@@ -9,7 +9,7 @@ public partial class ProductInSaleCampaign
 {
     public int CampaignId { get; set; }
 
-    public int ProductId { get; set; }
+    public string ProductId { get; set; }
 
     public decimal? PercentDiscount { get; set; }
 

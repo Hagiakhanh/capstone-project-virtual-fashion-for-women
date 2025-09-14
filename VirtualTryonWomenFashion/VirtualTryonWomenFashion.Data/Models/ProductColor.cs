@@ -7,9 +7,9 @@ namespace VirtualTryonWomenFashion.Data.Models;
 
 public partial class ProductColor
 {
-    public int ProductColorId { get; set; }
+    public string ProductColorId { get; set; }
 
-    public int? ProductId { get; set; }
+    public string ProductId { get; set; }
 
     public int? ColorId { get; set; }
 

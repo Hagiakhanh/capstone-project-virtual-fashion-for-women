@@ -93,7 +93,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
     {
         modelBuilder.Entity<Aiconversation>(entity =>
         {
-            entity.HasKey(e => e.AiconversationId).HasName("PK__AIConver__6604C7D27F98FCDD");
+            entity.HasKey(e => e.AiconversationId).HasName("PK__AIConver__6604C7D22496F181");
 
             entity.ToTable("AIConversations");
 
@@ -112,14 +112,18 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasKey(e => e.CartId).HasName("PK__Carts__51BCD7971F48731F");
+            entity.HasKey(e => e.CartId).HasName("PK__Carts__51BCD797F14BEAA6");
 
             entity.Property(e => e.CartId).HasColumnName("CartID");
             entity.Property(e => e.CreateDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
-            entity.Property(e => e.ProductVariantId).HasColumnName("ProductVariantID");
+            entity.Property(e => e.ProductVariantId)
+                .IsRequired()
+                .HasMaxLength(140)
+                .IsUnicode(false)
+                .HasColumnName("ProductVariantID");
             entity.Property(e => e.UserId).HasColumnName("UserID");
 
             entity.HasOne(d => d.ProductVariant).WithMany(p => p.Carts)
@@ -135,19 +139,21 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A2BEB4A34D3");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A2BCD2A1998");
 
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.BodyPart).HasMaxLength(50);
             entity.Property(e => e.CategoryName)
                 .IsRequired()
                 .HasMaxLength(100);
-            entity.Property(e => e.CategorySlug).HasMaxLength(100);
+            entity.Property(e => e.CategorySlug)
+                .HasMaxLength(100)
+                .IsUnicode(false);
         });
 
         modelBuilder.Entity<Characteristic>(entity =>
         {
-            entity.HasKey(e => e.CharacteristicId).HasName("PK__Characte__C0EA4DAF8A51A959");
+            entity.HasKey(e => e.CharacteristicId).HasName("PK__Characte__C0EA4DAFB0FD1A6B");
 
             entity.Property(e => e.CharacteristicId).HasColumnName("CharacteristicID");
             entity.Property(e => e.ColorPreference).HasMaxLength(100);
@@ -166,18 +172,23 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Color>(entity =>
         {
-            entity.HasKey(e => e.ColorId).HasName("PK__Color__8DA7676DA4F01834");
+            entity.HasKey(e => e.ColorId).HasName("PK__Color__8DA7676D0313802D");
 
             entity.ToTable("Color");
 
+            entity.HasIndex(e => e.ColorPrefix, "UQ__Color__4DAF32393B815BCD").IsUnique();
+
             entity.Property(e => e.ColorId).HasColumnName("ColorID");
-            entity.Property(e => e.ColorCode).HasMaxLength(50);
+            entity.Property(e => e.ColorName).HasMaxLength(50);
+            entity.Property(e => e.ColorPrefix)
+                .HasMaxLength(20)
+                .IsUnicode(false);
             entity.Property(e => e.HexCode).HasMaxLength(20);
         });
 
         modelBuilder.Entity<Message>(entity =>
         {
-            entity.HasKey(e => e.MessageId).HasName("PK__Messages__C87C037C3FC78CF8");
+            entity.HasKey(e => e.MessageId).HasName("PK__Messages__C87C037C9379F7DB");
 
             entity.Property(e => e.MessageId).HasColumnName("MessageID");
             entity.Property(e => e.AiconversationId).HasColumnName("AIConversationID");
@@ -213,7 +224,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E32D835BEA8");
+            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E32C3E0750E");
 
             entity.Property(e => e.NotificationId).HasColumnName("NotificationID");
             entity.Property(e => e.CreatedAt)
@@ -232,7 +243,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BAF84C61291");
+            entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BAF84CA6D2B");
 
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
@@ -261,12 +272,16 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<OrderDetail>(entity =>
         {
-            entity.HasKey(e => e.OrderDetailId).HasName("PK__OrderDet__D3B9D30C0264998A");
+            entity.HasKey(e => e.OrderDetailId).HasName("PK__OrderDet__D3B9D30C8C823568");
 
             entity.Property(e => e.OrderDetailId).HasColumnName("OrderDetailID");
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.PriceAtTime).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.ProductVariantId).HasColumnName("ProductVariantID");
+            entity.Property(e => e.ProductVariantId)
+                .IsRequired()
+                .HasMaxLength(140)
+                .IsUnicode(false)
+                .HasColumnName("ProductVariantID");
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.OrderId)
@@ -281,34 +296,45 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Product>(entity =>
         {
-            entity.HasKey(e => e.ProductId).HasName("PK__Products__B40CC6ED96BA2107");
+            entity.HasKey(e => e.ProductId).HasName("PK__Products__B40CC6EDEFD4AE0C");
 
-            entity.HasIndex(e => e.ProductSlug, "UQ__Products__A8918E70367D6709").IsUnique();
+            entity.HasIndex(e => e.ProductSlug, "UQ__Products__A8918E70755FB2EE").IsUnique();
 
-            entity.Property(e => e.ProductId).HasColumnName("ProductID");
+            entity.Property(e => e.ProductId)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("ProductID");
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.ProductName)
                 .IsRequired()
                 .HasMaxLength(200);
-            entity.Property(e => e.ProductSlug).HasMaxLength(200);
+            entity.Property(e => e.ProductSlug)
+                .HasMaxLength(200)
+                .IsUnicode(false);
 
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK__Products__Catego__4CA06362");
+                .HasConstraintName("FK__Products__Catego__4BAC3F29");
         });
 
         modelBuilder.Entity<ProductColor>(entity =>
         {
-            entity.HasKey(e => e.ProductColorId).HasName("PK__ProductC__C5DB681EC7172ADC");
+            entity.HasKey(e => e.ProductColorId).HasName("PK__ProductC__C5DB681EB259D0D6");
 
-            entity.Property(e => e.ProductColorId).HasColumnName("ProductColorID");
+            entity.Property(e => e.ProductColorId)
+                .HasMaxLength(120)
+                .IsUnicode(false)
+                .HasColumnName("ProductColorID");
             entity.Property(e => e.ColorId).HasColumnName("ColorID");
-            entity.Property(e => e.LensId).HasColumnName("LensID");
-            entity.Property(e => e.ProductId).HasColumnName("ProductID");
+            entity.Property(e => e.LensId)
+                .IsUnicode(false)
+                .HasColumnName("LensID");
+            entity.Property(e => e.ProductId)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("ProductID");
 
             entity.HasOne(d => d.Color).WithMany(p => p.ProductColors)
                 .HasForeignKey(d => d.ColorId)
@@ -321,11 +347,14 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<ProductImage>(entity =>
         {
-            entity.HasKey(e => e.ProductImageId).HasName("PK__ProductI__07B2B1D85E715D07");
+            entity.HasKey(e => e.ProductImageId).HasName("PK__ProductI__07B2B1D84D1B7571");
 
             entity.Property(e => e.ProductImageId).HasColumnName("ProductImageID");
             entity.Property(e => e.ImageUrl).HasMaxLength(300);
-            entity.Property(e => e.ProductColorId).HasColumnName("ProductColorID");
+            entity.Property(e => e.ProductColorId)
+                .HasMaxLength(120)
+                .IsUnicode(false)
+                .HasColumnName("ProductColorID");
 
             entity.HasOne(d => d.ProductColor).WithMany(p => p.ProductImages)
                 .HasForeignKey(d => d.ProductColorId)
@@ -337,7 +366,10 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.HasKey(e => new { e.CampaignId, e.ProductId });
 
             entity.Property(e => e.CampaignId).HasColumnName("CampaignID");
-            entity.Property(e => e.ProductId).HasColumnName("ProductID");
+            entity.Property(e => e.ProductId)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("ProductID");
             entity.Property(e => e.PercentDiscount).HasColumnType("decimal(5, 2)");
             entity.Property(e => e.SalePrice).HasColumnType("decimal(10, 2)");
 
@@ -354,12 +386,18 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<ProductVariant>(entity =>
         {
-            entity.HasKey(e => e.ProductVariantId).HasName("PK__ProductV__E4D66725C44C2248");
+            entity.HasKey(e => e.ProductVariantId).HasName("PK__ProductV__E4D66725FE3C9D24");
 
-            entity.Property(e => e.ProductVariantId).HasColumnName("ProductVariantID");
+            entity.Property(e => e.ProductVariantId)
+                .HasMaxLength(140)
+                .IsUnicode(false)
+                .HasColumnName("ProductVariantID");
             entity.Property(e => e.ImageUrl).HasMaxLength(300);
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.ProductColorId).HasColumnName("ProductColorID");
+            entity.Property(e => e.ProductColorId)
+                .HasMaxLength(120)
+                .IsUnicode(false)
+                .HasColumnName("ProductColorID");
             entity.Property(e => e.ProductHeight).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductLength).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.ProductWeight).HasColumnType("decimal(10, 2)");
@@ -380,7 +418,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Rating>(entity =>
         {
-            entity.HasKey(e => e.RatingId).HasName("PK__Ratings__FCCDF85CFDB13A36");
+            entity.HasKey(e => e.RatingId).HasName("PK__Ratings__FCCDF85C917401AE");
 
             entity.Property(e => e.RatingId).HasColumnName("RatingID");
             entity.Property(e => e.CreateAt)
@@ -402,7 +440,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Roles__8AFACE3ABC599457");
+            entity.HasKey(e => e.RoleId).HasName("PK__Roles__8AFACE3A745D250B");
 
             entity.Property(e => e.RoleId).HasColumnName("RoleID");
             entity.Property(e => e.RoleName)
@@ -412,7 +450,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<SaleCampaign>(entity =>
         {
-            entity.HasKey(e => e.CampaignId).HasName("PK__SaleCamp__3F5E8D790E075CB8");
+            entity.HasKey(e => e.CampaignId).HasName("PK__SaleCamp__3F5E8D790A6BC4C4");
 
             entity.Property(e => e.CampaignId).HasColumnName("CampaignID");
             entity.Property(e => e.CampaignName)
@@ -426,7 +464,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Size>(entity =>
         {
-            entity.HasKey(e => e.SizeId).HasName("PK__Size__83BD095A6C31BDB4");
+            entity.HasKey(e => e.SizeId).HasName("PK__Size__83BD095A07546EBA");
 
             entity.ToTable("Size");
 
@@ -436,7 +474,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<StatusLog>(entity =>
         {
-            entity.HasKey(e => e.StatusLogId).HasName("PK__StatusLo__A1B4D0BDC39548E4");
+            entity.HasKey(e => e.StatusLogId).HasName("PK__StatusLo__A1B4D0BD5E20142C");
 
             entity.Property(e => e.StatusLogId).HasColumnName("StatusLogID");
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
@@ -455,7 +493,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<SuggestedOutfit>(entity =>
         {
-            entity.HasKey(e => e.SuggestedOutfitId).HasName("PK__Suggeste__304834100655427A");
+            entity.HasKey(e => e.SuggestedOutfitId).HasName("PK__Suggeste__30483410BA5B1037");
 
             entity.Property(e => e.SuggestedOutfitId).HasColumnName("SuggestedOutfitID");
             entity.Property(e => e.AiconversationId).HasColumnName("AIConversationID");
@@ -481,18 +519,21 @@ public partial class VirtualTryonWomenFashionContext : DbContext
                         .HasConstraintName("FK_OutfitVariances_SuggestedOutfit"),
                     j =>
                     {
-                        j.HasKey("SuggestedOutfitId", "ProductVariantId").HasName("PK__OutfitVa__7E0552624B486D27");
+                        j.HasKey("SuggestedOutfitId", "ProductVariantId").HasName("PK__OutfitVa__7E055262ADD4F766");
                         j.ToTable("OutfitVariants");
                         j.IndexerProperty<int>("SuggestedOutfitId").HasColumnName("SuggestedOutfitID");
-                        j.IndexerProperty<int>("ProductVariantId").HasColumnName("ProductVariantID");
+                        j.IndexerProperty<string>("ProductVariantId")
+                            .HasMaxLength(140)
+                            .IsUnicode(false)
+                            .HasColumnName("ProductVariantID");
                     });
         });
 
         modelBuilder.Entity<TicketChat>(entity =>
         {
-            entity.HasKey(e => e.TicketChatId).HasName("PK__TicketCh__F9115A61084C1463");
+            entity.HasKey(e => e.TicketChatId).HasName("PK__TicketCh__F9115A6129A20F57");
 
-            entity.HasIndex(e => e.Slug, "UQ__TicketCh__BC7B5FB6346C2816").IsUnique();
+            entity.HasIndex(e => e.Slug, "UQ__TicketCh__BC7B5FB6EFEFF4D1").IsUnique();
 
             entity.Property(e => e.TicketChatId).HasColumnName("TicketChatID");
             entity.Property(e => e.ClosedAt).HasColumnType("datetime");
@@ -519,7 +560,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Transaction>(entity =>
         {
-            entity.HasKey(e => e.TransactionId).HasName("PK__Transact__55433A4B9B87D02D");
+            entity.HasKey(e => e.TransactionId).HasName("PK__Transact__55433A4BCA4D97C4");
 
             entity.Property(e => e.TransactionId).HasColumnName("TransactionID");
             entity.Property(e => e.CreatedAt)
@@ -548,7 +589,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<TryOnSlot>(entity =>
         {
-            entity.HasKey(e => e.TryOnSlotId).HasName("PK__TryOnSlo__9581D25E25BB4ECC");
+            entity.HasKey(e => e.TryOnSlotId).HasName("PK__TryOnSlo__9581D25EE6CF9C26");
 
             entity.Property(e => e.TryOnSlotId).HasColumnName("TryOnSlotID");
             entity.Property(e => e.CreatedAt)
@@ -580,18 +621,21 @@ public partial class VirtualTryonWomenFashionContext : DbContext
                         .HasConstraintName("FK__TryOnVari__TryOn__2B0A656D"),
                     j =>
                     {
-                        j.HasKey("TryOnSlotId", "ProductVariantId").HasName("PK__TryOnVar__DBCCB42C5EDBB71A");
+                        j.HasKey("TryOnSlotId", "ProductVariantId").HasName("PK__TryOnVar__DBCCB42C39BBE2DC");
                         j.ToTable("TryOnVariantClothes");
                         j.IndexerProperty<int>("TryOnSlotId").HasColumnName("TryOnSlotID");
-                        j.IndexerProperty<int>("ProductVariantId").HasColumnName("ProductVariantID");
+                        j.IndexerProperty<string>("ProductVariantId")
+                            .HasMaxLength(140)
+                            .IsUnicode(false)
+                            .HasColumnName("ProductVariantID");
                     });
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CCACB0397B3C");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CCAC627120EA");
 
-            entity.HasIndex(e => e.Email, "UQ__Users__A9D1053431333302").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Users__A9D10534E7A68528").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.Address).HasMaxLength(255);
@@ -620,14 +664,18 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<UserInteraction>(entity =>
         {
-            entity.HasKey(e => e.UserInteractionId).HasName("PK__UserInte__2CD47CC5A1C5D84E");
+            entity.HasKey(e => e.UserInteractionId).HasName("PK__UserInte__2CD47CC5512B61E1");
 
             entity.Property(e => e.UserInteractionId).HasColumnName("UserInteractionID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.InteractionType).HasMaxLength(100);
-            entity.Property(e => e.ProductId).HasColumnName("ProductID");
+            entity.Property(e => e.ProductId)
+                .IsRequired()
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("ProductID");
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.Weight).HasColumnType("decimal(10, 2)");
 
@@ -644,13 +692,17 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Wishlist>(entity =>
         {
-            entity.HasKey(e => e.WishlistId).HasName("PK__Wishlist__233189CBA2611574");
+            entity.HasKey(e => e.WishlistId).HasName("PK__Wishlist__233189CB79FD6149");
 
             entity.Property(e => e.WishlistId).HasColumnName("WishlistID");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ProductVariantId).HasColumnName("ProductVariantID");
+            entity.Property(e => e.ProductVariantId)
+                .IsRequired()
+                .HasMaxLength(140)
+                .IsUnicode(false)
+                .HasColumnName("ProductVariantID");
             entity.Property(e => e.UserId).HasColumnName("UserID");
 
             entity.HasOne(d => d.ProductVariant).WithMany(p => p.Wishlists)

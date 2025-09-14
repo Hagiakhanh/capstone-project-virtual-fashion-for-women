@@ -11,7 +11,7 @@ public partial class UserInteraction
 
     public int UserId { get; set; }
 
-    public int ProductId { get; set; }
+    public string ProductId { get; set; }
 
     public string InteractionType { get; set; }
 

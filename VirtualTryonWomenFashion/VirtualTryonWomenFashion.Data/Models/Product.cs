@@ -7,7 +7,7 @@ namespace VirtualTryonWomenFashion.Data.Models;
 
 public partial class Product
 {
-    public int ProductId { get; set; }
+    public string ProductId { get; set; }
 
     public string ProductName { get; set; }
 
@@ -19,7 +19,7 @@ public partial class Product
 
     public string MainImageUrl { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public int? CategoryId { get; set; }
 

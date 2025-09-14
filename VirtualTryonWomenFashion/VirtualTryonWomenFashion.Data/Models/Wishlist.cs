@@ -11,7 +11,7 @@ public partial class Wishlist
 
     public int UserId { get; set; }
 
-    public int ProductVariantId { get; set; }
+    public string ProductVariantId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

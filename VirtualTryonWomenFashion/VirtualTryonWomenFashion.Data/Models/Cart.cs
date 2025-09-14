@@ -17,7 +17,7 @@ public partial class Cart
 
     public bool? IsDelete { get; set; }
 
-    public int ProductVariantId { get; set; }
+    public string ProductVariantId { get; set; }
 
     public virtual ProductVariant ProductVariant { get; set; }
 
