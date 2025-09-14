@@ -1,0 +1,6 @@
+@VirtualTryonWomenFashion.API_HostAddress = http://localhost:5263
+
+GET {{VirtualTryonWomenFashion.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
