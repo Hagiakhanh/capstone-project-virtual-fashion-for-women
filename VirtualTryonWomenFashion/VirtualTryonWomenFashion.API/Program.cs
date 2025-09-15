@@ -11,6 +11,7 @@ builder.Services.AddDbContext<VirtualTryonWomenFashionContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MyDbContext"));
 });
 builder.Services.RegistDependencyInjection();
+builder.Services.RegistAutoMapperService();
 
 builder.Services.Configure<RouteOptions>(options =>
 {
