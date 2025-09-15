@@ -5,7 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
+	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="14.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+	</ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VirtualTryonWomenFashion.Data\VirtualTryonWomenFashion.Data.csproj" />
   </ItemGroup>

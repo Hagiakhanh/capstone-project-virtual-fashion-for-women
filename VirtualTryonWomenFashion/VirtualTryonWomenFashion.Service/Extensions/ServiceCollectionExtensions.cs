@@ -77,5 +77,13 @@ namespace VirtualTryonWomenFashion.Service.Extensions
 
             return services;
         }
+        public static IServiceCollection RegistAutoMapperService(this IServiceCollection services)
+        {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+                                    .Where(a => !a.IsDynamic)
+                                    .ToArray();
+            services.AddAutoMapper(assemblies);
+            return services;
+        }
     }
 }
