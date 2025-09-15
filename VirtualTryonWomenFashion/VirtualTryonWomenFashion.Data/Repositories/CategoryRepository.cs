@@ -21,5 +21,14 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
             return await _context.Categories.ToListAsync();
         }
+
+        public async Task<List<string>> GetSlugsAsync(string baseSlug)
+        {
+            return await _context.Categories
+                .Where(c => c.CategorySlug.StartsWith(baseSlug))
+                .Select(c => c.CategorySlug)
+                .ToListAsync();
+        }
+
     }
 }
