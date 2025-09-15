@@ -10,6 +10,7 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface ICategoryRepository : IGenericRepository<Category>
     {
-        public Task<List<Category>> GetAllCategories();   
+        public Task<List<Category>> GetAllCategories();
+        Task<List<string>> GetSlugsAsync(string baseSlug);
     }
 }
