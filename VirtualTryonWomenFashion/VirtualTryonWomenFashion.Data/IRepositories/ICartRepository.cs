@@ -10,5 +10,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface ICartRepository : IGenericRepository<Cart>
     {
+        Task<Cart?> GetCartItemByUserIdAndProductId(int userId, string productVariantId);
     }
 }
