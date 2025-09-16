@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.Category;
+using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Services;
 
@@ -28,7 +29,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
 
@@ -50,20 +51,13 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Create([FromBody] CreateCategoryRequest category)
+        public async Task<IActionResult> Create([FromBody] CreateCategoryRequest category)
         {
             try
             {
-                var result = await _categoryService.CreateCategory(category);
-                if (result > 0)
-                {
-                    return Ok(result);
-                }
-
-                return BadRequest(new { message = "Create failed" });
-            } catch (ArgumentNullException ex)
-            {
-                return BadRequest(new {message = ex.Message});
+                MessageModelWithData<Category> result = await _categoryService.CreateCategory(category);
+                
+                return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
             {
@@ -76,17 +70,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
         {
             try
             {
-                var result = await _categoryService.UpdateCategory(id, category);
-                if (result > 0)
-                {
-                    return Ok(result);
-                }
-
-                return BadRequest(new { message = "Update failed" });
-            }
-            catch (ArgumentNullException ex)
-            {
-                return BadRequest(new { message = ex.Message });
+                MessageModelWithData<Category> result = await _categoryService.UpdateCategory(id, category);
+                return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
             {
@@ -99,17 +84,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
         {
             try
             {
-                var result = await _categoryService.DeleteCategory(id);
-                if (result > 0)
-                {
-                    return Ok(result);
-                }
-
-                return BadRequest(new { message = "Delete failed" });
-            }
-            catch (ArgumentNullException ex)
-            {
-                return BadRequest(new { message = ex.Message });
+                MessageModelWithData<Category> result = await _categoryService.DeleteCategory(id);
+                return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
             {
