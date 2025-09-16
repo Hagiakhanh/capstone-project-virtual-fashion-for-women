@@ -1,7 +1,11 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 using VirtualTryonWomenFashion.Data.DBContext;
 using VirtualTryonWomenFashion.Service.Extensions;
+using VirtualTryonWomenFashion.Service.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +20,28 @@ builder.Services.RegistAutoMapperService();
 builder.Services.Configure<RouteOptions>(options =>
 {
     options.LowercaseUrls = true;
+});
+builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:ValidIssuer"],
+        ValidAudience = builder.Configuration["JwtSettings:ValidAudience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
+    };
 });
 
 builder.Services.AddControllers();

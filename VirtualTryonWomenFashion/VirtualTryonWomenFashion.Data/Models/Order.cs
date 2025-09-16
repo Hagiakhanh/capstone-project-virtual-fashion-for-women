@@ -17,7 +17,7 @@ public partial class Order
 
     public string ReceiverAddress { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public string Status { get; set; }
 

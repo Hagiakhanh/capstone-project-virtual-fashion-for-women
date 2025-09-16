@@ -13,7 +13,7 @@ public partial class StatusLog
 
     public string Status { get; set; }
 
-    public DateTime? UpdateDate { get; set; }
+    public DateTime UpdateDate { get; set; }
 
     public virtual Order Order { get; set; }
 }

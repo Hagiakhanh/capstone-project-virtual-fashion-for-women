@@ -17,7 +17,7 @@ public partial class SaleCampaign
 
     public DateOnly? EndDate { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public string Status { get; set; }
 

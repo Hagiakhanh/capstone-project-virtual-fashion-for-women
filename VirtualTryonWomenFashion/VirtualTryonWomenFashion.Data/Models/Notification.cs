@@ -11,7 +11,7 @@ public partial class Notification
 
     public int ReceiverId { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public DateTime? ReadAt { get; set; }
 
