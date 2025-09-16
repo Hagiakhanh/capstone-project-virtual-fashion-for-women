@@ -13,7 +13,7 @@ public partial class Rating
 
     public string Comment { get; set; }
 
-    public DateTime? CreateAt { get; set; }
+    public DateTime CreateAt { get; set; }
 
     public int UserId { get; set; }
 

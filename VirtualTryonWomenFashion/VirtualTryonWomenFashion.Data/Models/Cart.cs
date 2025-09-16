@@ -11,7 +11,7 @@ public partial class Cart
 
     public int UserId { get; set; }
 
-    public DateTime? CreateDate { get; set; }
+    public DateTime CreateDate { get; set; }
 
     public int Quantity { get; set; }
 

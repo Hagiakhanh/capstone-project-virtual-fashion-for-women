@@ -25,7 +25,9 @@ public partial class User
 
     public bool? IsEmailConfirm { get; set; }
 
-    public DateTime? CreatedDate { get; set; }
+    public DateTime CreatedDate { get; set; }
+
+    public string EmailConfirmToken { get; set; }
 
     public virtual ICollection<Aiconversation> Aiconversations { get; set; } = new List<Aiconversation>();
 

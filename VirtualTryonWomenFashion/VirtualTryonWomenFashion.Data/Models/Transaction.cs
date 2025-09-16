@@ -21,9 +21,9 @@ public partial class Transaction
 
     public string ThirdPartyCode { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public virtual Order Order { get; set; }
 

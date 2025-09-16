@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,11 @@ namespace VirtualTryonWomenFashion.Data.Repositories
     {
         public RoleRepository(VirtualTryonWomenFashionContext context) : base(context)
         {
+        }
+
+        public async Task<Role> GetRoleByRoleName(string roleName)
+        {
+            return await _context.Roles.FirstOrDefaultAsync(x => x.RoleName == roleName);
         }
     }
 }

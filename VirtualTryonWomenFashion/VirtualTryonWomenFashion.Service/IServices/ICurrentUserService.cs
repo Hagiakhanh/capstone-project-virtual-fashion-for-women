@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VirtualTryonWomenFashion.Service.Utils
+namespace VirtualTryonWomenFashion.Service.IServices
 {
-    internal class Class1
+    public interface ICurrentUserService
     {
+        public int GetUserId();
     }
 }

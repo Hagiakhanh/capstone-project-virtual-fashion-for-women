@@ -13,7 +13,7 @@ public partial class Wishlist
 
     public string ProductVariantId { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public virtual ProductVariant ProductVariant { get; set; }
 

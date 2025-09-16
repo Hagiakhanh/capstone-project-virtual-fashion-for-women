@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,11 @@ namespace VirtualTryonWomenFashion.Data.Repositories
     {
         public UserRepository(VirtualTryonWomenFashionContext context) : base(context)
         {
+        }
+
+        public async Task<User> GetUserByEmail(string email)
+        {
+            return await _context.Users.Include(x => x.Role).SingleOrDefaultAsync(x => x.Email == email);
         }
     }
 }
