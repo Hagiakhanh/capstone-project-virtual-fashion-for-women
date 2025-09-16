@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,7 @@ using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.Category;
+using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
 namespace VirtualTryonWomenFashion.Service.Services
@@ -101,17 +103,22 @@ namespace VirtualTryonWomenFashion.Service.Services
             
         }
 
-        public async Task<int> CreateCategory(CreateCategoryRequest category)
+        public async Task<MessageModelWithData<Category>> CreateCategory(CreateCategoryRequest category)
         {
             if (category == null || string.IsNullOrEmpty(category.CategoryName))
             {
-                throw new ArgumentNullException("Invalid input");
+                //throw new ArgumentNullException("Invalid input");
+                return new MessageModelWithData<Category>
+                {
+                    Message = "Nhập thông tin chưa đủ",
+                    StatusCode = StatusCodes.Status400BadRequest
+                };
             }
 
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                var newCategory = new Category()
+                Category newCategory = new Category()
                 {
                     CategoryName = category.CategoryName,
                     CategorySlug = await GenerateCategorySlug(category.CategoryName),
@@ -121,25 +128,56 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 var result = await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
-                return result;
 
-            } catch
+                if (result > 0)
+                {
+                    return new MessageModelWithData<Category>
+                    {
+                        Message = "Tạo thành công category",
+                        StatusCode = StatusCodes.Status201Created,
+                        Data = newCategory
+                    };
+                } 
+                else
+                {
+                    return new MessageModelWithData<Category>
+                    {
+                        Message = "Tạo thất bại",
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
+                }
+
+            } catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                throw;
+                return new MessageModelWithData<Category>
+                {
+                    Message = "Tạo thất bại: Lỗi hệ thống",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
             }
         }
 
-        public async Task<int> UpdateCategory(int id, CreateCategoryRequest category)
+        public async Task<MessageModelWithData<Category>> UpdateCategory(int id, CreateCategoryRequest category)
         {
             if (category == null)
-                throw new ArgumentNullException("Invalid input");
+                return new MessageModelWithData<Category>
+                {
+                    Message = "Nhập thông tin chưa đủ",
+                    StatusCode = StatusCodes.Status400BadRequest
+                };
 
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                var existing = await _categoryRepository.GetByIdAsync(id);
-                if (existing == null) throw new ArgumentNullException("Category not found");
+                Category existing = await _categoryRepository.GetByIdAsync(id);
+                if (existing == null)
+                    return new MessageModelWithData<Category>
+                    {
+                        Message = "Không tìm thấy category",
+                        StatusCode = StatusCodes.Status404NotFound
+                    };
+
                 existing.CategoryName = category.CategoryName;
                 existing.CategorySlug = await GenerateCategorySlug(category.CategoryName, existing.CategoryId);
                 existing.BodyPart = category.BodyPart;
@@ -148,27 +186,74 @@ namespace VirtualTryonWomenFashion.Service.Services
                 var result = await _unitOfWork.SaveChanges();
 
                 await _unitOfWork.CommitTransactionAsync();
-                return result;
+                if (result > 0)
+                {
+                    return new MessageModelWithData<Category>
+                    {
+                        Message = "Cập nhật thành công category",
+                        StatusCode = StatusCodes.Status200OK,
+                        Data = existing
+                    };
+                }
+                else
+                {
+                    return new MessageModelWithData<Category>
+                    {
+                        Message = "Cập nhật thất bại",
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
+                }
             }
             catch
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                throw;
+                return new MessageModelWithData<Category>
+                {
+                    Message = "Cập nhật thất bại: Lỗi hệ thống",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
             }
         }
 
-        public async Task<int> DeleteCategory(int categoryId)
+        public async Task<MessageModelWithData<Category>> DeleteCategory(int categoryId)
         {
-            var category = await _categoryRepository.GetByIdAsync(categoryId);
-            if (category == null)
+            try
             {
-                throw new ArgumentNullException("Not found");
+                var category = await _categoryRepository.GetByIdAsync(categoryId);
+                if (category == null)
+                    return new MessageModelWithData<Category>
+                    {
+                        Message = "Không tìm thấy category",
+                        StatusCode = StatusCodes.Status404NotFound
+                    };
+
+                await _categoryRepository.Delete(category);
+
+                var result = await _unitOfWork.SaveChanges();
+                if (result > 0)
+                {
+                    return new MessageModelWithData<Category>
+                    {
+                        Message = "Xóa thành công category",
+                        StatusCode = StatusCodes.Status204NoContent
+                    };
+                }
+                else
+                {
+                    return new MessageModelWithData<Category>
+                    {
+                        Message = "Xóa thất bại",
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
+                }
+            } catch
+            {
+                return new MessageModelWithData<Category>
+                {
+                    Message = "Xóa thất bại: Lỗi hệ thống",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
             }
-
-            await _categoryRepository.Delete(category);
-
-            var result = await _unitOfWork.SaveChanges();
-            return result;
         }
     }
 }
