@@ -11,6 +11,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
 {
     public interface IProductVariantService
     {
+        Task<ProductVariant?> GetProductVariantById(string id);
         Task<MessageModelWithData<ProductVariant>> CreateAsync(string productColorId, CreateProductVariantRequest request);
     }
 }

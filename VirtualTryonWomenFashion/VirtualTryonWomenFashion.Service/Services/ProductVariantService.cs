@@ -17,21 +17,27 @@ namespace VirtualTryonWomenFashion.Service.Services
     public class ProductVariantService : IProductVariantService
     {
         private readonly IProductVariantRepository _productVariantRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ISizeService _sizeService;
         private readonly ICloudinaryService _cloudinaryService;
-        private readonly IUnitOfWork _unitOfWork;
 
-        public ProductVariantService(IProductVariantRepository productVariantRepository,
+        public ProductVariantService(
+            IProductVariantRepository productVariantRepository, 
+            IUnitOfWork unitOfWork,
             ISizeService sizeService,
-            ICloudinaryService cloudinaryService,
-            IUnitOfWork unitOfWork) 
+            ICloudinaryService cloudinaryService)
         {
             _productVariantRepository = productVariantRepository;
+            _unitOfWork = unitOfWork;
             _sizeService = sizeService;
             _cloudinaryService = cloudinaryService;
-            _unitOfWork = unitOfWork;
         }
-
+        
+        public Task<ProductVariant?> GetProductVariantById(string id)
+        {
+            return _productVariantRepository.GetByIdAsync(id);
+        }
+        
         public async Task<MessageModelWithData<ProductVariant>> CreateAsync(string productColorId, CreateProductVariantRequest request)
         {
             await _unitOfWork.BeginTransactionAsync();
