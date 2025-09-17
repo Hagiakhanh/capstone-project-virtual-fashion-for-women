@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.Color;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -33,11 +35,11 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // POST api/<ColorController>
         [HttpPost]
-        public async Task<IActionResult> Post([FromForm] string colorName, string colorPrefix, string hexCode)
+        public async Task<IActionResult> Post([FromBody] CreateColorRequest colorModel)
         {
             try
             {
-                MessageModelWithData<Color> result = await _colorService.CreateColor(colorName, colorPrefix, hexCode);
+                MessageModelWithData<Color> result = await _colorService.CreateColor(colorModel.ColorName, colorModel.ColorPrefix, colorModel.HexCode);
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)

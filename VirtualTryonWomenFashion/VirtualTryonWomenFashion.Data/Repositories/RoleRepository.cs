@@ -19,7 +19,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
 
         public async Task<Role> GetRoleByRoleName(string roleName)
         {
-            return await _context.Roles.FirstOrDefaultAsync(x => x.RoleName == roleName);
+            return await _context.Roles.FirstOrDefaultAsync(x => x.RoleId == roleName);
         }
     }
 }

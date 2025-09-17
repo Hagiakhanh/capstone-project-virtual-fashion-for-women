@@ -11,11 +11,11 @@ public partial class Wishlist
 
     public int UserId { get; set; }
 
-    public string ProductVariantId { get; set; }
+    public string ProductId { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
-    public virtual ProductVariant ProductVariant { get; set; }
+    public virtual Product Product { get; set; }
 
     public virtual User User { get; set; }
 }

@@ -21,8 +21,6 @@ public partial class ProductVariant
 
     public string Status { get; set; }
 
-    public decimal? Price { get; set; }
-
     public decimal? ProductWeight { get; set; }
 
     public decimal? ProductLength { get; set; }
@@ -39,9 +37,5 @@ public partial class ProductVariant
 
     public virtual Size Size { get; set; }
 
-    public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
-
     public virtual ICollection<SuggestedOutfit> SuggestedOutfits { get; set; } = new List<SuggestedOutfit>();
-
-    public virtual ICollection<TryOnSlot> TryOnSlots { get; set; } = new List<TryOnSlot>();
 }

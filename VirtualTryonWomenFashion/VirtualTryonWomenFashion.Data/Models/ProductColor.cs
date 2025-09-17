@@ -15,6 +15,8 @@ public partial class ProductColor
 
     public string LensId { get; set; }
 
+    public string NoBgImgUrl { get; set; }
+
     public virtual Color Color { get; set; }
 
     public virtual Product Product { get; set; }
@@ -22,4 +24,6 @@ public partial class ProductColor
     public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 
     public virtual ICollection<ProductVariant> ProductVariants { get; set; } = new List<ProductVariant>();
+
+    public virtual ICollection<TryOnSlot> TryOnSlots { get; set; } = new List<TryOnSlot>();
 }

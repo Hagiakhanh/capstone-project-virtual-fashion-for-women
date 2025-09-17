@@ -33,5 +33,5 @@ public partial class TryOnSlot
 
     public virtual User Customer { get; set; }
 
-    public virtual ICollection<ProductVariant> ProductVariants { get; set; } = new List<ProductVariant>();
+    public virtual ICollection<ProductColor> ProductColors { get; set; } = new List<ProductColor>();
 }

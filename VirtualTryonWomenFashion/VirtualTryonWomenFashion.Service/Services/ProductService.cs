@@ -186,7 +186,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Description = request.Description,
                     MainImageUrl = await _cloudinaryService.UploadImageAsync(request.MainImageUrl),
                     CreatedAt = DateTime.UtcNow.AddHours(7),
-                    CategoryId = request.CategoryId
+                    CategoryId = request.CategoryId,
+                    Price = request.Price,
                 };
                 await _productRepository.InsertAsync(product);
 
@@ -297,7 +298,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 Quantity = variantRequest.Quantity,
                                 ImageUrl = imageUrl,
                                 Status = "Active",
-                                Price = variantRequest.Price,
                                 ProductWeight = variantRequest.ProductWeight,
                                 ProductLength = variantRequest.ProductLength,
                                 ProductWidth = variantRequest.ProductWidth,
@@ -372,8 +372,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                         if (variant.SizeId <= 0 && string.IsNullOrWhiteSpace(variant.SizeCode))
                             return (false, "Thông tin size không đầy đủ");
 
-                        if (variant.Price <= 0)
-                            return (false, "Giá sản phẩm phải lớn hơn 0");
+                        //if (variant.Price <= 0)
+                        //    return (false, "Giá sản phẩm phải lớn hơn 0");
 
                         if (variant.Quantity < 0)
                             return (false, "Số lượng không được âm");

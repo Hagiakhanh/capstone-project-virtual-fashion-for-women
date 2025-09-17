@@ -26,30 +26,55 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             try
             {
-                bool isExisted = _colorRepository.Count(x => x.ColorPrefix.Equals(colorPrefix, StringComparison.InvariantCultureIgnoreCase)) > 0 ? true : false;
-                if (!isExisted)
+                bool isValidColor = ColorHelper.IsValidColor(hexCode);
+                if (!isValidColor)
                 {
-                    Color model = new Color()
-                    {
-                        ColorPrefix = colorPrefix,
-                        HexCode = hexCode,
-                        ColorName = colorName,
-                    };
-                    await _colorRepository.InsertAsync(model);
-                    int result = await _unitOfWork.SaveChanges();
-                    if (result > 0)
-                    {
-                        return new MessageModelWithData<Color>
-                        {
-                            Message = "Tạo thành công màu sắc mới",
-                            StatusCode = StatusCodes.Status201Created,
-                            Data = model
-                        };
-                    }
+                    throw new InvalidDataException("Màu nhập vào không đúng định dạng");
                 }
+                bool isExisted = _colorRepository.Count(x => x.ColorPrefix.ToLower() == colorPrefix.ToLower()) > 0 ? true : false;
+                if (isExisted)
+                {
+                    return new MessageModelWithData<Color>
+                    {
+                        Message = "Tạo thất bại: màu sắc tạo mới có trùng prefix",
+                        StatusCode = StatusCodes.Status400BadRequest
+
+                    };
+
+                }
+                Color model = new Color()
+                {
+                    ColorPrefix = colorPrefix,
+                    HexCode = hexCode,
+                    ColorName = colorName,
+                };
+                await _colorRepository.InsertAsync(model);
+                int result = await _unitOfWork.SaveChanges();
+                if (result > 0)
+                {
+                    return new MessageModelWithData<Color>
+                    {
+                        Message = "Tạo thành công màu sắc mới",
+                        StatusCode = StatusCodes.Status201Created,
+                        Data = model
+                    };
+                }
+                else
+                {
+                    return new MessageModelWithData<Color>
+                    {
+                        Message = "Tạo thất bại màu sắc",
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Data = model
+                    };
+                }
+
+            }
+            catch (InvalidDataException exInput)
+            {
                 return new MessageModelWithData<Color>
                 {
-                    Message = "Tạo thất bại: màu sắc tạo mới có trùng prefix",
+                    Message = exInput.Message,
                     StatusCode = StatusCodes.Status400BadRequest
 
                 };
