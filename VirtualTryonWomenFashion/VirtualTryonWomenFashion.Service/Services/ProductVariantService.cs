@@ -81,7 +81,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Quantity = request.Quantity,
                     ImageUrl = imageUrl,
                     Status = "Active",
-                    Price = request.Price,
                     ProductWeight = request.ProductWeight,
                     ProductLength = request.ProductLength,
                     ProductWidth = request.ProductWidth,
