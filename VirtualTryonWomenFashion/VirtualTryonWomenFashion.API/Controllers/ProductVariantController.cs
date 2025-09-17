@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
+using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Services;
 
 namespace VirtualTryonWomenFashion.API.Controllers
 {
@@ -78,6 +81,20 @@ namespace VirtualTryonWomenFashion.API.Controllers
             };
 
             return Ok(mockVariants);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateAsync(string id, CreateProductVariantRequest request)
+        {
+            try
+            {
+                MessageModelWithData<ProductVariant> result = await _productVariantService.CreateAsync(id, request);
+
+                return StatusCode(result.StatusCode, result);
+            } catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

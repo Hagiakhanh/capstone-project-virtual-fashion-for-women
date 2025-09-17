@@ -10,6 +10,8 @@ namespace VirtualTryonWomenFashion.Data.GenericRepository
 {
     public interface IGenericRepository<TEntity> where TEntity : class
     {
+        Task<TEntity?> GetFirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate);
+        Task<TEntity?> GetFirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, params Expression<Func<TEntity, object>>[] includes);
         Task<List<TEntity>> GetAll(
             PaginationParameter? pagination = null,
             Expression<Func<TEntity, bool>>? filter = null,

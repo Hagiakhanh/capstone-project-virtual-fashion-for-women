@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.IServices;
 
 namespace VirtualTryonWomenFashion.API.Controllers
@@ -60,6 +61,13 @@ namespace VirtualTryonWomenFashion.API.Controllers
             };
 
             return Ok(mockProducts);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateProduct([FromForm]CreateProductRequest request)
+        {
+            var result = await _productService.CreateProductAsyncWithValidation(request);
+            return StatusCode(result.StatusCode, result);
         }
     }
 }
