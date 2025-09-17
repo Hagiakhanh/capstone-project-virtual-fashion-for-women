@@ -8,6 +8,7 @@ using VirtualTryonWomenFashion.Data.GenericRepository;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
 using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Services;
 
@@ -76,6 +77,7 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IWishlistService, WishlistService>();
             services.AddScoped<IMailService, MailService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
+            services.AddScoped<ICloudinaryService, CloudinaryService>();
 
             return services;
         }

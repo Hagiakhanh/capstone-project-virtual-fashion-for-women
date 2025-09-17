@@ -20,6 +20,27 @@ namespace VirtualTryonWomenFashion.Data.GenericRepository
             this.dbSet = context.Set<TEntity>();
         }
 
+        public virtual async Task<TEntity?> GetFirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            return await dbSet.FirstOrDefaultAsync(predicate);
+        }
+
+        public virtual async Task<TEntity?> GetFirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, params Expression<Func<TEntity, object>>[] includes)
+        {
+            IQueryable<TEntity> query = dbSet;
+
+            // Apply includes
+            if (includes != null)
+            {
+                foreach (var include in includes)
+                {
+                    query = query.Include(include);
+                }
+            }
+            return await query.FirstOrDefaultAsync(predicate);
+        }
+
+
         public Task<List<TEntity>> GetAll(
             PaginationParameter? pagination = null,
             Expression<Func<TEntity, bool>>? filter = null,

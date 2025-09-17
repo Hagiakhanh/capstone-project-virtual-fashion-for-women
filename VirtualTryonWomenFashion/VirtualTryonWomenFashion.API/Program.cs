@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using VirtualTryonWomenFashion.Data.DBContext;
 using VirtualTryonWomenFashion.Service.Extensions;
+using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
 using VirtualTryonWomenFashion.Service.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,8 @@ builder.Services.AddDbContext<VirtualTryonWomenFashionContext>(options =>
 });
 builder.Services.RegistDependencyInjection();
 builder.Services.RegistAutoMapperService();
+
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 builder.Services.Configure<RouteOptions>(options =>
 {

@@ -66,7 +66,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> Update(int id, [FromBody] CreateCategoryRequest category)
+        public async Task<IActionResult> Update(int id, [FromBody] CreateCategoryRequest category)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
