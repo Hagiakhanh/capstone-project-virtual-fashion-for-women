@@ -281,8 +281,77 @@ namespace VirtualTryonWomenFashion.Service.Services
             var product = await _productRepository.GetProductByVariantIdAsync(variantId);
             if (product == null)
                 return null;
+            return MapToResponseProductDtoForVariant(product, variantId);
+        }
 
-            return MapToResponseProductDto(product);
+        private ResponseProductDto MapToResponseProductDtoForVariant(Product product, string variantId)
+        {
+            // Tìm ProductColor chứa variant được yêu cầu
+            var targetProductColor = product.ProductColors
+                .FirstOrDefault(pc => pc.ProductVariants.Any(pv => pv.ProductVariantId == variantId));
+
+            if (targetProductColor == null)
+                return null;
+
+            // Tìm variant được yêu cầu
+            var targetVariant = targetProductColor.ProductVariants
+                .FirstOrDefault(pv => pv.ProductVariantId == variantId);
+
+            if (targetVariant == null)
+                return null;
+
+            return new ResponseProductDto
+            {
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                ProductSlug = product.ProductSlug,
+                Price = product.Price,
+                Description = product.Description,
+                MainImageUrl = product.MainImageUrl,
+                CreatedAt = product.CreatedAt,
+                ProductColors = new List<ResponseProductColorDto>
+        {
+            new ResponseProductColorDto
+            {
+                ProductColorId = targetProductColor.ProductColorId,
+                ColorId = targetProductColor.ColorId,
+                LensId = targetProductColor.LensId,
+                Color = targetProductColor.Color != null ? new ResponseColorDto
+                {
+                    ColorId = targetProductColor.Color.ColorId,
+                    ColorName = targetProductColor.Color.ColorName,
+                    ColorPrefix = targetProductColor.Color.ColorPrefix,
+                    HexCode = targetProductColor.Color.HexCode
+                } : null,
+                ProductVariants = new List<ResponseProductVariantDto>
+                {
+                    new ResponseProductVariantDto
+                    {
+                        ProductVariantId = targetVariant.ProductVariantId,
+                        SizeId = targetVariant.SizeId,
+                        VariantName = targetVariant.VariantName,
+                        Quantity = targetVariant.Quantity,
+                        ImageUrl = targetVariant.ImageUrl,
+                        Status = targetVariant.Status,
+                        ProductWeight = targetVariant.ProductWeight,
+                        ProductLength = targetVariant.ProductLength,
+                        ProductWidth = targetVariant.ProductWidth,
+                        ProductHeight = targetVariant.ProductHeight,
+                        Size = targetVariant.Size != null ? new ResponseSizeDto
+                        {
+                            SizeId = targetVariant.Size.SizeId,
+                            SizeCode = targetVariant.Size.SizeCode
+                        } : null,
+                        ProductImages = targetProductColor.ProductImages.Select(pi => new ResponseProductImageDto
+                        {
+                            ProductImageId = pi.ProductImageId,
+                            ImageUrl = pi.ImageUrl
+                        }).ToList()
+                    }
+                }
+            }
+        }
+            };
         }
 
         /*public async Task<MessageModelWithData<Product>> CreateProductAsync(CreateProductRequest request)
