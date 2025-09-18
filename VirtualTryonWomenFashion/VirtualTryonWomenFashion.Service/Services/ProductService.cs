@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.IRepositories;
@@ -9,6 +11,9 @@ using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.Product;
+using VirtualTryonWomenFashion.Service.DTO.ProductColor;
+using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
+using VirtualTryonWomenFashion.Service.Extensions;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -115,6 +120,169 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
+        }
+
+        /*public async Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParams pagination)
+        {
+            // Get products with pagination and includes
+            var products = await _productRepository.GetAll(
+                pagination: pagination,
+                filter: p => p.IsDeleted != true,
+                orderBy: q => q.OrderByDescending(p => p.CreatedAt),
+                includes: new Expression<Func<Product, object>>[]
+                {
+                p => p.Category,
+                p => p.ProductColors
+                }
+            );
+
+            // Get total count for pagination info
+            var totalRecords = await _productRepository.Count(p => p.IsDeleted != true);
+            var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.PageSize);
+
+            // Load additional related data manually since ThenInclude doesn't work with Expression<Func<T, object>>[]
+            foreach (var product in products)
+            {
+                await _context.Entry(product)
+                    .Collection(p => p.ProductColors)
+                    .Query()
+                    .Include(pc => pc.Color)
+                    .Include(pc => pc.ProductImages)
+                    .Include(pc => pc.ProductVariants)
+                        .ThenInclude(pv => pv.Size)
+                    .LoadAsync();
+            }
+
+            // Map to DTOs
+            var productDtos = products.Select(product => MapToResponseProductDto(product)).ToList();
+
+            return new ResponsePaginationModel<List<ResponseProductDto>>(
+                statusCode: 200,
+                data: productDtos,
+                totalRecords: totalRecords,
+                totalPages: totalPages
+            );
+        }*/
+
+        private ResponseProductDto MapToResponseProductDto(Product product)
+        {
+            return new ResponseProductDto
+            {
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                ProductSlug = product.ProductSlug,
+                Price = product.Price,
+                Description = product.Description,
+                MainImageUrl = product.MainImageUrl,
+                CreatedAt = product.CreatedAt,
+                ProductColors = product.ProductColors.Select(pc => new ResponseProductColorDto
+                {
+                    ProductColorId = pc.ProductColorId,
+                    ColorId = pc.ColorId,
+                    LensId = pc.LensId,
+                    Color = pc.Color != null ? new ResponseColorDto
+                    {
+                        ColorId = pc.Color.ColorId,
+                        ColorName = pc.Color.ColorName,
+                        ColorPrefix = pc.Color.ColorPrefix,
+                        HexCode = pc.Color.HexCode
+                    } : null,
+                    ProductVariants = pc.ProductVariants.Select(pv => new ResponseProductVariantDto
+                    {
+                        ProductVariantId = pv.ProductVariantId,
+                        SizeId = pv.SizeId,
+                        VariantName = pv.VariantName,
+                        Quantity = pv.Quantity,
+                        ImageUrl = pv.ImageUrl,
+                        Status = pv.Status,
+                        ProductWeight = pv.ProductWeight,
+                        ProductLength = pv.ProductLength,
+                        ProductWidth = pv.ProductWidth,
+                        ProductHeight = pv.ProductHeight,
+                        Size = pv.Size != null ? new ResponseSizeDto
+                        {
+                            SizeId = pv.Size.SizeId,
+                            SizeCode = pv.Size.SizeCode
+                        } : null,
+                        ProductImages = pc.ProductImages.Select(pi => new ResponseProductImageDto
+                        {
+                            ProductImageId = pi.ProductImageId,
+                            ImageUrl = pi.ImageUrl
+                        }).ToList()
+                    }).ToList()
+                }).ToList()
+            };
+        }
+
+        public async Task<ResponseProductDto> GetProductBySlugAsync(string slug)
+        {
+            /*var product = await _productRepository.GetProductBySlugAsync(slug);
+
+            if (product == null)
+                return null;
+
+            return new ResponseProductDto
+            {
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                ProductSlug = product.ProductSlug,
+                Price = product.Price,
+                Description = product.Description,
+                MainImageUrl = product.MainImageUrl,
+                CreatedAt = product.CreatedAt,
+                CategoryId = product.Category.CategoryId,
+                ProductColors = product.ProductColors.Select(pc => new ResponseProductColorDto
+                {
+                    ProductColorId = pc.ProductColorId,
+                    ColorId = pc.ColorId,
+                    LensId = pc.LensId,
+                    Color = pc.Color != null ? new ResponseColorDto
+                    {
+                        ColorId = pc.Color.ColorId,
+                        ColorName = pc.Color.ColorName,
+                        ColorPrefix = pc.Color.ColorPrefix,
+                        HexCode = pc.Color.HexCode
+                    } : null,
+                    ProductVariants = pc.ProductVariants.Select(pv => new ResponseProductVariantDto
+                    {
+                        ProductVariantId = pv.ProductVariantId,
+                        SizeId = pv.SizeId,
+                        VariantName = pv.VariantName,
+                        Quantity = pv.Quantity,
+                        ImageUrl = pv.ImageUrl, // Main image của variant
+                        Status = pv.Status,
+                        ProductWeight = pv.ProductWeight,
+                        ProductLength = pv.ProductLength,
+                        ProductWidth = pv.ProductWidth,
+                        ProductHeight = pv.ProductHeight,
+                        Size = pv.Size != null ? new ResponseSizeDto
+                        {
+                            SizeId = pv.Size.SizeId,
+                            SizeCode = pv.Size.SizeCode
+                        } : null,
+                        // Tất cả images của ProductColor này, có thể filter theo variant nếu cần
+                        ProductImages = pc.ProductImages.Select(pi => new ResponseProductImageDto
+                        {
+                            ProductImageId = pi.ProductImageId,
+                            ImageUrl = pi.ImageUrl
+                        }).ToList()
+                    }).ToList()
+                }).ToList()
+            };*/
+            var product = await _productRepository.GetProductBySlugAsync(slug);
+            if (product == null)
+                return null;
+
+            return MapToResponseProductDto(product);
+        }
+
+        public async Task<ResponseProductDto> GetProductByVariantIdAsync(string variantId)
+        {
+            var product = await _productRepository.GetProductByVariantIdAsync(variantId);
+            if (product == null)
+                return null;
+
+            return MapToResponseProductDto(product);
         }
 
         /*public async Task<MessageModelWithData<Product>> CreateProductAsync(CreateProductRequest request)
@@ -228,10 +396,15 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                     // 2.2. Tạo ProductColor
                     string productColorId = $"{product.ProductId}{colorId}";
+
+                    string noBgImageUrl = await _cloudinaryService.UploadImageAsync(productColorRequest.NoBgImgUrl);
+
                     var productColor = new ProductColor
                     {
                         ProductColorId = productColorId,
                         ProductId = product.ProductId,
+                        NoBgImgUrl = noBgImageUrl,
+                        LensId = productColorRequest.LensId,
                         ColorId = colorId
                     };
 
@@ -351,6 +524,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (request.ProductColor == null || !request.ProductColor.Any())
                 return (false, "Sản phẩm phải có ít nhất một màu");
 
+            // validate Price 
+            if (request.Price <= 0) return (false, "Giá sản phẩm phải lớn hơn 0");
+
             foreach (var colorRequest in request.ProductColor)
             {
                 // Nếu không dùng ColorId có sẵn thì phải có đủ thông tin để tạo Color mới
@@ -401,5 +577,6 @@ namespace VirtualTryonWomenFashion.Service.Services
             return await CreateProductAsync(request);
         }
 
+        
     }
 }

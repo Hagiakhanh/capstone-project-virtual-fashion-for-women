@@ -6,8 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
+using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -69,10 +72,14 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 string productColorId = $"{productId}{colorId}";
 
+                string noBgImageUrl = await _cloudinaryService.UploadImageAsync(request.NoBgImgUrl);
+
                 var productColor = new ProductColor
                 {
                     ProductColorId = productColorId,
                     ProductId = productId,
+                    NoBgImgUrl = noBgImageUrl,
+                    LensId = request.LensId,
                     ColorId = colorId
                 };
 
@@ -131,7 +138,40 @@ namespace VirtualTryonWomenFashion.Service.Services
                     StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
-            
+        }
+
+        public async Task<ProductColor> GetProductColorByIdAsync(string productColorId)
+        {
+            var productColor = await _productColorRepository.GetProductColorByIdAsync(productColorId);
+
+            if (productColor == null)
+                return null;
+
+            return new ProductColor
+            {
+                ProductId = productColor.ProductId,
+                ProductColorId = productColor.ProductColorId,
+                LensId = productColor.LensId,
+                NoBgImgUrl = productColor.NoBgImgUrl,
+                ColorId = productColor.ColorId,
+                Product = productColor.Product != null ? new Product
+                {
+                    ProductId = productColor.Product.ProductId,
+                    ProductName = productColor.Product.ProductName,
+                    ProductSlug = productColor.Product.ProductSlug,
+                    Price = productColor.Product.Price,
+                    Description = productColor.Product.Description,
+                    MainImageUrl = productColor.Product.MainImageUrl,
+                    CreatedAt = productColor.Product.CreatedAt,
+                } : null,
+                Color = productColor.Color != null ? new Color
+                {
+                    ColorId = productColor.Color.ColorId,
+                    ColorName = productColor.Color.ColorName,
+                    ColorPrefix = productColor.Color.ColorPrefix,
+                    HexCode = productColor.Color.HexCode,
+                } : null
+            };
         }
 
     }
