@@ -17,6 +17,10 @@ public partial class OrderDetail
 
     public decimal PriceAtTime { get; set; }
 
+    public int? CampaignId { get; set; }
+
+    public virtual SaleCampaign Campaign { get; set; }
+
     public virtual Order Order { get; set; }
 
     public virtual ProductVariant ProductVariant { get; set; }

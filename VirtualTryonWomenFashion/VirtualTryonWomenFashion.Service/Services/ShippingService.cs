@@ -1,0 +1,239 @@
+﻿using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Utils;
+
+namespace VirtualTryonWomenFashion.Service.Services;
+
+public class ShippingService : IShippingService
+{
+    private readonly HttpClient _client;
+    private readonly string _token;
+    private readonly string _shopId;
+
+    public ShippingService(HttpClient httpClient, IConfiguration configuration)
+    {
+        _client = httpClient;
+        _token = configuration["GHNSetttings:Token"];
+        _shopId = configuration["GHNSetttings:ShopId"];
+    }
+    public async Task<int> GetProvinceId(string provinceName)
+    {
+        try
+        {
+            if (!_client.DefaultRequestHeaders.Contains("Token"))
+            {
+                _client.DefaultRequestHeaders.Add("Token", _token);
+            }
+
+            var response = await _client.GetAsync(
+                "https://dev-online-gateway.ghn.vn/shiip/public-api/master-data/province"
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Failed to retrieve provinces from GHN API.");
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(responseContent);
+
+            var provinces = doc.RootElement.GetProperty("data");
+
+            foreach (var province in provinces.EnumerateArray())
+            {
+                int provinceId = province.GetProperty("ProvinceID").GetInt32();
+                string provinceNameJson = province.GetProperty("ProvinceName").GetString();
+
+                if (string.Equals(provinceNameJson, provinceName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return provinceId;
+                }
+
+                if (province.TryGetProperty("NameExtension", out var nameExtensions))
+                {
+                    foreach (var ext in nameExtensions.EnumerateArray())
+                    {
+                        if (string.Equals(ext.GetString(), provinceName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return provinceId;
+                        }
+                    }
+                }
+            }
+
+            // Nếu không tìm thấy
+            throw new Exception($"Province '{provinceName}' not found.");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            throw;
+        }
+    }
+
+    public async Task<int> GetDistrictId(string districtName, int provinceId)
+    {
+        try
+        {
+            if (!_client.DefaultRequestHeaders.Contains("Token"))
+            {
+                _client.DefaultRequestHeaders.Add("Token", _token);
+            }
+
+            var requestBody = new
+            {
+                province_id = provinceId
+            };
+            var jsonRequestBody = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _client.PostAsync(
+                "https://dev-online-gateway.ghn.vn/shiip/public-api/master-data/district",
+                content
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Failed to retrieve districts from GHN API.");
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(responseContent);
+
+            var districts = doc.RootElement.GetProperty("data");
+
+            foreach (var district in districts.EnumerateArray())
+            {
+                int districtId = district.GetProperty("DistrictID").GetInt32();
+                string districtNameJson = district.GetProperty("DistrictName").GetString();
+
+                if (string.Equals(districtNameJson, districtName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return districtId;
+                }
+
+                if (district.TryGetProperty("NameExtension", out var nameExtensions))
+                {
+                    foreach (var ext in nameExtensions.EnumerateArray())
+                    {
+                        if (string.Equals(ext.GetString(), districtName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return districtId;
+                        }
+                    }
+                }
+            }
+
+            // Nếu không tìm thấy
+            throw new Exception($"Province '{districtName}' not found.");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            throw;
+        }
+    }
+
+    public async Task<string> GetWardId(string wardName, int districtId)
+    {
+        try
+        {
+            if (!_client.DefaultRequestHeaders.Contains("Token"))
+            {
+                _client.DefaultRequestHeaders.Add("Token", _token);
+            }
+
+            var requestBody = new
+            {
+                district_id = districtId
+            };
+            var jsonRequestBody = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _client.PostAsync(
+                "https://dev-online-gateway.ghn.vn/shiip/public-api/master-data/ward",
+                content
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Failed to retrieve wards from GHN API.");
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(responseContent);
+
+            var wards = doc.RootElement.GetProperty("data");
+
+            foreach (var ward in wards.EnumerateArray())
+            {
+                string wardCode = ward.GetProperty("WardCode").ToString();
+                string wardNameJson = ward.GetProperty("WardName").GetString();
+
+                if (string.Equals(wardNameJson, wardName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return wardCode;
+                }
+
+                if (ward.TryGetProperty("NameExtension", out var nameExtensions))
+                {
+                    foreach (var ext in nameExtensions.EnumerateArray())
+                    {
+                        if (string.Equals(ext.GetString(), wardName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return wardCode;
+                        }
+                    }
+                }
+            }
+
+            // Nếu không tìm thấy
+            throw new Exception($"Province '{wardName}' not found.");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            throw;
+        }
+    }
+
+    public async Task<(decimal,decimal)> CalculateShippingFee(ShippingObjectRequest shippingObjectRequest)
+    {
+        try
+        {
+            if (!_client.DefaultRequestHeaders.Contains("Token"))
+            {
+                _client.DefaultRequestHeaders.Add("Token", _token);
+            }
+            if (!_client.DefaultRequestHeaders.Contains("ShopId"))
+            {
+                _client.DefaultRequestHeaders.Add("ShopId", _shopId);
+            }
+            var jsonRequestBody = JsonSerializer.Serialize(shippingObjectRequest);
+            var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
+            var response = await _client.PostAsync(
+                "https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/fee",
+                content
+            );
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("Failed to retrieve free services from GHN API.");
+            }
+            
+            var responseContent = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(responseContent);
+
+            var data = doc.RootElement.GetProperty("data");
+            decimal serviceFee = data.GetProperty("service_fee").GetDecimal();
+            decimal insuranceFee = data.GetProperty("insurance_fee").GetDecimal();
+
+            return (serviceFee, insuranceFee);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            throw;
+        }
+    }
+}

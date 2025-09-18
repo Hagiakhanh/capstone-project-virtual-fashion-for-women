@@ -21,5 +21,7 @@ public partial class SaleCampaign
 
     public string Status { get; set; }
 
+    public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+
     public virtual ICollection<ProductInSaleCampaign> ProductInSaleCampaigns { get; set; } = new List<ProductInSaleCampaign>();
 }

@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace VirtualTryonWomenFashion.Data.Enum
 {
-    internal class Class1
+    public enum SaleCampaignStatusEnum
     {
+        Pending,
+        InActive,
+        Active,
     }
 }
