@@ -13,5 +13,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
     {
         Task<MessageModelWithData<Product>> CreateProductAsyncWithValidation(CreateProductRequest request);
         Task<ResponseProductDto> GetProductBySlugAsync(string slug);
+        Task<ResponseProductDto> GetProductByVariantIdAsync(string variantId);
     }
 }

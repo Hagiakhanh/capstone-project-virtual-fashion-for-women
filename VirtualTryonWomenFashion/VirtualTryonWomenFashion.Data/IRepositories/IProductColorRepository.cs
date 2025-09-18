@@ -10,5 +10,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface IProductColorRepository : IGenericRepository<ProductColor>
     {
+        Task<ProductColor> GetProductColorByIdAsync(string productColorId);
     }
 }

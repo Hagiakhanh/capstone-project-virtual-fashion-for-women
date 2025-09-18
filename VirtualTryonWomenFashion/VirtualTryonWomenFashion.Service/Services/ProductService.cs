@@ -164,9 +164,59 @@ namespace VirtualTryonWomenFashion.Service.Services
             );
         }*/
 
+        private ResponseProductDto MapToResponseProductDto(Product product)
+        {
+            return new ResponseProductDto
+            {
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                ProductSlug = product.ProductSlug,
+                Price = product.Price,
+                Description = product.Description,
+                MainImageUrl = product.MainImageUrl,
+                CreatedAt = product.CreatedAt,
+                ProductColors = product.ProductColors.Select(pc => new ResponseProductColorDto
+                {
+                    ProductColorId = pc.ProductColorId,
+                    ColorId = pc.ColorId,
+                    LensId = pc.LensId,
+                    Color = pc.Color != null ? new ResponseColorDto
+                    {
+                        ColorId = pc.Color.ColorId,
+                        ColorName = pc.Color.ColorName,
+                        ColorPrefix = pc.Color.ColorPrefix,
+                        HexCode = pc.Color.HexCode
+                    } : null,
+                    ProductVariants = pc.ProductVariants.Select(pv => new ResponseProductVariantDto
+                    {
+                        ProductVariantId = pv.ProductVariantId,
+                        SizeId = pv.SizeId,
+                        VariantName = pv.VariantName,
+                        Quantity = pv.Quantity,
+                        ImageUrl = pv.ImageUrl,
+                        Status = pv.Status,
+                        ProductWeight = pv.ProductWeight,
+                        ProductLength = pv.ProductLength,
+                        ProductWidth = pv.ProductWidth,
+                        ProductHeight = pv.ProductHeight,
+                        Size = pv.Size != null ? new ResponseSizeDto
+                        {
+                            SizeId = pv.Size.SizeId,
+                            SizeCode = pv.Size.SizeCode
+                        } : null,
+                        ProductImages = pc.ProductImages.Select(pi => new ResponseProductImageDto
+                        {
+                            ProductImageId = pi.ProductImageId,
+                            ImageUrl = pi.ImageUrl
+                        }).ToList()
+                    }).ToList()
+                }).ToList()
+            };
+        }
+
         public async Task<ResponseProductDto> GetProductBySlugAsync(string slug)
         {
-            var product = await _productRepository.GetProductBySlugAsync(slug);
+            /*var product = await _productRepository.GetProductBySlugAsync(slug);
 
             if (product == null)
                 return null;
@@ -176,6 +226,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 ProductId = product.ProductId,
                 ProductName = product.ProductName,
                 ProductSlug = product.ProductSlug,
+                Price = product.Price,
                 Description = product.Description,
                 MainImageUrl = product.MainImageUrl,
                 CreatedAt = product.CreatedAt,
@@ -200,7 +251,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                         Quantity = pv.Quantity,
                         ImageUrl = pv.ImageUrl, // Main image của variant
                         Status = pv.Status,
-                        Price = pv.Price,
                         ProductWeight = pv.ProductWeight,
                         ProductLength = pv.ProductLength,
                         ProductWidth = pv.ProductWidth,
@@ -218,7 +268,21 @@ namespace VirtualTryonWomenFashion.Service.Services
                         }).ToList()
                     }).ToList()
                 }).ToList()
-            };
+            };*/
+            var product = await _productRepository.GetProductBySlugAsync(slug);
+            if (product == null)
+                return null;
+
+            return MapToResponseProductDto(product);
+        }
+
+        public async Task<ResponseProductDto> GetProductByVariantIdAsync(string variantId)
+        {
+            var product = await _productRepository.GetProductByVariantIdAsync(variantId);
+            if (product == null)
+                return null;
+
+            return MapToResponseProductDto(product);
         }
 
         /*public async Task<MessageModelWithData<Product>> CreateProductAsync(CreateProductRequest request)
@@ -332,10 +396,15 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                     // 2.2. Tạo ProductColor
                     string productColorId = $"{product.ProductId}{colorId}";
+
+                    string noBgImageUrl = await _cloudinaryService.UploadImageAsync(productColorRequest.NoBgImgUrl);
+
                     var productColor = new ProductColor
                     {
                         ProductColorId = productColorId,
                         ProductId = product.ProductId,
+                        NoBgImgUrl = noBgImageUrl,
+                        LensId = productColorRequest.LensId,
                         ColorId = colorId
                     };
 
@@ -455,6 +524,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (request.ProductColor == null || !request.ProductColor.Any())
                 return (false, "Sản phẩm phải có ít nhất một màu");
 
+            // validate Price 
+            if (request.Price <= 0) return (false, "Giá sản phẩm phải lớn hơn 0");
+
             foreach (var colorRequest in request.ProductColor)
             {
                 // Nếu không dùng ColorId có sẵn thì phải có đủ thông tin để tạo Color mới
@@ -505,5 +577,6 @@ namespace VirtualTryonWomenFashion.Service.Services
             return await CreateProductAsync(request);
         }
 
+        
     }
 }

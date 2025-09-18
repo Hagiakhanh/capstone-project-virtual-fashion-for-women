@@ -43,7 +43,6 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                         Quantity = pv.Quantity,
                         ImageUrl = pv.ImageUrl,
                         Status = pv.Status,
-                        Price = pv.Price,
                         ProductWeight = pv.ProductWeight,
                         ProductLength = pv.ProductLength,
                         ProductWidth = pv.ProductWidth,

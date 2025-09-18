@@ -14,7 +14,6 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductVariant
         public int? Quantity { get; set; }
         public string ImageUrl { get; set; }
         public string Status { get; set; }
-        public decimal? Price { get; set; }
         public decimal? ProductWeight { get; set; }
         public decimal? ProductLength { get; set; }
         public decimal? ProductWidth { get; set; }

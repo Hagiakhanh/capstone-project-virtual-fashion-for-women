@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,15 @@ namespace VirtualTryonWomenFashion.Data.Repositories
     {
         public ProductColorRepository(VirtualTryonWomenFashionContext context) : base(context)
         {
+        }
+
+        public async Task<ProductColor> GetProductColorByIdAsync(string productColorId)
+        {
+            return await _context.ProductColors
+                .Include(x => x.Product)
+                .Include(x => x.Color)
+                .Where(p => p.ProductColorId == productColorId)
+                .FirstOrDefaultAsync();
         }
     }
 }
