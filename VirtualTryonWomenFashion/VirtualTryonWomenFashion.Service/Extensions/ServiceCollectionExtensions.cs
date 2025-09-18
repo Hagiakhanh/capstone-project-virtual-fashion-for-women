@@ -78,6 +78,7 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IMailService, MailService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<ICloudinaryService, CloudinaryService>();
+            services.AddScoped<IShippingService, ShippingService>();
 
             return services;
         }
