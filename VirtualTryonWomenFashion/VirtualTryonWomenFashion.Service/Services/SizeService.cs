@@ -25,7 +25,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             try
             {
-                bool isExisted = _sizeRepository.Count(x => x.SizeCode.Equals(sizeName, StringComparison.InvariantCultureIgnoreCase)) > 0 ? true : false;
+                bool isExisted = _sizeRepository.Count(x => x.SizeCode.ToLower() == sizeName.ToLower()) > 0 ? true : false;
                 if (!isExisted)
                 {
                     Size model = new Size()

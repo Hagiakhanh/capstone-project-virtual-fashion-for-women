@@ -23,7 +23,7 @@ public partial class Order
 
     public decimal? Amount { get; set; }
 
-    public decimal? DiscountMoney { get; set; }
+    public string Note { get; set; }
 
     public decimal? PackageWeight { get; set; }
 

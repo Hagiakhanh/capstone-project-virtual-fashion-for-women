@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using VirtualTryonWomenFashion.Data.DBContext;
 using VirtualTryonWomenFashion.Service.Extensions;
+using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
 using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Services;
 using VirtualTryonWomenFashion.Service.Utils;
@@ -18,6 +19,8 @@ builder.Services.AddDbContext<VirtualTryonWomenFashionContext>(options =>
 });
 builder.Services.RegistDependencyInjection();
 builder.Services.RegistAutoMapperService();
+
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 builder.Services.Configure<RouteOptions>(options =>
 {
@@ -53,7 +56,6 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddHttpClient<IShippingService, ShippingService>();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "VirtualTryonWomenFashionApi", Version = "v1" });

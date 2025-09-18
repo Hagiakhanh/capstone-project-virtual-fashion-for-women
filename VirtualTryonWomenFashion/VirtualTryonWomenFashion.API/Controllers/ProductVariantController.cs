@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
+using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Services;
 
 namespace VirtualTryonWomenFashion.API.Controllers
 {
@@ -30,7 +33,6 @@ namespace VirtualTryonWomenFashion.API.Controllers
                     Quantity = 50,
                     ImageUrl = "https://example.com/images/ao-so-mi-trang-m.jpg",
                     Status = "Available",
-                    Price = 350000,
                     ProductWeight = 0.3m,
                     ProductLength = 30,
                     ProductWidth = 25,
@@ -57,7 +59,6 @@ namespace VirtualTryonWomenFashion.API.Controllers
                     Quantity = 20,
                     ImageUrl = "https://example.com/images/vay-hoa-l.jpg",
                     Status = "Available",
-                    Price = 550000,
                     ProductWeight = 0.5m,
                     ProductLength = 60,
                     ProductWidth = 40,
@@ -78,6 +79,20 @@ namespace VirtualTryonWomenFashion.API.Controllers
             };
 
             return Ok(mockVariants);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateAsync(string id, CreateProductVariantRequest request)
+        {
+            try
+            {
+                MessageModelWithData<ProductVariant> result = await _productVariantService.CreateAsync(id, request);
+
+                return StatusCode(result.StatusCode, result);
+            } catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

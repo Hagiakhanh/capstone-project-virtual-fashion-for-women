@@ -13,6 +13,8 @@ public partial class Product
 
     public string ProductSlug { get; set; }
 
+    public decimal? Price { get; set; }
+
     public string Description { get; set; }
 
     public bool? IsDeleted { get; set; }
@@ -30,4 +32,6 @@ public partial class Product
     public virtual ICollection<ProductInSaleCampaign> ProductInSaleCampaigns { get; set; } = new List<ProductInSaleCampaign>();
 
     public virtual ICollection<UserInteraction> UserInteractions { get; set; } = new List<UserInteraction>();
+
+    public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
 }
