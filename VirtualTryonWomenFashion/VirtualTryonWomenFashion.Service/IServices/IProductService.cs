@@ -12,5 +12,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
     public interface IProductService
     {
         Task<MessageModelWithData<Product>> CreateProductAsyncWithValidation(CreateProductRequest request);
+        Task<ResponseProductDto> GetProductBySlugAsync(string slug);
     }
 }

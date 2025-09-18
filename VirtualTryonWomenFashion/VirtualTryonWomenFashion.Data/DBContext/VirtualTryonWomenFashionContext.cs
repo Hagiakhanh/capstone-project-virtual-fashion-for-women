@@ -690,10 +690,5 @@ public partial class VirtualTryonWomenFashionContext : DbContext
         OnModelCreatingPartial(modelBuilder);
     }
 
-    internal async Task<Color> FirstOrDefaultAsync(Func<object, bool> value)
-    {
-        throw new NotImplementedException();
-    }
-
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
