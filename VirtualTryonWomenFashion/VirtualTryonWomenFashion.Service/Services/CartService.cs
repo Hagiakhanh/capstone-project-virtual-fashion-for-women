@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.IRepositories;
@@ -161,8 +162,11 @@ namespace VirtualTryonWomenFashion.Service.Services
             List<Cart> cartItems =  await _cartRepository.GetAll(
                 filter: c=>c.UserId == userId && !(bool)c.IsDelete,
                 orderBy: q=>q.OrderBy(c=>c.CreateDate),
-                includes: c=> c.ProductVariant
-            );
+                includes: new Expression<Func<Cart,object>>[] 
+                { 
+                    c=>c.ProductVariant,
+                });
+                
 
             //Kiểm tra xem sản phẩm có trong giỏ hàng không
             bool existingItemsNotInCart = productVariantIds.Except(cartItems.Select(c => c.ProductVariantId)).Any();
@@ -181,7 +185,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception("No items selected for checkout.");
             }
 
-            int totalProductPrice =(int) Math.Ceiling(selectedCartItems.Sum(c => c.Quantity * c.ProductVariant.Price)??0);
+            int totalProductPrice =(int) Math.Ceiling(selectedCartItems.Sum(c => c.Quantity * c.ProductVariant.ProductColor.Product.Price)??0);
             int provinceId = await _shippingService.GetProvinceId(requestCheckout.ProvinceName);
             int districtId = await _shippingService.GetDistrictId(requestCheckout.DistrictName, provinceId);
             string wardCode = await _shippingService.GetWardId(requestCheckout.WardName, districtId);

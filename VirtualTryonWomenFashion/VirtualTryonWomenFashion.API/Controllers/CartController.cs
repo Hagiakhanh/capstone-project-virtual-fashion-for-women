@@ -39,7 +39,7 @@ public class CartController : ControllerBase
             });
         }
     }
-    
+    // Đang bị lỗi chưa fix được
     [HttpGet("selected-items")]
     public async Task<IActionResult> GetSelectedCartItemsAsync([FromQuery] List<string> productVariantIds)
     {
@@ -186,7 +186,8 @@ public class CartController : ControllerBase
         }
     }
     
-    [HttpPost("checkout")]
+    // Đang bị lỗi chưa fix được
+    /*[HttpPost("checkout")]
     public async Task<IActionResult> CheckoutAsync([FromBody] RequestCheckout requestCheckout)
     {
         try
@@ -209,5 +210,6 @@ public class CartController : ControllerBase
             });
         }
     }
+    */
     
 }
