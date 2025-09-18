@@ -5,6 +5,8 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using VirtualTryonWomenFashion.Data.DBContext;
 using VirtualTryonWomenFashion.Service.Extensions;
+using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Services;
 using VirtualTryonWomenFashion.Service.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,7 +25,11 @@ builder.Services.Configure<RouteOptions>(options =>
 });
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 builder.Services.AddHttpContextAccessor();
-
+builder.Services.AddControllers()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -47,6 +53,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpClient<IShippingService, ShippingService>();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "VirtualTryonWomenFashionApi", Version = "v1" });

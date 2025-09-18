@@ -8,6 +8,7 @@ using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.Cart;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Utils;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -17,17 +18,20 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
         private readonly IProductVariantService _productVariantService;
+        private readonly IShippingService _shippingService;
 
         public CartService(
             ICartRepository cartRepository, 
             IUnitOfWork unitOfWork, 
             ICurrentUserService currentUserService,
-            IProductVariantService productVariantService)
+            IProductVariantService productVariantService,
+            IShippingService shippingService)
         {
             _cartRepository = cartRepository;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
             _productVariantService = productVariantService;
+            _shippingService = shippingService;
         }
         public async Task<bool> AddProductToCartAsync(RequestAddProductToCart requestAddProductToCart)
         {
@@ -156,7 +160,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             
             List<Cart> cartItems =  await _cartRepository.GetAll(
                 filter: c=>c.UserId == userId && !(bool)c.IsDelete,
-                orderBy: q=>q.OrderBy(c=>c.CreateDate)
+                orderBy: q=>q.OrderBy(c=>c.CreateDate),
+                includes: c=> c.ProductVariant
             );
 
             //Kiểm tra xem sản phẩm có trong giỏ hàng không
@@ -166,6 +171,44 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception("Some products are not in the cart.");
             }
             return cartItems.Where(c => productVariantIds.Contains(c.ProductVariantId)).ToList();
+        }
+
+        public async Task<ResponseCheckout> CheckoutAsync(RequestCheckout requestCheckout)
+        {
+            List<Cart> selectedCartItems = await  this.GetSelectedCartItemsAsync(requestCheckout.productVariantIds);
+            if(selectedCartItems.Count == 0)
+            {
+                throw new Exception("No items selected for checkout.");
+            }
+
+            int totalProductPrice =(int) Math.Ceiling(selectedCartItems.Sum(c => c.Quantity * c.ProductVariant.Price)??0);
+            int provinceId = await _shippingService.GetProvinceId(requestCheckout.ProvinceName);
+            int districtId = await _shippingService.GetDistrictId(requestCheckout.DistrictName, provinceId);
+            string wardCode = await _shippingService.GetWardId(requestCheckout.WardName, districtId);
+            int totalWeight = (int) Math.Ceiling( selectedCartItems.Sum(c => c.Quantity * c.ProductVariant.ProductWeight) ?? 0);
+            int totalHeight = (int) Math.Ceiling( selectedCartItems.Sum(c => c.Quantity * c.ProductVariant.ProductHeight) ?? 0);
+            int totalLength =(int) Math.Ceiling(selectedCartItems.Max(c => c.ProductVariant.ProductLength) ?? 0);
+            int totalWidth =(int) Math.Ceiling(selectedCartItems.Max(c => c.ProductVariant.ProductWidth) ?? 0);
+            ShippingObjectRequest shippingObjectRequest = new ShippingObjectRequest()
+            {
+                ToWardCode = wardCode,
+                ToDistrictId = districtId,
+                Weight = totalWeight,
+                Length = totalLength,
+                Width = totalWidth,
+                Height = totalHeight,
+                InsuranceValue = totalProductPrice
+            };
+            (decimal serviceFree, decimal insuranceFree) =
+                await _shippingService.CalculateShippingFee(shippingObjectRequest);
+            ResponseCheckout responseCheckout = new ResponseCheckout()
+            {
+                TotalPrice = totalProductPrice,
+                ServiceFree = serviceFree,
+                InsuranceFee = insuranceFree,
+                TotalProductPrice = totalProductPrice + serviceFree + insuranceFree
+            };
+            return responseCheckout;
         }
     }
 }

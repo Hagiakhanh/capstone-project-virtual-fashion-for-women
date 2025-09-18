@@ -15,6 +15,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<bool> UpdateProductQuantityAsync(RequestAddProductToCart requestAddProductToCart);
         Task<List<Cart>> GetCartItemsAsync(); 
         Task<List<Cart>> GetSelectedCartItemsAsync(List<string> productVariantIds);
+        Task<ResponseCheckout> CheckoutAsync(RequestCheckout requestCheckout);
         
     }
 }
