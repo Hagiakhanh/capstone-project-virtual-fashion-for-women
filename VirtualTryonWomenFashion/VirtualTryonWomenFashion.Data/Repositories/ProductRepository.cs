@@ -24,5 +24,36 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Select(c => c.ProductSlug)
                 .ToListAsync();
         }
+
+        public async Task<Product> GetProductBySlugAsync(string slug)
+        {
+            return await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.Color)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductImages)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductVariants)
+                        .ThenInclude(pv => pv.Size)
+                .Where(p => p.ProductSlug == slug && p.IsDeleted != true)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<Product> GetProductByVariantIdAsync(string variantId)
+        {
+            return await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.Color)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductImages)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductVariants)
+                        .ThenInclude(pv => pv.Size)
+                .Where(p => p.ProductColors.Any(pc => pc.ProductVariants.Any(pv => pv.ProductVariantId == variantId))
+                         && p.IsDeleted != true)
+                .FirstOrDefaultAsync();
+        }
     }
 }

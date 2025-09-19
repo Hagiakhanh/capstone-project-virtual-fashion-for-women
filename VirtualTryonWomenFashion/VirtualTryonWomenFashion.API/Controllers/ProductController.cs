@@ -63,11 +63,39 @@ namespace VirtualTryonWomenFashion.API.Controllers
             return Ok(mockProducts);
         }
 
+        [HttpGet("{slug}")]
+        public async Task<IActionResult> GetProductBySlug(string slug)
+        {
+            if (string.IsNullOrWhiteSpace(slug))
+                return BadRequest("Product slug is required");
+
+            var product = await _productService.GetProductBySlugAsync(slug);
+
+            if (product == null)
+                return NotFound($"Product with slug '{slug}' not found");
+
+            return Ok(product);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromForm]CreateProductRequest request)
         {
             var result = await _productService.CreateProductAsyncWithValidation(request);
             return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("by-variant/{variantId}")]
+        public async Task<IActionResult> GetProductByVariantId(string variantId)
+        {
+            if (string.IsNullOrWhiteSpace(variantId))
+                return BadRequest("Product variant id is required");
+
+            var product = await _productService.GetProductByVariantIdAsync(variantId);
+
+            if (product == null)
+                return NotFound($"Product with variant id '{variantId}' not found");
+
+            return Ok(product);
         }
     }
 }

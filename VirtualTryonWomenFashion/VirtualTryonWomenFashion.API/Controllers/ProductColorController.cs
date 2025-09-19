@@ -33,5 +33,19 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProductColorById(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return BadRequest("ProductColor id is required");
+
+            var productColor = await _productColorService.GetProductColorByIdAsync(id);
+
+            if (productColor == null)
+                return NotFound($"ProductColor with slug '{id}' not found");
+
+            return Ok(productColor);
+        }
     }
 }

@@ -11,5 +11,7 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     public interface IProductRepository : IGenericRepository<Product>
     {
         Task<List<string>> GetSlugsAsync(string baseSlug);
+        Task<Product> GetProductBySlugAsync(string slug);
+        Task<Product> GetProductByVariantIdAsync(string variantId);
     }
 }
