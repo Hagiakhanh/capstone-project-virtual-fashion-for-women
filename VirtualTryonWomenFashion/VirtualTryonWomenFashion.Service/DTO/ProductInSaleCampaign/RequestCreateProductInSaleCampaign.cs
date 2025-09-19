@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Enum;
 
 namespace VirtualTryonWomenFashion.Service.DTO.ProductInSaleCampaign
 {
     public class RequestCreateProductInSaleCampaign
     {
-        public string ProductVariantId { get; set; }
-
-        public decimal? PercentDiscount { get; set; }
-
-        public decimal? SalePrice { get; set; }
+        public string ProductID { get; set; }
+        public SalePriceTypeInputEnum DiscountType { get; set; }
+        public decimal Value { get; set; }
 
     }
 }

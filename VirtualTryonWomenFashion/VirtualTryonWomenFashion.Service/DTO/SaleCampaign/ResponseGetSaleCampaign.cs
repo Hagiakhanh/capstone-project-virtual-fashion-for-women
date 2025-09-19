@@ -21,5 +21,6 @@ namespace VirtualTryonWomenFashion.Service.DTO.SaleCampaign
         public DateTime CreatedAt { get; set; }
 
         public string Status { get; set; }
+        public string ImageUrl { get; set; }
     }
 }

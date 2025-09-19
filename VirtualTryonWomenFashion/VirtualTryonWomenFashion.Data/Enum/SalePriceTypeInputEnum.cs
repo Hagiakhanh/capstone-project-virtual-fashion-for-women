@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VirtualTryonWomenFashion.Service.Mappers
+namespace VirtualTryonWomenFashion.Data.Enum
 {
-    internal class Class1
+   public enum SalePriceTypeInputEnum
     {
+        PercentDiscount,
+        PriceDiscount
     }
 }
