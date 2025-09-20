@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -61,6 +63,13 @@ namespace VirtualTryonWomenFashion.API.Controllers
             };
 
             return Ok(mockProducts);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<ResponseProductDto>>> GetAll([FromQuery] PaginationParameter pagination)
+        {
+            var result = await _productService.GetAllProductsAsync(pagination);
+            return StatusCode(result.StatusCode, result);
         }
 
         [HttpGet("{slug}")]

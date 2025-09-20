@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
@@ -122,7 +123,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
         }
 
-        /*public async Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParams pagination)
+        public async Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParameter pagination)
         {
             // Get products with pagination and includes
             var products = await _productRepository.GetAll(
@@ -137,21 +138,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             );
 
             // Get total count for pagination info
-            var totalRecords = await _productRepository.Count(p => p.IsDeleted != true);
+            var totalRecords = _productRepository.Count(p => p.IsDeleted != true);
             var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.PageSize);
-
-            // Load additional related data manually since ThenInclude doesn't work with Expression<Func<T, object>>[]
-            foreach (var product in products)
-            {
-                await _context.Entry(product)
-                    .Collection(p => p.ProductColors)
-                    .Query()
-                    .Include(pc => pc.Color)
-                    .Include(pc => pc.ProductImages)
-                    .Include(pc => pc.ProductVariants)
-                        .ThenInclude(pv => pv.Size)
-                    .LoadAsync();
-            }
 
             // Map to DTOs
             var productDtos = products.Select(product => MapToResponseProductDto(product)).ToList();
@@ -162,7 +150,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 totalRecords: totalRecords,
                 totalPages: totalPages
             );
-        }*/
+        }
 
         private ResponseProductDto MapToResponseProductDto(Product product)
         {
@@ -216,59 +204,6 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public async Task<ResponseProductDto> GetProductBySlugAsync(string slug)
         {
-            /*var product = await _productRepository.GetProductBySlugAsync(slug);
-
-            if (product == null)
-                return null;
-
-            return new ResponseProductDto
-            {
-                ProductId = product.ProductId,
-                ProductName = product.ProductName,
-                ProductSlug = product.ProductSlug,
-                Price = product.Price,
-                Description = product.Description,
-                MainImageUrl = product.MainImageUrl,
-                CreatedAt = product.CreatedAt,
-                CategoryId = product.Category.CategoryId,
-                ProductColors = product.ProductColors.Select(pc => new ResponseProductColorDto
-                {
-                    ProductColorId = pc.ProductColorId,
-                    ColorId = pc.ColorId,
-                    LensId = pc.LensId,
-                    Color = pc.Color != null ? new ResponseColorDto
-                    {
-                        ColorId = pc.Color.ColorId,
-                        ColorName = pc.Color.ColorName,
-                        ColorPrefix = pc.Color.ColorPrefix,
-                        HexCode = pc.Color.HexCode
-                    } : null,
-                    ProductVariants = pc.ProductVariants.Select(pv => new ResponseProductVariantDto
-                    {
-                        ProductVariantId = pv.ProductVariantId,
-                        SizeId = pv.SizeId,
-                        VariantName = pv.VariantName,
-                        Quantity = pv.Quantity,
-                        ImageUrl = pv.ImageUrl, // Main image của variant
-                        Status = pv.Status,
-                        ProductWeight = pv.ProductWeight,
-                        ProductLength = pv.ProductLength,
-                        ProductWidth = pv.ProductWidth,
-                        ProductHeight = pv.ProductHeight,
-                        Size = pv.Size != null ? new ResponseSizeDto
-                        {
-                            SizeId = pv.Size.SizeId,
-                            SizeCode = pv.Size.SizeCode
-                        } : null,
-                        // Tất cả images của ProductColor này, có thể filter theo variant nếu cần
-                        ProductImages = pc.ProductImages.Select(pi => new ResponseProductImageDto
-                        {
-                            ProductImageId = pi.ProductImageId,
-                            ImageUrl = pi.ImageUrl
-                        }).ToList()
-                    }).ToList()
-                }).ToList()
-            };*/
             var product = await _productRepository.GetProductBySlugAsync(slug);
             if (product == null)
                 return null;
