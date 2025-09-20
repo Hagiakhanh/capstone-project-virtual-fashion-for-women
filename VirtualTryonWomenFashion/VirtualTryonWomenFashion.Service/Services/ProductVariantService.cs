@@ -20,17 +20,20 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ISizeService _sizeService;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IProductInSaleCampaignService _productInSaleCampaign;
 
         public ProductVariantService(
             IProductVariantRepository productVariantRepository, 
             IUnitOfWork unitOfWork,
             ISizeService sizeService,
-            ICloudinaryService cloudinaryService)
+            ICloudinaryService cloudinaryService,
+            IProductInSaleCampaignService productInSaleCampaign)
         {
             _productVariantRepository = productVariantRepository;
             _unitOfWork = unitOfWork;
             _sizeService = sizeService;
             _cloudinaryService = cloudinaryService;
+            _productInSaleCampaign = productInSaleCampaign;
         }
         
         public Task<ProductVariant?> GetProductVariantById(string id)
@@ -260,6 +263,58 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
+        public async Task<ResponseGetVariantPriceInfo> GetVariantPriceInfoAsync(string variantId)
+        {
+            try
+            {
+                // 1. Lấy thông tin ProductVariant và Product
+                var variant = await _productVariantRepository.GetVariantWithProductAsync(variantId);
+
+                if (variant == null)
+                {
+                    return null;
+                }
+
+                var product = variant.ProductColor.Product;
+                if (product == null || product.IsDeleted == true)
+                {
+                    return null;
+                }
+
+                // 2. Lấy thông tin campaign đang hoạt động của sản phẩm
+                var activeCampaign = await _productInSaleCampaign.GetPriceOfProductInActiveCampaign(product.ProductId);
+
+                // 3. Tạo response
+                var result = new ResponseGetVariantPriceInfo
+                {
+                    ProductVariantId = variantId,
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    OriginalPrice = product.Price,
+                    HasActiveCampaign = activeCampaign != null,
+                    SaleCampaignInfo = activeCampaign
+                };
+
+                // 4. Tính giá cuối cùng
+                if (activeCampaign != null)
+                {
+                    // Nếu có campaign, dùng SalePrice từ campaign
+                    result.CurrentPrice = activeCampaign.SalePrice;
+                }
+                else
+                {
+                    // Nếu không có campaign, dùng giá gốc
+                    result.CurrentPrice = product.Price;
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // Log exception nếu cần
+                return null;
+            }
+        }
 
     }
 }
