@@ -19,5 +19,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<List<ResponseGetProductInSaleCampaign>> GetListProductBasedCampaignID(int campaignID);
         public Task<List<ResponseGetProductInSaleCampaign>> GetProductInSaleCampaign(string productId);
         public Task<ResponseGetProductInSaleCampaign> GetPriceOfProductInActiveCampaign(string productId);
+        public Task<bool> BulkDeleteProductInCampaign(int campaignID, List<string> listProductID);
+
     }
 }

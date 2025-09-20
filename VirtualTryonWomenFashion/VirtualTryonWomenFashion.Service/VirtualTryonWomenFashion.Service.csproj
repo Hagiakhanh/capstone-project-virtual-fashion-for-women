@@ -11,6 +11,7 @@
 		<PackageReference Include="CloudinaryDotNet" Version="1.27.6" />
 		<PackageReference Include="MailKit" Version="4.10.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
 	</ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VirtualTryonWomenFashion.Data\VirtualTryonWomenFashion.Data.csproj" />
