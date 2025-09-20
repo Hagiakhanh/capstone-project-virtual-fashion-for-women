@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,10 @@ using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.ProductInSaleCampaign;
+using VirtualTryonWomenFashion.Service.DTO.SaleCampaign;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Mappers;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -18,10 +21,12 @@ namespace VirtualTryonWomenFashion.Service.Services
     {
         private readonly IProductInSaleCampaignRepository _repository;
         private readonly IUnitOfWork _unitOfWork;
-        public ProductInSaleCampaignService(IProductInSaleCampaignRepository productInSaleCampaignRepository, IUnitOfWork unitOfWork)
+        private readonly IMapper _mapper;
+        public ProductInSaleCampaignService(IProductInSaleCampaignRepository productInSaleCampaignRepository, IUnitOfWork unitOfWork, IMapper mapper)
         {
             _repository = productInSaleCampaignRepository;
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
 
         }
 
@@ -79,6 +84,82 @@ namespace VirtualTryonWomenFashion.Service.Services
                     StatusCode = StatusCodes.Status500InternalServerError,
                     Data = new ResponseCheckedProductInSaleCampaign()
                 };
+            }
+        }
+
+        public async Task<List<ResponseGetProductInSaleCampaign>> GetListProductBasedCampaignID(int campaignID)
+        {
+            try
+            {
+                List<ProductInSaleCampaign> listProductInCampaign = await _repository.GetDetailProductInSaleCampaign(campaignID);
+                List<ResponseGetProductInSaleCampaign> listMapped = new();
+                foreach (var product in listProductInCampaign)
+                {
+                    ResponseGetProductInSaleCampaign mappedModel = product.MapToResponseGetProductInSaleCampaign();
+                    listMapped.Add(mappedModel);
+                }
+                return listMapped;
+            }
+            catch (Exception e)
+            {
+                return [];
+            }
+        }
+
+        public async Task<ResponseGetProductInSaleCampaign> GetPriceOfProductInActiveCampaign(string productId)
+        {
+            try
+            {
+                List<ResponseGetProductInSaleCampaign> listResult = new();
+                List<ProductInSaleCampaign> productInListSaleCampaign = await _repository.GetAll(null, x => x.ProductId.Equals(productId)
+                && !x.Campaign.Status.Equals(SaleCampaignStatusEnum.Active.ToString()), x => x.OrderBy(x => x.Campaign.StartDate), includes: x => x.Campaign);
+                ProductInSaleCampaign selectCurrentCampaign = productInListSaleCampaign.FirstOrDefault();
+                if (selectCurrentCampaign != null)
+                {
+                    ResponseGetProductInSaleCampaign mappedModel = new()
+                    {
+                        CampaignId = selectCurrentCampaign.CampaignId,
+                        ProductId = selectCurrentCampaign.ProductId,
+                        CampaignDetail = _mapper.Map<ResponseGetShortSaleCampaignDetail>(selectCurrentCampaign.Campaign),
+                        SalePrice = selectCurrentCampaign.SalePrice,
+                        PercentDiscount = selectCurrentCampaign.PercentDiscount,
+                    };
+                    return mappedModel;
+                }
+                return null;
+            }
+            catch (
+            Exception e)
+            {
+                return null;
+            }
+        }
+
+        public async Task<List<ResponseGetProductInSaleCampaign>> GetProductInSaleCampaign(string productId)
+        {
+            try
+            {
+                List<ResponseGetProductInSaleCampaign> listResult = new();
+                List<ProductInSaleCampaign> productInListSaleCampaign = await _repository.GetAll(null, x => x.ProductId.Equals(productId)
+                && !x.Campaign.Status.Equals(SaleCampaignStatusEnum.Expired.ToString()), x => x.OrderBy(x => x.Campaign.StartDate), includes: x => x.Campaign);
+                foreach (var product in productInListSaleCampaign)
+                {
+                    ResponseGetProductInSaleCampaign mappedModel = new()
+                    {
+                        CampaignId = product.CampaignId,
+                        ProductId = product.ProductId,
+                        CampaignDetail = _mapper.Map<ResponseGetShortSaleCampaignDetail>(product.Campaign),
+                        SalePrice = product.SalePrice,
+                        PercentDiscount = product.PercentDiscount,
+                    };
+                    listResult.Add(mappedModel);
+                }
+                return listResult;
+            }
+            catch (
+            Exception e)
+            {
+                return null;
             }
         }
 
