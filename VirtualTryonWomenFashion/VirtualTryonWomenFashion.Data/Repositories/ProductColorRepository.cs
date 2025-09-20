@@ -25,5 +25,13 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Where(p => p.ProductColorId == productColorId)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<ProductColor> GetByIdWithVariantsAsync(string productColorId)
+        {
+            return await _context.ProductColors
+                .Include(pc => pc.ProductVariants)      // load variants
+                .Include(pc => pc.ProductImages)        // load images nếu cần
+                .FirstOrDefaultAsync(pc => pc.ProductColorId == productColorId);
+        }
     }
 }

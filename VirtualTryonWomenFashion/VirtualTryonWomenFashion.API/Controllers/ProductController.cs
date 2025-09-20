@@ -1,8 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.Product;
+using VirtualTryonWomenFashion.Service.DTO.ProductColor;
+using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Services;
 
 namespace VirtualTryonWomenFashion.API.Controllers
 {
@@ -63,6 +68,13 @@ namespace VirtualTryonWomenFashion.API.Controllers
             return Ok(mockProducts);
         }
 
+        [HttpGet]
+        public async Task<ActionResult<List<ResponseProductDto>>> GetAll([FromQuery] PaginationParameter pagination)
+        {
+            var result = await _productService.GetAllProductsAsync(pagination);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{slug}")]
         public async Task<IActionResult> GetProductBySlug(string slug)
         {
@@ -96,6 +108,21 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return NotFound($"Product with variant id '{variantId}' not found");
 
             return Ok(product);
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> UpdateAsync(string productId, UpdateProductRequest request)
+        {
+            try
+            {
+                MessageModelWithData<Product> result = await _productService.UpdateAsync(productId, request);
+
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

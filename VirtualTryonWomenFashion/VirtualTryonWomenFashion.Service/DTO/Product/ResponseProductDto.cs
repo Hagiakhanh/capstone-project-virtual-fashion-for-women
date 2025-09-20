@@ -13,6 +13,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.Product
         public string ProductName { get; set; }
         public string ProductSlug { get; set; }
         public decimal? Price { get; set; }
+        public decimal? PriceAtTime { get; set; }
         public string Description { get; set; }
         public string MainImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }

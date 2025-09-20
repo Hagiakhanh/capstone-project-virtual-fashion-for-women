@@ -81,6 +81,20 @@ namespace VirtualTryonWomenFashion.API.Controllers
             return Ok(mockVariants);
         }
 
+        [HttpGet("product-price-by-variantId/{variantId}")]
+        public async Task<IActionResult> GetProductPriceByVariantId(string variantId)
+        {
+            if (string.IsNullOrWhiteSpace(variantId))
+                return BadRequest("Product variant id is required");
+
+            var product = await _productVariantService.GetVariantPriceInfoAsync(variantId);
+
+            if (product == null)
+                return NotFound($"Product with variant id '{variantId}' not found");
+
+            return Ok(product);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateAsync(string id, CreateProductVariantRequest request)
         {
@@ -92,6 +106,35 @@ namespace VirtualTryonWomenFashion.API.Controllers
             } catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> UpdateAsync(string id, UpdateProductVariantRequest request)
+        {
+            try
+            {
+                MessageModelWithData<ProductVariant> result = await _productVariantService.UpdateAsync(id, request);
+
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            try
+            {
+                MessageModel result = await _productVariantService.DeleteAsync(id);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
         }
     }
