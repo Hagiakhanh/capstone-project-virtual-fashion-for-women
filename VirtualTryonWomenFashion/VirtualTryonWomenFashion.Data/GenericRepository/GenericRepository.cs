@@ -97,6 +97,24 @@ namespace VirtualTryonWomenFashion.Data.GenericRepository
 
             await dbSet.AddRangeAsync(entities);
         }
+        public virtual void DeleteRange(IEnumerable<TEntity> entities)
+        {
+            if (entities == null)
+                throw new ArgumentNullException(nameof(entities), "Entities list cannot be null.");
+
+            if (!entities.Any())
+                throw new ArgumentException("Entities list cannot be empty.", nameof(entities));
+
+            foreach (var entity in entities)
+            {
+                if (_context.Entry(entity).State == EntityState.Detached)
+                {
+                    dbSet.Attach(entity);
+                }
+            }
+
+            dbSet.RemoveRange(entities);
+        }
 
         public virtual async Task UpdateAsync(TEntity entity)
         {
@@ -125,6 +143,37 @@ namespace VirtualTryonWomenFashion.Data.GenericRepository
             }
             return query.Count();
         }
+        public virtual async Task AddRangeAsync(IEnumerable<TEntity> entities)
+        {
+            if (entities == null || !entities.Any())
+                throw new ArgumentNullException(nameof(entities), "Entities list cannot be null or empty.");
 
+            await dbSet.AddRangeAsync(entities);
+        }
+
+        public virtual void AddRange(IEnumerable<TEntity> entities)
+        {
+            if (entities == null || !entities.Any())
+                throw new ArgumentNullException(nameof(entities), "Entities list to add cannot be null or empty.");
+
+            dbSet.AddRange(entities);
+        }
+
+        public virtual Task UpdateRangeAsync(IEnumerable<TEntity> entities)
+        {
+            if (entities == null || !entities.Any())
+                throw new ArgumentNullException(nameof(entities), "Entities list to update cannot be null or empty.");
+
+            dbSet.UpdateRange(entities);
+            return Task.CompletedTask;
+        }
+
+        public virtual void UpdateRange(IEnumerable<TEntity> entities)
+        {
+            if (entities == null || !entities.Any())
+                throw new ArgumentNullException(nameof(entities), "Entities list to update cannot be null or empty.");
+
+            dbSet.UpdateRange(entities);
+        }
     }
 }

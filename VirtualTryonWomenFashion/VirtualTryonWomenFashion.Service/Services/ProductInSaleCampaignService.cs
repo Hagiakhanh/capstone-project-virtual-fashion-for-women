@@ -1,12 +1,19 @@
-﻿using System;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.ProductInSaleCampaign;
+using VirtualTryonWomenFashion.Service.DTO.SaleCampaign;
+using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Mappers;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -14,21 +21,175 @@ namespace VirtualTryonWomenFashion.Service.Services
     {
         private readonly IProductInSaleCampaignRepository _repository;
         private readonly IUnitOfWork _unitOfWork;
-        public ProductInSaleCampaignService(IProductInSaleCampaignRepository productInSaleCampaignRepository, IUnitOfWork unitOfWork)
+        private readonly IMapper _mapper;
+        public ProductInSaleCampaignService(IProductInSaleCampaignRepository productInSaleCampaignRepository, IUnitOfWork unitOfWork, IMapper mapper)
         {
             _repository = productInSaleCampaignRepository;
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
+
         }
-        public Task<List<ProductInSaleCampaign>> CheckListProductVarianceIdInvalid(List<int> listVarianceID)
+
+
+
+        public async Task<MessageModelWithData<ResponseCheckedProductInSaleCampaign>> CheckListProductIdInSaleCampaign(
+      DateOnly startDate,
+      DateOnly endDate,
+      List<string> listProductID)
         {
             try
             {
+                HashSet<string> hashSetProductId = listProductID.ToHashSet();
+                List<string> validListProductId = new List<string>();
 
+                List<ProductInSaleCampaign> productInCampaigns = await _repository.GetAll(
+                    null,
+                    filter: x => hashSetProductId.Contains(x.ProductId) && x.Campaign.IsDeleted == false && x.Campaign.Status != SaleCampaignStatusEnum.Expired.ToString() && x.Product.IsDeleted == false,
+                    includes: [x => x.Campaign, x => x.Product]
+                );
+
+                List<string> invalidProducts = productInCampaigns
+                    .GroupBy(p => p.ProductId)
+                    .Where(g =>
+                        g.Any(p =>
+                            p.Campaign.StartDate <= endDate &&
+                            startDate <= p.Campaign.EndDate
+                        )
+                    )
+                    .Select(g => g.Key)
+                    .ToList();
+
+                foreach (var productId in hashSetProductId)
+                {
+                    if (!invalidProducts.Contains(productId))
+                    {
+                        validListProductId.Add(productId);
+                    }
+                }
+
+                return new MessageModelWithData<ResponseCheckedProductInSaleCampaign>()
+                {
+                    Message = "Đã kiểm tra thành công các sản phẩm trong chiến dịch",
+                    StatusCode = StatusCodes.Status200OK,
+                    Data = new ResponseCheckedProductInSaleCampaign()
+                    {
+                        ValidProductIDList = validListProductId,
+                        InvalidProductIDList = invalidProducts
+                    }
+                };
             }
-            catch (Exception ex) { 
-            
+            catch (Exception)
+            {
+                return new MessageModelWithData<ResponseCheckedProductInSaleCampaign>()
+                {
+                    Message = "Kiểm tra thất bại các sản phẩm có hợp lệ cho chiến dịch",
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Data = new ResponseCheckedProductInSaleCampaign()
+                };
             }
-            throw new NotImplementedException();
+        }
+
+        public async Task<List<ResponseGetProductInSaleCampaign>> GetListProductBasedCampaignID(int campaignID)
+        {
+            try
+            {
+                List<ProductInSaleCampaign> listProductInCampaign = await _repository.GetDetailProductInSaleCampaign(campaignID);
+                List<ResponseGetProductInSaleCampaign> listMapped = new();
+                foreach (var product in listProductInCampaign)
+                {
+                    ResponseGetProductInSaleCampaign mappedModel = product.MapToResponseGetProductInSaleCampaign();
+                    listMapped.Add(mappedModel);
+                }
+                return listMapped;
+            }
+            catch (Exception e)
+            {
+                return [];
+            }
+        }
+
+        public async Task<ResponseGetProductInSaleCampaign> GetPriceOfProductInActiveCampaign(string productId)
+        {
+            try
+            {
+                List<ResponseGetProductInSaleCampaign> listResult = new();
+                List<ProductInSaleCampaign> productInListSaleCampaign = await _repository.GetAll(null, x => x.ProductId.Equals(productId)
+                && !x.Campaign.Status.Equals(SaleCampaignStatusEnum.Active.ToString()), x => x.OrderBy(x => x.Campaign.StartDate), includes: x => x.Campaign);
+                ProductInSaleCampaign selectCurrentCampaign = productInListSaleCampaign.FirstOrDefault();
+                if (selectCurrentCampaign != null)
+                {
+                    ResponseGetProductInSaleCampaign mappedModel = new()
+                    {
+                        CampaignId = selectCurrentCampaign.CampaignId,
+                        ProductId = selectCurrentCampaign.ProductId,
+                        CampaignDetail = _mapper.Map<ResponseGetShortSaleCampaignDetail>(selectCurrentCampaign.Campaign),
+                        SalePrice = selectCurrentCampaign.SalePrice,
+                        PercentDiscount = selectCurrentCampaign.PercentDiscount,
+                    };
+                    return mappedModel;
+                }
+                return null;
+            }
+            catch (
+            Exception e)
+            {
+                return null;
+            }
+        }
+
+        public async Task<List<ResponseGetProductInSaleCampaign>> GetProductInSaleCampaign(string productId)
+        {
+            try
+            {
+                List<ResponseGetProductInSaleCampaign> listResult = new();
+                List<ProductInSaleCampaign> productInListSaleCampaign = await _repository.GetAll(null, x => x.ProductId.Equals(productId)
+                && !x.Campaign.Status.Equals(SaleCampaignStatusEnum.Expired.ToString()), x => x.OrderBy(x => x.Campaign.StartDate), includes: x => x.Campaign);
+                foreach (var product in productInListSaleCampaign)
+                {
+                    ResponseGetProductInSaleCampaign mappedModel = new()
+                    {
+                        CampaignId = product.CampaignId,
+                        ProductId = product.ProductId,
+                        CampaignDetail = _mapper.Map<ResponseGetShortSaleCampaignDetail>(product.Campaign),
+                        SalePrice = product.SalePrice,
+                        PercentDiscount = product.PercentDiscount,
+                    };
+                    listResult.Add(mappedModel);
+                }
+                return listResult;
+            }
+            catch (
+            Exception e)
+            {
+                return null;
+            }
+        }
+
+        public async Task<bool> InsertListProductInSaleCampaign(List<ProductInSaleCampaign> listProductInSaleCampaign)
+        {
+            try
+            {
+                await _repository.AddRangeAsync(listProductInSaleCampaign);
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+
+        }
+        public async Task<bool> BulkDeleteProductInCampaign(int campaignID, List<string> listProductID)
+        {
+            try
+            {
+                List<ProductInSaleCampaign> listProductInCampaign = await _repository.GetAll(null, x => listProductID.Contains(x.ProductId) && x.CampaignId == campaignID);
+                _repository.DeleteRange(listProductInCampaign);
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
         }
     }
 }

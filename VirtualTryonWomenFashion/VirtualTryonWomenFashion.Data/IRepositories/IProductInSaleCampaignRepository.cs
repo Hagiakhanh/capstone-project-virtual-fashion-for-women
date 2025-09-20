@@ -10,5 +10,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface IProductInSaleCampaignRepository : IGenericRepository<ProductInSaleCampaign>
     {
+        public Task<List<ProductInSaleCampaign>> GetDetailProductInSaleCampaign(int campaignID);
     }
 }

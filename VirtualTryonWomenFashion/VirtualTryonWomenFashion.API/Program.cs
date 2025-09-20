@@ -11,6 +11,7 @@ using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
 using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Services;
 using VirtualTryonWomenFashion.Service.Utils;
+using VirtualTryonWomenFashion.Service.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -106,6 +107,7 @@ builder.Services.AddSwaggerGen(c =>
                 });
 });
 
+builder.Services.AddHostedService<SaleCampaignWorkerService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

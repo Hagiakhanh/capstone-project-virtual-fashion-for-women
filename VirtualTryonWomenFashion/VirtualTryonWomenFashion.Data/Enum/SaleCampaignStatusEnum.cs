@@ -11,5 +11,6 @@ namespace VirtualTryonWomenFashion.Data.Enum
         Pending,
         InActive,
         Active,
+        Expired
     }
 }
