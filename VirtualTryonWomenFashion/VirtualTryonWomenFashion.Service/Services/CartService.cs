@@ -19,6 +19,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
         private readonly IProductVariantService _productVariantService;
+        private readonly IProductColorService _productColorService;
         private readonly IShippingService _shippingService;
 
         public CartService(
@@ -26,13 +27,15 @@ namespace VirtualTryonWomenFashion.Service.Services
             IUnitOfWork unitOfWork, 
             ICurrentUserService currentUserService,
             IProductVariantService productVariantService,
-            IShippingService shippingService)
+            IShippingService shippingService,
+            IProductColorService productColorService)
         {
             _cartRepository = cartRepository;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
             _productVariantService = productVariantService;
             _shippingService = shippingService;
+            _productColorService = productColorService;
         }
         public async Task<bool> AddProductToCartAsync(RequestAddProductToCart requestAddProductToCart)
         {
@@ -162,12 +165,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             List<Cart> cartItems =  await _cartRepository.GetAll(
                 filter: c=>c.UserId == userId && !(bool)c.IsDelete,
                 orderBy: q=>q.OrderBy(c=>c.CreateDate),
-                includes: new Expression<Func<Cart,object>>[] 
-                { 
-                    c=>c.ProductVariant,
-                });
-                
-
+                includes: c=>c.ProductVariant);
+            
             //Kiểm tra xem sản phẩm có trong giỏ hàng không
             bool existingItemsNotInCart = productVariantIds.Except(cartItems.Select(c => c.ProductVariantId)).Any();
             if(existingItemsNotInCart)
@@ -185,7 +184,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception("No items selected for checkout.");
             }
 
-            int totalProductPrice =(int) Math.Ceiling(selectedCartItems.Sum(c => c.Quantity * c.ProductVariant.ProductColor.Product.Price)??0);
+            int totalProductPrice = 0;
+            
+            foreach (var cartItem in selectedCartItems)
+            {
+                var productColor = await _productColorService.GetProductColorByIdAsync(cartItem.ProductVariant.ProductColorId);
+
+                int productPrice = (int)Math.Ceiling((cartItem.Quantity * productColor.Product.Price) ?? 0);
+                totalProductPrice += productPrice;
+            }
             int provinceId = await _shippingService.GetProvinceId(requestCheckout.ProvinceName);
             int districtId = await _shippingService.GetDistrictId(requestCheckout.DistrictName, provinceId);
             string wardCode = await _shippingService.GetWardId(requestCheckout.WardName, districtId);
@@ -207,10 +214,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _shippingService.CalculateShippingFee(shippingObjectRequest);
             ResponseCheckout responseCheckout = new ResponseCheckout()
             {
-                TotalPrice = totalProductPrice,
+                TotalProductPrice = totalProductPrice,
                 ServiceFree = serviceFree,
                 InsuranceFee = insuranceFree,
-                TotalProductPrice = totalProductPrice + serviceFree + insuranceFree
+                TotalPrice = totalProductPrice + serviceFree + insuranceFree
             };
             return responseCheckout;
         }
