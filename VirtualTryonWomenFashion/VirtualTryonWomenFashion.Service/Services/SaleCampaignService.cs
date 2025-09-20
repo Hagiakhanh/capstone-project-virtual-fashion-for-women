@@ -26,14 +26,16 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IProductRepository _productRepository;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IMapper _mapper;
-        public SaleCampaignService(ISaleCampaignRepository saleCampaignRepository, IUnitOfWork unitOfWork, IProductRepository productRepository, ICloudinaryService cloudinaryService, IMapper mapper)
+        public SaleCampaignService(ISaleCampaignRepository saleCampaignRepository, IUnitOfWork unitOfWork, IProductRepository productRepository, ICloudinaryService cloudinaryService, IMapper mapper, IProductInSaleCampaignService productInSaleCampaignService)
         {
             _saleCampaignRepository = saleCampaignRepository;
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
             _cloudinaryService = cloudinaryService;
             _mapper = mapper;
+            _productInSaleCampaignService = productInSaleCampaignService;
         }
+
         public async Task<MessageModel> CreateSaleCampaign(RequestCreateSaleCampaign model)
         {
             MessageModelWithData<ResponseCheckedProductInSaleCampaign> checkedResult = new();
@@ -51,6 +53,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     throw new ArgumentException("Thời gian chiến dịch hoạt động ít nhất trong vòng 2 ngày");
                 }
+                ValidateProductInSaleCampaignsBasic(model.ProductInSalesCampaigns);
                 List<string> listProductId = model.ProductInSalesCampaigns.Select(x => x.ProductID).ToList();
                 checkedResult = await _productInSaleCampaignService.CheckListProductIdInSaleCampaign(model.StartDate, model.EndDate, listProductId);
                 List<string> listValidProductId = checkedResult.Data.ValidProductIDList;
@@ -72,7 +75,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 string imageUrl = await _cloudinaryService.UploadImageAsync(model.ImageFile);
                 saleCampaign.ImageUrl = imageUrl;
                 await _saleCampaignRepository.InsertAsync(saleCampaign);
-
+                await _unitOfWork.SaveChanges();
                 List<Product> listValidProduct = await _productRepository.GetAll(null, x => listValidProductId.Contains(x.ProductId) && x.IsDeleted == false);
                 ValidateProductInSaleCampaigns(model.ProductInSalesCampaigns, listValidProduct);
                 foreach (string productId in checkedResult.Data.ValidProductIDList)
@@ -201,30 +204,33 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<MessageModelWithData<SaleCampaign>> GetDetailSaleCampaign(int saleCampaignID)
+        public async Task<MessageModelWithData<ResponseGetSaleCampaign>> GetDetailSaleCampaign(int saleCampaignID)
         {
             try
             {
                 SaleCampaign currentSaleCampaign = await _saleCampaignRepository.GetByIdAsync(saleCampaignID);
+                ResponseGetSaleCampaign mappedSaleCampaign = _mapper.Map<ResponseGetSaleCampaign>(currentSaleCampaign);
+                List<ResponseGetProductInSaleCampaign> listProductInSale = await _productInSaleCampaignService.GetListProductBasedCampaignID(saleCampaignID);
                 if (currentSaleCampaign == null || currentSaleCampaign.IsDeleted)
                 {
-                    return new MessageModelWithData<SaleCampaign>
+                    return new MessageModelWithData<ResponseGetSaleCampaign>
                     {
                         Message = "Chiến dịch giảm giá đã bị xoá hoặc không tồn tại",
                         StatusCode = StatusCodes.Status404NotFound
                     };
                 }
-                return new MessageModelWithData<SaleCampaign>
+                mappedSaleCampaign.ListProductInSaleCampaign = listProductInSale;
+                return new MessageModelWithData<ResponseGetSaleCampaign>
                 {
-                    Message = "Tìm kiếm chiến dịch giảm giá thành công",
+                    Message = "Xem chi tiết chiến dịch giảm giá thành công",
                     StatusCode = StatusCodes.Status200OK,
-                    Data = currentSaleCampaign
+                    Data = mappedSaleCampaign
                 };
 
             }
             catch (Exception ex)
             {
-                return new MessageModelWithData<SaleCampaign>
+                return new MessageModelWithData<ResponseGetSaleCampaign>
                 {
                     Message = "Tìm chiến dịch giảm giá thất bại - Lỗi hệ thống",
                     StatusCode = StatusCodes.Status500InternalServerError,
@@ -242,7 +248,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                     throw new ArgumentException("ProductID không được để trống");
                 }
 
-                // lấy giá gốc để so sánh (nếu có)
                 var productDetail = productDetails.FirstOrDefault(x => x.ProductId == p.ProductID);
                 if (productDetail == null)
                 {
@@ -422,5 +427,53 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
+        public void ValidateProductInSaleCampaignsBasic(List<RequestCreateProductInSaleCampaign> products)
+        {
+            if (products == null || !products.Any())
+            {
+                throw new ArgumentException("Danh sách sản phẩm không được để trống");
+            }
+
+            foreach (var p in products)
+            {
+                if (string.IsNullOrWhiteSpace(p.ProductID))
+                {
+                    throw new ArgumentException("ProductID không được để trống");
+                }
+
+                if (p.DiscountType == SalePriceTypeInputEnum.PercentDiscount)
+                {
+                    if (p.Value <= 0 || p.Value > 100)
+                    {
+                        throw new ArgumentException(
+                            $"Sản phẩm {p.ProductID}: % giảm giá phải nằm trong khoảng 0 < value ≤ 100"
+                        );
+                    }
+                }
+                else // Direct price
+                {
+                    if (p.Value <= 0)
+                    {
+                        throw new ArgumentException(
+                            $"Sản phẩm {p.ProductID}: giá sau giảm phải > 0"
+                        );
+                    }
+                }
+            }
+
+            // check trùng ID
+            var duplicateIds = products.GroupBy(x => x.ProductID)
+                                       .Where(g => g.Count() > 1)
+                                       .Select(g => g.Key)
+                                       .ToList();
+            if (duplicateIds.Any())
+            {
+                throw new ArgumentException(
+                    $"Danh sách có sản phẩm trùng lặp: {string.Join(", ", duplicateIds)}"
+                );
+            }
+        }
+
     }
+
 }
