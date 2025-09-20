@@ -871,9 +871,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                             .Where(v => !reqVariantIds.Contains(v.ProductVariantId))
                             .ToList();
 
-                        foreach (var variant in toRemoveVariants)
+                        if (toRemoveVariants.Any())
                         {
-                            await _productVariantRepository.Delete(variant);
+                            _productVariantRepository.DeleteRange(toRemoveVariants);
                         }
                     }
                 }
@@ -883,9 +883,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     .Where(c => !requestColorIds.Contains(c.ProductColorId))
                     .ToList();
 
-                foreach(var productColor  in toRemoveColors)
+                if (toRemoveColors.Any())
                 {
-                    await _productColorRepository.Delete(productColor);
+                    _productColorRepository.DeleteRange(toRemoveColors);
                 }
 
                 // Lưu thay đổi
@@ -999,22 +999,14 @@ namespace VirtualTryonWomenFashion.Service.Services
                 // Xóa ProductVariants khỏi database
                 if (productColor.ProductVariants?.Any() == true)
                 {
-                    foreach (var variant  in productColor.ProductVariants)
-                    {
-                        await _productVariantRepository.Delete(variant);
-                    }
+                    _productVariantRepository.DeleteRange(productColor.ProductVariants);
                 }
 
                 // Xóa ProductImages khỏi database
                 if (productColor.ProductImages?.Any() == true)
                 {
-                    foreach (var image in productColor.ProductImages)
-                    {
-                        // Xóa ảnh trên Cloudinary nếu cần
-                        // await _cloudinaryService.DeleteImageAsync(image.ImageUrl);
-                        await _productImageRepository.Delete(image);
-                    }
-                    
+                    _productImageRepository.DeleteRange(productColor.ProductImages);
+
                 }
 
                 // Xóa ảnh NoBg trên Cloudinary nếu cần
@@ -1027,10 +1019,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             // Xóa tất cả ProductColors khỏi database
             if (productColors?.Any() == true)
             {
-                foreach (var color in productColors)
-                {
-                    await _productColorRepository.Delete(color);
-                }
+                _productColorRepository.DeleteRange(productColors);
             }
         }
 
