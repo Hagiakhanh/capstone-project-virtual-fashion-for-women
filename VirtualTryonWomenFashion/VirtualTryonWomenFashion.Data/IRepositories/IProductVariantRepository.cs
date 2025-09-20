@@ -10,5 +10,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface IProductVariantRepository : IGenericRepository<ProductVariant>
     {
+        Task<ProductVariant> GetVariantWithProductAsync(string variantId);
     }
 }
