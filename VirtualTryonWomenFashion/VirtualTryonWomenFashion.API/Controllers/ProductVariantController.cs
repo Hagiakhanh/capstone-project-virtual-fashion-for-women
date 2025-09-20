@@ -94,5 +94,34 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpPut]
+        public async Task<IActionResult> UpdateAsync(string id, UpdateProductVariantRequest request)
+        {
+            try
+            {
+                MessageModelWithData<ProductVariant> result = await _productVariantService.UpdateAsync(id, request);
+
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            try
+            {
+                MessageModel result = await _productVariantService.DeleteAsync(id);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
+            }
+        }
     }
 }

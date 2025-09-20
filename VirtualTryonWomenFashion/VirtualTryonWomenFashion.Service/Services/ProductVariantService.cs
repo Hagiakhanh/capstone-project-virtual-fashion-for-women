@@ -121,5 +121,145 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
+        public async Task<MessageModelWithData<ProductVariant>> UpdateAsync(string productVariantId, UpdateProductVariantRequest request)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+
+            try
+            {
+                // Lấy variant hiện có
+                var existingVariant = await _productVariantRepository.GetByIdAsync(productVariantId);
+                if (existingVariant == null)
+                {
+                    return new MessageModelWithData<ProductVariant>
+                    {
+                        Message = "Không tìm thấy ProductVariant cần cập nhật",
+                        StatusCode = StatusCodes.Status404NotFound
+                    };
+                }
+
+                int sizeId = existingVariant.SizeId ?? 0;
+
+                // Nếu có SizeId mới truyền vào
+                if (request.SizeId > 0 && request.SizeId != sizeId)
+                {
+                    sizeId = (int)request.SizeId;
+                }
+                else if (!string.IsNullOrEmpty(request.SizeCode))
+                {
+                    // Nếu nhập size code mới => tạo size mới
+                    var sizeResult = await _sizeService.CreateAsync(request.SizeCode);
+                    if (sizeResult.StatusCode != StatusCodes.Status201Created)
+                    {
+                        return new MessageModelWithData<ProductVariant>
+                        {
+                            Message = "Cập nhật thất bại: Không thể tạo size mới",
+                            StatusCode = StatusCodes.Status400BadRequest
+                        };
+                    }
+                    sizeId = sizeResult.Data.SizeId;
+                }
+
+                // Upload lại ảnh nếu có
+                string imageUrl = existingVariant.ImageUrl;
+                if (request.ImageUrl != null)
+                {
+                    imageUrl = await _cloudinaryService.UploadImageAsync(request.ImageUrl);
+                }
+
+                // Cập nhật dữ liệu
+                existingVariant.SizeId = sizeId;
+                existingVariant.VariantName = request.VariantName ?? existingVariant.VariantName;
+                existingVariant.Quantity = request.Quantity ?? existingVariant.Quantity;
+                existingVariant.ImageUrl = imageUrl;
+                existingVariant.ProductWeight = request.ProductWeight ?? existingVariant.ProductWeight;
+                existingVariant.ProductLength = request.ProductLength ?? existingVariant.ProductLength;
+                existingVariant.ProductWidth = request.ProductWidth ?? existingVariant.ProductWidth;
+                existingVariant.ProductHeight = request.ProductHeight ?? existingVariant.ProductHeight;
+
+                _productVariantRepository.UpdateAsync(existingVariant);
+                int result = await _unitOfWork.SaveChanges();
+
+                await _unitOfWork.CommitTransactionAsync();
+
+                if (result > 0)
+                {
+                    return new MessageModelWithData<ProductVariant>
+                    {
+                        Message = "Cập nhật thành công ProductVariant",
+                        StatusCode = StatusCodes.Status200OK,
+                        Data = existingVariant
+                    };
+                }
+
+                return new MessageModelWithData<ProductVariant>
+                {
+                    Message = "Cập nhật thất bại",
+                    StatusCode = StatusCodes.Status400BadRequest
+                };
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                return new MessageModelWithData<ProductVariant>
+                {
+                    Message = "Cập nhật thất bại: Lỗi hệ thống",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+        public async Task<MessageModel> DeleteAsync(string productVariantId)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+
+            try
+            {
+                var existingVariant = await _productVariantRepository.GetByIdAsync(productVariantId);
+                if (existingVariant == null)
+                {
+                    return new MessageModel
+                    {
+                        Message = "Không tìm thấy ProductVariant",
+                        StatusCode = StatusCodes.Status404NotFound
+                    };
+                }
+
+                // Nếu bạn muốn xóa luôn ảnh trên Cloudinary thì gọi service tại đây
+                // await _cloudinaryService.DeleteImageAsync(existingVariant.ImageUrl);
+
+                _productVariantRepository.Delete(existingVariant);
+
+                int result = await _unitOfWork.SaveChanges();
+                await _unitOfWork.CommitTransactionAsync();
+
+                if (result > 0)
+                {
+                    return new MessageModel
+                    {
+                        Message = "Xóa thành công ProductVariant",
+                        StatusCode = StatusCodes.Status200OK
+                    };
+                }
+
+                return new MessageModel
+                {
+                    Message = "Xóa thất bại",
+                    StatusCode = StatusCodes.Status400BadRequest
+                };
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+
+                return new MessageModel
+                {
+                    Message = "Xóa thất bại: Lỗi hệ thống",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+
     }
 }
