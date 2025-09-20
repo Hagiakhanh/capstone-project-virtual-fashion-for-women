@@ -68,25 +68,13 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         // PUT api/<SaleCampaignController>/5
-        [HttpPut("{id}/active")]
-        public async Task<IActionResult> Activate(int id, [FromForm] RequestUpdateSaleCampaign model)
-        {
-            try
-            {
-                var result = await _saleCampaignService.UpdateSaleCampaign(id, model, Data.Enum.SaleCampaignStatusEnum.Active);
-                return StatusCode(result.StatusCode, result.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
-        }
-        [HttpPut("{id}/deactive")]
+
+        [HttpPut("{id}")]
         public async Task<IActionResult> Deactivate(int id, [FromForm] RequestUpdateSaleCampaign model)
         {
             try
             {
-                var result = await _saleCampaignService.UpdateSaleCampaign(id, model, Data.Enum.SaleCampaignStatusEnum.InActive);
+                var result = await _saleCampaignService.UpdateSaleCampaign(id, model);
                 return StatusCode(result.StatusCode, result.Message);
             }
             catch (Exception ex)

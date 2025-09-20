@@ -97,6 +97,24 @@ namespace VirtualTryonWomenFashion.Data.GenericRepository
 
             await dbSet.AddRangeAsync(entities);
         }
+        public virtual void DeleteRange(IEnumerable<TEntity> entities)
+        {
+            if (entities == null)
+                throw new ArgumentNullException(nameof(entities), "Entities list cannot be null.");
+
+            if (!entities.Any())
+                throw new ArgumentException("Entities list cannot be empty.", nameof(entities));
+
+            foreach (var entity in entities)
+            {
+                if (_context.Entry(entity).State == EntityState.Detached)
+                {
+                    dbSet.Attach(entity);
+                }
+            }
+
+            dbSet.RemoveRange(entities);
+        }
 
         public virtual async Task UpdateAsync(TEntity entity)
         {
