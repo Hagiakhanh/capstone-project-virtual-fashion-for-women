@@ -4,12 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.ProductInSaleCampaign;
 using VirtualTryonWomenFashion.Service.Helpers;
 
 namespace VirtualTryonWomenFashion.Service.IServices
 {
     public interface IProductInSaleCampaignService
     {
-        public Task<List<ProductInSaleCampaign>> CheckListProductVarianceIdInvalid(List<int> listVarianceID);
+        public Task<MessageModelWithData<ResponseCheckedProductInSaleCampaign>> CheckListProductIdInSaleCampaign(
+      DateOnly startDate,
+      DateOnly endDate,
+      List<string> listProductID);
+        public Task<bool> InsertListProductInSaleCampaign(List<ProductInSaleCampaign> listProductInSaleCampaign);
     }
 }
