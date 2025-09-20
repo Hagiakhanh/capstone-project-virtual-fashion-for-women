@@ -292,8 +292,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public async Task<MessageModelWithData<ResponseGetSaleCampaign>> UpdateSaleCampaign(
      int campaignId,
-     RequestUpdateSaleCampaign model,
-     SaleCampaignStatusEnum statusToSet
+     RequestUpdateSaleCampaign model
  )
         {
             try
@@ -314,7 +313,20 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 if (!string.IsNullOrWhiteSpace(model.DescriptionUpdated))
                     campaign.Description = model.DescriptionUpdated;
+                // cập nhật trạng thái nếu hợp lệ
 
+                if (model.CampaignStatus.HasValue)
+                {
+                    if (model.CampaignStatus == SaleCampaignStatusEnum.Active || model.CampaignStatus == SaleCampaignStatusEnum.InActive)
+                    {
+                        campaign.Status = model.CampaignStatus.ToString();
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Trạng thái chiến dịch cập nhật không hợp lệ");
+                    }
+
+                }
                 // cập nhật hình ảnh
                 if (model.ImageFile != null)
                 {
@@ -322,11 +334,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     campaign.ImageUrl = imageUrl;
                 }
 
-                // cập nhật trạng thái nếu hợp lệ
-                if (statusToSet == SaleCampaignStatusEnum.Active || statusToSet == SaleCampaignStatusEnum.InActive)
-                {
-                    campaign.Status = statusToSet.ToString();
-                }
+
 
                 // xử lý cập nhật sản phẩm
                 var productInCampaigns = campaign.ProductInSaleCampaigns?.ToList() ?? new List<ProductInSaleCampaign>();
@@ -335,6 +343,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 if (model.ListIdDeleted != null && model.ListIdDeleted.Any())
                 {
                     productInCampaigns.RemoveAll(p => model.ListIdDeleted.Contains(p.ProductId));
+                    await _productInSaleCampaignService.BulkDeleteProductInCampaign(campaignId, model.ListIdDeleted);
                 }
 
                 // thêm hoặc update sản phẩm
@@ -474,6 +483,42 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
+        public async Task ChangeStatusForExistingSaleCampaign()
+        {
+            try
+            {
+                DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
+
+                List<SaleCampaign> listExistingSaleCampaign = await _saleCampaignRepository.GetAll(null, x => x.IsDeleted == false
+                && (x.Status == SaleCampaignStatusEnum.InActive.ToString() || x.Status == SaleCampaignStatusEnum.Active.ToString()
+                || x.Status == SaleCampaignStatusEnum.Pending.ToString()));
+
+                List<SaleCampaign> listToExpired = listExistingSaleCampaign.Where(x => x.EndDate < today
+                && x.Status != SaleCampaignStatusEnum.Pending.ToString()).ToList();
+                foreach (SaleCampaign expiredItem in listToExpired)
+                {
+                    expiredItem.Status = SaleCampaignStatusEnum.Expired.ToString();
+                }
+
+                List<SaleCampaign> listWaiting = listExistingSaleCampaign.Where(x => x.StartDate <= today && x.EndDate >= today
+                && x.Status == SaleCampaignStatusEnum.Pending.ToString()).ToList();
+                foreach (SaleCampaign pendingItem in listWaiting)
+                {
+                    pendingItem.Status = SaleCampaignStatusEnum.Active.ToString();
+                }
+
+                if (listWaiting.Any() || listToExpired.Any())
+                {
+                    IEnumerable<SaleCampaign> mergeResult = listWaiting.Concat(listToExpired);
+                    await _saleCampaignRepository.UpdateRangeAsync(mergeResult);
+                    await _unitOfWork.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
     }
 
 }

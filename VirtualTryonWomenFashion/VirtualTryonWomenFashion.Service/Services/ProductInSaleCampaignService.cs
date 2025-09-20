@@ -30,6 +30,8 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         }
 
+
+
         public async Task<MessageModelWithData<ResponseCheckedProductInSaleCampaign>> CheckListProductIdInSaleCampaign(
       DateOnly startDate,
       DateOnly endDate,
@@ -175,6 +177,19 @@ namespace VirtualTryonWomenFashion.Service.Services
                 return false;
             }
 
+        }
+        public async Task<bool> BulkDeleteProductInCampaign(int campaignID, List<string> listProductID)
+        {
+            try
+            {
+                List<ProductInSaleCampaign> listProductInCampaign = await _repository.GetAll(null, x => listProductID.Contains(x.ProductId) && x.CampaignId == campaignID);
+                _repository.DeleteRange(listProductInCampaign);
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
         }
     }
 }
