@@ -14,6 +14,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
         public SaleCampaignProfile()
         {
             CreateMap<SaleCampaign, ResponseGetSaleCampaign>();
+            CreateMap<SaleCampaign, ResponseGetShortSaleCampaignDetail>();
         }
     }
 }
