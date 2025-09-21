@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -35,6 +36,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IProductVariantRepository _productVariantRepository;
         private readonly IProductInSaleCampaignService _productInSaleCampaignService;
         private readonly IProductImageRepository _productImageRepository;
+        private readonly IMapper _mapper;
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             /*IProductColorService productColorService,
@@ -46,7 +48,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             ISizeRepository sizeRepository,
             IProductVariantRepository productVariantRepository,
             IProductInSaleCampaignService productInSaleCampaignService,
-            IProductImageRepository productImageRepository)
+            IProductImageRepository productImageRepository,
+            IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
@@ -60,6 +63,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _productVariantRepository = productVariantRepository;
             _productInSaleCampaignService = productInSaleCampaignService;
             _productImageRepository = productImageRepository;
+            _mapper = mapper;
         }
 
         public static string GenerateFixedLengthString(int length)
@@ -131,85 +135,38 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public async Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParameter pagination)
         {
-            // Get products with pagination and includes
-            var products = await _productRepository.GetAll(
-                pagination: pagination,
-                filter: p => p.IsDeleted != true,
-                orderBy: q => q.OrderByDescending(p => p.CreatedAt),
-                includes: new Expression<Func<Product, object>>[]
-                {
-                p => p.Category,
-                p => p.ProductColors
-                }
-            );
+            var products = await _productRepository.GetAllProductsWithIncludes(pagination);
 
             // Get total count for pagination info
             var totalRecords = _productRepository.Count(p => p.IsDeleted != true);
             var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.PageSize);
 
-            // Map to DTOs
-            var productDtos = products.Select(product => MapToResponseProductDto(product)).ToList();
+            // Map to DTOs (await từng product)
+            var productDtos = await Task.WhenAll(products.Select(p => MapToResponseProductDto(p)));
 
             return new ResponsePaginationModel<List<ResponseProductDto>>(
                 statusCode: 200,
-                data: productDtos,
+                data: productDtos.ToList(),
                 totalRecords: totalRecords,
                 totalPages: totalPages
             );
         }
 
-        private ResponseProductDto MapToResponseProductDto(Product product)
+        private async Task<ResponseProductDto> MapToResponseProductDto(Product product)
         {
-            var productActiveInSaleCapaign = _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(product.ProductId);
-            return new ResponseProductDto
-            {
-                ProductId = product.ProductId,
-                ProductName = product.ProductName,
-                ProductSlug = product.ProductSlug,
-                Price = product.Price,
-                PriceAtTime = productActiveInSaleCapaign != null
-                    ? productActiveInSaleCapaign.Result.SalePrice
-                    : product.Price, // nếu không có campaign thì lấy giá gốc 
-                Description = product.Description,
-                MainImageUrl = product.MainImageUrl,
-                CreatedAt = product.CreatedAt,
-                ProductColors = product.ProductColors.Select(pc => new ResponseProductColorDto
-                {
-                    ProductColorId = pc.ProductColorId,
-                    ColorId = pc.ColorId,
-                    LensId = pc.LensId,
-                    Color = pc.Color != null ? new ResponseColorDto
-                    {
-                        ColorId = pc.Color.ColorId,
-                        ColorName = pc.Color.ColorName,
-                        ColorPrefix = pc.Color.ColorPrefix,
-                        HexCode = pc.Color.HexCode
-                    } : null,
-                    ProductVariants = pc.ProductVariants.Select(pv => new ResponseProductVariantDto
-                    {
-                        ProductVariantId = pv.ProductVariantId,
-                        SizeId = pv.SizeId,
-                        VariantName = pv.VariantName,
-                        Quantity = pv.Quantity,
-                        ImageUrl = pv.ImageUrl,
-                        Status = pv.Status,
-                        ProductWeight = pv.ProductWeight,
-                        ProductLength = pv.ProductLength,
-                        ProductWidth = pv.ProductWidth,
-                        ProductHeight = pv.ProductHeight,
-                        Size = pv.Size != null ? new ResponseSizeDto
-                        {
-                            SizeId = pv.Size.SizeId,
-                            SizeCode = pv.Size.SizeCode
-                        } : null,
-                        ProductImages = pc.ProductImages.Select(pi => new ResponseProductImageDto
-                        {
-                            ProductImageId = pi.ProductImageId,
-                            ImageUrl = pi.ImageUrl
-                        }).ToList()
-                    }).ToList()
-                }).ToList()
-            };
+            // lấy giá trong campaign
+            var productActiveInSaleCapaign =
+                _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(product.ProductId);
+
+            // map entity -> dto
+            var dto = _mapper.Map<ResponseProductDto>(product);
+
+            // custom PriceAtTime
+            dto.PriceAtTime = productActiveInSaleCapaign.Result != null
+                ? productActiveInSaleCapaign.Result.SalePrice
+                : product.Price;
+
+            return dto;
         }
 
         public async Task<ResponseProductDto> GetProductBySlugAsync(string slug)
@@ -218,7 +175,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (product == null)
                 return null;
 
-            return MapToResponseProductDto(product);
+            return await MapToResponseProductDto(product);
         }
 
         public async Task<ResponseProductDto> GetProductByVariantIdAsync(string variantId)
@@ -231,7 +188,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         private ResponseProductDto MapToResponseProductDtoForVariant(Product product, string variantId)
         {
-            var productActiveInSaleCapaign = _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(product.ProductId);
+            var productActiveInSaleCampaign = _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(product.ProductId);
             // Tìm ProductColor chứa variant được yêu cầu
             var targetProductColor = product.ProductColors
                 .FirstOrDefault(pc => pc.ProductVariants.Any(pv => pv.ProductVariantId == variantId));
@@ -246,61 +203,47 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (targetVariant == null)
                 return null;
 
-            return new ResponseProductDto
+            // Map product sang ResponseProductDto
+            var response = _mapper.Map<ResponseProductDto>(product);
+
+            // Set giá ở thời điểm hiện tại
+            response.PriceAtTime = productActiveInSaleCampaign.Result != null
+                ? productActiveInSaleCampaign.Result.SalePrice
+                : product.Price;
+
+            // Chỉ giữ lại đúng 1 ProductColor và 1 Variant
+            response.ProductColors = new List<ResponseProductColorDto>
             {
-                ProductId = product.ProductId,
-                ProductName = product.ProductName,
-                ProductSlug = product.ProductSlug,
-                Price = product.Price,
-                PriceAtTime = productActiveInSaleCapaign != null
-                    ? productActiveInSaleCapaign.Result.SalePrice
-                    : product.Price, // nếu không có campaign thì lấy giá gốc 
-                        Description = product.Description,
-                MainImageUrl = product.MainImageUrl,
-                CreatedAt = product.CreatedAt,
-                ProductColors = new List<ResponseProductColorDto>
+                new ResponseProductColorDto
                 {
-                    new ResponseProductColorDto
+                    ProductColorId = targetProductColor.ProductColorId,
+                    ColorId = targetProductColor.ColorId,
+                    LensId = targetProductColor.LensId,
+                    Color = _mapper.Map<ResponseColorDto>(targetProductColor.Color),
+                    ProductVariants = new List<ResponseProductVariantDto>
                     {
-                        ProductColorId = targetProductColor.ProductColorId,
-                        ColorId = targetProductColor.ColorId,
-                        LensId = targetProductColor.LensId,
-                        Color = targetProductColor.Color != null ? new ResponseColorDto
+                        new ResponseProductVariantDto
                         {
-                            ColorId = targetProductColor.Color.ColorId,
-                            ColorName = targetProductColor.Color.ColorName,
-                            ColorPrefix = targetProductColor.Color.ColorPrefix,
-                            HexCode = targetProductColor.Color.HexCode
-                        } : null,
-                        ProductVariants = new List<ResponseProductVariantDto>
-                        {
-                            new ResponseProductVariantDto
-                            {
-                                ProductVariantId = targetVariant.ProductVariantId,
-                                SizeId = targetVariant.SizeId,
-                                VariantName = targetVariant.VariantName,
-                                Quantity = targetVariant.Quantity,
-                                ImageUrl = targetVariant.ImageUrl,
-                                Status = targetVariant.Status,
-                                ProductWeight = targetVariant.ProductWeight,
-                                ProductLength = targetVariant.ProductLength,
-                                ProductWidth = targetVariant.ProductWidth,
-                                ProductHeight = targetVariant.ProductHeight,
-                                Size = targetVariant.Size != null ? new ResponseSizeDto
-                                {
-                                    SizeId = targetVariant.Size.SizeId,
-                                    SizeCode = targetVariant.Size.SizeCode
-                                } : null,
-                                ProductImages = targetProductColor.ProductImages.Select(pi => new ResponseProductImageDto
-                                {
-                                    ProductImageId = pi.ProductImageId,
-                                    ImageUrl = pi.ImageUrl
-                                }).ToList()
-                            }
+                            ProductVariantId = targetVariant.ProductVariantId,
+                            SizeId = targetVariant.SizeId,
+                            VariantName = targetVariant.VariantName,
+                            Quantity = targetVariant.Quantity,
+                            ImageUrl = targetVariant.ImageUrl,
+                            Status = targetVariant.Status,
+                            ProductWeight = targetVariant.ProductWeight,
+                            ProductLength = targetVariant.ProductLength,
+                            ProductWidth = targetVariant.ProductWidth,
+                            ProductHeight = targetVariant.ProductHeight,
+                            Size = _mapper.Map<ResponseSizeDto>(targetVariant.Size),
+                            ProductImages = targetProductColor.ProductImages
+                                .Select(pi => _mapper.Map<ResponseProductImageDto>(pi))
+                                .ToList()
                         }
                     }
                 }
             };
+
+            return response;
         }
 
         public async Task<MessageModelWithData<Product>> CreateProductAsync(CreateProductRequest request)
