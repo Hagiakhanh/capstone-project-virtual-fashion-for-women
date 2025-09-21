@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.DBContext;
 using VirtualTryonWomenFashion.Data.GenericRepository;
 using VirtualTryonWomenFashion.Data.IRepositories;
@@ -24,6 +25,31 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Select(c => c.ProductSlug)
                 .ToListAsync();
         }
+
+        public async Task<List<Product>> GetAllProductsWithIncludes(PaginationParameter? pagination = null)
+        {
+            IQueryable<Product> query = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.ProductColors).ThenInclude(pc => pc.Color)
+                .Include(p => p.ProductColors).ThenInclude(pc => pc.ProductImages)
+                .Include(p => p.ProductColors).ThenInclude(pc => pc.ProductVariants).ThenInclude(pv => pv.Size);
+
+            // lọc product không bị xóa
+            query = query.Where(p => p.IsDeleted != true);
+
+            // sắp xếp
+            query = query.OrderByDescending(p => p.CreatedAt);
+
+            // phân trang
+            if (pagination != null)
+            {
+                query = query.Skip((pagination.PageIndex - 1) * pagination.PageSize)
+                             .Take(pagination.PageSize);
+            }
+
+            return await query.ToListAsync();
+        }
+
 
         public async Task<Product> GetProductBySlugAsync(string slug)
         {
