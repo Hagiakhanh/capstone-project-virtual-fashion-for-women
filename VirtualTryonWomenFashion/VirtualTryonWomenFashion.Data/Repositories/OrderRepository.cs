@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,13 @@ namespace VirtualTryonWomenFashion.Data.Repositories
     {
         public OrderRepository(VirtualTryonWomenFashionContext context) : base(context)
         {
+        }
+
+        public async Task<Order?> GetOrderByOrderID(int orderID)
+        {
+            return await _context.Orders.Include(x => x.OrderDetails)
+                .ThenInclude(x => x.ProductVariant)
+                .SingleOrDefaultAsync(x => x.OrderId == orderID);
         }
     }
 }
