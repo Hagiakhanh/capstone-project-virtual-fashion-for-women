@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using VirtualTryonWomenFashion.Data.DBContext;
 using VirtualTryonWomenFashion.Data.GenericRepository;
 using VirtualTryonWomenFashion.Data.IRepositories;
@@ -14,6 +15,14 @@ namespace VirtualTryonWomenFashion.Data.Repositories
     {
         public TransactionRepository(VirtualTryonWomenFashionContext context) : base(context)
         {
+        }
+
+        public async Task<Transaction?> GetTransactionByThirdPartyId(string thirdPartyId)
+        {
+            var transaction = await _context.Transactions
+                .Where(x => x.ThirdPartyCode == thirdPartyId)
+                .FirstOrDefaultAsync();
+            return transaction;
         }
     }
 }

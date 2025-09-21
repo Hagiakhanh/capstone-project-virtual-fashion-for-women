@@ -9,7 +9,10 @@ using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.Cart;
 using VirtualTryonWomenFashion.Service.DTO.Order;
+using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
+using VirtualTryonWomenFashion.Service.DTO.User;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Mappers;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -20,7 +23,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IOrderDetailService _orderDetailService;
         private readonly ICurrentUserService _currentUserService;
         private readonly ICartService _cartService;
-        private readonly IProductColorService _productColorService;
+        private readonly IProductVariantService _productVariantService;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -28,7 +31,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             IOrderDetailService orderDetailService,
             ICurrentUserService currentUserService,
             ICartService cartService,
-            IProductColorService productColorService
+            IProductVariantService productVariantService
             )
         {
             _orderRepository = orderRepository;
@@ -36,11 +39,10 @@ namespace VirtualTryonWomenFashion.Service.Services
             _orderDetailService = orderDetailService;
             _currentUserService = currentUserService;
             _cartService = cartService;
-            _productColorService = productColorService;
+            _productVariantService = productVariantService;
         }
-        public async Task<string> CreateOrderAsync(RequestCreateOrder requestCreateOrder)
+        public async Task<Order> CreateOrderAsync(RequestCreateOrder requestCreateOrder)
         {
-            await _unitOfWork.BeginTransactionAsync();
             try
             {
                 int userId = _currentUserService.GetUserId();
@@ -70,25 +72,33 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveChanges();
                 List<OrderDetail> orderDetails = new List<OrderDetail>();
+                List<string> productVariantIds = new List<string>();
                 foreach (var item in cartItems)
                 {
-                    var productColor = await _productColorService.GetProductColorByIdAsync(item.ProductVariant.ProductColorId);
+                    var responseGetVariantPriceInfo = await _productVariantService.GetVariantPriceInfoAsync(item.ProductVariantId);
+                    var productVariant = await _productVariantService.GetProductVariantById(item.ProductVariantId);
+                    
                     OrderDetail orderDetail = new OrderDetail()
                     {
                         OrderId = order.OrderId,
                         ProductVariantId = item.ProductVariantId,
                         Quantity = item.Quantity,
-                        PriceAtTime =(decimal)productColor.Product.Price,
-                        CampaignId = null
+                        PriceAtTime =(decimal)responseGetVariantPriceInfo.CurrentPrice,
+                        CampaignId = responseGetVariantPriceInfo.HasActiveCampaign ? responseGetVariantPriceInfo.SaleCampaignInfo.CampaignId : null
                     };
+                    productVariantIds.Add(item.ProductVariantId);
+                    await _productVariantService.UpdateAsync(item.ProductVariantId,new UpdateProductVariantRequest()
+                    {
+                        Quantity = productVariant?.Quantity - item.Quantity
+                    },true);
                     orderDetails.Add(orderDetail);
                 }
+
+                await _cartService.RemoveMultipleProductsFromCartAsync(productVariantIds);
                 int result = await _orderDetailService.CreateOrderDetailAsync(orderDetails);
                 if (result > 0)
                 {
-                    
-                    await _unitOfWork.CommitTransactionAsync();
-                    return "Create order successfully";
+                    return order;
                 }
                 else
                 {
@@ -98,9 +108,39 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync();
                 Console.WriteLine($"Error occurred while create order in the cart: {ex.Message}.", ex);
                 throw;
+            }
+        }
+
+        public async Task<ResponseOrder?> GetOrderByIdAsync(int orderId)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+            {
+                throw new Exception("Order không tồn tại");
+            }
+
+            var userInformation = new UserInformation();
+            ResponseOrder responseOrder = order.MapToResponseOrder(userInformation);
+            return responseOrder;
+        }
+
+        public async Task<int> UpdateOrderStatusAsync(string status, int orderId)
+        {
+            try
+            {
+                Order order = await _orderRepository.GetByIdAsync(orderId);
+                if (order == null)
+                {
+                    throw new Exception("Order không tồn tại");
+                }
+                order.Status = status;
+                await _orderRepository.UpdateAsync(order);
+                return await _unitOfWork.SaveChanges();
+            }catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi cập nhật trạng thái của order: {ex.Message}");
             }
         }
     }

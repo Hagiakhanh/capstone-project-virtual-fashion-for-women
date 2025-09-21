@@ -19,7 +19,6 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
         private readonly IProductVariantService _productVariantService;
-        private readonly IProductColorService _productColorService;
         private readonly IShippingService _shippingService;
 
         public CartService(
@@ -27,15 +26,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             IUnitOfWork unitOfWork, 
             ICurrentUserService currentUserService,
             IProductVariantService productVariantService,
-            IShippingService shippingService,
-            IProductColorService productColorService)
+            IShippingService shippingService)
         {
             _cartRepository = cartRepository;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
             _productVariantService = productVariantService;
             _shippingService = shippingService;
-            _productColorService = productColorService;
         }
         public async Task<bool> AddProductToCartAsync(RequestAddProductToCart requestAddProductToCart)
         {
@@ -46,12 +43,17 @@ namespace VirtualTryonWomenFashion.Service.Services
             
             if(requestAddProductToCart.Quantity <= 0)
             {
-                throw new Exception("Quantity must be greater than zero.");
+                throw new Exception("Số lượng phải lớn hơn 0.");
             }
-            
+
             if(existingProductVariant == null)
             {
-                throw new Exception("Product not found."); 
+                throw new Exception("Sản phẩm không được tìm thấy."); 
+            }
+            
+            if (requestAddProductToCart.Quantity > existingProductVariant.Quantity)
+            {
+                throw new Exception("Số lượng sản phẩm trong kho không đủ.");
             }
             Cart? existingCartItem = await _cartRepository.GetCartItemByUserIdAndProductId(userId, requestAddProductToCart.ProductVariantId);
             
@@ -86,7 +88,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                throw new Exception($"Error occurred while adding item into the cart: {ex.Message}", ex);
+                throw new Exception($"Lỗi xảy ra khi thêm 1 sản phẩm vào giỏ hàng: {ex.Message}", ex);
             }
            
         }
@@ -99,7 +101,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             if (existingCartItem == null)
             {
-                throw new Exception("Cart item not found.");
+                throw new Exception("Sản phẩm trong cart không được tìm thấy.");
             }
 
             try
@@ -113,25 +115,51 @@ namespace VirtualTryonWomenFashion.Service.Services
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                throw new Exception($"Error occurred while deleting item from the cart: {ex.Message}.", ex);
+                throw new Exception($"Lỗi xảy ra khi xóa 1 sản phẩm trong giỏ hàng: {ex.Message}.", ex);
             }
+        }
+
+        public async Task<int> RemoveMultipleProductsFromCartAsync(List<string> productVariantIds)
+        {
+            int userId = _currentUserService.GetUserId();
+            List<Cart> listItemsInCart = new List<Cart>();
+            foreach (var variantId in productVariantIds)
+            {
+            Cart? existingCartItem = await _cartRepository.GetCartItemByUserIdAndProductId(userId, variantId);
+            if(existingCartItem !=null) listItemsInCart.Add(existingCartItem);
+            }
+
+            _cartRepository.DeleteRange(listItemsInCart);
+            return await _unitOfWork.SaveChanges();
         }
 
         public async Task<bool> UpdateProductQuantityAsync(RequestAddProductToCart requestAddProductToCart)
         {
             int userId = _currentUserService.GetUserId();
 
+            ProductVariant? existingProductVariant = await _productVariantService.GetProductVariantById(requestAddProductToCart.ProductVariantId);
             Cart? existingCartItem = await _cartRepository.GetCartItemByUserIdAndProductId(userId, requestAddProductToCart.ProductVariantId);
 
             if (existingCartItem == null)
             {
-                throw new Exception("Cart item not found.");
+                throw new Exception("Sản phẩm trong cart không được tìm thấy.");
             }
             
             if(requestAddProductToCart.Quantity <= 0)
             {
-                throw new Exception("Quantity must be greater than zero.");
+                throw new Exception("Số lượng phải lớn hơn 0.");
             }
+            
+            if(existingProductVariant == null)
+            {
+                throw new Exception("Sản phẩm không được tìm thấy."); 
+            }
+            
+            if (requestAddProductToCart.Quantity > existingProductVariant.Quantity)
+            {
+                throw new Exception("Số lượng sản phẩm trong kho không đủ.");
+            }
+            
             try
             {
                 await _unitOfWork.BeginTransactionAsync();
@@ -144,7 +172,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
-                throw new Exception($"Error occurred while updating item in the cart: {ex.Message}.", ex);
+                throw new Exception($"Lỗi xảy ra khi cập nhật số lượng sản phẩm trong giỏ hàng: {ex.Message}.", ex);
             }
         }
 
@@ -171,7 +199,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             bool existingItemsNotInCart = productVariantIds.Except(cartItems.Select(c => c.ProductVariantId)).Any();
             if(existingItemsNotInCart)
             {
-                throw new Exception("Some products are not in the cart.");
+                throw new Exception("Có 1 vài sản phẩm không nằm trong giỏ hàng khi checkout.");
             }
             return cartItems.Where(c => productVariantIds.Contains(c.ProductVariantId)).ToList();
         }
@@ -188,9 +216,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             
             foreach (var cartItem in selectedCartItems)
             {
-                var productColor = await _productColorService.GetProductColorByIdAsync(cartItem.ProductVariant.ProductColorId);
+                var responseGetVariantPriceInfo  = await _productVariantService.GetVariantPriceInfoAsync(cartItem.ProductVariantId);
 
-                int productPrice = (int)Math.Ceiling((cartItem.Quantity * productColor.Product.Price) ?? 0);
+                int productPrice = (int)Math.Ceiling((cartItem.Quantity * responseGetVariantPriceInfo.CurrentPrice) ?? 0);
                 totalProductPrice += productPrice;
             }
             int provinceId = await _shippingService.GetProvinceId(requestCheckout.ProvinceName);

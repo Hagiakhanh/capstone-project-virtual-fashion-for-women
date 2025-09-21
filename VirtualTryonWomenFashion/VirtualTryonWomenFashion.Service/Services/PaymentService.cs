@@ -7,6 +7,9 @@ using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.Momo;
+using VirtualTryonWomenFashion.Service.DTO.Order;
+using VirtualTryonWomenFashion.Service.DTO.OrderDetail;
+using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -15,37 +18,52 @@ namespace VirtualTryonWomenFashion.Service.Services;
 public class PaymentService : IPaymentService
 {
     private readonly IConfiguration _configuration;
+    private readonly ITransactionService _transactionService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IOrderService _orderService;
+    private readonly IOrderDetailService _orderDetailService;
+    private readonly IProductVariantService _productVariantService;
 
     public PaymentService(
         IConfiguration configuration,
         IUnitOfWork unitOfWork,
-        ICurrentUserService currentUserService
+        ICurrentUserService currentUserService,
+        ITransactionService transactionService,
+        IOrderService orderService,
+        IOrderDetailService orderDetailService,
+        IProductVariantService productVariantService
     )
     {
         _configuration = configuration;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
+        _transactionService = transactionService;
+        _orderService = orderService;
+        _orderDetailService = orderDetailService;
+        _productVariantService = productVariantService;
     }
 
-    public async Task<string> CreatePaymentUrlInMomoAsync(decimal amount)
+    public async Task<string> CreatePaymentUrlInMomoAsync(Order order)
     {
         try
         {
             int userId = _currentUserService.GetUserId();
-
-            if (amount < 1000 || amount > 50000000)
+            decimal totalAmount = (decimal)(order.Amount + order.ShippingMoney);
+            if (totalAmount < 1000 || totalAmount > 50000000)
             {
                 throw new Exception("Số tiền thanh toán phải từ 1.000 VNĐ đến 50.000.000 VNĐ");
             }
+
             Transaction transaction = new Transaction()
             {
                 UserId = userId,
                 Status = TransactionStatusEnum.Pending.ToString(),
-                Money = amount,
+                Money = totalAmount,
                 Method = "Momo",
                 CreatedAt = DateTime.UtcNow.AddHours(7),
+                UpdatedAt = DateTime.UtcNow.AddHours(7),
+                OrderId = order.OrderId
             };
 
             string endpoint = _configuration["MomoPayment:BaseUrl"];
@@ -59,12 +77,12 @@ public class PaymentService : IPaymentService
 
             string orderId = Guid.NewGuid().ToString();
             string requestId = Guid.NewGuid().ToString();
-            string orderInfo = $"Khách hàng {userId} thanh toán đơn hàng giá trị {amount} VNĐ";
+            string orderInfo = $"Khách hàng {userId} thanh toán đơn hàng giá trị {totalAmount} VNĐ";
 
             transaction.ThirdPartyCode = requestId;
             string rawSignature =
                 $"accessKey={accessKey}" +
-                $"&amount={amount}" +
+                $"&amount={totalAmount}" +
                 $"&extraData={extraData}" +
                 $"&ipnUrl={ipnUrl}" +
                 $"&orderId={orderId}" +
@@ -86,7 +104,7 @@ public class PaymentService : IPaymentService
                     ipnUrl = ipnUrl,
                     redirectUrl = redirectUrl,
                     orderId = orderId,
-                    amount = amount,
+                    amount = totalAmount,
                     orderInfo = orderInfo,
                     requestId = requestId,
                     extraData = extraData,
@@ -109,6 +127,7 @@ public class PaymentService : IPaymentService
 
                 if (!string.IsNullOrEmpty(paymentUrl))
                 {
+                    await _transactionService.CreateTransactionAsync(transaction);
                     return paymentUrl;
                 }
                 else
@@ -125,27 +144,144 @@ public class PaymentService : IPaymentService
         }
     }
 
-    public Task<string> HandleMomoCallback(MomoReturnModel momoReturnModel)
+    public async Task<string> HandleMomoCallback(MomoReturnModel momoReturnModel)
     {
-        throw new NotImplementedException();
+        try
+        {
+            // Xử lý callback từ Momo
+            // Kiểm tra chữ ký để xác thực tính hợp lệ của dữ liệu
+            
+            string secretKey = _configuration["MomoPayment:SecretKey"];
+            string accessKey = _configuration["MomoPayment:AccessKey"];
+            string rawSignature =
+                $"accessKey={accessKey}" +
+                $"&amount={momoReturnModel.amount}" +
+                $"&extraData={momoReturnModel.extraData}" +
+                $"&message={momoReturnModel.message}" +
+                $"&orderId={momoReturnModel.orderId}" +
+                $"&orderInfo={momoReturnModel.orderInfo}" +
+                $"&orderType={momoReturnModel.orderType}" +
+                $"&partnerCode={momoReturnModel.partnerCode}" +
+                $"&payType={momoReturnModel.payType}" +
+                $"&requestId={momoReturnModel.requestId}" +
+                $"&responseTime={momoReturnModel.responseTime}" +
+                $"&resultCode={momoReturnModel.resultCode}" +
+                $"&transId={momoReturnModel.transId}";
+
+            string computedSignature = ComputeHmacSha256(rawSignature, secretKey);
+
+            if (computedSignature != momoReturnModel.signature)
+            {
+                throw new Exception("Chữ ký không hợp lệ.");
+            }
+
+            var transaction = await _transactionService.GetTransactionByThirdPartyIdAsync(momoReturnModel.requestId);
+            // Cập nhật trạng thái giao dịch và đơn hàng dựa trên resultCode
+            // resultCode = 0 nghĩa là thanh toán thành công
+            if (momoReturnModel.resultCode == 0)
+            {
+                
+                transaction.Status = TransactionStatusEnum.Success.ToString();
+                transaction.UpdatedAt = DateTime.UtcNow.AddHours(7);
+                await _transactionService.UpdateTransactionStatusAsync(transaction);
+                
+                ResponseOrder responseOrder = await _orderService.GetOrderByIdAsync(transaction.OrderId);
+                if (responseOrder == null)
+                {
+                    throw new Exception("Đơn hàng không tồn tại.");
+                }
+                
+                // Cập nhật trạng thái đơn hàng thành "Confirmed"
+                await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(), responseOrder.OrderId);
+                // Tạo đơn hàng trên giao hàng nhanh 
+
+            }
+            else
+            {
+                transaction.Status = TransactionStatusEnum.Failed.ToString();
+                transaction.UpdatedAt = DateTime.UtcNow.AddHours(7);
+                await _transactionService.UpdateTransactionStatusAsync(transaction);
+                
+                ResponseOrder responseOrder = await _orderService.GetOrderByIdAsync(transaction.OrderId);
+                if (responseOrder == null)
+                {
+                    throw new Exception("Đơn hàng không tồn tại.");
+                }
+                
+                // Cập nhật trạng thái đơn hàng thành "Failed"
+                await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Failed.ToString(), responseOrder.OrderId);
+                
+                // Trả lại số lượng sản phẩm về kho 
+                List<ResponseOrderDetail> listResponseOrderDetail =
+                    await _orderDetailService.GetOrderDetailsByOrderIdAsync(responseOrder.OrderId);
+                foreach (var item in listResponseOrderDetail)
+                {
+                    await _productVariantService.UpdateAsync(item.ResponseProductVariantDto.ProductVariantId,new UpdateProductVariantRequest()
+                    {
+                        Quantity = item.ResponseProductVariantDto.Quantity + item.Quantity
+                    });
+                }
+            }
+
+            return "Xử lý callback thành công";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi xử lý callback từ Momo: {ex.Message}");
+            throw;
+        }
     }
 
-    public async Task<string> CreatePaymentUrlInVnPayAsync(decimal amount)
+    public async Task<string> CreatePaymentAsync(RequestCreateOrder requestCreateOrder)
+    {
+        await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            Order order = await _orderService.CreateOrderAsync(requestCreateOrder);
+            string paymentUrl = "";
+            if (PaymentMethodEnum.Momo.ToString() == requestCreateOrder.PaymentMethod)
+            {
+                paymentUrl = await this.CreatePaymentUrlInMomoAsync(order);
+            }
+            else if (PaymentMethodEnum.VnPay.ToString() == requestCreateOrder.PaymentMethod)
+            {
+                paymentUrl = await this.CreatePaymentUrlInVnPayAsync(order);
+            }
+            else
+            {
+                throw new Exception("Unsupported payment method");
+            }
+
+            await _unitOfWork.CommitTransactionAsync();
+            return paymentUrl;
+        }
+        catch (Exception ex)
+        {
+            await _unitOfWork.RollbackTransactionAsync();
+            throw new Exception($"Error creating payment: {ex.Message}");
+        }
+    }
+
+    public async Task<string> CreatePaymentUrlInVnPayAsync(Order order)
     {
         try
         {
             int userId = _currentUserService.GetUserId();
-            if (amount < 5000 || amount > 1000000000)
+            decimal totalAmount = (decimal)(order.Amount + order.ShippingMoney);
+            if (totalAmount < 5000 || totalAmount > 1000000000)
             {
                 throw new Exception("Số tiền thanh toán phải nằm trong khoảng 5.000 (VND) đến 1.000.000.000 (VND).");
             }
+
             Transaction transaction = new Transaction()
             {
                 UserId = userId,
                 Status = TransactionStatusEnum.Pending.ToString(),
-                Money = amount,
+                Money = totalAmount,
                 Method = "VnPay",
                 CreatedAt = DateTime.UtcNow.AddHours(7),
+                UpdatedAt = DateTime.UtcNow.AddHours(7),
+                OrderId = order.OrderId
             };
 
             string version = _configuration["VnPayPayment:Version"];
@@ -163,14 +299,14 @@ public class PaymentService : IPaymentService
             var ipAddress = VnPayUtils.GetIpAddress(context);
             var vnPayLibrary = new VnPayLibrary();
 
-            string orderInfo = $"Khach hang {userId} thanh toan don hang gia tri {amount} VND";
+            string orderInfo = $"Khach hang {userId} thanh toan don hang gia tri {totalAmount} VND";
             string thirdPartyCode = Guid.NewGuid().ToString();
 
             //Thêm dữ liệu vào request VNpay
             vnPayLibrary.AddRequestData("vnp_Version", version);
             vnPayLibrary.AddRequestData("vnp_Command", command);
             vnPayLibrary.AddRequestData("vnp_TmnCode", tmnCode);
-            vnPayLibrary.AddRequestData("vnp_Amount", ((int)(amount * 100)).ToString());
+            vnPayLibrary.AddRequestData("vnp_Amount", ((int)(totalAmount * 100)).ToString());
             vnPayLibrary.AddRequestData("vnp_BankCode", vnpayBank);
             vnPayLibrary.AddRequestData("vnp_CreateDate", dateTime.ToString("yyyyMMddHHmmss"));
             vnPayLibrary.AddRequestData("vnp_CurrCode", currCode);
@@ -192,6 +328,7 @@ public class PaymentService : IPaymentService
             }
 
             // Trả về URL thanh toán
+            await _transactionService.CreateTransactionAsync(transaction);
             return paymentUrl;
         }
         catch (Exception ex)
@@ -199,6 +336,7 @@ public class PaymentService : IPaymentService
             throw new Exception($"Error creating vnpay payment URL: {ex.Message}");
         }
     }
+
 
     private string ComputeHmacSha256(string message, string secretKey)
     {

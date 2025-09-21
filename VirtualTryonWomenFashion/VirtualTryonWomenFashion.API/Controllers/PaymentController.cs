@@ -1,6 +1,7 @@
 ﻿using Azure;
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Service.DTO.Momo;
+using VirtualTryonWomenFashion.Service.DTO.Order;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -16,7 +17,7 @@ public class PaymentController : ControllerBase
         _paymentService = paymentService;
     }
 
-    [HttpPost("create-momo-payment-url")]
+    /*[HttpPost("create-momo-payment-url")]
     public async Task<IActionResult> CreateMomoPaymentUrl([FromQuery] decimal amount)
     {
         try
@@ -38,17 +39,18 @@ public class PaymentController : ControllerBase
                 Data = null
             });
         }
-    }
+    }*/
     
     [HttpPost("momo/momo-callback")]
-    public IActionResult MomoCallback([FromBody] MomoReturnModel momoReturnModel)
+    public async Task<IActionResult> MomoCallback([FromBody] MomoReturnModel momoReturnModel)
     {
         Console.WriteLine("===== Momo Callback Data =====");
         Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(momoReturnModel));
+        await _paymentService.HandleMomoCallback(momoReturnModel);
         return Ok(momoReturnModel);
     }
    
-    [HttpPost("create-vnpay-payment-url")]
+    /*[HttpPost("create-vnpay-payment-url")]
     public async Task<IActionResult> CreateVnPayPaymentUrl([FromQuery] decimal amount)
     {
         try
@@ -70,7 +72,7 @@ public class PaymentController : ControllerBase
                 Data = null
             });
         }
-    }
+    }*/
     
     [HttpGet("vnpay/vnpay-callback")]
     public IActionResult VnPayCallback()
@@ -100,5 +102,32 @@ public class PaymentController : ControllerBase
             Message = "Không tìm thấy thông tin thanh toán từ vnpay: " ,
             Data = null
         });
+    }
+    
+    /// <summary>
+    /// Tạo payment cho đơn hàng khi khách thanh toán
+    /// </summary>
+    [HttpPost("create-payment")]
+    public async Task<IActionResult> CreatePayment([FromBody] RequestCreateOrder requestCreateOrder)
+    {
+        try
+        {
+            string paymentUrl = await _paymentService.CreatePaymentAsync(requestCreateOrder);
+            return Ok(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Tạo URL thanh toán thành công",
+                Data = paymentUrl
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = "Tạo URL thanh toán thất bại: " + ex.Message,
+                Data = null
+            });
+        }
     }
 }
