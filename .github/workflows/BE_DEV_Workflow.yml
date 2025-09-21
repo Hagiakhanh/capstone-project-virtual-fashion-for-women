@@ -1,0 +1,48 @@
+name: BE build testing CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - 'BE' 
+  pull_request:
+    branches:
+      - 'BE'
+
+jobs:
+  restore-deps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore solution
+        working-directory: ./VirtualTryonWomenFashion
+        run: dotnet restore VirtualTryonWomenFashion.sln
+
+
+  build-app-service:
+    runs-on: ubuntu-latest
+    needs: restore-deps   
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build solution
+        working-directory: ./VirtualTryonWomenFashion
+        run: dotnet build VirtualTryonWomenFashion.sln --configuration Release --no-restore
