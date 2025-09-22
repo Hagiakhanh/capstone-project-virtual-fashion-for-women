@@ -20,7 +20,8 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         public async Task<ProductVariant> GetVariantWithProductAsync(string variantId)
         {
             return await _context.ProductVariants
-                .Include(v => v.ProductColor) // nạp ProductColor
+                .Include(v => v.ProductColor)
+                .ThenInclude(pv => pv.Product)// nạp ProductColor
                 .FirstOrDefaultAsync(v => v.ProductVariantId == variantId);
         }
     }

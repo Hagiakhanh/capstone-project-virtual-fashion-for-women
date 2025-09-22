@@ -152,7 +152,7 @@ public class CartController : ControllerBase
             return BadRequest(new MessageModelWithData<object>()
             {
                 StatusCode = StatusCodes.Status400BadRequest,
-                Message = " Invalid input data",
+                Message = ModelState.Values.First().Errors.First().ErrorMessage,
                 Data = null
             });
         }
@@ -187,9 +187,18 @@ public class CartController : ControllerBase
     }
     
     // Đang bị lỗi chưa fix được
-    /*[HttpPost("checkout")]
+    [HttpPost("checkout")]
     public async Task<IActionResult> CheckoutAsync([FromBody] RequestCheckout requestCheckout)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = ModelState.Values.First().Errors.First().ErrorMessage,
+                Data = null
+            });
+        }
         try
         {
             var checkoutDetails = await _cartService.CheckoutAsync(requestCheckout);
@@ -210,6 +219,4 @@ public class CartController : ControllerBase
             });
         }
     }
-    */
-    
 }

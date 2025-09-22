@@ -25,6 +25,8 @@ public partial class Transaction
 
     public DateTime CreatedAt { get; set; }
 
+    public string ThirdPartyOrderIdCode { get; set; }
+
     public virtual Order Order { get; set; }
 
     public virtual User User { get; set; }

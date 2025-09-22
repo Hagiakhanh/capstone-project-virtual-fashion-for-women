@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Storage;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
@@ -124,9 +125,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<MessageModelWithData<ProductVariant>> UpdateAsync(string productVariantId, UpdateProductVariantRequest request)
+        public async Task<MessageModelWithData<ProductVariant>> UpdateAsync(string productVariantId, UpdateProductVariantRequest request, bool useExistingTransaction = false)
         {
-            await _unitOfWork.BeginTransactionAsync();
+            if(!useExistingTransaction) await _unitOfWork.BeginTransactionAsync();
 
             try
             {
@@ -180,10 +181,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                 existingVariant.ProductWidth = request.ProductWidth ?? existingVariant.ProductWidth;
                 existingVariant.ProductHeight = request.ProductHeight ?? existingVariant.ProductHeight;
 
-                _productVariantRepository.UpdateAsync(existingVariant);
+                await _productVariantRepository.UpdateAsync(existingVariant);
                 int result = await _unitOfWork.SaveChanges();
 
-                await _unitOfWork.CommitTransactionAsync();
+                if(!useExistingTransaction) await _unitOfWork.CommitTransactionAsync();
 
                 if (result > 0)
                 {
@@ -203,7 +204,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync();
+                if(!useExistingTransaction) await _unitOfWork.RollbackTransactionAsync();
                 return new MessageModelWithData<ProductVariant>
                 {
                     Message = "Cập nhật thất bại: Lỗi hệ thống",
@@ -316,5 +317,19 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
+        public async Task UpdateQuantityAsync(Dictionary<string, int> variantAdjustments)
+        {
+            var productVariantIds = variantAdjustments.Keys.ToList();
+            var productVariants = await _productVariantRepository.GetAll(
+                filter: pv => productVariantIds.Contains(pv.ProductVariantId)
+            );
+            foreach (var variant in productVariants)
+            {
+                variant.Quantity += variantAdjustments[variant.ProductVariantId];
+            }
+            if(productVariants == null || productVariants.Count() == 0) return;
+            await _productVariantRepository.UpdateRangeAsync(productVariants);
+            await _unitOfWork.SaveChanges();
+        }
     }
 }

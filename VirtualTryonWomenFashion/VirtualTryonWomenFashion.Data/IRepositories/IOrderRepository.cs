@@ -11,5 +11,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     public interface IOrderRepository : IGenericRepository<Order>
     {
         public Task<Order?> GetOrderByOrderID(int orderID);
+        public Task<List<Order>> GetOrdersByStatus(string status);
     }
 }

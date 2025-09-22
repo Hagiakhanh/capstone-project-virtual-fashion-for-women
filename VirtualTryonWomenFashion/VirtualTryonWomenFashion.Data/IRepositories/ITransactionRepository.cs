@@ -10,5 +10,7 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface ITransactionRepository : IGenericRepository<Transaction>
     {
+        public Task<Transaction?> GetTransactionByThirdPartyId(string thirdPartyId);
+        public Task<Transaction?> GetTransactionByOrderId(int orderId);
     }
 }
