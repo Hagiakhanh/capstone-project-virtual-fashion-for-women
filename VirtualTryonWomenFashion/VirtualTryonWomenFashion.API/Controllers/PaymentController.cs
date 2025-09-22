@@ -17,30 +17,6 @@ public class PaymentController : ControllerBase
         _paymentService = paymentService;
     }
 
-    /*[HttpPost("create-momo-payment-url")]
-    public async Task<IActionResult> CreateMomoPaymentUrl([FromQuery] decimal amount)
-    {
-        try
-        {
-            string paymentUrl = await _paymentService.CreatePaymentUrlInMomoAsync(amount);
-            return Ok(new MessageModelWithData<object>()
-            {
-                StatusCode = StatusCodes.Status200OK,
-                Message = "Tạo URL thanh toán MoMo thành công",
-                Data = paymentUrl
-            });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new MessageModelWithData<object>()
-            {
-                StatusCode = StatusCodes.Status400BadRequest,
-                Message = "Tạo URL thanh toán MoMo thất bại: " + ex.Message,
-                Data = null
-            });
-        }
-    }*/
-    
     [HttpPost("momo/momo-callback")]
     public async Task<IActionResult> MomoCallback([FromBody] MomoReturnModel momoReturnModel)
     {
@@ -50,29 +26,6 @@ public class PaymentController : ControllerBase
         return Ok(momoReturnModel);
     }
    
-    /*[HttpPost("create-vnpay-payment-url")]
-    public async Task<IActionResult> CreateVnPayPaymentUrl([FromQuery] decimal amount)
-    {
-        try
-        {
-            string paymentUrl = await _paymentService.CreatePaymentUrlInVnPayAsync(amount);
-            return Ok(new MessageModelWithData<object>()
-            {
-                StatusCode = StatusCodes.Status200OK,
-                Message = "Tạo URL thanh toán VnPay thành công",
-                Data = paymentUrl
-            });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new MessageModelWithData<object>()
-            {
-                StatusCode = StatusCodes.Status400BadRequest,
-                Message = "Tạo URL thanh toán Vnpay thất bại: " + ex.Message,
-                Data = null
-            });
-        }
-    }*/
     
     [HttpGet("vnpay/vnpay-callback")]
     public IActionResult VnPayCallback()
