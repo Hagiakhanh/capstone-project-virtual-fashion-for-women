@@ -226,14 +226,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _orderRepository.UpdateRangeAsync(successfulOrders);
             await _unitOfWork.SaveChanges();
         }
-        private readonly IOrderRepository _orderRepository;
-        private readonly IUnitOfWork _unitOfWork;
-
-        public OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWork)
-        {
-            _orderRepository = orderRepository;
-            _unitOfWork = unitOfWork;
-        }
+        
         public async Task<MessageModelWithData<List<ResponseOrderForStaff>>> GetAllOrderForStaff(PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease)
         {
             List<Order> listOrder = new();
