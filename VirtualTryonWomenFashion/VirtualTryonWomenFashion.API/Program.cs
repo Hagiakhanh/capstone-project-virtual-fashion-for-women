@@ -108,6 +108,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddHostedService<SaleCampaignWorkerService>();
+//builder.Services.AddHostedService<PaymentWorkerService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -9,6 +9,7 @@ using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.Cart;
 using VirtualTryonWomenFashion.Service.DTO.Order;
+using VirtualTryonWomenFashion.Service.DTO.OrderDetail;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
 using VirtualTryonWomenFashion.Service.DTO.User;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -86,18 +87,19 @@ namespace VirtualTryonWomenFashion.Service.Services
                         PriceAtTime =(decimal)responseGetVariantPriceInfo.CurrentPrice,
                         CampaignId = responseGetVariantPriceInfo.HasActiveCampaign ? responseGetVariantPriceInfo.SaleCampaignInfo.CampaignId : null
                     };
-                    productVariantIds.Add(item.ProductVariantId);
                     await _productVariantService.UpdateAsync(item.ProductVariantId,new UpdateProductVariantRequest()
                     {
                         Quantity = productVariant?.Quantity - item.Quantity
                     },true);
+                    productVariantIds.Add(item.ProductVariantId);
                     orderDetails.Add(orderDetail);
                 }
+                
 
-                await _cartService.RemoveMultipleProductsFromCartAsync(productVariantIds);
                 int result = await _orderDetailService.CreateOrderDetailAsync(orderDetails);
                 if (result > 0)
                 {
+                    await _cartService.HideCartItemsAsync(productVariantIds);
                     return order;
                 }
                 else
@@ -113,12 +115,17 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<ResponseOrder?> GetOrderByIdAsync(int orderId)
+        public async Task<ResponseOrder?> GetOrderByIdAsync(int orderId, int userId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
             {
                 throw new Exception("Order không tồn tại");
+            }
+            
+            if(order.CustomerId != userId)
+            {
+                throw new Exception("Bạn không có quyền xem đơn hàng này");
             }
 
             var userInformation = new UserInformation();
@@ -142,6 +149,73 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 throw new Exception($"Lỗi khi cập nhật trạng thái của order: {ex.Message}");
             }
+        }
+
+        public async Task<int> UpdatePaymentUrlAsync(string paymentUrl, int orderId)
+        {
+            try
+            {
+                Order order = await _orderRepository.GetByIdAsync(orderId);
+                if (order == null)
+                {
+                    throw new Exception("Order không tồn tại");
+                }
+                order.PaymentUrl = paymentUrl;
+                await _orderRepository.UpdateAsync(order);
+                return await _unitOfWork.SaveChanges();
+            }catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi cập nhật link thanh toán của order: {ex.Message}");
+            }
+        }
+
+        public async Task<List<Order>> GetOrdersByStatusAsync(string status)
+        {
+            var orders = await _orderRepository.GetOrdersByStatus(OrderStatusEnum.Pending.ToString());
+            return orders;
+        }
+
+        public async Task HandleFailedOrders(List<Order> failedOrders)
+        {
+            var allOrderDetails =
+                await _orderDetailService.GetOrderDetailsByOrderIdsAsync(failedOrders.Select(o => o.OrderId).ToList());
+            
+            var variantQuantityAdjustments = new Dictionary<string, int>();
+            foreach (var detail in allOrderDetails)
+            {
+                if (!variantQuantityAdjustments.ContainsKey(detail.ProductVariantId))
+                    variantQuantityAdjustments[detail.ProductVariantId] = 0;
+
+                variantQuantityAdjustments[detail.ProductVariantId] += detail.Quantity;
+            }
+
+            await _productVariantService.UpdateQuantityAsync(variantQuantityAdjustments);
+            
+            foreach (var order in failedOrders)
+            {
+                order.Status = OrderStatusEnum.Failed.ToString();
+                order.PaymentUrl = null;
+            }
+
+            if(failedOrders == null || failedOrders.Count == 0)
+                return;
+            await _orderRepository.UpdateRangeAsync(failedOrders);
+            await _unitOfWork.SaveChanges();
+
+        }
+
+        public async Task HandleSuccessfulOrders(List<Order> successfulOrders)
+        {
+            foreach (var order in successfulOrders)
+            {
+                order.Status = OrderStatusEnum.Confirmed.ToString();
+                order.PaymentUrl = null;
+            }
+
+            if(successfulOrders == null || successfulOrders.Count == 0)
+                return;
+            await _orderRepository.UpdateRangeAsync(successfulOrders);
+            await _unitOfWork.SaveChanges();
         }
     }
 }

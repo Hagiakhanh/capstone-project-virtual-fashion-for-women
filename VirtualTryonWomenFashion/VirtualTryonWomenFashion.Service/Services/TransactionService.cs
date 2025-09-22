@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
@@ -56,11 +57,11 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<int> UpdateTransactionStatusAsync(Transaction transaction)
+        public async Task<int> UpdateTransactionStatusAsync(IEnumerable<Transaction> transaction)
         {
             try
             {
-                await _transactionRepository.UpdateAsync(transaction);
+                await _transactionRepository.UpdateRangeAsync(transaction);
                 return await _unitOfWork.SaveChanges();
             }
             catch (Exception ex)
@@ -68,5 +69,25 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception($"Lỗi khi cập nhật trạng thái của transaction: {ex.Message}");
             }
         }
+
+        public async Task<Transaction> GetTransactionByOrderIdAsync(int orderId)
+        {
+            try
+            {
+                var exsitingTransaction = await _transactionRepository.GetTransactionByOrderId(orderId);
+                if (exsitingTransaction == null)
+                {
+                    throw new Exception("Transaction không tồn tại");
+                }
+
+                return exsitingTransaction;
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi tìm transaction theo orderId code: {ex.Message}");
+            }
+        }
+
     }
 }

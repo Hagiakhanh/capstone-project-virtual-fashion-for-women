@@ -66,5 +66,13 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             return listResponseOrderDetail;
         }
+
+        public async Task<List<OrderDetail>> GetOrderDetailsByOrderIdsAsync(List<int> orderIds)
+        {
+            var orderDetails = await _orderDetailRepository.GetAll(
+                filter: od => orderIds.Contains(od.OrderId)
+                );
+            return orderDetails.ToList();
+        }
     }
 }

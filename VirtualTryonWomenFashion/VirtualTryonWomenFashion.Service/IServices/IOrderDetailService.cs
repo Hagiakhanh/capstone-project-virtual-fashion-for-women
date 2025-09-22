@@ -12,5 +12,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
     {
         public Task<int> CreateOrderDetailAsync(List<OrderDetail> createOrderDetails);
         public Task<List<ResponseOrderDetail>> GetOrderDetailsByOrderIdAsync(int orderId);
+        public Task<List<OrderDetail>> GetOrderDetailsByOrderIdsAsync(List<int> orderIds);
     }
 }

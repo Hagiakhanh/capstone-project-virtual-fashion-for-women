@@ -24,5 +24,10 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .FirstOrDefaultAsync();
             return transaction;
         }
+
+        public async Task<Transaction?> GetTransactionByOrderId(int orderId)
+        {
+            return await _context.Transactions.Where(x => x.OrderId == orderId).FirstOrDefaultAsync();
+        }
     }
 }

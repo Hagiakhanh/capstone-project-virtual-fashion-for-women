@@ -11,7 +11,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
     {
         public Task<int> CreateTransactionAsync(Transaction transaction);
         public Task<Transaction> GetTransactionByThirdPartyIdAsync(string thirdPartyId);
-        
-        public Task<int> UpdateTransactionStatusAsync(Transaction transaction);
+        public Task<int> UpdateTransactionStatusAsync(IEnumerable<Transaction> transaction);
+        public Task<Transaction> GetTransactionByOrderIdAsync(int orderId);
     }
 }

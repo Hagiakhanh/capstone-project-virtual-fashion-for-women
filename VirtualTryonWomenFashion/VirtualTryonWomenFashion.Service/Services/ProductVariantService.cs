@@ -317,5 +317,19 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
+        public async Task UpdateQuantityAsync(Dictionary<string, int> variantAdjustments)
+        {
+            var productVariantIds = variantAdjustments.Keys.ToList();
+            var productVariants = await _productVariantRepository.GetAll(
+                filter: pv => productVariantIds.Contains(pv.ProductVariantId)
+            );
+            foreach (var variant in productVariants)
+            {
+                variant.Quantity += variantAdjustments[variant.ProductVariantId];
+            }
+            if(productVariants == null || productVariants.Count() == 0) return;
+            await _productVariantRepository.UpdateRangeAsync(productVariants);
+            await _unitOfWork.SaveChanges();
+        }
     }
 }

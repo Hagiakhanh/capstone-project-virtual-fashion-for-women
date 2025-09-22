@@ -130,4 +130,52 @@ public class PaymentController : ControllerBase
             });
         }
     }
+    
+    [HttpPost("query-momo-transaction-status/{momoOrderId}") ]
+    public async Task<IActionResult> QueryMomoTransactionStatus([FromRoute] int momoOrderId)
+    {
+        try
+        {
+            int status = await _paymentService.QueryTransactionStatusInMomoAsync(momoOrderId);
+            return Ok(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Truy vấn trạng thái giao dịch MoMo thành công",
+                Data = status
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = "Truy vấn trạng thái giao dịch MoMo thất bại: " + ex.Message,
+                Data = null
+            });
+        }
+    }
+    
+    [HttpPost("handle-order-and-transaction-status")]
+    public async Task<IActionResult> HandleOrderAndTransactionStatus()
+    {
+        try
+        {
+            await _paymentService.HandleOrderStatusAndTransactionStatus();
+            return Ok(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Xử lý trạng thái đơn hàng và giao dịch thành công",
+                Data = null
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = "Xử lý trạng thái đơn hàng và giao dịch thất bại: " + ex.Message,
+                Data = null
+            });
+        }
+    }
 }

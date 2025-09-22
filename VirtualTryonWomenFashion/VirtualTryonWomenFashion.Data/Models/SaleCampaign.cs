@@ -19,11 +19,11 @@ public partial class SaleCampaign
 
     public DateTime CreatedAt { get; set; }
 
+    public string Status { get; set; }
+
     public bool IsDeleted { get; set; }
 
     public string ImageUrl { get; set; }
-
-    public string Status { get; set; }
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 

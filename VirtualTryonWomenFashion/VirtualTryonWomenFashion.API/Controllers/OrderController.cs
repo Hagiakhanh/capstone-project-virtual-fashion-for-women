@@ -14,27 +14,4 @@ public class OrderController : ControllerBase
     {
         _orderService = orderService;
     }
-    
-    [HttpPost("create-order")]
-    public async Task<IActionResult> CreateOrder([FromBody] RequestCreateOrder requestCreateOrder)
-    {
-        try
-        {
-            var result = await _orderService.CreateOrderAsync(requestCreateOrder);
-            return Ok(new MessageModelWithData<object>()
-            {
-                StatusCode = StatusCodes.Status200OK,
-                Message = "Create order successfully",
-                Data = result
-            });
-        }catch (Exception e)
-        {
-            return BadRequest(new MessageModelWithData<object>()
-            {
-                StatusCode = StatusCodes.Status400BadRequest,
-                Message = e.Message,
-                Data = null
-            });
-        }
-    }
 }

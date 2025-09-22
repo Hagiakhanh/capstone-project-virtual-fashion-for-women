@@ -97,7 +97,9 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             int userId = _currentUserService.GetUserId();
 
-            Cart? existingCartItem = await _cartRepository.GetCartItemByUserIdAndProductId(userId, productVariantId);
+            Cart? existingCartItem = (await _cartRepository.GetAll(
+                filter: c => c.UserId == userId && c.ProductVariantId == productVariantId 
+            )).FirstOrDefault();
 
             if (existingCartItem == null)
             {
@@ -119,17 +121,52 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<int> RemoveMultipleProductsFromCartAsync(List<string> productVariantIds)
+        public async Task<int> RemoveMultipleProductsFromCartAsync(List<string> productVariantIds, int userId)
+        {
+            List<Cart> listItemsInCart = await _cartRepository.GetAll(
+                filter:c => c.UserId == userId && productVariantIds.Contains(c.ProductVariantId)
+                );
+            
+            if (listItemsInCart == null || !listItemsInCart.Any())
+                return 0;
+            
+            _cartRepository.DeleteRange(listItemsInCart);
+            return await _unitOfWork.SaveChanges();
+        }
+
+        public async Task<int> HideCartItemsAsync(List<string> productVariantIds)
         {
             int userId = _currentUserService.GetUserId();
-            List<Cart> listItemsInCart = new List<Cart>();
-            foreach (var variantId in productVariantIds)
+            List<Cart> listItemsInCart = await _cartRepository.GetAll(
+                filter:c => c.UserId == userId && productVariantIds.Contains(c.ProductVariantId) && !(bool)c.IsDelete
+            );
+            
+            if (listItemsInCart == null || !listItemsInCart.Any())
+                return 0;
+            foreach (var item in listItemsInCart)
             {
-            Cart? existingCartItem = await _cartRepository.GetCartItemByUserIdAndProductId(userId, variantId);
-            if(existingCartItem !=null) listItemsInCart.Add(existingCartItem);
+                item.IsDelete = true;
             }
 
-            _cartRepository.DeleteRange(listItemsInCart);
+            await _cartRepository.UpdateRangeAsync(listItemsInCart);
+            return await _unitOfWork.SaveChanges();
+        }
+
+        public async Task<int> ShowCartItemsAsync(List<string> productVariantIds , int userId)
+        {
+            List<Cart> listItemsInCart =await _cartRepository.GetAll(
+                filter:c => c.UserId == userId && productVariantIds.Contains(c.ProductVariantId)
+            );
+            
+            if (listItemsInCart == null || !listItemsInCart.Any())
+                return 0;
+            
+            foreach (var item in listItemsInCart)
+            {
+                item.IsDelete = false;
+            }
+
+            await _cartRepository.UpdateRangeAsync(listItemsInCart);
             return await _unitOfWork.SaveChanges();
         }
 
