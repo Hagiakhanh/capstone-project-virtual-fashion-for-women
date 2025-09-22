@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.DBContext;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.GenericRepository;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
@@ -81,5 +82,59 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                          && p.IsDeleted != true)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<List<Product>> SearchProductsWithIncludes(string productName, string productSort, PaginationParameter pagination)
+        {
+            var query = _context.Products
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductVariants).ThenInclude(pv => pv.Size)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.Color)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductImages)
+                .Include(p => p.ProductInSaleCampaigns)
+                .Include(p => p.Category)
+                .Where(p => p.IsDeleted != true)
+                .AsQueryable();
+
+            // Filter theo ProductName
+            if (!string.IsNullOrEmpty(productName))
+            {
+                query = query.Where(p => p.ProductName.Contains(productName));
+            }
+
+            // Sort
+            query = productSort switch
+            {
+                "AZ" => query.OrderBy(p => p.ProductName),
+                "ZA" => query.OrderByDescending(p => p.ProductName),
+                "Newest" => query.OrderByDescending(p => p.CreatedAt),
+                "PriceAscending" => query.OrderBy(p => p.Price),
+                "PriceDescending" => query.OrderByDescending(p => p.Price),
+                "BestSelling" => query.OrderByDescending(p =>
+                    p.ProductColors.SelectMany(pc => pc.ProductVariants)
+                                   .SelectMany(v => v.OrderDetails)
+                                   .Sum(od => (int?)od.Quantity) ?? 0),
+                _ => query.OrderBy(p => p.ProductName)
+            };
+
+            return await query
+                .Skip((pagination.PageIndex - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountSearchProductsAsync(string productName)
+        {
+            var query = _context.Products.Where(p => p.IsDeleted != true);
+
+            if (!string.IsNullOrEmpty(productName))
+            {
+                query = query.Where(p => p.ProductName.Contains(productName));
+            }
+
+            return await query.CountAsync();
+        }
+
     }
 }
