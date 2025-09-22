@@ -17,5 +17,8 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<ResponseProductDto> GetProductByVariantIdAsync(string variantId);
         Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParameter pagination);
         Task<MessageModelWithData<Product>> UpdateAsync(string productId, UpdateProductRequest request);
+        Task<ResponsePaginationModel<List<ResponseProductDto>>> SearchProductAsync(
+            ProductSearchRequest request,
+            PaginationParameter pagination);
     }
 }
