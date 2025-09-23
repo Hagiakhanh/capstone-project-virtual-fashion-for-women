@@ -123,7 +123,6 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync();
                 return new MessageModelWithData<Rating>
                 {
                     Message = "Tạo thất bại: Lỗi hệ thống",
