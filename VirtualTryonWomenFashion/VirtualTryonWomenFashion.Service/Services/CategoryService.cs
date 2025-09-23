@@ -178,9 +178,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                         StatusCode = StatusCodes.Status404NotFound
                     };
 
-                existing.CategoryName = category.CategoryName;
+                existing.CategoryName = category.CategoryName ?? existing.CategoryName;
                 existing.CategorySlug = await GenerateCategorySlug(category.CategoryName, existing.CategoryId);
-                existing.BodyPart = category.BodyPart;
+                existing.BodyPart = category.BodyPart ?? existing.BodyPart;
 
                 await _categoryRepository.UpdateAsync(existing);
                 var result = await _unitOfWork.SaveChanges();
@@ -215,13 +215,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<MessageModelWithData<Category>> DeleteCategory(int categoryId)
+        public async Task<MessageModel> DeleteCategory(int categoryId)
         {
             try
             {
                 var category = await _categoryRepository.GetByIdAsync(categoryId);
                 if (category == null)
-                    return new MessageModelWithData<Category>
+                    return new MessageModel
                     {
                         Message = "Không tìm thấy category",
                         StatusCode = StatusCodes.Status404NotFound
@@ -232,7 +232,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 var result = await _unitOfWork.SaveChanges();
                 if (result > 0)
                 {
-                    return new MessageModelWithData<Category>
+                    return new MessageModel
                     {
                         Message = "Xóa thành công category",
                         StatusCode = StatusCodes.Status204NoContent
@@ -240,7 +240,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
                 else
                 {
-                    return new MessageModelWithData<Category>
+                    return new MessageModel
                     {
                         Message = "Xóa thất bại",
                         StatusCode = StatusCodes.Status400BadRequest
@@ -248,7 +248,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
             } catch
             {
-                return new MessageModelWithData<Category>
+                return new MessageModel
                 {
                     Message = "Xóa thất bại: Lỗi hệ thống",
                     StatusCode = StatusCodes.Status500InternalServerError

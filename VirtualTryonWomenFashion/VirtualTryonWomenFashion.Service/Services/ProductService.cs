@@ -246,6 +246,29 @@ namespace VirtualTryonWomenFashion.Service.Services
             return response;
         }
 
+        public async Task<ResponsePaginationModel<List<ResponseProductDto>>> SearchProductAsync(
+            ProductSearchRequest request,
+            PaginationParameter pagination)
+        {
+            // Lấy danh sách product theo filter + sort
+            var products = await _productRepository.SearchProductsWithIncludes(request.ProductName, request.ProductSort.ToString(), pagination);
+
+            // Đếm tổng record (áp dụng filter nhưng bỏ phân trang)
+            var totalRecords = await _productRepository.CountSearchProductsAsync(request.ProductName);
+            var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.PageSize);
+
+            // Map sang DTO
+            var productDtos = await Task.WhenAll(products.Select(p => MapToResponseProductDto(p)));
+
+            return new ResponsePaginationModel<List<ResponseProductDto>>(
+                statusCode: 200,
+                data: productDtos.ToList(),
+                totalRecords: totalRecords,
+                totalPages: totalPages
+            );
+        }
+
+
         public async Task<MessageModelWithData<Product>> CreateProductAsync(CreateProductRequest request)
         {
             await _unitOfWork.BeginTransactionAsync();

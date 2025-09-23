@@ -84,7 +84,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         {
             try
             {
-                MessageModelWithData<Category> result = await _categoryService.DeleteCategory(id);
+                MessageModel result = await _categoryService.DeleteCategory(id);
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
