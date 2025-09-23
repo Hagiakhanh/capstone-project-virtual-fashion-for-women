@@ -190,14 +190,32 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _orderDetailService.GetOrderDetailsByOrderIdsAsync(failedOrders.Select(o => o.OrderId).ToList());
             
             var variantQuantityAdjustments = new Dictionary<string, int>();
+            
+            // Số lượng item trong cart cần được khôi phục
+            var cartRestores = new Dictionary<(int userId, string variantId), int>();
             foreach (var detail in allOrderDetails)
             {
                 if (!variantQuantityAdjustments.ContainsKey(detail.ProductVariantId))
                     variantQuantityAdjustments[detail.ProductVariantId] = 0;
 
                 variantQuantityAdjustments[detail.ProductVariantId] += detail.Quantity;
+                
+                var key = (detail.Order.CustomerId, detail.ProductVariantId);
+                if (!cartRestores.ContainsKey(key))
+                    cartRestores[key] = 0;
+                cartRestores[key] += detail.Quantity;
             }
 
+            // Restore vào Cart
+            foreach (var restore in cartRestores)
+            {
+                await _cartService.RestoreCartItemAsync(
+                    restore.Key.userId,
+                    restore.Key.variantId,
+                    restore.Value
+                );
+            }
+            
             await _productVariantService.UpdateQuantityAsync(variantQuantityAdjustments);
             
             foreach (var order in failedOrders)
