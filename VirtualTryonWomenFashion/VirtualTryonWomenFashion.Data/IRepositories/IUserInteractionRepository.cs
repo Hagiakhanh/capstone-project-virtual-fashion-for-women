@@ -10,5 +10,7 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface IUserInteractionRepository : IGenericRepository<UserInteraction>
     {
+        Task<List<UserInteraction>> GetInteractionByUserIdAsync(int userId);
+        Task<List<UserInteraction>> GetInteractionByProductIdAsync(string productId);
     }
 }
