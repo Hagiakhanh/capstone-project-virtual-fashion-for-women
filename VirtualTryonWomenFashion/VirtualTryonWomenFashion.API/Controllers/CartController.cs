@@ -41,11 +41,11 @@ public class CartController : ControllerBase
     }
     // Đang bị lỗi chưa fix được
     [HttpGet("selected-items")]
-    public async Task<IActionResult> GetSelectedCartItemsAsync([FromQuery] List<string> productVariantIds)
+    public async Task<IActionResult> GetSelectedCartItemsAsync([FromQuery] List<int> cartIds)
     {
         try
         {
-            var selectedCartItems = await _cartService.GetSelectedCartItemsAsync(productVariantIds);
+            var selectedCartItems = await _cartService.GetSelectedCartItemsAsync(cartIds);
             return Ok(new MessageModelWithData<object>()
             {
                 StatusCode = StatusCodes.Status200OK,

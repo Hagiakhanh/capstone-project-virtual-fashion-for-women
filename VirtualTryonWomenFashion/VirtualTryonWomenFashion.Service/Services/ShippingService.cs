@@ -225,8 +225,20 @@ public class ShippingService : IShippingService
             using var doc = JsonDocument.Parse(responseContent);
 
             var data = doc.RootElement.GetProperty("data");
-            decimal serviceFee = data.GetProperty("service_fee").GetDecimal();
-            decimal insuranceFee = data.GetProperty("insurance_fee").GetDecimal();
+            decimal serviceFee = 0;
+
+            if (data.TryGetProperty("service_fee", out var serviceFeeElement) 
+                && serviceFeeElement.ValueKind == JsonValueKind.Number)
+            {
+                serviceFee = serviceFeeElement.GetDecimal();
+            }
+            decimal insuranceFee = 0;
+
+            if (data.TryGetProperty("insurance_fee", out var insuranceFeeeElement) 
+                && serviceFeeElement.ValueKind == JsonValueKind.Number)
+            {
+                insuranceFee = insuranceFeeeElement.GetDecimal();
+            }
 
             return (serviceFee, insuranceFee);
         }

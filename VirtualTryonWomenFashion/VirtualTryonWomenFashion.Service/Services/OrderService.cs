@@ -56,12 +56,20 @@ namespace VirtualTryonWomenFashion.Service.Services
             try
             {
                 int userId = _currentUserService.GetUserId();
-                var cartItems = await _cartService.GetSelectedCartItemsAsync(requestCreateOrder.productVariantIds);
+                var cartItems = await _cartService.GetSelectedCartItemsAsync(requestCreateOrder.cartIds);
                
                 int totalWeight = (int) Math.Ceiling(cartItems.Sum(item => item.ProductVariant.ProductWeight * item.Quantity) ?? 0);
                 int totalHeight = (int) Math.Ceiling(cartItems.Sum(item => item.ProductVariant.ProductHeight * item.Quantity) ?? 0);
                 int totalWidth = (int) Math.Ceiling(cartItems.Max(c => c.ProductVariant.ProductWidth) ?? 0);
                 int totalLength = (int) Math.Ceiling(cartItems.Max(c => c.ProductVariant.ProductLength) ?? 0);
+                
+                ResponseCheckout responseCheckout = await _cartService.CheckoutAsync(new RequestCheckout()
+                {
+                    cartIds = requestCreateOrder.cartIds,
+                    ProvinceName = requestCreateOrder.ProvinceName,
+                    DistrictName = requestCreateOrder.DistrictName,
+                    WardName = requestCreateOrder.WardName,
+                });
                 
                 Order order = new Order()
                 {
@@ -72,12 +80,16 @@ namespace VirtualTryonWomenFashion.Service.Services
                     CreatedAt = DateTime.UtcNow.AddHours(7),
                     Note = requestCreateOrder.Note,
                     Status = OrderStatusEnum.Pending.ToString(),
-                    Amount = requestCreateOrder.Amount,
+                    Amount = responseCheckout.TotalPrice,
                     PackageWeight =totalWeight,
                     PackageHeight = totalHeight,
                     PackageWidth = totalWidth,
                     PackageLength = totalLength,
-                    ShippingMoney = requestCreateOrder.ShippingFee
+                    ShippingMoney = responseCheckout.ServiceFree,
+                    InsuranceFree = responseCheckout.InsuranceFee,
+                    ProvinceName = requestCreateOrder.ProvinceName,
+                    DistrictName = requestCreateOrder.DistrictName,
+                    WardName = requestCreateOrder.WardName,
                 };
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveChanges();
