@@ -5,7 +5,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.Order;
 public class RequestCreateOrder
 {
     [Required]
-    public List<string> productVariantIds { get; set; }
+    public List<int> cartIds { get; set; }
     [Required]
     public string RecieverName { get; set; }
     [Phone]
@@ -21,11 +21,6 @@ public class RequestCreateOrder
     [Required]
     public string WardName { get; set; }
     public string? Note { get; set; } = "";
-    [Required]
-    public decimal Amount { get; set; }
-    [Required]
-    public decimal ShippingFee { get; set; } = 0;
-    public decimal InsuranceFee { get; set; } = 0;
     [Required]
     public string PaymentMethod { get; set; }
     

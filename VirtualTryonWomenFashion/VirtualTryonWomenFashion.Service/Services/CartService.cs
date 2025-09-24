@@ -228,28 +228,28 @@ namespace VirtualTryonWomenFashion.Service.Services
             return cartItems ?? new List<Cart>();
         }
 
-        public async Task<List<Cart>> GetSelectedCartItemsAsync(List<string> productVariantIds)
+        public async Task<List<Cart>> GetSelectedCartItemsAsync(List<int> cartIds)
         {
             int userId = _currentUserService.GetUserId();
 
             List<Cart> cartItems = await _cartRepository.GetAll(
-                filter: c => c.UserId == userId && !(bool)c.IsDelete,
+                filter: c => c.UserId == userId && !(bool)c.IsDelete && cartIds.Contains(c.CartId),
                 orderBy: q => q.OrderBy(c => c.CreateDate),
                 includes: c => c.ProductVariant);
 
             //Kiểm tra xem sản phẩm có trong giỏ hàng không
-            bool existingItemsNotInCart = productVariantIds.Except(cartItems.Select(c => c.ProductVariantId)).Any();
+            bool existingItemsNotInCart = cartIds.Except(cartItems.Select(c => c.CartId)).Any();
             if (existingItemsNotInCart)
             {
                 throw new Exception("Có 1 vài sản phẩm không nằm trong giỏ hàng khi checkout.");
             }
 
-            return cartItems.Where(c => productVariantIds.Contains(c.ProductVariantId)).ToList();
+            return cartItems;
         }
 
         public async Task<ResponseCheckout> CheckoutAsync(RequestCheckout requestCheckout)
         {
-            List<Cart> selectedCartItems = await this.GetSelectedCartItemsAsync(requestCheckout.productVariantIds);
+            List<Cart> selectedCartItems = await this.GetSelectedCartItemsAsync(requestCheckout.cartIds);
             if (selectedCartItems.Count == 0)
             {
                 throw new Exception("No items selected for checkout.");
