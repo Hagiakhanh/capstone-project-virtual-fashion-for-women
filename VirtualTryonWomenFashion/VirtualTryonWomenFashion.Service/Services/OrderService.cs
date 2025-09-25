@@ -76,6 +76,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     WardName = requestCreateOrder.WardName,
                 });
                 
+                (int provinceId, int districtId, string wardCode) =
+                    await _cartService.GetAddressCodeAsync(requestCreateOrder.ProvinceName, requestCreateOrder.DistrictName,
+                        requestCreateOrder.WardName);
                 Order order = new Order()
                 {
                     CustomerId = userId,
@@ -92,9 +95,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     PackageLength = totalLength,
                     ShippingMoney = responseCheckout.ServiceFree,
                     InsuranceFree = responseCheckout.InsuranceFee,
-                    ProvinceName = requestCreateOrder.ProvinceName,
-                    DistrictName = requestCreateOrder.DistrictName,
-                    WardName = requestCreateOrder.WardName,
+                    ProvinceId = provinceId,
+                    DistrictId = districtId,
+                    WardCode = wardCode,
                 };
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveChanges();
@@ -392,8 +395,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                         ToName = order.ReceiverName,    // Tên của khách hàng
                         ToPhone = order.ReceiverPhone,  // Số điện thoại của khách hàng
                         ToAddress = order.ReceiverAddress, // Địa chỉ của khách hàng
-                        ToWardCode = order.WardName,   // Phường của người nhận hàng | Phải theo api của GHN
-                        ToDistrictId = int.Parse(order.DistrictName),    // Huyện của người nhận hàng | Phải theo api của GHN
+                        ToWardCode = order.WardCode,   // Phường của người nhận hàng | Phải theo api của GHN
+                        ToDistrictId = (int)order.DistrictId,    // Huyện của người nhận hàng | Phải theo api của GHN
                         CodAmount = 0,  // Tiền COD mà shipper phải thu
                         Content = "Cửa hàng thời trang nữ",   // Có thể đặt tên sản phẩm ở đây
                         Weight = (int)order.PackageWeight.Value,    // Cân nặng đơn

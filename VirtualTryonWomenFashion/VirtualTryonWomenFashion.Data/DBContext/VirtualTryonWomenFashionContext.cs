@@ -71,10 +71,10 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
     public virtual DbSet<Wishlist> Wishlists { get; set; }
 
-    /*    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-            => optionsBuilder.UseSqlServer("Data Source=MSI;Initial Catalog=VirtualTryonWomenFashion;Persist Security Info=True;User ID=sa;Password=12345");
-    */
+    /* protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+ #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+         => optionsBuilder.UseSqlServer("Data Source=MSI;Initial Catalog=VirtualTryonWomenFashion;Persist Security Info=True;User ID=sa;Password=12345");
+ */
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
 
@@ -240,21 +240,21 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
-            entity.Property(e => e.DistrictName).HasMaxLength(250);
+            entity.Property(e => e.DistrictId).HasColumnName("DistrictID");
             entity.Property(e => e.EstimatedDelivery).HasColumnType("datetime");
             entity.Property(e => e.InsuranceFree).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PackageHeight).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PackageLength).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PackageWeight).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PackageWidth).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.ProvinceName).HasMaxLength(250);
+            entity.Property(e => e.ProvinceId).HasColumnName("ProvinceID");
             entity.Property(e => e.ReceiverAddress).HasMaxLength(500);
             entity.Property(e => e.ReceiverName).HasMaxLength(255);
             entity.Property(e => e.ReceiverPhone).HasMaxLength(50);
             entity.Property(e => e.ShippingCode).HasMaxLength(100);
             entity.Property(e => e.ShippingMoney).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Status).HasMaxLength(50);
-            entity.Property(e => e.WardName).HasMaxLength(250);
+            entity.Property(e => e.WardCode).HasMaxLength(100);
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.CustomerId)
