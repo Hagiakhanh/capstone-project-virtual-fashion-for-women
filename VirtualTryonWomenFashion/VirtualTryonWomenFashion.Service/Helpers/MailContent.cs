@@ -10,7 +10,7 @@ namespace VirtualTryonWomenFashion.Service.Helpers
     {
         public static string ConfirmAccountEmail(string fullName, string tokenConfirm, string email)
         {
-            string url = "https://pre-order-blindbox-system-sp25.vercel.app/confirmemail?token="
+            string url = "http://localhost:3000/confirm-email?token="
                  + Uri.EscapeDataString(tokenConfirm)
                  + "&email=" + Uri.EscapeDataString(email);
 
@@ -25,14 +25,12 @@ namespace VirtualTryonWomenFashion.Service.Helpers
                 + "                        <br>\n"
                 + "                        <p style=\"margin:0;font-size:16px\">\n"
                 + "                            You have just registered an account, please click the button below to confirm your account at\n"
-                + "                            <a style=\"text-decoration:none\\\\\" href=\"Pre-order Blind Box\\\\\"\n"
-                + "                                target=\"_blank\">Pre-order Blind Box</a>\n"
+                + "                            <a style=\"text-decoration:none\\\\\" href=\"Women Fashion\\\\\"\n"
+                + "                                target=\"_blank\">Women Fashion</a>\n"
 + "                                          </p>\n"
                 + "                        <div style=\"padding:40px;margin:auto;text-align:center\">\n"
                 + "                            <a href=\"" + url + "\" style=\"color: #3cc892; text-decoration: none;\">\n"
-                + "                                style=\"color: #3cc892; text-decoration: none;\">\n"
-                + "                                <div\n"
-                + "                                    style=\"width:fit-content;border:#3cc892 thin solid;color:#3cc892;font-weight:bold;text-align:center;padding:7px 12px;border-radius:2px;margin:auto;font-size:large\">\n"
+                + "                                <div style=\"width:fit-content;border:#3cc892 thin solid;color:#3cc892;font-weight:bold;text-align:center;padding:7px 12px;border-radius:2px;margin:auto;font-size:large\">\n"
                 + "                                    CONFIRM\n"
                 + "                                </div>\n"
                 + "                            </a>\n"
@@ -40,7 +38,7 @@ namespace VirtualTryonWomenFashion.Service.Helpers
                 + "                        <div style=\"border-top:1px solid #dcdbdb\"></div>\n"
                 + "                        <br>\n"
                 + "                        <p style=\"margin:0;font-size:16px\">Best Regards,</p>\n"
-                + "                        <p style=\"margin:0;font-size:16px\">Pre-order Blind Box</p>\n"
+                + "                        <p style=\"margin:0;font-size:16px\">Women Fashion</p>\n"
                 + "                    </div>\n"
                 + "                </div>\n"
                 + "            </div>\n"
