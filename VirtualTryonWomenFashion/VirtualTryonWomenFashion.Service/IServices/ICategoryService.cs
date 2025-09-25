@@ -15,6 +15,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<Category?> GetByIdAsync(int id);
         Task<MessageModelWithData<Category>> CreateCategory(CreateCategoryRequest category);
         Task<MessageModelWithData<Category>> UpdateCategory(int id, CreateCategoryRequest category);
-        Task<MessageModelWithData<Category>> DeleteCategory(int id);
+        Task<MessageModel> DeleteCategory(int id);
     }
 }

@@ -1,11 +1,10 @@
-﻿namespace VirtualTryonWomenFashion.Service.DTO.Cart;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace VirtualTryonWomenFashion.Service.DTO.Cart;
 
 public class RequestCheckout
 {
-    public List<string> productVariantIds { get; set; }
-    public string RecieverName { get; set; }
-    public string RecieverPhone { get; set; }
-    public string StreetAddress { get; set; }
+    public List<int> cartIds { get; set; }
     public string ProvinceName { get; set; }
     public string DistrictName { get; set; }
     public string WardName { get; set; }

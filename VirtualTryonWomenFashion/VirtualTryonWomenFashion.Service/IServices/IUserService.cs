@@ -13,5 +13,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModel> RegisterCustomerAccount(RequestCreateAccount requestCreateAccount);
         public Task<MessageModelWithData<string>> LoginAccount(RequestLoginAccount requestLoginAccount);
         public Task<MessageModel> ConfirmAccount(RequestConfirmAccount requestConfirmAccount);
+        
+        public Task<UserInformation> GetUserInformationByIdAsync(int userId);
     }
 }

@@ -20,7 +20,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
 
         public async Task<Cart?> GetCartItemByUserIdAndProductId(int userId, string productVariantId)
         {
-            return await _context.Carts.FirstOrDefaultAsync(c => c.UserId == userId && c.ProductVariantId == productVariantId);
+            return await _context.Carts.FirstOrDefaultAsync(c => c.UserId == userId && c.ProductVariantId == productVariantId && (bool)!c.IsDelete);
         }
     }
 }

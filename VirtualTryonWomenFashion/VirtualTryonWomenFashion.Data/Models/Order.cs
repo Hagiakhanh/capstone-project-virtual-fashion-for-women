@@ -39,6 +39,16 @@ public partial class Order
 
     public DateTime? EstimatedDelivery { get; set; }
 
+    public string PaymentUrl { get; set; }
+
+    public string DistrictName { get; set; }
+
+    public string WardName { get; set; }
+
+    public decimal? InsuranceFree { get; set; }
+
+    public string ProvinceName { get; set; }
+
     public virtual User Customer { get; set; }
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

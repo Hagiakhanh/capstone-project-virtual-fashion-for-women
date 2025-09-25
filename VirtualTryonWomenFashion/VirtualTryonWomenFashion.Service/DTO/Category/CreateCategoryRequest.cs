@@ -8,8 +8,8 @@ namespace VirtualTryonWomenFashion.Service.DTO.Category
 {
     public class CreateCategoryRequest
     {
-        public string CategoryName { get; set; }
+        public string? CategoryName { get; set; }
 
-        public string BodyPart { get; set; }
+        public string? BodyPart { get; set; }
     }
 }

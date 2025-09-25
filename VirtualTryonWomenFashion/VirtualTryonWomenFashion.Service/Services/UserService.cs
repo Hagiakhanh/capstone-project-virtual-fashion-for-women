@@ -73,6 +73,11 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         }
 
+        public Task<UserInformation> GetUserInformationByIdAsync(int userId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<MessageModelWithData<string>> LoginAccount(RequestLoginAccount requestLoginAccount)
         {
             User user = await _userRepository.GetUserByEmail(requestLoginAccount.Email);
