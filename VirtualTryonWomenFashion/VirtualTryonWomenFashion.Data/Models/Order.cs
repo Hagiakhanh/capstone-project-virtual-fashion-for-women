@@ -41,13 +41,13 @@ public partial class Order
 
     public string PaymentUrl { get; set; }
 
-    public string DistrictName { get; set; }
+    public int? DistrictId { get; set; }
 
-    public string WardName { get; set; }
+    public string WardCode { get; set; }
 
     public decimal? InsuranceFree { get; set; }
 
-    public string ProvinceName { get; set; }
+    public int? ProvinceId { get; set; }
 
     public virtual User Customer { get; set; }
 

@@ -19,6 +19,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<List<Cart>> GetCartItemsAsync(); 
         Task<List<Cart>> GetSelectedCartItemsAsync(List<int> cartIds);
         Task<ResponseCheckout> CheckoutAsync(RequestCheckout requestCheckout);
+        Task<(int, int, string)> GetAddressCodeAsync(string provinceName, string districtName, string wardName);
         Task RestoreCartItemAsync(int userId, string productVariantId, int quantity);
 
     }

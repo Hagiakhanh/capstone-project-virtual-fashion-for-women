@@ -267,9 +267,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                 totalProductPrice += productPrice;
             }
 
-            int provinceId = await _shippingService.GetProvinceId(requestCheckout.ProvinceName);
-            int districtId = await _shippingService.GetDistrictId(requestCheckout.DistrictName, provinceId);
-            string wardCode = await _shippingService.GetWardId(requestCheckout.WardName, districtId);
+            (int provinceId, int districtId, string wardCode) =
+                await this.GetAddressCodeAsync(requestCheckout.ProvinceName, requestCheckout.DistrictName,
+                    requestCheckout.WardName);
             int totalWeight =
                 (int)Math.Ceiling(selectedCartItems.Sum(c => c.Quantity * c.ProductVariant.ProductWeight) ?? 0);
             int totalHeight =
@@ -296,6 +296,14 @@ namespace VirtualTryonWomenFashion.Service.Services
                 TotalPrice = totalProductPrice + serviceFree + insuranceFree
             };
             return responseCheckout;
+        }
+
+        public async Task<(int, int, string)> GetAddressCodeAsync(string provinceName, string districtName, string wardName)
+        {
+            int provinceId = await _shippingService.GetProvinceId(provinceName);
+            int districtId = await _shippingService.GetDistrictId(districtName, provinceId);
+            string wardCode = await _shippingService.GetWardId(wardName, districtId);
+            return (provinceId,districtId,wardCode);
         }
 
         public async Task RestoreCartItemAsync(int userId, string productVariantId, int quantity)

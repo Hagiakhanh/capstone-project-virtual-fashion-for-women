@@ -71,6 +71,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     WardName = requestCreateOrder.WardName,
                 });
                 
+                (int provinceId, int districtId, string wardCode) =
+                    await _cartService.GetAddressCodeAsync(requestCreateOrder.ProvinceName, requestCreateOrder.DistrictName,
+                        requestCreateOrder.WardName);
                 Order order = new Order()
                 {
                     CustomerId = userId,
@@ -87,9 +90,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     PackageLength = totalLength,
                     ShippingMoney = responseCheckout.ServiceFree,
                     InsuranceFree = responseCheckout.InsuranceFee,
-                    ProvinceName = requestCreateOrder.ProvinceName,
-                    DistrictName = requestCreateOrder.DistrictName,
-                    WardName = requestCreateOrder.WardName,
+                    ProvinceId = provinceId,
+                    DistrictId = districtId,
+                    WardCode = wardCode,
                 };
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveChanges();
