@@ -48,7 +48,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             IOrderDetailService orderDetailService,
             ICurrentUserService currentUserService,
             ICartService cartService,
-            IProductVariantService productVariantService
+            IProductVariantService productVariantService,
+            IOptions<GHNSettings> ghnSettings
             )
         {
             _orderRepository = orderRepository;
@@ -390,11 +391,11 @@ namespace VirtualTryonWomenFashion.Service.Services
                         ClientOrderCode = "",   // Không thêm trường này
                         ToName = order.ReceiverName,    // Tên của khách hàng
                         ToPhone = order.ReceiverPhone,  // Số điện thoại của khách hàng
-                        ToAddress = "số 54, Tăng Nhơn Phú B, Thủ Đức, Hồ Chí Minh", // Địa chỉ của khách hàng
-                        ToWardCode = "90756",   // Phường của người nhận hàng | Phải theo api của GHN
-                        ToDistrictId = 3695,    // Huyện của người nhận hàng | Phải theo api của GHN
+                        ToAddress = order.ReceiverAddress, // Địa chỉ của khách hàng
+                        ToWardCode = order.WardName,   // Phường của người nhận hàng | Phải theo api của GHN
+                        ToDistrictId = int.Parse(order.DistrictName),    // Huyện của người nhận hàng | Phải theo api của GHN
                         CodAmount = 0,  // Tiền COD mà shipper phải thu
-                        Content = "Tên đơn hàng",   // Có thể đặt tên sản phẩm ở đây
+                        Content = "Cửa hàng thời trang nữ",   // Có thể đặt tên sản phẩm ở đây
                         Weight = (int)order.PackageWeight.Value,    // Cân nặng đơn
                         Length = (int)order.PackageLength.Value,    // Chiều dài đơn
                         Width = (int)order.PackageWidth.Value,  // Chiều rộng đơn
@@ -428,6 +429,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                         var resultGHN = await response.Content.ReadAsStringAsync();
                         GhnCreateOrderResponse resultGHNObj = JsonSerializer.Deserialize<GhnCreateOrderResponse>(resultGHN);
                         // ... xử lý result
+                        order.ShippingCode = resultGHNObj.Data.OrderCode;
                         await _orderRepository.UpdateAsync(order);
                         int result = await _unitOfWork.SaveChanges();
                         await _unitOfWork.CommitTransactionAsync();
