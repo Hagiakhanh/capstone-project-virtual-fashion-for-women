@@ -11,9 +11,9 @@ public partial class Message
 
     public int TicketChatId { get; set; }
 
-    public int SenderId { get; set; }
+    public int? SenderId { get; set; }
 
-    public int ReceiverId { get; set; }
+    public int? ReceiverId { get; set; }
 
     public int AiconversationId { get; set; }
 

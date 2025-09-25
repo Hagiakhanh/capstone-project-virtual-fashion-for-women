@@ -80,7 +80,7 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<IShippingService, ShippingService>();
             services.AddScoped<IPaymentService, PaymentService>();
-
+           
             return services;
         }
         public static IServiceCollection RegistAutoMapperService(this IServiceCollection services)

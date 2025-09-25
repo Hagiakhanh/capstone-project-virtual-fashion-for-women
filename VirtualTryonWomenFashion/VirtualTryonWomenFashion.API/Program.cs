@@ -31,6 +31,8 @@ builder.Services.Configure<RouteOptions>(options =>
 });
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 builder.Services.AddHttpClient<IShippingService, ShippingService>();
+builder.Services.AddHttpClient<IGeminiService, GeminiService>();
+builder.Services.AddHttpClient<IVectorDbService, PineconeService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
