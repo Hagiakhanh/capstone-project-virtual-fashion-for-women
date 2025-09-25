@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Ocsp;
 using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
@@ -53,7 +54,7 @@ public class PaymentService : IPaymentService
         try
         {
             int userId = _currentUserService.GetUserId();
-            decimal totalAmount = (decimal)(order.Amount + order.ShippingMoney);
+            decimal totalAmount = (decimal)(order.Amount);
             if (totalAmount < 1000 || totalAmount > 50000000)
             {
                 throw new Exception("Số tiền thanh toán phải từ 1.000 VNĐ đến 50.000.000 VNĐ");
@@ -313,6 +314,171 @@ public class PaymentService : IPaymentService
         }
     }
 
+    public async Task<string> HandleVnPayCallback(IQueryCollection request)
+    {
+        await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            var vnpay = new VnPayLibrary();
+            foreach (var (key, value) in request)
+            {
+                if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+                {
+                    vnpay.AddResponseData(key, value.ToString());
+                }
+            }
+
+            var vnp_SecureHash = request.FirstOrDefault(p => p.Key == "vnp_SecureHash").Value;
+            bool isSignatureValid = vnpay.ValidateSignature(vnp_SecureHash, _configuration["VnPayPayment:HashSecret"]);
+            if (!isSignatureValid)
+            {
+                throw new Exception("Chữ ký không hợp lệ.");
+            }
+
+            var transaction =
+                await _transactionService.GetTransactionByThirdPartyIdAsync((vnpay.GetResponseData("vnp_TxnRef")));
+
+            if (vnpay.GetResponseData("vnp_ResponseCode") == "00")
+            {
+                transaction.Status = TransactionStatusEnum.Success.ToString();
+                transaction.UpdatedAt = DateTime.UtcNow.AddHours(7);
+                await _transactionService.UpdateTransactionStatusAsync(new List<Transaction>() { transaction });
+
+                ResponseOrder responseOrder =
+                    await _orderService.GetOrderByIdAsync(transaction.OrderId, transaction.UserId);
+                if (responseOrder == null)
+                {
+                    throw new Exception("Đơn hàng không tồn tại.");
+                }
+
+                await _orderService.UpdatePaymentUrlAsync(null, responseOrder.OrderId);
+                // Xóa các item trong giỏ hàng tương ứng với đơn hàng đã thanh toán
+                List<ResponseOrderDetail> listResponseOrderDetail =
+                    await _orderDetailService.GetOrderDetailsByOrderIdAsync(responseOrder.OrderId);
+
+                List<string> productVariantIds = listResponseOrderDetail
+                    .Where(od => od.ResponseProductVariantDto != null) // tránh null
+                    .Select(od => od.ResponseProductVariantDto.ProductVariantId)
+                    .ToList();
+
+                await _cartService.RemoveMultipleProductsFromCartAsync(productVariantIds, transaction.UserId);
+                // Cập nhật trạng thái đơn hàng thành "Confirmed"
+                await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(), responseOrder.OrderId);
+                // Tạo đơn hàng trên giao hàng nhanh 
+            }
+            else
+            {
+                transaction.Status = TransactionStatusEnum.Failed.ToString();
+                transaction.UpdatedAt = DateTime.UtcNow.AddHours(7);
+                await _transactionService.UpdateTransactionStatusAsync(new List<Transaction>() { transaction });
+
+                ResponseOrder responseOrder =
+                    await _orderService.GetOrderByIdAsync(transaction.OrderId, transaction.UserId);
+                if (responseOrder == null)
+                {
+                    throw new Exception("Đơn hàng không tồn tại.");
+                }
+
+                // Cập nhật trạng thái đơn hàng thành "Failed"
+                await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Failed.ToString(), responseOrder.OrderId);
+                await _orderService.UpdatePaymentUrlAsync(null, responseOrder.OrderId);
+                // Trả lại số lượng sản phẩm về kho 
+                List<ResponseOrderDetail> listResponseOrderDetail =
+                    await _orderDetailService.GetOrderDetailsByOrderIdAsync(responseOrder.OrderId);
+
+                List<string> productVariantIds = listResponseOrderDetail
+                    .Where(od => od.ResponseProductVariantDto != null) // tránh null
+                    .Select(od => od.ResponseProductVariantDto.ProductVariantId)
+                    .ToList();
+
+                await _cartService.ShowCartItemsAsync(productVariantIds, transaction.UserId);
+                foreach (var item in listResponseOrderDetail)
+                {
+                    await _productVariantService.UpdateAsync(item.ResponseProductVariantDto.ProductVariantId,
+                        new UpdateProductVariantRequest()
+                        {
+                            Quantity = item.ResponseProductVariantDto.Quantity + item.Quantity
+                        }, true);
+                }
+            }
+
+            await _unitOfWork.CommitTransactionAsync();
+            return "Xử lý callback thành công";
+        }
+        catch (Exception ex)
+        {
+            await _unitOfWork.RollbackTransactionAsync();
+            Console.WriteLine($"Lỗi xử lý callback từ VnPay: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<string> QueryTransactionStatusInVnPayAsync(int orderId)
+    {
+        try
+        {
+            Transaction transaction = await _transactionService.GetTransactionByOrderIdAsync(orderId);
+
+            string secretKey = _configuration["VnPayPayment:HashSecret"];
+            string requestId = Guid.NewGuid().ToString();
+            string version = _configuration["VnPayPayment:Version"];
+            string command = "querydr";
+            string tmnCode = _configuration["VnPayPayment:TmnCode"];
+            string txnRef = transaction.ThirdPartyCode;
+            string orderInfo = $"Truy vấn trạng thái giao dịch {txnRef} từ VnPay";
+            string transactionDate = transaction.CreatedAt.ToString("yyyyMMddHHmmss");
+            string createDate = DateTime.UtcNow.AddHours(7).ToString("yyyyMMddHHmmss");
+
+            HttpContext context = new HttpContextAccessor().HttpContext;
+            var ipAddress = VnPayUtils.GetIpAddress(context);
+
+            var rawData = requestId + "|" +
+                          version + "|" +
+                          command + "|" +
+                          tmnCode + "|" +
+                          txnRef + "|" +
+                          transactionDate + "|" +
+                          createDate + "|" +
+                          ipAddress + "|" +
+                          orderInfo;
+            var checksum = VnPayUtils.HmacSHA512(secretKey, rawData);
+
+            var requestData = new Dictionary<string, string>
+            {
+                { "vnp_RequestId", requestId },
+                { "vnp_Version", version },
+                { "vnp_Command", command },
+                { "vnp_TmnCode", tmnCode },
+                { "vnp_TxnRef", txnRef },
+                { "vnp_OrderInfo", orderInfo },
+                { "vnp_TransactionDate", transactionDate },
+                { "vnp_CreateDate", createDate },
+                { "vnp_IpAddr", ipAddress },
+                { "vnp_SecureHash", checksum }
+            };
+
+            var jsonRequestData = JsonConvert.SerializeObject(requestData);
+
+            using var client = new HttpClient();
+            var content = new StringContent(jsonRequestData, Encoding.UTF8, "application/json");
+            var response =
+                await client.PostAsync("https://sandbox.vnpayment.vn/merchant_webapi/api/transaction", content);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(responseContent);
+            var root = doc.RootElement;
+            string responseCode = root.GetProperty("vnp_ResponseCode").GetString();
+            if (responseCode == "00")
+                return root.GetProperty("vnp_TransactionStatus").GetString();
+            else
+                throw new Exception($"Lỗi từ VnPay với message lỗi: {root.GetProperty("vnp_Message").GetString()}");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Lỗi khi truy vấn trạng thái giao dịch từ VnPay: {ex.Message}");
+        }
+    }
+
     public async Task<string> CreatePaymentAsync(RequestCreateOrder requestCreateOrder)
     {
         await _unitOfWork.BeginTransactionAsync();
@@ -346,32 +512,67 @@ public class PaymentService : IPaymentService
 
     public async Task HandleOrderStatusAndTransactionStatus()
     {
-        List<Order> pendingOrders = await _orderService.GetOrdersByStatusAsync(OrderStatusEnum.Pending.ToString());
-        List<Transaction> pendingTransactions = new List<Transaction>();
-        List<Order> failedOrders = new List<Order>();
-        List<Order> successfulOrders = new List<Order>();
-        foreach (var item in pendingOrders)
+        await _unitOfWork.BeginTransactionAsync();
+        try
         {
-            int resultCodeFromMomo = await this.QueryTransactionStatusInMomoAsync(item.OrderId);
-            var transaction = await _transactionService.GetTransactionByOrderIdAsync(item.OrderId);
-            switch (resultCodeFromMomo)
+            List<Order> pendingOrders = await _orderService.GetOrdersByStatusAsync(OrderStatusEnum.Pending.ToString());
+            List<Transaction> pendingTransactions = new List<Transaction>();
+            List<Order> failedOrders = new List<Order>();
+            List<Order> successfulOrders = new List<Order>();
+            foreach (var item in pendingOrders)
             {
-                case 0:
-                    transaction.Status = TransactionStatusEnum.Success.ToString();
-                    pendingTransactions.Add(transaction);
-                    successfulOrders.Add(item);
-                    break;
-                case 1006:
-                    transaction.Status = TransactionStatusEnum.Failed.ToString();
-                    pendingTransactions.Add(transaction);
-                    failedOrders.Add(item);
-                    break;
-            }
-        }
+                var transaction = await _transactionService.GetTransactionByOrderIdAsync(item.OrderId);
+                switch (transaction.Method)
+                {
+                    case "Momo":
+                        int resultCodeFromMomo = await this.QueryTransactionStatusInMomoAsync(item.OrderId);
+                        switch (resultCodeFromMomo)
+                        {
+                            case 0:
+                                transaction.Status = TransactionStatusEnum.Success.ToString();
+                                pendingTransactions.Add(transaction);
+                                successfulOrders.Add(item);
+                                break;
+                            case 1006:
+                            case 1005:
+                                transaction.Status = TransactionStatusEnum.Failed.ToString();
+                                pendingTransactions.Add(transaction);
+                                failedOrders.Add(item);
+                                break;
+                        }
 
-        await _transactionService.UpdateTransactionStatusAsync(pendingTransactions);
-        await _orderService.HandleSuccessfulOrders(successfulOrders);
-        await _orderService.HandleFailedOrders(failedOrders);
+                        break;
+                    case "VnPay":
+                        string resultCodeFromVnPay = await this.QueryTransactionStatusInVnPayAsync(item.OrderId);
+                        switch (resultCodeFromVnPay)
+                        {
+                            case "00":
+                                transaction.Status = TransactionStatusEnum.Success.ToString();
+                                pendingTransactions.Add(transaction);
+                                successfulOrders.Add(item);
+                                break;
+                            case "11":
+                            case "08":
+                                transaction.Status = TransactionStatusEnum.Failed.ToString();
+                                pendingTransactions.Add(transaction);
+                                failedOrders.Add(item);
+                                break;
+                        }
+
+                        break;
+                }
+            }
+
+            await _transactionService.UpdateTransactionStatusAsync(pendingTransactions);
+            await _orderService.HandleSuccessfulOrders(successfulOrders);
+            await _orderService.HandleFailedOrders(failedOrders);
+            await _unitOfWork.CommitTransactionAsync();
+        }
+        catch (Exception ex)
+        {
+            await _unitOfWork.RollbackTransactionAsync();
+            throw new Exception($"Lỗi khi xử lý trạng thái đơn hàng và giao dịch: {ex.Message}");
+        }
     }
 
     public async Task<string> CreatePaymentUrlInVnPayAsync(Order order)
@@ -379,19 +580,20 @@ public class PaymentService : IPaymentService
         try
         {
             int userId = _currentUserService.GetUserId();
-            decimal totalAmount = (decimal)(order.Amount + order.ShippingMoney);
+            decimal totalAmount = (decimal)(order.Amount);
             if (totalAmount < 5000 || totalAmount > 1000000000)
             {
                 throw new Exception("Số tiền thanh toán phải nằm trong khoảng 5.000 (VND) đến 1.000.000.000 (VND).");
             }
 
+            DateTime dateTime = DateTime.UtcNow.AddHours(7);
             Transaction transaction = new Transaction()
             {
                 UserId = userId,
                 Status = TransactionStatusEnum.Pending.ToString(),
                 Money = totalAmount,
                 Method = "VnPay",
-                CreatedAt = DateTime.UtcNow.AddHours(7),
+                CreatedAt = dateTime,
                 UpdatedAt = DateTime.UtcNow.AddHours(7),
                 OrderId = order.OrderId
             };
@@ -406,7 +608,6 @@ public class PaymentService : IPaymentService
             string baseUrl = _configuration["VnPayPayment:BaseUrl"];
             string hashSecret = _configuration["VnPayPayment:HashSecret"];
 
-            DateTime dateTime = DateTime.UtcNow.AddHours(7);
             HttpContext context = new HttpContextAccessor().HttpContext;
             var ipAddress = VnPayUtils.GetIpAddress(context);
             var vnPayLibrary = new VnPayLibrary();

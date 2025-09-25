@@ -30,6 +30,7 @@ builder.Services.Configure<RouteOptions>(options =>
     options.LowercaseUrls = true;
 });
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
+builder.Services.Configure<GHNSettings>(builder.Configuration.GetSection("GHNSetttings"));
 builder.Services.AddHttpClient<IShippingService, ShippingService>();
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddHttpClient<IVectorDbService, PineconeService>();
@@ -110,7 +111,16 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddHostedService<SaleCampaignWorkerService>();
-//builder.Services.AddHostedService<PaymentWorkerService>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+           builder => builder.WithOrigins("http://localhost:3000")
+          .AllowAnyMethod()
+          .AllowAnyHeader()
+          .AllowCredentials()
+          .WithExposedHeaders("X-Pagination")
+          );
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -124,6 +134,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors("AllowAll");
 
 app.MapControllers();
 

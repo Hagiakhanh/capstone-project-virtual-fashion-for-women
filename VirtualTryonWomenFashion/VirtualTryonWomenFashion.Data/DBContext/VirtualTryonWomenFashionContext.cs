@@ -239,7 +239,9 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
+            entity.Property(e => e.DistrictName).HasMaxLength(250);
             entity.Property(e => e.EstimatedDelivery).HasColumnType("datetime");
+            entity.Property(e => e.InsuranceFree).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PackageHeight).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PackageLength).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PackageWeight).HasColumnType("decimal(18, 2)");
@@ -253,6 +255,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.Property(e => e.ShippingCode).HasMaxLength(100);
             entity.Property(e => e.ShippingMoney).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Status).HasMaxLength(50);
+            entity.Property(e => e.WardName).HasMaxLength(250);
 
             entity.HasOne(d => d.Customer).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.CustomerId)

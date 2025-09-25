@@ -8,5 +8,4 @@ public interface IShippingService
     public Task<int> GetDistrictId(string districtName, int provinceId);
     public Task<string> GetWardId(string wardName, int districtId);
     public Task<(decimal, decimal)> CalculateShippingFee(ShippingObjectRequest shippingObjectRequest);
-    //public Task<(string, DateTime)> CreateOrderInGHN(CreateOrderInGHNRequest createOrderInGHNRequest);
 }

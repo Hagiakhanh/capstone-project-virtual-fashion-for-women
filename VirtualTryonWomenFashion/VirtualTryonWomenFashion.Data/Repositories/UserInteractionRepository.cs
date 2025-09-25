@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,24 @@ namespace VirtualTryonWomenFashion.Data.Repositories
     {
         public UserInteractionRepository(VirtualTryonWomenFashionContext context) : base(context)
         {
+        }
+
+        public async Task<List<UserInteraction>> GetInteractionByUserIdAsync(int userId)
+        {
+            return await _context.UserInteractions
+                .Include(ui => ui.Product)
+                .Include(ui => ui.User)
+                .Where(ui => ui.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<List<UserInteraction>> GetInteractionByProductIdAsync(string productId)
+        {
+            return await _context.UserInteractions
+                .Include(ui => ui.Product)
+                .Include(ui => ui.User)
+                .Where(ui => ui.ProductId == productId)
+                .ToListAsync();
         }
     }
 }

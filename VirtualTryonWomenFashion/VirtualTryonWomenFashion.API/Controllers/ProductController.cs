@@ -89,6 +89,13 @@ namespace VirtualTryonWomenFashion.API.Controllers
             return Ok(product);
         }
 
+        [HttpGet("search")]
+        public async Task<ActionResult<List<ResponseProductDto>>> Search([FromQuery] PaginationParameter pagination, ProductSearchRequest request)
+        {
+            var result = await _productService.SearchProductAsync(request, pagination);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromForm]CreateProductRequest request)
         {

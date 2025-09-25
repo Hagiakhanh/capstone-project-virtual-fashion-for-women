@@ -28,7 +28,7 @@ public class PaymentController : ControllerBase
    
     
     [HttpGet("vnpay/vnpay-callback")]
-    public IActionResult VnPayCallback()
+    public async Task<IActionResult> VnPayCallback()
     {
         if (Request.QueryString.HasValue)
         {
@@ -36,6 +36,7 @@ public class PaymentController : ControllerBase
             {
                 Console.WriteLine("===== Momo Callback Data =====");
                 Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(Request.Query));
+                await _paymentService.HandleVnPayCallback(Request.Query);
                 return Ok(Request.Query);
 
             }
@@ -103,6 +104,30 @@ public class PaymentController : ControllerBase
             {
                 StatusCode = StatusCodes.Status400BadRequest,
                 Message = "Truy vấn trạng thái giao dịch MoMo thất bại: " + ex.Message,
+                Data = null
+            });
+        }
+    }
+    
+    [HttpPost("query-vnpay-transaction-status/{orderId}") ]
+    public async Task<IActionResult> QueryVnPayTransactionStatus([FromRoute] int orderId)
+    {
+        try
+        {
+            string status = await _paymentService.QueryTransactionStatusInVnPayAsync(orderId);
+            return Ok(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Truy vấn trạng thái giao dịch VnPay thành công",
+                Data = status
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = "Truy vấn trạng thái giao dịch VnPay thất bại: " + ex.Message,
                 Data = null
             });
         }
