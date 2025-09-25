@@ -49,5 +49,19 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
+        [HttpPut("staff/{id}")]
+        public async Task<IActionResult> UpdateOrderForStaff(int id)
+        {
+            try
+            {
+                MessageModelWithData<string> result = await _orderService.UpdateOrderStatusForStaff(id);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }
