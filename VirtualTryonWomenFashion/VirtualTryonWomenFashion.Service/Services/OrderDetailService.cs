@@ -49,12 +49,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                     ProductLength = item.ProductVariant.ProductLength,
                     ProductWidth = item.ProductVariant.ProductWidth,
                     ProductHeight = item.ProductVariant.ProductHeight,
-                    Size = item.ProductVariant.Size != null ? new ResponseSizeDto
+                    SizeDto = item.ProductVariant.Size != null ? new ResponseSizeDto
                     {
                         SizeId = item.ProductVariant.Size.SizeId,
                         SizeCode = item.ProductVariant.Size.SizeCode
                     } : null,
-                    ProductImages = item.ProductVariant.ProductColor.ProductImages?.Select(pi => new ResponseProductImageDto
+                    ProductImagesDto = item.ProductVariant.ProductColor.ProductImages?.Select(pi => new ResponseProductImageDto
                     {
                         ProductImageId = pi.ProductImageId,
                         ImageUrl = pi.ImageUrl

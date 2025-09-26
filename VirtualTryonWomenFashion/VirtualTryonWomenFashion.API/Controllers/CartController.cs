@@ -121,14 +121,14 @@ public class CartController : ControllerBase
         }
         try
         {
-            bool result = await _cartService.UpdateProductQuantityAsync(requestUpdateProductQuantity);
-            if (result)
+            ResponseCartItem result = await _cartService.UpdateProductQuantityAsync(requestUpdateProductQuantity);
+            if (result !=null)
             {
                 return Ok(new MessageModelWithData<object>()
                 {
                     StatusCode = StatusCodes.Status200OK,
                     Message =  "Product quantity updated successfully." ,
-                    Data = null
+                    Data = result
                 });
             }
             return BadRequest(new MessageModelWithData<object>()
@@ -144,8 +144,8 @@ public class CartController : ControllerBase
         }
     }
     
-    [HttpDelete("remove-item/{productVariantId}")]
-    public async Task<IActionResult> RemoveItemFromCartAsync(string productVariantId)
+    [HttpDelete("remove-item/{cartId}")]
+    public async Task<IActionResult> RemoveItemFromCartAsync(int cartId)
     {
         if (!ModelState.IsValid)
         {
@@ -158,7 +158,7 @@ public class CartController : ControllerBase
         }
         try
         {
-            bool result = await _cartService.RemoveProductFromCartAsync(productVariantId);
+            bool result = await _cartService.RemoveProductFromCartAsync(cartId);
             if (result)
             {
                 return Ok(new MessageModelWithData<object>()

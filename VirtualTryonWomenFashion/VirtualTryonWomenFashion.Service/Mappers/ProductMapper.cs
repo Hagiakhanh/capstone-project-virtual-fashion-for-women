@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.Color;
 using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
@@ -28,7 +29,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                     ProductColorId = pc.ProductColorId,
                     ColorId = pc.ColorId,
                     LensId = pc.LensId,
-                    Color = pc.Color != null ? new ResponseColorDto
+                    Color = pc.Color != null ? new ResponseColorDto()
                     {
                         ColorId = pc.Color.ColorId,
                         ColorName = pc.Color.ColorName,
@@ -47,12 +48,12 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                         ProductLength = pv.ProductLength,
                         ProductWidth = pv.ProductWidth,
                         ProductHeight = pv.ProductHeight,
-                        Size = pv.Size != null ? new ResponseSizeDto
+                        SizeDto = pv.Size != null ? new ResponseSizeDto
                         {
                             SizeId = pv.Size.SizeId,
                             SizeCode = pv.Size.SizeCode
                         } : null,
-                        ProductImages = pc.ProductImages?.Select(pi => new ResponseProductImageDto
+                        ProductImagesDto = pc.ProductImages?.Select(pi => new ResponseProductImageDto
                         {
                             ProductImageId = pi.ProductImageId,
                             ImageUrl = pi.ImageUrl

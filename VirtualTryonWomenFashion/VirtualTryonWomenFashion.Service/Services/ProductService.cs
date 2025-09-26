@@ -12,6 +12,7 @@ using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Color;
 using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
@@ -234,8 +235,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                             ProductLength = targetVariant.ProductLength,
                             ProductWidth = targetVariant.ProductWidth,
                             ProductHeight = targetVariant.ProductHeight,
-                            Size = _mapper.Map<ResponseSizeDto>(targetVariant.Size),
-                            ProductImages = targetProductColor.ProductImages
+                            SizeDto = _mapper.Map<ResponseSizeDto>(targetVariant.Size),
+                            ProductImagesDto = targetProductColor.ProductImages
                                 .Select(pi => _mapper.Map<ResponseProductImageDto>(pi))
                                 .ToList()
                         }
