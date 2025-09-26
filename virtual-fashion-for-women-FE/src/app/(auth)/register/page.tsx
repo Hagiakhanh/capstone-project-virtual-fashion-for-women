@@ -2,15 +2,33 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Input, Form } from "antd";
 import { useRouter } from "next/navigation";
+import Link from 'next/link';
 
 import bgRegister from '../../../assets/auth/bg-login.png'
 import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
 import googleIcon from '../../../assets/auth/GoogleIcon.webp'
-import Link from 'next/link';
+import { typeRegister } from '@/types/auth';
+import { api } from '@/api/instance';
+import { useState } from 'react';
 
 export default function RegisterPage() {
    const router = useRouter();
    const [form] = Form.useForm();
+   const [loading, setLoading] = useState<boolean>(false);
+
+   const handleRegister = async (values: typeRegister) => {
+      setLoading(true);
+      try {
+         const response = await api.post('/register', values);
+         if(response.status === 200) {
+            router.replace("/login");
+            //Thông báo vào mail để xác nhận tài khoản
+         }
+      } catch (error) {
+         console.error("Register error:", error);
+         setLoading(false);
+      }
+   }
 
    return (
       <div className="w-[100vw] h-[100vh] flex justify-center items-center bg-cover bg-center"
@@ -29,14 +47,14 @@ export default function RegisterPage() {
                <p className="mt-4 font-normal text-xl text-center">
                   Bạn đã có tài khoản? <Link href="/login" className="cursor-pointer underline">Đăng nhập ngay</Link>
                </p>
-               <Form
+               <Form<typeRegister>
                   form={form}
                   layout="vertical"
-                  onFinish={(values) => console.log("submit", values)}
+                  onFinish={handleRegister}
                >
-                  <Form.Item
+                  <Form.Item<typeRegister>
                      label={<span className="text-xl font-bold">Họ và tên</span>}
-                     name="fullname"
+                     name="fullName"
                      className=""
                      rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
                   >
@@ -47,7 +65,7 @@ export default function RegisterPage() {
                         placeholder="Nhập họ và tên của bạn"
                      />
                   </Form.Item>
-                  <Form.Item
+                  <Form.Item<typeRegister>
                      label={<span className="text-xl font-bold">Email</span>}
                      name="email"
                      rules={[
@@ -62,7 +80,7 @@ export default function RegisterPage() {
                         placeholder="Nhập địa chỉ email của bạn"
                      />
                   </Form.Item>
-                  <Form.Item
+                  <Form.Item<typeRegister>
                      label={<span className="text-xl font-bold">Mật khẩu</span>}
                      name="password"
                      rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
@@ -74,7 +92,7 @@ export default function RegisterPage() {
                         placeholder="Nhập mật khẩu của bạn"
                      />
                   </Form.Item>
-                  <Form.Item
+                  <Form.Item<typeRegister>
                      label={<span className="text-xl font-bold">Xác nhận mật khẩu</span>}
                      name="confirmPassword"
                      dependencies={["password"]}
@@ -100,7 +118,7 @@ export default function RegisterPage() {
                   <Form.Item>
                      <div>
                         <AntButtonCommon label="Đăng ký" style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FAE3B6' }} className="mt-3 w-full !py-6 !text-black !hover:text-black" shape="round" size="large"
-                           htmlType='submit'
+                           htmlType='submit' disabled={loading} loading={loading}
                         />
                      </div>
                   </Form.Item>
