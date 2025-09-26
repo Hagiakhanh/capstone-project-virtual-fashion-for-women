@@ -58,5 +58,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/staff/:path*", "/login"], // áp dụng cho route nào
+  matcher: ["/admin/:path*", "/staff/:path*", "/login", "/cart"], // áp dụng cho route nào
 };
