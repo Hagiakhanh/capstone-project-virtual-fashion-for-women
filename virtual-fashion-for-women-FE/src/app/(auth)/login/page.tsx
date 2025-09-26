@@ -8,18 +8,16 @@ import { typeLogin } from "@/types/auth";
 import bgLogin from '../../../assets/auth/bg-login.png'
 import googleIcon from '../../../assets/auth/GoogleIcon.webp'
 import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
-import { useState } from "react";
 import { api } from "@/api/instance";
 
 function LoginPage() {
   const router = useRouter();
   const [form] = Form.useForm();
-  const [loginData, setLoginData] = useState<typeLogin>({ email: '', password: '' });
 
   const handleLogin = async (values: typeLogin) => {
     try {
       console.log("Login data:", values);
-      var response = await api.post('/login', values);
+      const response = await api.post('/login', values);
       if (response.status === 200) {
         console.log("Login successful:", response.data);
         router.replace("/");
