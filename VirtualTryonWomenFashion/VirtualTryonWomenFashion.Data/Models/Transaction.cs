@@ -21,11 +21,11 @@ public partial class Transaction
 
     public string ThirdPartyCode { get; set; }
 
+    public string ThirdPartyOrderIdCode { get; set; }
+
     public DateTime UpdatedAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
-
-    public string ThirdPartyOrderIdCode { get; set; }
 
     public virtual Order Order { get; set; }
 
