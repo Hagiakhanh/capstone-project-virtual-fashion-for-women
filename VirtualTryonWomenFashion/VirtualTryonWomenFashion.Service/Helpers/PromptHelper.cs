@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.AIChatModel;
 
 namespace VirtualTryonWomenFashion.Service.Helpers
@@ -52,13 +53,13 @@ namespace VirtualTryonWomenFashion.Service.Helpers
             return queryBuilder.ToString();
         }
 
-        public static string BuildConversationalStylistPrompt(List<MessageDTO> history, SuggestRequirement currentStyle, string newMessage)
+        public static string BuildConversationalStylistPrompt(List<Message> history, SuggestRequirement currentStyle, string newMessage)
         {
             var historyText = new StringBuilder();
             foreach (var msg in history)
             {
-                // Giả sử SenderID = 0 là AI, khác 0 là User
-                historyText.AppendLine($"{msg.SenderType}: {msg.Content}");
+                historyText.AppendLine((msg.IsAiresponse ? "AI" : "User")
+                + $": {msg.Content}");
             }
 
             string currentStyleJson = JsonSerializer.Serialize(currentStyle);

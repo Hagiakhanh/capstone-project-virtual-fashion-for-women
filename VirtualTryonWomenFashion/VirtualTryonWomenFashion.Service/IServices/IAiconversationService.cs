@@ -10,6 +10,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
 {
     public interface IAiconversationService
     {
+        public Task<List<Aiconversation>> GetAllAIConversation();
         public Task<MessageModelWithData<Aiconversation>> CreateAIConversation(int? userCharacteristicID);
         public Task<MessageModelWithData<Aiconversation>> UpdateAICurrentConversationStyle(int conversationID, string userStyleJsonString);
     }

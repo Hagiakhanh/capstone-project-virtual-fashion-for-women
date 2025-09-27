@@ -89,6 +89,20 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
+        public async Task<List<Aiconversation>> GetAllAIConversation()
+        {
+            try
+            {
+                int currentUserId = _currentUserService.GetUserId();
+                List<Aiconversation> listConversation = await _aiconversationRepository.GetAll(null, x => x.UserId == currentUserId);
+                return listConversation;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
         public async Task<MessageModelWithData<Aiconversation>> UpdateAICurrentConversationStyle(int conversationID, string userStyleJsonString)
         {
             try
