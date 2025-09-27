@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.Color;
 using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
@@ -30,7 +31,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
 
             // ProductVariant -> ResponseProductVariantDto
             CreateMap<ProductVariant, ResponseProductVariantDto>()
-                .ForMember(dest => dest.ProductImages,
+                .ForMember(dest => dest.ProductImagesDto,
                            opt => opt.MapFrom(src => src.ProductColor.ProductImages));
 
             // Size -> ResponseSizeDto

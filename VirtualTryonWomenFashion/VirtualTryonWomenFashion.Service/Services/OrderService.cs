@@ -63,10 +63,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                 int userId = _currentUserService.GetUserId();
                 var cartItems = await _cartService.GetSelectedCartItemsAsync(requestCreateOrder.cartIds);
                
-                int totalWeight = (int) Math.Ceiling(cartItems.Sum(item => item.ProductVariant.ProductWeight * item.Quantity) ?? 0);
-                int totalHeight = (int) Math.Ceiling(cartItems.Sum(item => item.ProductVariant.ProductHeight * item.Quantity) ?? 0);
-                int totalWidth = (int) Math.Ceiling(cartItems.Max(c => c.ProductVariant.ProductWidth) ?? 0);
-                int totalLength = (int) Math.Ceiling(cartItems.Max(c => c.ProductVariant.ProductLength) ?? 0);
+                int totalWeight = (int) Math.Ceiling(cartItems.Sum(item => item.ResponseProductVariantDto.ProductWeight * item.QuantityItem) ?? 0);
+                int totalHeight = (int) Math.Ceiling(cartItems.Sum(item => item.ResponseProductVariantDto.ProductHeight * item.QuantityItem) ?? 0);
+                int totalWidth = (int) Math.Ceiling(cartItems.Max(c => c.ResponseProductVariantDto.ProductWidth) ?? 0);
+                int totalLength = (int) Math.Ceiling(cartItems.Max(c => c.ResponseProductVariantDto.ProductLength) ?? 0);
                 
                 ResponseCheckout responseCheckout = await _cartService.CheckoutAsync(new RequestCheckout()
                 {
@@ -76,6 +76,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     WardName = requestCreateOrder.WardName,
                 });
                 
+                (int provinceId, int districtId, string wardCode) =
+                    await _cartService.GetAddressCodeAsync(requestCreateOrder.ProvinceName, requestCreateOrder.DistrictName,
+                        requestCreateOrder.WardName);
                 Order order = new Order()
                 {
                     CustomerId = userId,
@@ -92,9 +95,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     PackageLength = totalLength,
                     ShippingMoney = responseCheckout.ServiceFree,
                     InsuranceFree = responseCheckout.InsuranceFee,
-                    ProvinceName = requestCreateOrder.ProvinceName,
-                    DistrictName = requestCreateOrder.DistrictName,
-                    WardName = requestCreateOrder.WardName,
+                    ProvinceId = provinceId,
+                    DistrictId = districtId,
+                    WardCode = wardCode,
                 };
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveChanges();
@@ -109,13 +112,18 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         OrderId = order.OrderId,
                         ProductVariantId = item.ProductVariantId,
-                        Quantity = item.Quantity,
+                        Quantity = item.QuantityItem,
                         PriceAtTime =(decimal)responseGetVariantPriceInfo.CurrentPrice,
                         CampaignId = responseGetVariantPriceInfo.HasActiveCampaign ? responseGetVariantPriceInfo.SaleCampaignInfo.CampaignId : null
                     };
+                    int newQuantity = (int)productVariant?.Quantity - item.QuantityItem;
+                    if (newQuantity < 0)
+                    {
+                        throw new Exception("Số lượng sản phẩm trong kho không đủ");
+                    }
                     await _productVariantService.UpdateAsync(item.ProductVariantId,new UpdateProductVariantRequest()
                     {
-                        Quantity = productVariant?.Quantity - item.Quantity
+                        Quantity = productVariant?.Quantity - item.QuantityItem
                     },true);
                     productVariantIds.Add(item.ProductVariantId);
                     orderDetails.Add(orderDetail);
@@ -392,8 +400,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                         ToName = order.ReceiverName,    // Tên của khách hàng
                         ToPhone = order.ReceiverPhone,  // Số điện thoại của khách hàng
                         ToAddress = order.ReceiverAddress, // Địa chỉ của khách hàng
-                        ToWardCode = order.WardName,   // Phường của người nhận hàng | Phải theo api của GHN
-                        ToDistrictId = int.Parse(order.DistrictName),    // Huyện của người nhận hàng | Phải theo api của GHN
+                        ToWardCode = order.WardCode,   // Phường của người nhận hàng | Phải theo api của GHN
+                        ToDistrictId = (int)order.DistrictId,    // Huyện của người nhận hàng | Phải theo api của GHN
                         CodAmount = 0,  // Tiền COD mà shipper phải thu
                         Content = "Cửa hàng thời trang nữ",   // Có thể đặt tên sản phẩm ở đây
                         Weight = (int)order.PackageWeight.Value,    // Cân nặng đơn

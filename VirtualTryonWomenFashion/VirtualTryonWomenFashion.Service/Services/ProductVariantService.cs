@@ -37,9 +37,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             _productInSaleCampaign = productInSaleCampaign;
         }
         
-        public Task<ProductVariant?> GetProductVariantById(string id)
+        public async Task<ProductVariant?> GetProductVariantById(string id)
         {
-            return _productVariantRepository.GetByIdAsync(id);
+            return await _productVariantRepository.GetByIdAsync(id);
         }
         
         public async Task<MessageModelWithData<ProductVariant>> CreateAsync(string productColorId, CreateProductVariantRequest request)

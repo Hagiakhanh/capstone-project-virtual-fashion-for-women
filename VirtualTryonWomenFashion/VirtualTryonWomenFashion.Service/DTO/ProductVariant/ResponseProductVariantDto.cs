@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Service.DTO.Color;
 
 namespace VirtualTryonWomenFashion.Service.DTO.ProductVariant
 {
@@ -14,12 +15,15 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductVariant
         public int? Quantity { get; set; }
         public string ImageUrl { get; set; }
         public string Status { get; set; }
+        public decimal CurrentPrice { get; set; }
         public decimal? ProductWeight { get; set; }
         public decimal? ProductLength { get; set; }
         public decimal? ProductWidth { get; set; }
         public decimal? ProductHeight { get; set; }
-        public ResponseSizeDto Size { get; set; }
-        public List<ResponseProductImageDto> ProductImages { get; set; } = new List<ResponseProductImageDto>();
+        public ResponseSizeDto SizeDto { get; set; }
+        
+        public ResponseColorDto ColorDto { get; set; } = new ResponseColorDto();
+        public List<ResponseProductImageDto> ProductImagesDto { get; set; } = new List<ResponseProductImageDto>();
     }
 
     public class ResponseSizeDto

@@ -8,7 +8,11 @@ using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.Cart;
+using VirtualTryonWomenFashion.Service.DTO.Color;
+using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
+using VirtualTryonWomenFashion.Service.DTO.User;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Mappers;
 using VirtualTryonWomenFashion.Service.Utils;
 
 namespace VirtualTryonWomenFashion.Service.Services
@@ -20,19 +24,23 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICurrentUserService _currentUserService;
         private readonly IProductVariantService _productVariantService;
         private readonly IShippingService _shippingService;
+        private readonly IProductService _productService;
 
         public CartService(
             ICartRepository cartRepository,
             IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService,
             IProductVariantService productVariantService,
-            IShippingService shippingService)
+            IShippingService shippingService,
+            IProductService productService
+        )
         {
             _cartRepository = cartRepository;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
             _productVariantService = productVariantService;
             _shippingService = shippingService;
+            _productService = productService;
         }
 
         public async Task<bool> AddProductToCartAsync(RequestAddProductToCart requestAddProductToCart)
@@ -64,12 +72,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 if (existingCartItem != null)
                 {
-                    return await this.UpdateProductQuantityAsync(
+                    var responseCartItem = await this.UpdateProductQuantityAsync(
                         new RequestAddProductToCart()
                         {
                             ProductVariantId = requestAddProductToCart.ProductVariantId,
                             Quantity = requestAddProductToCart.Quantity + existingCartItem.Quantity
                         });
+                    return responseCartItem != null;
                 }
                 else
                 {
@@ -96,17 +105,19 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<bool> RemoveProductFromCartAsync(string productVariantId)
+        public async Task<bool> RemoveProductFromCartAsync(int cartId)
         {
             int userId = _currentUserService.GetUserId();
 
-            Cart? existingCartItem = (await _cartRepository.GetAll(
-                filter: c => c.UserId == userId && c.ProductVariantId == productVariantId
-            )).FirstOrDefault();
-
+            Cart? existingCartItem = await _cartRepository.GetByIdAsync(cartId);
             if (existingCartItem == null)
             {
                 throw new Exception("Sản phẩm trong cart không được tìm thấy.");
+            }
+            
+            if(existingCartItem.UserId != userId)
+            {
+                throw new Exception("Bạn không có quyền xóa sản phẩm này trong giỏ hàng.");
             }
 
             try
@@ -173,7 +184,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             return await _unitOfWork.SaveChanges();
         }
 
-        public async Task<bool> UpdateProductQuantityAsync(RequestAddProductToCart requestAddProductToCart)
+        public async Task<ResponseCartItem> UpdateProductQuantityAsync(RequestAddProductToCart requestAddProductToCart)
         {
             int userId = _currentUserService.GetUserId();
 
@@ -209,7 +220,32 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _cartRepository.UpdateAsync(existingCartItem);
                 await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
-                return true;
+
+                var responseProductDto =
+                    await _productService.GetProductByVariantIdAsync(existingCartItem.ProductVariantId);
+                ResponseProductVariantDto productVariantDto = new ResponseProductVariantDto()
+                {
+                    ProductVariantId = existingCartItem.ProductVariant.ProductVariantId,
+                    SizeId = existingCartItem.ProductVariant.SizeId,
+                    VariantName = existingCartItem.ProductVariant.VariantName,
+                    CurrentPrice = (decimal)responseProductDto.PriceAtTime,
+                    Quantity = existingCartItem.ProductVariant.Quantity,
+                    ImageUrl = existingCartItem.ProductVariant.ImageUrl,
+                    Status = existingCartItem.ProductVariant.Status,
+                    ProductWeight = existingCartItem.ProductVariant.ProductWeight,
+                    ProductHeight = existingCartItem.ProductVariant.ProductHeight,
+                    ProductLength = existingCartItem.ProductVariant.ProductLength,
+                    ProductWidth = existingCartItem.ProductVariant.ProductWidth,
+                    SizeDto = responseProductDto.ProductColors
+                            .SelectMany(c => c.ProductVariants) // gộp tất cả variant từ các màu
+                            .FirstOrDefault(v => v.ProductVariantId == existingCartItem.ProductVariantId).SizeDto ??=
+                        new ResponseSizeDto(),
+                    ColorDto = responseProductDto.ProductColors
+                        .Where(pc => pc.ProductVariants.Any(pv=>pv.ProductVariantId == existingCartItem.ProductVariantId))
+                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto(),
+                    ProductImagesDto = new List<ResponseProductImageDto>()
+                };
+                return existingCartItem.MapToResponseCartItem(productVariantDto);
             }
             catch (Exception ex)
             {
@@ -218,17 +254,49 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<List<Cart>> GetCartItemsAsync()
+        public async Task<List<ResponseCartItem>> GetCartItemsAsync()
         {
             int userId = _currentUserService.GetUserId();
             List<Cart> cartItems = await _cartRepository.GetAll(
                 filter: c => c.UserId == userId && !(bool)c.IsDelete,
-                orderBy: q => q.OrderBy(c => c.CreateDate)
+                orderBy: q => q.OrderBy(c => c.CreateDate),
+                includes: c => c.ProductVariant
             );
-            return cartItems ?? new List<Cart>();
+            List<ResponseCartItem> responseCartItems = new List<ResponseCartItem>();
+            foreach (var cartItem in cartItems)
+            {
+                var responseProductDto =
+                    await _productService.GetProductByVariantIdAsync(cartItem.ProductVariantId);
+                ResponseProductVariantDto productVariantDto = new ResponseProductVariantDto()
+                {
+                    ProductVariantId = cartItem.ProductVariant.ProductVariantId,
+                    SizeId = cartItem.ProductVariant.SizeId,
+                    VariantName = cartItem.ProductVariant.VariantName,
+                    CurrentPrice = (decimal)responseProductDto.PriceAtTime,
+                    Quantity = cartItem.ProductVariant.Quantity,
+                    ImageUrl = cartItem.ProductVariant.ImageUrl,
+                    Status = cartItem.ProductVariant.Status,
+                    ProductWeight = cartItem.ProductVariant.ProductWeight,
+                    ProductHeight = cartItem.ProductVariant.ProductHeight,
+                    ProductLength = cartItem.ProductVariant.ProductLength,
+                    ProductWidth = cartItem.ProductVariant.ProductWidth,
+                    SizeDto = responseProductDto.ProductColors
+                            .SelectMany(c => c.ProductVariants) // gộp tất cả variant từ các màu
+                            .FirstOrDefault(v => v.ProductVariantId == cartItem.ProductVariantId).SizeDto ??=
+                        new ResponseSizeDto(),
+                    ColorDto = responseProductDto.ProductColors
+                        .Where(pc => pc.ProductVariants.Any(pv=>pv.ProductVariantId == cartItem.ProductVariantId))
+                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto(),
+                    ProductImagesDto = new List<ResponseProductImageDto>()
+                };
+
+                responseCartItems.Add(cartItem.MapToResponseCartItem(productVariantDto));
+            }
+
+            return responseCartItems ?? new List<ResponseCartItem>();
         }
 
-        public async Task<List<Cart>> GetSelectedCartItemsAsync(List<int> cartIds)
+        public async Task<List<ResponseCartItem>> GetSelectedCartItemsAsync(List<int> cartIds)
         {
             int userId = _currentUserService.GetUserId();
 
@@ -244,12 +312,43 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception("Có 1 vài sản phẩm không nằm trong giỏ hàng khi checkout.");
             }
 
-            return cartItems;
+            List<ResponseCartItem> responseCartItems = new List<ResponseCartItem>();
+            foreach (var cartItem in cartItems)
+            {
+                var responseProductDto =
+                    await _productService.GetProductByVariantIdAsync(cartItem.ProductVariantId);
+                ResponseProductVariantDto productVariantDto = new ResponseProductVariantDto()
+                {
+                    ProductVariantId = cartItem.ProductVariant.ProductVariantId,
+                    SizeId = cartItem.ProductVariant.SizeId,
+                    VariantName = cartItem.ProductVariant.VariantName,
+                    CurrentPrice = (decimal)responseProductDto.PriceAtTime,
+                    Quantity = cartItem.ProductVariant.Quantity,
+                    ImageUrl = cartItem.ProductVariant.ImageUrl,
+                    Status = cartItem.ProductVariant.Status,
+                    ProductWeight = cartItem.ProductVariant.ProductWeight,
+                    ProductHeight = cartItem.ProductVariant.ProductHeight,
+                    ProductLength = cartItem.ProductVariant.ProductLength,
+                    ProductWidth = cartItem.ProductVariant.ProductWidth,
+                    SizeDto = responseProductDto.ProductColors
+                            .SelectMany(c => c.ProductVariants) // gộp tất cả variant từ các màu
+                            .FirstOrDefault(v => v.ProductVariantId == cartItem.ProductVariantId).SizeDto ??=
+                        new ResponseSizeDto(),
+                    ColorDto = responseProductDto.ProductColors
+                        .Where(pc => pc.ProductVariants.Any(pv=>pv.ProductVariantId == cartItem.ProductVariantId))
+                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto(),
+                    ProductImagesDto = new List<ResponseProductImageDto>()
+                };
+
+                responseCartItems.Add(cartItem.MapToResponseCartItem(productVariantDto));
+            }
+
+            return responseCartItems;
         }
 
         public async Task<ResponseCheckout> CheckoutAsync(RequestCheckout requestCheckout)
         {
-            List<Cart> selectedCartItems = await this.GetSelectedCartItemsAsync(requestCheckout.cartIds);
+            List<ResponseCartItem> selectedCartItems = await this.GetSelectedCartItemsAsync(requestCheckout.cartIds);
             if (selectedCartItems.Count == 0)
             {
                 throw new Exception("No items selected for checkout.");
@@ -263,19 +362,23 @@ namespace VirtualTryonWomenFashion.Service.Services
                     await _productVariantService.GetVariantPriceInfoAsync(cartItem.ProductVariantId);
 
                 int productPrice =
-                    (int)Math.Ceiling((cartItem.Quantity * responseGetVariantPriceInfo.CurrentPrice) ?? 0);
+                    (int)Math.Ceiling((cartItem.QuantityItem * responseGetVariantPriceInfo.CurrentPrice) ?? 0);
                 totalProductPrice += productPrice;
             }
 
-            int provinceId = await _shippingService.GetProvinceId(requestCheckout.ProvinceName);
-            int districtId = await _shippingService.GetDistrictId(requestCheckout.DistrictName, provinceId);
-            string wardCode = await _shippingService.GetWardId(requestCheckout.WardName, districtId);
+            (int provinceId, int districtId, string wardCode) =
+                await this.GetAddressCodeAsync(requestCheckout.ProvinceName, requestCheckout.DistrictName,
+                    requestCheckout.WardName);
             int totalWeight =
-                (int)Math.Ceiling(selectedCartItems.Sum(c => c.Quantity * c.ProductVariant.ProductWeight) ?? 0);
+                (int)Math.Ceiling(
+                    selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductWeight) ?? 0);
             int totalHeight =
-                (int)Math.Ceiling(selectedCartItems.Sum(c => c.Quantity * c.ProductVariant.ProductHeight) ?? 0);
-            int totalLength = (int)Math.Ceiling(selectedCartItems.Max(c => c.ProductVariant.ProductLength) ?? 0);
-            int totalWidth = (int)Math.Ceiling(selectedCartItems.Max(c => c.ProductVariant.ProductWidth) ?? 0);
+                (int)Math.Ceiling(
+                    selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductHeight) ?? 0);
+            int totalLength =
+                (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductLength) ?? 0);
+            int totalWidth =
+                (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductWidth) ?? 0);
             ShippingObjectRequest shippingObjectRequest = new ShippingObjectRequest()
             {
                 ToWardCode = wardCode,
@@ -296,6 +399,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                 TotalPrice = totalProductPrice + serviceFree + insuranceFree
             };
             return responseCheckout;
+        }
+
+        public async Task<(int, int, string)> GetAddressCodeAsync(string provinceName, string districtName,
+            string wardName)
+        {
+            int provinceId = await _shippingService.GetProvinceId(provinceName);
+            int districtId = await _shippingService.GetDistrictId(districtName, provinceId);
+            string wardCode = await _shippingService.GetWardId(wardName, districtId);
+            return (provinceId, districtId, wardCode);
         }
 
         public async Task RestoreCartItemAsync(int userId, string productVariantId, int quantity)
