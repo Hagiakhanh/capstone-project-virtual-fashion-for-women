@@ -53,6 +53,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 var cleanJson = JsonHelper.CleanJsonString(geminiJsonResponse);
                 var analysis = JsonSerializer.Deserialize<OutfitPlanResponse>(cleanJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                // Dieu chinh lai cau prompt va cau hinh cho phan tra ve chi yeu cau phoi theo dung bo quan ao theo phong cach qua tu khoa
 
                 var finalOutfit = new OutfitDTO
                 {
@@ -83,6 +84,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                 };
                 await _messageRepository.InsertAsync(responseMessage);
                 await _unitOfWork.SaveChanges();
+                responseMessage.Aiconversation = null;
+
+                //Tra ve dto voi suggested outfit neu co
                 return responseMessage;
             }
             catch (Exception ex)

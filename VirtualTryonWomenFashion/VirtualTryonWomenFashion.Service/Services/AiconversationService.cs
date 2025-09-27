@@ -64,6 +64,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     aiConversation.Messages.Add(new Message() { Content = analysis.ResponseText, SenderId = null, ReceiverId = currentUserId, IsAiresponse = true });
 
                 }
+                aiConversation.CreatedAt = DateTime.UtcNow.AddHours(7);
                 await _aiconversationRepository.InsertAsync(aiConversation);
                 await _unitOfWork.SaveChanges();
                 return new MessageModelWithData<Aiconversation>() { Data = aiConversation, Message = "Tạo thành công cuộc trò chuyện", StatusCode = StatusCodes.Status200OK };
