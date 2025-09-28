@@ -24,7 +24,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
             catch
             {
-                throw new Exception("Login Before Use");
+                throw new ArgumentException("Login Before Use");
             }
         }
     }
