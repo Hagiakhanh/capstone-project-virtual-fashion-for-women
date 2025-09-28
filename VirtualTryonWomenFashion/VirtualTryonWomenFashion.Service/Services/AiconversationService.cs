@@ -22,14 +22,16 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICharacteristicService _characteristicService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IGeminiService _geminiService;
+        private readonly ICategoryService _categoryService;
         public AiconversationService(IAiconversationRepository aiconversationRepository, ICurrentUserService currentUserService,
-            ICharacteristicService characteristicService, IUnitOfWork unitOfWork, IGeminiService geminiService)
+            ICharacteristicService characteristicService, IUnitOfWork unitOfWork, IGeminiService geminiService, ICategoryService categoryService)
         {
             _aiconversationRepository = aiconversationRepository;
             _currentUserService = currentUserService;
             _characteristicService = characteristicService;
             _unitOfWork = unitOfWork;
             _geminiService = geminiService;
+            _categoryService = categoryService;
         }
         public async Task<MessageModelWithData<Aiconversation>> CreateAIConversation(int? userCharacteristicID)
         {
@@ -49,7 +51,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                     string characteristicDescribe = _characteristicService.GetCharacteristicDescription(selectedCharacteristic.Data);
                     Message messageDescribe = new Message { Content = characteristicDescribe, SenderId = currentUserId, ReceiverId = null, CreatedAt = DateTime.UtcNow.AddHours(7) };
                     aiConversation.Messages.Add(messageDescribe);
-                    string prompt = PromptHelper.BuildConversationalStylistPrompt(null, null, characteristicDescribe);
+                    List<Category> categories = await _categoryService.GetAllCategories();
+                    string prompt = PromptHelper.BuildConversationalStylistPrompt(null, null, categories, "Tôi là người mới mong muốn được gợi ý và có phong cách " + characteristicDescribe);
                     string geminiJsonResponse = await _geminiService.CallGeminiAsync(prompt);
                     var cleanJson = JsonHelper.CleanJsonString(geminiJsonResponse);
 

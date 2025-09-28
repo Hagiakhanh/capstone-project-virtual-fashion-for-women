@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualBasic;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,14 +23,19 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICurrentUserService _currentUserService;
         private readonly IAiconversationRepository _aiConversationRepository;
         private readonly IGeminiService _geminiService;
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly IVectorDbService _vectorDbService;
         public MessageService(IMessageRepository messageRepository, IUnitOfWork unitOfWork,
-            ICurrentUserService currentUserService, IAiconversationRepository aiconversationRepository, IGeminiService geminiService)
+            ICurrentUserService currentUserService, IAiconversationRepository aiconversationRepository,
+            IGeminiService geminiService, ICategoryRepository categoryRepository, IVectorDbService vectorDbService)
         {
             _messageRepository = messageRepository;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
             _aiConversationRepository = aiconversationRepository;
             _geminiService = geminiService;
+            _categoryRepository = categoryRepository;
+            _vectorDbService = vectorDbService;
         }
         public async Task<Message> SendMessageToAIConversation(int conversationChatID, string message)
         {
@@ -48,7 +54,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 var currentUserStyle = string.IsNullOrEmpty(conversationModel.CurrentUserStyleJson)
                    ? new SuggestRequirement()
                    : JsonSerializer.Deserialize<SuggestRequirement>(conversationModel.CurrentUserStyleJson);
-                string prompt = PromptHelper.BuildConversationalStylistPrompt(listHistoryMessage, currentUserStyle, message);
+                List<Category> listCategory = await _categoryRepository.GetAll();
+                string prompt = PromptHelper.BuildConversationalStylistPrompt(listHistoryMessage, currentUserStyle, listCategory, message);
                 string geminiJsonResponse = await _geminiService.CallGeminiAsync(prompt);
 
                 var cleanJson = JsonHelper.CleanJsonString(geminiJsonResponse);
@@ -60,6 +67,43 @@ namespace VirtualTryonWomenFashion.Service.Services
                     OutfitName = analysis.OutfitName,
                     ResponseText = analysis.ResponseText
                 };
+                if (HasChanges(currentUserStyle, analysis.UpdatedStyle))
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                        WriteIndented = true
+                    };
+
+                    conversationModel.CurrentUserStyleJson = JsonSerializer.Serialize(analysis.UpdatedStyle, options);
+                    currentUserStyle = analysis.UpdatedStyle;
+                    await _aiConversationRepository.UpdateAsync(conversationModel);
+                }
+                if (analysis.Action == "provide_suggestions" && analysis.Components != null)
+                {
+                    foreach (var componentPlan in analysis.Components)
+                    {
+                        //if (currentUserStyle.Weight.HasValue && currentUserStyle.Height.HasValue)
+                        //{
+                        //    componentPlan.Filters.Add("size", SizeHelper.GetFemaleSize(currentUserStyle.Height.Value, currentUserStyle.Weight.Value));
+                        //}
+                        float[] embeddedQuery = await _geminiService.GetEmbeddingAsync(componentPlan.SearchQuery);
+
+                        var vectorResult = await _vectorDbService.QueryAsync(embeddedQuery, topK: 5, filters: componentPlan.Filters);
+
+                        if (vectorResult.Any())
+                        {
+                            var bestMatch = vectorResult.First();
+                            finalOutfit.Components.Add(new ProductSuggestionDTO { ProductName = bestMatch.metadata["productName"], VarianceId = int.Parse(bestMatch.metadata["varianceId"]), Color = bestMatch.metadata["color"], Size = bestMatch.metadata["size"] });
+                        }
+                    }
+
+                    if (finalOutfit.Components.Count != analysis.Components.Count)
+                    {
+                        finalOutfit.ResponseText = "Xin lỗi, mình chưa tìm được gợi ý phù hợp. Bạn có thể thử lại nhé.";
+                    }
+
+                }
                 // Check dieu kien goi y ra cac bo do neu co -> them vao bang SuggestedOutfits
 
                 // Save user sent message
@@ -93,6 +137,24 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 return null;
             }
+        }
+
+        public static bool HasChanges(SuggestRequirement oldStyle, SuggestRequirement newStyle)
+        {
+            // Kiểm tra trường hợp một trong hai hoặc cả hai là null
+            if (oldStyle == null && newStyle == null) return false; // Cả hai đều null -> không đổi
+            if (oldStyle == null || newStyle == null) return true;  // Một trong hai là null -> có đổi
+
+            // So sánh từng thuộc tính
+            if (oldStyle.Height != newStyle.Height) return true;
+            if (oldStyle.Weight != newStyle.Weight) return true;
+            if (oldStyle.FashionStyle != newStyle.FashionStyle) return true;
+            if (oldStyle.ItemType != newStyle.ItemType) return true;
+            if (oldStyle.Occasion != newStyle.Occasion) return true;
+            if (oldStyle.Color != newStyle.Color) return true;
+
+            // Nếu tất cả các thuộc tính đều giống nhau
+            return false;
         }
     }
 }
