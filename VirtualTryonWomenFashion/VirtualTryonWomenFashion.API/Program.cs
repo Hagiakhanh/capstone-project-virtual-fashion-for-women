@@ -52,7 +52,7 @@ builder.Services.AddControllers()
             var errorResponse = new MessageModelWithData<object>
             {
                 StatusCode = StatusCodes.Status400BadRequest,
-                Message = "Error: "+ string.Join(", ", errors.SelectMany(e => e.Value)),
+                Message = "Error: " + string.Join(", ", errors.SelectMany(e => e.Value)),
                 Data = null
             };
             return new BadRequestObjectResult(errorResponse);
@@ -124,12 +124,8 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
