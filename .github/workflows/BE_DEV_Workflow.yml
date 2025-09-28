@@ -1,15 +1,20 @@
-name: BE build testing CI/CD Workflow
+name: BE build & deploy CI/CD Workflow
 
 on:
   push:
     branches:
-      - 'BE' 
+      - 'BE'
   pull_request:
     branches:
       - 'BE'
 
+env:
+  ASPNETCORE_ENVIRONMENT: Production
+  PROJECT_PATH: VirtualTryonWomenFashion/VirtualTryonWomenFashion.API/VirtualTryonWomenFashion.API.csproj
+  PUBLISH_OUTPUT_PATH: ${{ github.workspace }}/publish
+
 jobs:
-  build-app-service:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,3 +39,16 @@ jobs:
       - name: Build solution
         working-directory: ./VirtualTryonWomenFashion
         run: dotnet build VirtualTryonWomenFashion.sln --configuration Release --no-restore
+
+      - name: Publish API project
+        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --no-build --output ${{ env.PUBLISH_OUTPUT_PATH }}
+
+      - name: Create Production appsettings.json
+        run: echo '${{ secrets.APPSETTINGS_DEV_JSON }}' > ${{ env.PUBLISH_OUTPUT_PATH }}/appsettings.json
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.PUBLISH_OUTPUT_PATH }}

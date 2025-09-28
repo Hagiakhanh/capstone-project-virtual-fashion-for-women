@@ -293,21 +293,24 @@ namespace VirtualTryonWomenFashion.Service.Services
                 foreach (var productColorRequest in request.ProductColor)
                 {
                     // 2.1. Xử lý Color
+                    string colorPrefix = null;
                     int colorId;
                     if (productColorRequest.ColorId > 0)
                     {
                         // Dùng màu có sẵn
                         colorId = productColorRequest.ColorId;
+                        colorPrefix = _colorRepository.GetByIdAsync(productColorRequest.ColorId).Result.ColorPrefix;
                     }
                     else
                     {
                         // Kiểm tra màu đã tồn tại chưa
                         var existingColor = await _colorRepository.GetFirstOrDefaultAsync(
-                            x => x.ColorPrefix.Equals(productColorRequest.ColorPrefix, StringComparison.InvariantCultureIgnoreCase));
+                                                        x => x.ColorPrefix.ToLower() == productColorRequest.ColorPrefix.ToLower());
 
                         if (existingColor != null)
                         {
                             colorId = existingColor.ColorId;
+                            colorPrefix = existingColor.ColorPrefix;
                         }
                         else
                         {
@@ -321,11 +324,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                             await _colorRepository.InsertAsync(newColor);
                             await _unitOfWork.SaveChanges(); // Save để lấy ColorId
                             colorId = newColor.ColorId;
+                            colorPrefix = newColor.ColorPrefix;
                         }
                     }
 
                     // 2.2. Tạo ProductColor
-                    string productColorId = $"{product.ProductId}-{colorId}";
+                    string productColorId = $"{product.ProductId}-{colorPrefix}";
 
                     string noBgImageUrl = await _cloudinaryService.UploadImageAsync(productColorRequest.NoBgImgUrl);
 
@@ -346,6 +350,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                         {
                             productColor.ProductImages.Add(new ProductImage
                             {
+                                ProductColorId = productColorId,
                                 ImageUrl = imageUrl
                             });
                         }
@@ -360,20 +365,23 @@ namespace VirtualTryonWomenFashion.Service.Services
                         {
                             // Xử lý Size
                             int sizeId;
+                            string sizeCode;
                             if (variantRequest.SizeId > 0)
                             {
                                 // Dùng size có sẵn
                                 sizeId = variantRequest.SizeId;
+                                sizeCode = _sizeRepository.GetByIdAsync(variantRequest.SizeId).Result.SizeCode;
                             }
                             else
                             {
                                 // Kiểm tra size đã tồn tại chưa
                                 var existingSize = await _sizeRepository.GetFirstOrDefaultAsync(
-                                    x => x.SizeCode.Equals(variantRequest.SizeCode, StringComparison.InvariantCultureIgnoreCase));
+                                    x => x.SizeCode.ToLower() == variantRequest.SizeCode.ToLower());
 
                                 if (existingSize != null)
                                 {
                                     sizeId = existingSize.SizeId;
+                                    sizeCode = existingSize.SizeCode;
                                 }
                                 else
                                 {
@@ -385,11 +393,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                                     await _sizeRepository.InsertAsync(newSize);
                                     await _unitOfWork.SaveChanges(); // Save để lấy SizeId
                                     sizeId = newSize.SizeId;
+                                    sizeCode = newSize.SizeCode;
                                 }
                             }
 
                             // Tạo ProductVariant
-                            string productVariantId = $"{productColorId}-{sizeId}";
+                            string productVariantId = $"{productColorId}-{sizeCode}";
                             var imageUrl = await _cloudinaryService.UploadImageAsync(variantRequest.ImageUrl);
 
                             var variant = new ProductVariant
@@ -574,20 +583,23 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         // 2.1. Xử lý Color
                         int colorId;
+                        string colorPrefix;
                         if (colorReq.ColorId.HasValue && colorReq.ColorId > 0)
                         {
                             // Dùng màu có sẵn
                             colorId = colorReq.ColorId.Value;
+                            colorPrefix = _colorRepository.GetByIdAsync(colorReq.ColorId.Value).Result.ColorPrefix;
                         }
                         else
                         {
                             // Kiểm tra màu đã tồn tại chưa
                             var existingColor = await _colorRepository.GetFirstOrDefaultAsync(
-                                x => x.ColorPrefix.Equals(colorReq.ColorPrefix, StringComparison.InvariantCultureIgnoreCase));
+                                                        x => x.ColorPrefix.ToLower() == colorReq.ColorPrefix.ToLower());
 
                             if (existingColor != null)
                             {
                                 colorId = existingColor.ColorId;
+                                colorPrefix = existingColor.ColorPrefix;
                             }
                             else
                             {
@@ -601,11 +613,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 await _colorRepository.InsertAsync(newColor);
                                 await _unitOfWork.SaveChanges(); // Save để lấy ColorId
                                 colorId = newColor.ColorId;
+                                colorPrefix= newColor.ColorPrefix;
                             }
                         }
 
                         string productColorId = string.IsNullOrEmpty(colorReq.ProductColorId)
-                            ? $"{productId}-{colorId}"
+                            ? $"{productId}-{colorPrefix}"
                             : colorReq.ProductColorId;
 
                         string noBgImageUrl = colorReq.NoBgImgUrl != null
@@ -629,6 +642,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             {
                                 newProductColor.ProductImages.Add(new ProductImage
                                 {
+                                    ProductColorId= productColorId,
                                     ImageUrl = imageUrl
                                 });
                             }
@@ -641,20 +655,23 @@ namespace VirtualTryonWomenFashion.Service.Services
                             {
                                 // Xử lý Size
                                 int sizeId;
+                                string sizeCode;
                                 if (variantReq.SizeId.HasValue && variantReq.SizeId > 0)
                                 {
                                     // Dùng size có sẵn
                                     sizeId = variantReq.SizeId.Value;
+                                    sizeCode = _sizeRepository.GetByIdAsync(variantReq.SizeId.Value).Result.SizeCode;
                                 }
                                 else
                                 {
                                     // Kiểm tra size đã tồn tại chưa
                                     var existingSize = await _sizeRepository.GetFirstOrDefaultAsync(
-                                        x => x.SizeCode.Equals(variantReq.SizeCode, StringComparison.InvariantCultureIgnoreCase));
+                                    x => x.SizeCode.ToLower() == variantReq.SizeCode.ToLower());
 
                                     if (existingSize != null)
                                     {
                                         sizeId = existingSize.SizeId;
+                                        sizeCode = existingSize.SizeCode;
                                     }
                                     else
                                     {
@@ -666,11 +683,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                                         await _sizeRepository.InsertAsync(newSize);
                                         await _unitOfWork.SaveChanges(); // Save để lấy SizeId
                                         sizeId = newSize.SizeId;
+                                        sizeCode= newSize.SizeCode;
                                     }
                                 }
 
                                 string productVariantId = string.IsNullOrEmpty(variantReq.ProductVariantId)
-                                    ? $"{productColorId}-{sizeId}"
+                                    ? $"{productColorId}-{sizeCode}"
                                     : variantReq.ProductVariantId;
 
                                 var imageUrl = variantReq.ImageUrl != null
@@ -723,6 +741,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             {
                                 dbColor.ProductImages.Add(new ProductImage
                                 {
+                                    ProductColorId = dbColor.ProductColorId,
                                     ImageUrl = imageUrl
                                 });
                             }
@@ -745,18 +764,21 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 {
                                     // Xử lý Size cho variant mới
                                     int sizeId;
+                                    string sizeCode;
                                     if (variantReq.SizeId.HasValue && variantReq.SizeId > 0)
                                     {
                                         sizeId = variantReq.SizeId.Value;
+                                        sizeCode = _sizeRepository.GetByIdAsync(sizeId).Result.SizeCode;
                                     }
                                     else
                                     {
                                         var existingSize = await _sizeRepository.GetFirstOrDefaultAsync(
-                                            x => x.SizeCode.Equals(variantReq.SizeCode, StringComparison.InvariantCultureIgnoreCase));
+                                                                    x => x.SizeCode.ToLower() == variantReq.SizeCode.ToLower());
 
                                         if (existingSize != null)
                                         {
                                             sizeId = existingSize.SizeId;
+                                            sizeCode = existingSize.SizeCode;
                                         }
                                         else
                                         {
@@ -764,11 +786,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                                             await _sizeRepository.InsertAsync(newSize);
                                             await _unitOfWork.SaveChanges();
                                             sizeId = newSize.SizeId;
+                                            sizeCode = newSize.SizeCode;
                                         }
                                     }
 
                                     string productVariantId = string.IsNullOrEmpty(variantReq.ProductVariantId)
-                                        ? $"{dbColor.ProductColorId}-{sizeId}"
+                                        ? $"{dbColor.ProductColorId}-{sizeCode}"
                                         : variantReq.ProductVariantId;
 
                                     var imageUrl = variantReq.ImageUrl != null
@@ -794,19 +817,23 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 }
                                 else
                                 {
+                                    string sizeCode = null;
+
                                     // Update existing variant
                                     if (variantReq.SizeId.HasValue && variantReq.SizeId > 0)
                                     {
                                         dbVariant.SizeId = variantReq.SizeId.Value;
+                                        sizeCode = _sizeRepository.GetByIdAsync(variantReq.SizeId.Value).Result.SizeCode;
                                     }
                                     else if (!string.IsNullOrEmpty(variantReq.SizeCode))
                                     {
                                         var existingSize = await _sizeRepository.GetFirstOrDefaultAsync(
-                                            x => x.SizeCode.Equals(variantReq.SizeCode, StringComparison.InvariantCultureIgnoreCase));
+                                                                       x => x.SizeCode.ToLower() == variantReq.SizeCode.ToLower());
 
                                         if (existingSize != null)
                                         {
                                             dbVariant.SizeId = existingSize.SizeId;
+                                            sizeCode = _sizeRepository.GetByIdAsync(existingSize.SizeCode).Result.SizeCode;
                                         }
                                         else
                                         {
@@ -814,9 +841,13 @@ namespace VirtualTryonWomenFashion.Service.Services
                                             await _sizeRepository.InsertAsync(newSize);
                                             await _unitOfWork.SaveChanges();
                                             dbVariant.SizeId = newSize.SizeId;
+                                            sizeCode = newSize.SizeCode;
                                         }
                                     }
 
+                                    dbVariant.ProductVariantId = string.IsNullOrEmpty(variantReq.ProductVariantId)
+                                        ? $"{dbColor.ProductColorId}-{sizeCode}"
+                                        : variantReq.ProductVariantId;
                                     dbVariant.VariantName = string.IsNullOrEmpty(variantReq.VariantName) ? dbVariant.VariantName : variantReq.VariantName;
                                     dbVariant.Quantity = variantReq.Quantity ?? dbVariant.Quantity;
                                     dbVariant.Status = variantReq.Status ?? dbVariant.Status;
