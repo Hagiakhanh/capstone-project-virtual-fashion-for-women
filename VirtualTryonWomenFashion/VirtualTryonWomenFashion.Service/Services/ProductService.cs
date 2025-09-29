@@ -27,9 +27,6 @@ namespace VirtualTryonWomenFashion.Service.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IProductRepository _productRepository;
-        /*private readonly IProductColorService _productColorService;
-        private readonly IProductImageService _productImageService;
-        private readonly IProductVariantService _productVariantService;*/
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IColorRepository _colorRepository;
         private readonly IProductColorRepository _productColorRepository;
@@ -38,11 +35,11 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IProductInSaleCampaignService _productInSaleCampaignService;
         private readonly IProductImageRepository _productImageRepository;
         private readonly IMapper _mapper;
+        private readonly IVectorDbService _vectorDbService;
+        private readonly IGeminiService _geminiService;
+        private readonly ICategoryRepository _categoryRepository;
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
-            /*IProductColorService productColorService,
-            IProductImageService productImageService,
-            IProductVariantService productVariantService,*/
             ICloudinaryService cloudinaryService,
             IColorRepository colorRepository,
             IProductColorRepository productColorRepository,
@@ -50,13 +47,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             IProductVariantRepository productVariantRepository,
             IProductInSaleCampaignService productInSaleCampaignService,
             IProductImageRepository productImageRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IVectorDbService vectorDbService,
+            IGeminiService geminiService,
+            ICategoryRepository categoryRepository)
         {
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
-            /*_productColorService = productColorService;
-            _productImageService = productImageService;
-            _productVariantService = productVariantService;*/
             _cloudinaryService = cloudinaryService;
             _colorRepository = colorRepository;
             _productColorRepository = productColorRepository;
@@ -65,6 +62,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             _productInSaleCampaignService = productInSaleCampaignService;
             _productImageRepository = productImageRepository;
             _mapper = mapper;
+            _vectorDbService = vectorDbService;
+            _geminiService = geminiService;
+            _categoryRepository = categoryRepository;
         }
 
         public static string GenerateFixedLengthString(int length)
@@ -423,6 +423,68 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 // 3. Save tất cả changes
                 var result = await _unitOfWork.SaveChanges();
+
+                var productWithRelations = await _productRepository.GetProductByIdAsync(product.ProductId);
+                // Sau khi SaveChanges xong, ta đã có đầy đủ ID cho product, productColor, variant
+                foreach (var productColor in productWithRelations.ProductColors)
+                {
+                    foreach (var variant in productColor.ProductVariants)
+                    {
+                        // Lấy category và bodyPart
+                        var category = await _categoryRepository.GetByIdAsync(product.CategoryId.Value);
+                        string bodyPartText = category.BodyPart switch
+                        {
+                            "upperBody" => "Thân trên",
+                            "underBody" => "Thân dưới",
+                            "fullBody" => "Nguyên bộ",
+                            _ => "Không xác định"
+                        };
+
+                        // Ghép text cho embedding
+                        var textParts = new List<string>
+                        {
+                            $"Tên sản phẩm: {product.ProductName}",
+                            $"Mô tả: {product.Description}",
+                            $"Danh mục: {category.CategoryName}",
+                            $"Có thể mặc: {bodyPartText}",
+                            $"Màu sắc: {productColor.Color?.ColorName ?? "Không rõ"}",
+                            $"Mã màu: {productColor.Color?.ColorPrefix ?? ""} ({productColor.Color?.HexCode ?? ""})",
+                            $"Size: {variant.Size?.SizeCode ?? "Free size"}",
+                            $"Giá: {product.Price} VND"
+                        };
+
+                        string textToEmbed = string.Join(". ", textParts);
+                        float[] vector = await _geminiService.GetEmbeddingAsync(textToEmbed);
+
+                        // Metadata cho Vector DB
+                        var metadata = new Dictionary<string, string>
+                        {
+                            { "productId", product.ProductId },
+                            { "productName", product.ProductName },
+                            { "productSlug", product.ProductSlug },
+                            { "categoryId", category.CategoryId.ToString() },
+                            { "categoryName", category.CategoryName },
+                            { "bodyPart", bodyPartText },
+                            { "productColorId", productColor.ProductColorId },
+                            { "colorId", productColor.ColorId?.ToString() ?? "" },
+                            { "colorName", productColor.Color?.ColorName ?? "" },
+                            { "colorPrefix", productColor.Color?.ColorPrefix ?? "" },
+                            { "hexCode", productColor.Color?.HexCode ?? "" },
+                            { "productVariantId", variant.ProductVariantId },
+                            { "variantName", variant.VariantName },
+                            { "sizeId", variant.SizeId?.ToString() ?? "" },
+                            { "sizeCode", variant.Size?.SizeCode ?? "" },
+                            { "price", product.Price?.ToString() ?? "" },
+                            { "imageUrl", variant.ImageUrl },
+                            { "noBgImageUrl", productColor.NoBgImgUrl ?? "" },
+                            { "createdAt", product.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss") }
+                        };
+
+                        // Upsert vào Vector DB (dùng productVariantId làm ID)
+                        await _vectorDbService.UpsertAsync(variant.ProductVariantId, vector, metadata);
+                    }
+                }
+
                 await _unitOfWork.CommitTransactionAsync();
 
                 if (result > 0)
@@ -613,7 +675,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 await _colorRepository.InsertAsync(newColor);
                                 await _unitOfWork.SaveChanges(); // Save để lấy ColorId
                                 colorId = newColor.ColorId;
-                                colorPrefix= newColor.ColorPrefix;
+                                colorPrefix = newColor.ColorPrefix;
                             }
                         }
 
@@ -642,7 +704,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             {
                                 newProductColor.ProductImages.Add(new ProductImage
                                 {
-                                    ProductColorId= productColorId,
+                                    ProductColorId = productColorId,
                                     ImageUrl = imageUrl
                                 });
                             }
@@ -683,7 +745,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                                         await _sizeRepository.InsertAsync(newSize);
                                         await _unitOfWork.SaveChanges(); // Save để lấy SizeId
                                         sizeId = newSize.SizeId;
-                                        sizeCode= newSize.SizeCode;
+                                        sizeCode = newSize.SizeCode;
                                     }
                                 }
 
