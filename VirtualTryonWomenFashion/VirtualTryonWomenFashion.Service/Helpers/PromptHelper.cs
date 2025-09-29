@@ -63,6 +63,9 @@ namespace VirtualTryonWomenFashion.Service.Helpers
             }
             StringBuilder textRuleCategories = new StringBuilder();
             textRuleCategories.AppendLine("**QUY TẮC LỌC KHI `provide_suggestions`:**");
+            textRuleCategories.AppendLine("Phần thông tin người dùng cần như quần áo thì cần phải tách ra thành áo với quần theo category tôi cung cấp dưới đây ở component khi gợi ý ra." +
+                " Còn người dùng nếu chỉ muốn một loại thì chỉ lấy ra một loại thôi.");
+
             foreach (Category cat in listCategory)
             {
                 textRuleCategories.AppendLine(
@@ -103,12 +106,6 @@ namespace VirtualTryonWomenFashion.Service.Helpers
 
 {textRuleCategories}
 
-**--- QUY TẮC LỌC NÂNG CAO (BÓC TÁCH THUỘC TÍNH) ---**
--   **Loại trang phục cụ thể:** Nếu người dùng hỏi một loại rất cụ thể (ví dụ: 'áo dài', 'chân váy', 'quần jean'), hãy thêm vào bộ lọc. Ví dụ: `""item_type"": ""áo dài""`.
--   **Màu sắc:** Nếu người dùng đề cập đến màu sắc (ví dụ: 'màu nâu', 'họa tiết hoa'), hãy thêm vào bộ lọc. Ví dụ: `""color"": ""nâu""`.
--   **Phong cách:** Nếu người dùng nói về phong cách (ví dụ: 'công sở', 'vintage'), hãy thêm vào bộ lọc. Ví dụ: `""style_tags"": ""công sở""`.
--   **Dịp:** Nếu người dùng nói về dịp mặc (ví dụ: 'đi tiệc', 'đi làm'), hãy thêm vào bộ lọc. Ví dụ: `""occasion"": ""đi tiệc""`.
-
 **LƯU Ý QUAN TRỌNG:**
 -   `SearchQuery` vẫn cần phải đầy đủ để tìm kiếm ngữ nghĩa bao gồm các từ khoá về sản phẩm theo yêu cầu của người dùng, nhưng các thuộc tính quan trọng PHẢI được đưa vào `filters`.
 
@@ -125,7 +122,7 @@ Your JSON output:
 {{
   ""action"": ""provide_suggestions"",
   ""updatedStyle"": {{ ""Occasion"": ""đi tiệc"", ""FashionStyle"": ""cách tân"", ""ItemType"": ""áo dài"", ""Color"": ""đỏ"" }},
-  ""outfitName"": ""Duyên Dáng Áo Dài Đỏ"",
+  ""outfitName"": ""Áo dài tiệc sự kiện màu đỏ cách tân đi tiệc cho dịp đám cưới "",
   ""components"": [ 
     {{ 
       ""SearchQuery"": ""áo dài cách tân màu đỏ chất liệu lụa mềm mại cho dịp tiệc cưới"", 
@@ -147,11 +144,9 @@ Your JSON output:
         public static string BuildStylistReasoningPrompt(
     SuggestRequirement currentStyle,
     List<Category> listCategory,
-    List<Product> retrievedProducts, string? textSuggestion)
+     Dictionary<string, List<ProductVariant>> groupedOptions, string? textSuggestion)
         {
             // Convert dữ liệu sản phẩm lấy được từ vector DB thành JSON gọn
-            var productsJson = JsonSerializer.Serialize(retrievedProducts);
-
             var categoryRules = new StringBuilder();
             categoryRules.AppendLine("**QUY TẮC LỌC THEO CATEGORY:**");
             foreach (Category cat in listCategory)
@@ -163,22 +158,37 @@ Your JSON output:
 
             string currentStyleJson = JsonSerializer.Serialize(currentStyle);
 
+            // Gom dữ liệu sản phẩm theo nhóm
+            var groupedBuilder = new StringBuilder();
+            foreach (var kv in groupedOptions)
+            {
+                groupedBuilder.AppendLine($"Loại: {kv.Key}");
+                foreach (var pv in kv.Value)
+                {
+                    groupedBuilder.AppendLine(
+                        $"- Id: {pv.ProductVariantId}, Tên: {pv.ProductColor.Product?.ProductName}, Màu: {pv.ProductColor}, Size: {pv.Size}"
+                    );
+                }
+                groupedBuilder.AppendLine();
+            }
+
             return $@"
 Bạn là Stylist AI chuyên về thời trang nữ. 
-Dữ liệu dưới đây là danh sách sản phẩm lấy từ vector database (chỉ chứa text mô tả, tên, tags). 
-Nhiệm vụ của bạn: reasoning và chọn ra sản phẩm phù hợp nhất với yêu cầu `SuggestRequirement`.
+Dưới đây là danh sách sản phẩm lấy từ vector database, đã được gom theo loại. 
+Nhiệm vụ của bạn: reasoning và chọn **một sản phẩm duy nhất từ mỗi loại** để phối đồ, sao cho phù hợp nhất với yêu cầu của người dùng (`SuggestRequirement`).
 
 **Thông tin người dùng (SuggestRequirement):**
 {currentStyleJson}
 
-**Danh sách sản phẩm lấy từ vector database:**
-{productsJson}
+**Danh sách sản phẩm (grouped theo loại):**
+{groupedBuilder}
 
 **Quy tắc reasoning:**
 - Phải bám sát `SuggestRequirement` (phong cách, màu sắc, itemType, occasion).
+- Mỗi loại chỉ chọn đúng 1 sản phẩm.
 - Ưu tiên sản phẩm có độ phù hợp cao nhất (matching nhiều trường).
-- Không cần tạo thêm sản phẩm mới, chỉ chọn trong danh sách có sẵn.
-- `SearchQuery` là câu ngắn gọn, súc tích (ví dụ: ""áo sơ mi trắng công sở"").
+- Không tạo sản phẩm mới, chỉ chọn trong danh sách có sẵn.
+- `SearchQuery` là câu ngắn gọn (ví dụ: ""áo sơ mi trắng công sở"").
 - `filters` phải theo quy tắc bên dưới:
 
 {categoryRules}
@@ -186,13 +196,15 @@ Nhiệm vụ của bạn: reasoning và chọn ra sản phẩm phù hợp nhất
 **Kết quả trả về:**
 Một JSON duy nhất với các trường:
 {{
-  ""selectedProducts"": [ {{ ""id"": ..., ""name"": ..., ""reason"": ""{textSuggestion}: giải thích ngắn tại sao phù hợp"" }} ],
+  ""selectedProducts"": [
+    {{ ""id"": ..., ""name"": ..., ""reason"": ""{textSuggestion}: giải thích ngắn tại sao phù hợp"" }}
+  ],
   ""responseText"": ""câu trả lời ngắn gọn, tự nhiên cho user""
 }}
 
 **Lưu ý:** 
 - Chỉ trả về JSON, không markdown, không kèm giải thích thừa.
-- Trong `reason`, bạn giải thích ngắn gọn dựa trên sự khớp giữa sản phẩm và yêu cầu của người dùng.
+- Trong `reason`, giải thích ngắn gọn dựa trên sự khớp giữa sản phẩm và yêu cầu người dùng.
 ";
         }
     }
