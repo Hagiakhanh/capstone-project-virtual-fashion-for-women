@@ -60,23 +60,31 @@ export default function CartItems({
 
                 {/* Quantity and Price Controls */}
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center border border-gray-300 rounded-md">
-                        <button
-                            onClick={() => onUpdateQuantity?.(item.cartId, -1)}
-                            className="p-2 hover:bg-gray-100 rounded-l-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            disabled={item.quantityItem <= 1}
-                        >
-                            <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="px-4 py-2 text-sm font-medium min-w-[3rem] text-center">
-                            {item.quantityItem}
-                        </span>
-                        <button
-                            onClick={() => onUpdateQuantity?.(item.cartId, 1)}
-                            className="p-2 hover:bg-gray-100 rounded-r-md transition-colors"
-                        >
-                            <Plus className="w-4 h-4" />
-                        </button>
+                    <div className="flex items-center border border-gray-300 rounded-md px-2 py-1">
+                        {showQuantityControls ? (
+                            <>
+                                <button
+                                    onClick={() => onUpdateQuantity?.(item.cartId, -1)}
+                                    className="p-2 hover:bg-gray-100 rounded-l-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    disabled={item.quantityItem <= 1}
+                                >
+                                    <Minus className="w-4 h-4" />
+                                </button>
+                                <span className="px-4 py-2 text-sm font-medium min-w-[3rem] text-center">
+                                    {item.quantityItem}
+                                </span>
+                                <button
+                                    onClick={() => onUpdateQuantity?.(item.cartId, 1)}
+                                    className="p-2 hover:bg-gray-100 rounded-r-md transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </button>
+                            </>
+                        ) : (
+                            <span className="text-sm font-medium">
+                                Số lượng: {item.quantityItem}
+                            </span>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-4">
