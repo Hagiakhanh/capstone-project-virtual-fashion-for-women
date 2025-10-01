@@ -15,7 +15,8 @@ export async function middleware(req: NextRequest) {
   }
   // Các route cho customer
   const customerRoutes = [
-    "/cart"
+    "/cart",
+    "/checkout"
   ];
   const isProtectedRoute = url.pathname.startsWith("/admin") || url.pathname.startsWith("/staff") || customerRoutes.some((route) => url.pathname.startsWith(route));
   if (isProtectedRoute && !token) {
@@ -58,5 +59,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/staff/:path*", "/login", "/cart"], // áp dụng cho route nào
+  matcher: ["/admin/:path*", "/staff/:path*", "/login", "/cart", "/checkout"], // áp dụng cho route nào
 };

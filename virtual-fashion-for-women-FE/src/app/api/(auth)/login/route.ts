@@ -6,7 +6,6 @@ export async function POST(request: Request) {
    try {
       const payload = await request.json();
       const api = createApiInstance(request);
-
       const responseBE = await api.post('/auth/login', payload);
       if (responseBE.status === 200) {
          const jwtToken = responseBE.data?.data;

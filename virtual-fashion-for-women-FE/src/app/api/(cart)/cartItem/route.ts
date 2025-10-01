@@ -3,8 +3,9 @@ import { NextResponse } from "next/dist/server/web/spec-extension/response";
 
 export async function GET(request: Request) {
     try {
-        console.log("GET /cartItem called");
+
         const api = createApiInstance(request);
+        console.log("api :", api)
         const responseBE = await api.get('/cart')
         if (responseBE.status === 200) {
             const cartItems = responseBE.data?.data;
