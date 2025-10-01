@@ -2,62 +2,69 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
+// Config: route nào role nào được phép
+const routePermissions: Record<string, string[]> = {
+  "/admin": ["Admin"],
+  "/staff": ["Staff"],
+  "/cart": ["Customer"],
+  "/manage": ["Admin", "Staff"],
+  "/profile": ["Admin", "Staff", "Customer"], // authenticated users
+};
+
+// Routes public (không cần login)
+const publicRoutes = ["/login", "/register", "/"];
+
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
-  //const role = req.cookies.get("role")?.value;
   const url = req.nextUrl.clone();
-  console.log('----------Check middleware runing----------');
-  console.log('Token:', token);
+  console.log("Middleware running:", url.pathname);
 
-  // Kiểm tra xem người dùng đã đăng nhập hay chưa
-  if (token && req.nextUrl.pathname === '/login') {
-    return NextResponse.redirect(new URL('/', req.url));
-  }
-  // Các route cho customer
-  const customerRoutes = [
-    "/cart",
-    "/checkout"
-  ];
-  const isProtectedRoute = url.pathname.startsWith("/admin") || url.pathname.startsWith("/staff") || customerRoutes.some((route) => url.pathname.startsWith(route));
-  if (isProtectedRoute && !token) {
-    return NextResponse.redirect(new URL('/login', req.url));
+  // Nếu đã login mà vào /login thì redirect về home
+  if (token && url.pathname === "/login") {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
-  if (token) {
-    try {
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-      const decoded = await jwtVerify(token, secret);
-      const role = decoded.payload.role;
+  // Nếu route public thì cho qua
+  if (publicRoutes.some((route) => url.pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
 
-      // Rule cho admin
-      if (url.pathname.startsWith("/admin") && role !== "Admin") {
+  // Nếu chưa login thì redirect về /login
+  if (!token) {
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    const decoded = await jwtVerify(token, secret);
+    const role = decoded.payload.role as string;
+
+    console.log("Role:", role);
+
+    // Tìm rule cho route hiện tại
+    const matchedRoute = Object.keys(routePermissions).find((route) =>
+      url.pathname.startsWith(route)
+    );
+
+    if (matchedRoute) {
+      const allowedRoles = routePermissions[matchedRoute];
+      if (!allowedRoles.includes(role)) {
         url.pathname = "/unauthorized";
         return NextResponse.redirect(url);
       }
-
-      // Rule cho staff
-      if (url.pathname.startsWith("/staff") && role !== "Staff") {
-        url.pathname = "/unauthorized";
-        return NextResponse.redirect(url);
-      }
-
-      // Rule cho customer
-      if (customerRoutes.some((route) => url.pathname.startsWith(route)) && role !== "Customer") {
-        url.pathname = "/unauthorized";
-        return NextResponse.redirect(url);
-      }
-
-    } catch (error) {
-      console.log('Invalid token or no token present');
-      const response = NextResponse.redirect(new URL('/login', req.url));
-      response.cookies.delete("token");
-      return response;
     }
+  } catch (error) {
+    console.log("Invalid token");
+    const response = NextResponse.redirect(new URL("/login", req.url));
+    response.cookies.delete("token");
+    return response;
   }
 
   return NextResponse.next();
 }
 
+// Middleware chỉ áp dụng cho page routes, exclude /api/*
 export const config = {
-  matcher: ["/admin/:path*", "/staff/:path*", "/login", "/cart", "/checkout"], // áp dụng cho route nào
+
+  matcher: ["/((?!api|_next|static|favicon.ico|robots.txt).*)"],
 };
