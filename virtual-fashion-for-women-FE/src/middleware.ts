@@ -25,7 +25,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Nếu route public thì cho qua
-  if (publicRoutes.some((route) => url.pathname.startsWith(route))) {
+  if (publicRoutes.some((route) => url.pathname === (route))) {
     return NextResponse.next();
   }
 
