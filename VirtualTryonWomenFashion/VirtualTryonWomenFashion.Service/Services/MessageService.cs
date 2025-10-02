@@ -25,9 +25,10 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IGeminiService _geminiService;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IVectorDbService _vectorDbService;
+        private readonly IProductVariantRepository _productVariantRepository;
         public MessageService(IMessageRepository messageRepository, IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService, IAiconversationRepository aiconversationRepository,
-            IGeminiService geminiService, ICategoryRepository categoryRepository, IVectorDbService vectorDbService)
+            IGeminiService geminiService, ICategoryRepository categoryRepository, IVectorDbService vectorDbService, IProductVariantRepository productVariantRepository)
         {
             _messageRepository = messageRepository;
             _unitOfWork = unitOfWork;
@@ -36,6 +37,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _geminiService = geminiService;
             _categoryRepository = categoryRepository;
             _vectorDbService = vectorDbService;
+            _productVariantRepository = productVariantRepository;
         }
         public async Task<Message> SendMessageToAIConversation(int conversationChatID, string message)
         {
@@ -81,29 +83,57 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
                 if (analysis.Action == "provide_suggestions" && analysis.Components != null)
                 {
+                    // Dictionary gom list sản phẩm theo loại
+                    var groupedVariants = new Dictionary<string, List<ProductVariant>>();
+
                     foreach (var componentPlan in analysis.Components)
                     {
                         //if (currentUserStyle.Weight.HasValue && currentUserStyle.Height.HasValue)
                         //{
-                        //    componentPlan.Filters.Add("size", SizeHelper.GetFemaleSize(currentUserStyle.Height.Value, currentUserStyle.Weight.Value));
+                        //    var size = SizeHelper.GetFemaleSize(currentUserStyle.Height.Value, currentUserStyle.Weight.Value);
+                        //    componentPlan.Filters["size"] = size;
                         //}
+
                         float[] embeddedQuery = await _geminiService.GetEmbeddingAsync(componentPlan.SearchQuery);
 
+                        // Query nhiều sản phẩm cho mỗi loại
                         var vectorResult = await _vectorDbService.QueryAsync(embeddedQuery, topK: 5, filters: componentPlan.Filters);
 
                         if (vectorResult.Any())
                         {
-                            var bestMatch = vectorResult.First();
-                            finalOutfit.Components.Add(new ProductSuggestionDTO { ProductName = bestMatch.metadata["productName"], VarianceId = int.Parse(bestMatch.metadata["varianceId"]), Color = bestMatch.metadata["color"], Size = bestMatch.metadata["size"] });
+                            var varianceIds = vectorResult.Select(x => x.metadata["varianceId"]).ToList();
+                            var productVariants = await _productVariantRepository.GetAll(null, x => varianceIds.Contains(x.ProductVariantId));
+
+                            // Gom theo ItemType (nếu bạn muốn gom theo Category thì đổi key)
+                            string key = vectorResult.FirstOrDefault().metadata["bodyPart"] ?? "unknown";
+                            if (!groupedVariants.ContainsKey(key))
+                                groupedVariants[key] = new List<ProductVariant>();
+
+                            groupedVariants[key].AddRange(productVariants);
                         }
                     }
 
-                    if (finalOutfit.Components.Count != analysis.Components.Count)
+                    if (groupedVariants.Any())
+                    {
+                        // Tạo prompt reasoning với nhiều lựa chọn
+                        string reasoningPrompt = PromptHelper.BuildStylistReasoningPrompt(
+                            currentUserStyle,
+                            listCategory,
+                            groupedVariants,
+                            analysis.ResponseText
+                        );
+
+                        string refinedResponse = await _geminiService.CallGeminiAsync(reasoningPrompt);
+                        finalOutfit.ResponseText = JsonHelper.CleanJsonString(refinedResponse);
+
+                        // Có thể parse lại response nếu AI chọn ra 1 item cụ thể trong list
+                    }
+                    else
                     {
                         finalOutfit.ResponseText = "Xin lỗi, mình chưa tìm được gợi ý phù hợp. Bạn có thể thử lại nhé.";
                     }
-
                 }
+
                 // Check dieu kien goi y ra cac bo do neu co -> them vao bang SuggestedOutfits
 
                 // Save user sent message
