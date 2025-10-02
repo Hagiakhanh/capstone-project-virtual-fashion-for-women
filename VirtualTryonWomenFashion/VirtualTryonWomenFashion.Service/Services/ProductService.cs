@@ -38,6 +38,8 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IVectorDbService _vectorDbService;
         private readonly IGeminiService _geminiService;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IWishlistRepository _wishlistRepository;
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             ICloudinaryService cloudinaryService,
@@ -50,7 +52,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             IMapper mapper,
             IVectorDbService vectorDbService,
             IGeminiService geminiService,
-            ICategoryRepository categoryRepository)
+            ICategoryRepository categoryRepository,
+            ICurrentUserService currentUserService,
+            IWishlistRepository wishlistRepository)
         {
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
@@ -65,6 +69,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             _vectorDbService = vectorDbService;
             _geminiService = geminiService;
             _categoryRepository = categoryRepository;
+            _currentUserService = currentUserService;
+            _wishlistRepository = wishlistRepository;
         }
 
         public static string GenerateFixedLengthString(int length)
@@ -251,6 +257,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             ProductSearchRequest request,
             PaginationParameter pagination)
         {
+            int? userId = _currentUserService.GetUserId();
             // Lấy danh sách product theo filter + sort
             var products = await _productRepository.SearchProductsWithIncludes(request.ProductName, request.ProductSort.ToString(), pagination);
 
@@ -258,8 +265,24 @@ namespace VirtualTryonWomenFashion.Service.Services
             var totalRecords = await _productRepository.CountSearchProductsAsync(request.ProductName);
             var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.PageSize);
 
+            // Nếu user đã đăng nhập -> lấy danh sách Wishlist
+            HashSet<string> userWishlistProductIds = new HashSet<string>();
+            if (userId.HasValue && userId.Value > 0)
+            {
+                userWishlistProductIds = (await _wishlistRepository
+                    .GetUserWishlistProductIdsAsync(userId.Value))
+                    .ToHashSet();
+            }
+
             // Map sang DTO
-            var productDtos = await Task.WhenAll(products.Select(p => MapToResponseProductDto(p)));
+            //var productDtos = await Task.WhenAll(products.Select(p => MapToResponseProductDto(p)));
+            var productDtos = products.Select(p =>
+            {
+                var dto = _mapper.Map<ResponseProductDto>(p);
+                dto.IsInWishlist = userId.HasValue && userWishlistProductIds.Contains(p.ProductId);
+                return dto;
+            }).ToList();
+
 
             return new ResponsePaginationModel<List<ResponseProductDto>>(
                 statusCode: 200,
