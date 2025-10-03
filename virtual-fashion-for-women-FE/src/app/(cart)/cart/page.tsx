@@ -5,10 +5,11 @@ import CartItems from "@/components/CartItem/CartItem";
 import { CartItemDTO } from "@/models/CartItemDTO";
 import formatPrice from "@/utils/formatPrice";
 import { ShoppingBag } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 export default function CartContainer() {
-
+    const router = useRouter();
     const [cartItems, setCartItems] = useState<CartItemDTO[]>([]);
     const [selectAll, setSelectAll] = useState(() =>
         cartItems.every(item => item.selected)
@@ -44,14 +45,6 @@ export default function CartContainer() {
     }, [cartItems]);
 
     const removeItem = useCallback(async (id: number) => {
-        // setCartItems(items => {
-        //     const newItems = items.filter(item => item.cartId !== id);
-        //     // Update selectAll state if needed
-        //     if (newItems.length === 0) {
-        //         setSelectAll(false);
-        //     }
-        //     return newItems;
-        // });
         const res = await api.delete(`/cartItem/${id}`);
         if (res.status === 200) {
             await fetchCartItem();
@@ -65,6 +58,9 @@ export default function CartContainer() {
             );
             // Update selectAll based on all items selection status
             setSelectAll(newItems.every(item => item.selected));
+
+            const selectedIds = newItems.filter(i => i.selected).map(i => i.cartId);
+            localStorage.setItem("checkoutCartIds", JSON.stringify(selectedIds));
             return newItems;
         });
     }, []);
@@ -72,10 +68,26 @@ export default function CartContainer() {
     const toggleSelectAll = useCallback(() => {
         const newSelectAll = !selectAll;
         setSelectAll(newSelectAll);
-        setCartItems(items =>
-            items.map(item => ({ ...item, selected: newSelectAll }))
-        );
+        setCartItems(items => {
+            const newItems = items.map(item => ({ ...item, selected: newSelectAll }));
+
+            // Lưu danh sách id các item đã tích
+            const selectedIds = newItems.filter(i => i.selected).map(i => i.cartId);
+            localStorage.setItem("checkoutCartIds", JSON.stringify(selectedIds));
+
+            return newItems;
+        });
     }, [selectAll]);
+
+    const handleCheckout = () => {
+        const ids = cartItems.filter(item => item.selected).map(item => item.cartId);
+
+        if (ids.length === 0) return;
+
+        localStorage.setItem("checkoutCartIds", JSON.stringify(ids));
+
+        router.push("/checkout");
+    };
 
     const selectedItems = cartItems.filter(item => item.selected);
     const totalAmount = selectedItems.reduce((sum, item) => sum + (item.responseProductVariantDto.currentPrice * item.quantityItem), 0);
@@ -163,7 +175,7 @@ export default function CartContainer() {
                     </div>
 
                     <button
-                        onClick={() => alert('Proceed to checkout')}
+                        onClick={handleCheckout}
                         className="w-full bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors mb-4"
                         disabled={totalAmount === 0}
                     >
