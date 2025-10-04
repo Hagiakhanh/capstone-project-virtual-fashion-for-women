@@ -1,18 +1,24 @@
+'use client';
 import { SearchOutlined, UserOutlined, ShoppingCartOutlined, DownOutlined } from '@ant-design/icons';
 import { Input, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 
-
 import logo from '../../assets/home/Logo.png';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
 
 function HeaderComponent() {
+   const { user } = useAuth();
+
    const items: MenuProps['items'] = [
       { key: '1', label: <span style={{ fontSize: '1rem' }}>Áo</span> },
       { key: '2', label: <span style={{ fontSize: '1rem' }}>Quần</span> },
       { key: '3', label: <span style={{ fontSize: '1rem' }}>Váy</span> },
       { key: '4', label: <span style={{ fontSize: '1rem' }}>Đầm</span> },
    ];
+
+   console.log('Current user in header:', user);
 
    return (
       <header className='bg-[#FAE3B6] border-b-1'>
@@ -22,7 +28,7 @@ function HeaderComponent() {
                   className='w-20 object-cover'
                />
             </div>
-            <ul className='flex flex-2 justify-around text-2xl gap-11 font-normal cursor-pointer'>
+            <ul className='flex flex-2 justify-around text-2xl font-normal cursor-pointer'>
                <Link href="/" className='flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100'>
                   Trang chủ
                </Link>
@@ -53,8 +59,22 @@ function HeaderComponent() {
                      }}
                   />
                </div>
-               <UserOutlined className='text-2xl cursor-pointer' />
-               <ShoppingCartOutlined className='text-3xl cursor-pointer' />
+               {user?.role == 'customer' ? (
+                  <>
+                     <UserOutlined className='text-2xl cursor-pointer' />
+                     <ShoppingCartOutlined className='text-3xl cursor-pointer' />
+                  </>
+               ) : (
+                  <div className='flex items-center gap-3'>
+                     <Link href="/login">
+                        <AntButtonCommon label="Đăng nhập" style={{ border: '2px solid #000' }} className="w-full !py-2 !px-4 !text-black !hover:text-black !rounded-full !text-xl !bg-transparent" size="large" />
+                     </Link>
+                     <Link href="/register">
+                        <AntButtonCommon label="Đăng ký" style={{ border: 'none' }} className="w-full !py-2 !px-4 !text-black !hover:text-black !rounded-full !text-xl !bg-[#FFAF37]" size="large" />
+                     </Link>
+                  </div>
+               )}
+
             </div>
          </div>
       </header>

@@ -9,16 +9,16 @@ import Point from '../../assets/home/Dot.png'
 
 function HomeIntroSection() {
    return (
-      <div className="bg-gradient-to-b from-[#FAE3B6] via-[#FAE3B6] via-60% to-white">
+      <div>
          <div className="max-w-[80%] mx-auto pt-35 relative">
             <h1 className="text-7xl w-[80%] mx-auto font-semibold text-center leading-relaxed from-[#FFAF37] to-[#996921] bg-gradient-to-r bg-clip-text text-transparent">
-               Thiết kế bộ đồ theo đặc điểm và yêu cầu của bạn
+               Gợi ý bộ đồ theo đặc điểm và yêu cầu của bạn
             </h1>
             <div className="flex justify-center">
                <Button style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundImage: 'linear-gradient(to right, #FFAF37, #996921)', border: 'none' }}
                   className="mt-5 !py-6 !text-white" shape="round">
                   <div className="flex items-center gap-3">
-                     <h1>Thiết kế ngay</h1>
+                     <h1>Gợi ý ngay</h1>
                      <ArrowRightOutlined />
                   </div>
                </Button>
