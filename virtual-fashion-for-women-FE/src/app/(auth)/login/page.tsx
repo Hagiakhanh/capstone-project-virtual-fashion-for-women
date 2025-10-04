@@ -9,18 +9,25 @@ import bgLogin from '../../../assets/auth/bg-login.png'
 import googleIcon from '../../../assets/auth/GoogleIcon.webp'
 import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
 import { api } from "@/api/instance";
+import { useAuth } from "@/contexts/AuthContext";
 
 function LoginPage() {
   const router = useRouter();
   const [form] = Form.useForm();
+  const { loginSuccess } = useAuth();
 
   const handleLogin = async (values: typeLogin) => {
     try {
-      console.log("Login data:", values);
       const response = await api.post('/login', values);
       if (response.status === 200) {
-        console.log("Login successful:", response.data);
-        router.replace("/");
+        loginSuccess(response.data.user);
+        if (response.data.user.role === 'admin') {
+          router.replace("/admin");
+        } else if (response.data.user.role === 'staff') {
+          router.replace("/");
+        } else if (response.data.user.role === 'customer') {
+          router.replace("/");
+        }
       } else {
 
       }

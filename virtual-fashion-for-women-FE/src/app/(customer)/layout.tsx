@@ -1,3 +1,4 @@
+import FooterComponent from "@/components/Footer/Footer";
 import HeaderComponent from "@/components/Header/Header";
 
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
@@ -6,6 +7,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
       <>
          <HeaderComponent />
          {children}
+         <FooterComponent />
       </>
    )
 }

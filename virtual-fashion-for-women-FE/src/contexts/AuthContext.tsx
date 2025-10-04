@@ -1,21 +1,22 @@
 "use client";
 
+import { api } from "@/api/instance";
 import { User } from "@/types/user";
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 type AuthContextType = {
   user: User | null;
-  login: (user: User, token: string) => void;
+  loginSuccess: (user: User) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User|null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (user: User, token: string) => {
-    localStorage.setItem("token", token);
+  const loginSuccess = (user: User) => {
     setUser(user);
   };
 
@@ -24,8 +25,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        // Gọi API route để Server kiểm tra HttpOnly cookie
+        const response = await api.get('/login/status');
+
+        if (response.status === 200) {
+          setUser(response.data.user);
+        }
+      } catch (error) {
+        console.error("Failed to check auth status:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, loginSuccess, logout }}>
       {children}
     </AuthContext.Provider>
   );
