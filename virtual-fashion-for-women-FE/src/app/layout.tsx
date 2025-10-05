@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Frank_Ruhl_Libre } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import { Spin } from "antd";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${frankRuhlLibre.variable} antialiased`}
       >
-        <Suspense fallback={<Spin />}>{children}</Suspense>
+        <AuthProvider>
+          <Suspense fallback={<Spin />}>{children}</Suspense>
+        </AuthProvider>
       </body>
     </html>
   );

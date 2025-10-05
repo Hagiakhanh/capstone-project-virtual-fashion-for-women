@@ -17,7 +17,7 @@ const publicRoutes = ["/login", "/register", "/", "/payment/return"];
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
   const url = req.nextUrl.clone();
-  console.log("Middleware running:", url.pathname);
+  //console.log("Middleware running:", url.pathname);
 
   // Nếu đã login mà vào /login thì redirect về home
   if (token && url.pathname === "/login") {

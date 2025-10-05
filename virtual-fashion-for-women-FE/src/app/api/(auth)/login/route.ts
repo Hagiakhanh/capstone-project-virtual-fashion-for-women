@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createApiInstance } from "@/api/instance";
 import { jwtDecode } from "jwt-decode";
+import { User } from "@/types/user";
 
 export async function POST(request: Request) {
    try {
@@ -12,8 +13,14 @@ export async function POST(request: Request) {
          const decodedToken = jwtDecode(jwtToken) as any;
          const maxAge = decodedToken.exp - Math.floor(Date.now() / 1000);
 
+         const user: User = {
+            id: decodedToken.UserID,
+            role: decodedToken.role.toLowerCase(),
+         };
+
          const nextResponse = NextResponse.json({
             message: "Đăng nhập thành công.",
+            user: user,
          }, { status: 200 });
          nextResponse.cookies.set('token', jwtToken, {
             httpOnly: true,
