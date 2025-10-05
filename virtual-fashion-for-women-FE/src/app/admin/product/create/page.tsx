@@ -467,7 +467,20 @@ export default function CreateProductPage() {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Ảnh không nền *
+                        Lens ID (tùy chọn)
+                        </label>
+                        <input
+                        type="text"
+                        value={color.lensId}
+                        onChange={(e) => updateColor(colorIndex, "lensId", e.target.value)}
+                        placeholder="Nhập Lens ID nếu có"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ảnh không nền (tùy chọn)
                         </label>
                         <label className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer hover:bg-blue-600 w-fit">
                         <Upload size={20} />
