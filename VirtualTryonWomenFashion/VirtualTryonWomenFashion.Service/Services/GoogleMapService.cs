@@ -45,7 +45,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             var response = await _client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception("Không thể lấy được quận/huyện từ API GHN.");
+                throw new Exception("Không thể lấy được địa chỉ từ google map.");
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
