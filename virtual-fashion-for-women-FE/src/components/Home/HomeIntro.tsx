@@ -6,6 +6,7 @@ import Dam from '../../assets/home/Dam.png'
 import Ao from '../../assets/home/Ao.png'
 import Quan from '../../assets/home/Quan.jpg'
 import Point from '../../assets/home/Dot.png'
+import Link from 'next/link';
 
 function HomeIntroSection() {
    return (
@@ -15,13 +16,13 @@ function HomeIntroSection() {
                Thiết kế bộ đồ theo đặc điểm và yêu cầu của bạn
             </h1>
             <div className="flex justify-center">
-               <Button style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundImage: 'linear-gradient(to right, #FFAF37, #996921)', border: 'none' }}
-                  className="mt-5 !py-6 !text-white" shape="round">
+               <Link href={"/recommendation"} style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundImage: 'linear-gradient(to right, #FFAF37, #996921)', border: 'none' }} 
+                  className="mt-5 px-4 py-2 rounded-4xl !text-white">
                   <div className="flex items-center gap-3">
                      <h1>Thiết kế ngay</h1>
                      <ArrowRightOutlined />
                   </div>
-               </Button>
+               </Link>
             </div>
             <div className='absolute top-55 -right-10'>
                <img src={Point.src} alt="Point" />

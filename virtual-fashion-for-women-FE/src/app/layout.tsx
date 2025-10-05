@@ -3,7 +3,9 @@ import { Geist, Geist_Mono, Frank_Ruhl_Libre } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import { Spin } from "antd";
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { defaultToastContainerProps } from "@/helpers/toastHelper";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -35,6 +37,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${frankRuhlLibre.variable} antialiased`}
       >
         <Suspense fallback={<Spin />}>{children}</Suspense>
+        <ToastContainer {...defaultToastContainerProps} />
       </body>
     </html>
   );

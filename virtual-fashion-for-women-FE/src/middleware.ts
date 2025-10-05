@@ -12,20 +12,22 @@ const routePermissions: Record<string, string[]> = {
 };
 
 // Routes public (không cần login)
-const publicRoutes = ["/login", "/register", "/"];
+const publicRoutes = ["/login", "/register"];
 
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
   const url = req.nextUrl.clone();
   console.log("Middleware running:", url.pathname);
-
+  if (url.pathname === "/") {
+    return;
+  }
   // Nếu đã login mà vào /login thì redirect về home
   if (token && url.pathname === "/login") {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
   // Nếu route public thì cho qua
-  if (publicRoutes.some((route) => url.pathname === (route))) {
+  if (publicRoutes.some((route) => url.pathname === route)) {
     return NextResponse.next();
   }
 
@@ -65,6 +67,5 @@ export async function middleware(req: NextRequest) {
 
 // Middleware chỉ áp dụng cho page routes, exclude /api/*
 export const config = {
-
   matcher: ["/((?!api|_next|static|favicon.ico|robots.txt).*)"],
 };
