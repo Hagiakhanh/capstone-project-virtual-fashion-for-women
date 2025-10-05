@@ -5,8 +5,6 @@ export async function POST(request: Request) {
     try {
         const payload = await request.json();
         const api = createApiInstance(request);
-        // console.log("Forwarded headers:", request.headers);
-        console.log("api :", api)
         const responseBE = await api.post('/payment/create-payment', payload)
         if (responseBE.status === 200) {
             const dataResponse = responseBE.data?.data || [];

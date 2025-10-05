@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
    try {
       const payload = await request.json();
-      console.log("Payload confirm email:", payload);
       const api = createApiInstance(request);
       const responseBE = await api.post('/auth/confirm-email', payload);
       if (responseBE.status === 200) {

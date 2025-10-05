@@ -8,11 +8,11 @@ const routePermissions: Record<string, string[]> = {
   "/staff": ["Staff"],
   "/cart": ["Customer"],
   "/manage": ["Admin", "Staff"],
-  "/profile": ["Admin", "Staff", "Customer"], // authenticated users
+  "/profile": ["Admin", "Staff", "Customer"],
 };
 
 // Routes public (không cần login)
-const publicRoutes = ["/login", "/register", "/"];
+const publicRoutes = ["/login", "/register", "/", "/payment/return"];
 
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
