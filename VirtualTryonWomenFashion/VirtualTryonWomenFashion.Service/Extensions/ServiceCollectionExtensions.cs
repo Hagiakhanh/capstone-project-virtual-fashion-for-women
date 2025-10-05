@@ -83,6 +83,7 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IGoogleMapService, GoogleMapService>();
 
            
+           
             return services;
         }
         public static IServiceCollection RegistAutoMapperService(this IServiceCollection services)
