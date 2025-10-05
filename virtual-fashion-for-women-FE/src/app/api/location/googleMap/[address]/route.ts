@@ -1,10 +1,12 @@
 import { createApiInstance } from "@/api/instance";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET(request: Request,
+    { params }: { params: Promise<{ address: string }> }) {
     try {
+        const { address } = await params;
         const api = createApiInstance(request);
-        const responseBE = await api.get('/shipping/get-province');
+        const responseBE = await api.get(`/googlemap/autocomplete-location?address=${address}`);
         if (responseBE.status === 200) {
             const cities = responseBE.data?.data;
             return NextResponse.json(cities, { status: 200 });
@@ -13,4 +15,4 @@ export async function GET(request: Request) {
         console.error("Error fetching cities:", error);
         return NextResponse.json("Error fetching cities", { status: 500 });
     }
-}   
+}
