@@ -11,6 +11,7 @@ using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.AIChatModel;
+using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -39,7 +40,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _vectorDbService = vectorDbService;
             _productVariantRepository = productVariantRepository;
         }
-        public async Task<Message> SendMessageToAIConversation(int conversationChatID, string message)
+        public async Task<ResponseAIChatModelWithSuggestion> SendMessageToAIConversation(int conversationChatID, string message)
         {
             try
             {
@@ -49,6 +50,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     throw new Exception("Cuộc trò chuyện AI không hợp lệ");
                 }
+
                 List<Message> listHistoryMessage = await _messageRepository.GetAll(new Data.Commons.PaginationParameter { PageIndex = 1, PageSize = 15 },
                     x => x.AiconversationId == conversationChatID,
                     x => x.OrderByDescending(x => x.CreatedAt));
@@ -160,11 +162,20 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _unitOfWork.SaveChanges();
                 responseMessage.Aiconversation = null;
 
+
+
                 //Tra ve dto voi suggested outfit neu co
-                return responseMessage;
+                ResponseAIChatModelWithSuggestion responseToClient = new ResponseAIChatModelWithSuggestion()
+                {
+                    Content = responseMessage.Content,
+                    CreatedAt = responseMessage.CreatedAt,
+                    IsAiresponse = true,
+                    Components = []
+                };
+                return responseToClient;
             }
             catch (Exception ex)
-            {
+             {
                 return null;
             }
         }

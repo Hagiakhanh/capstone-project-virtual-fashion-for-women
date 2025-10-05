@@ -32,6 +32,16 @@ namespace VirtualTryonWomenFashion.Service.Services
             try
             {
                 int currentUserId = _currentUserService.GetUserId();
+                int existedCharacteristic = _characteristicRepository.Count(x => x.UserId == currentUserId);
+                if (existedCharacteristic > 0)
+                {
+                    return new MessageModelWithData<Characteristic>()
+                    {
+                        Data = null,
+                        Message = "Tạo thất bại - đã tồn tại phong cách thời trang của bạn.",
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
+                }
                 Characteristic characteristicCreateModel = _mapper.Map<Characteristic>(requestModel);
                 characteristicCreateModel.UserId = currentUserId;
                 await _characteristicRepository.InsertAsync(characteristicCreateModel);
@@ -90,6 +100,25 @@ namespace VirtualTryonWomenFashion.Service.Services
             return sentence;
         }
 
+        public async Task<Characteristic> GetCurrentCharacteristicForUser()
+        {
+            try
+            {
+                int currentUserId = _currentUserService.GetUserId();
+                List<Characteristic> characteristicModel = await _characteristicRepository.GetAll(null, x => x.UserId == currentUserId);
+                if (characteristicModel == null)
+                {
+                    return null;
+                }
+
+                return characteristicModel.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
         public async Task<MessageModelWithData<Characteristic>> GetDetailCharacteristicByID(int id)
         {
             try
@@ -124,6 +153,52 @@ namespace VirtualTryonWomenFashion.Service.Services
                 return new MessageModelWithData<Characteristic>()
                 {
                     Message = "Lấy phong cách thời trang thất bại",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+        public async Task<MessageModelWithData<Characteristic>> UpdateCharacteristic(RequestCreateUserCharacteristics requestModel)
+        {
+            try
+            {
+                int currentUserId = _currentUserService.GetUserId();
+                Characteristic existingCharacteristic = (await _characteristicRepository
+                    .GetAll(null, x => x.UserId == currentUserId))
+                    .FirstOrDefault();
+
+                if (existingCharacteristic == null)
+                {
+                    return new MessageModelWithData<Characteristic>()
+                    {
+                        Message = "Không tìm thấy phong cách thời trang của bạn để cập nhật.",
+                        StatusCode = StatusCodes.Status404NotFound
+                    };
+                }
+
+                existingCharacteristic.Weight = requestModel.Weight;
+                existingCharacteristic.Height = requestModel.Height;
+                existingCharacteristic.Age = requestModel.Age;
+                existingCharacteristic.ColorPreference = requestModel.ColorPreference;
+                existingCharacteristic.StyleType = requestModel.StyleType;
+                existingCharacteristic.OccasionPreference = requestModel.OccasionPreference;
+                existingCharacteristic.SkinTone = requestModel.SkinTone;
+
+                await _characteristicRepository.UpdateAsync(existingCharacteristic);
+                await _unitOfWork.SaveChanges();
+
+                return new MessageModelWithData<Characteristic>()
+                {
+                    Data = existingCharacteristic,
+                    Message = "Cập nhật phong cách thời trang thành công.",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+            catch (Exception ex)
+            {
+                return new MessageModelWithData<Characteristic>()
+                {
+                    Message = "Cập nhật phong cách thời trang thất bại.",
                     StatusCode = StatusCodes.Status500InternalServerError
                 };
             }

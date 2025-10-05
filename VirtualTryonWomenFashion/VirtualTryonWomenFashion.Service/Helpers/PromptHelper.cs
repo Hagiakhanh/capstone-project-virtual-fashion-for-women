@@ -56,10 +56,13 @@ namespace VirtualTryonWomenFashion.Service.Helpers
         public static string BuildConversationalStylistPrompt(List<Message>? history, SuggestRequirement currentStyle, List<Category> listCategory, string newMessage)
         {
             var historyText = new StringBuilder();
+            if (history != null)
+            {
             foreach (var msg in history)
             {
                 historyText.AppendLine((msg.IsAiresponse ? "AI" : "User")
                 + $": {msg.Content}");
+            }
             }
             StringBuilder textRuleCategories = new StringBuilder();
             textRuleCategories.AppendLine("**QUY TẮC LỌC KHI `provide_suggestions`:**");

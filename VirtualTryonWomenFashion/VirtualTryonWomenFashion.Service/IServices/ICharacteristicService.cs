@@ -14,6 +14,10 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModelWithData<Characteristic>> CreateCharacteristic(RequestCreateUserCharacteristics requestModel);
 
         public Task<MessageModelWithData<Characteristic>> GetDetailCharacteristicByID(int id);
+        public Task<Characteristic> GetCurrentCharacteristicForUser();
         public string GetCharacteristicDescription(Characteristic c);
+
+        public Task<MessageModelWithData<Characteristic>> UpdateCharacteristic(RequestCreateUserCharacteristics requestModel);
+
     }
 }

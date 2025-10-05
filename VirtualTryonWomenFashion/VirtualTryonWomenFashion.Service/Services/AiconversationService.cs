@@ -64,7 +64,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     };
 
                     aiConversation.CurrentUserStyleJson = JsonSerializer.Serialize(analysis.UpdatedStyle, options);
-                    aiConversation.Messages.Add(new Message() { Content = analysis.ResponseText, SenderId = null, ReceiverId = currentUserId, IsAiresponse = true });
+                    aiConversation.Messages.Add(new Message() { Content = analysis.ResponseText, SenderId = null, ReceiverId = currentUserId, IsAiresponse = true, CreatedAt = DateTime.UtcNow.AddHours(7) });
 
                 }
                 aiConversation.CreatedAt = DateTime.UtcNow.AddHours(7);
@@ -93,6 +93,59 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
+        public async Task<MessageModel> DeleteConversationById(int conversationID)
+        {
+            try
+            {
+                int currentUserId = _currentUserService.GetUserId();
+                Aiconversation detailConversation = await _aiconversationRepository.GetByIdAsync(conversationID);
+
+                if (detailConversation == null || detailConversation.IsDeleted)
+                {
+                    throw new ArgumentException("Cuộc trò chuyện không tồn tại để xoá");
+                }
+                if (detailConversation.UserId != currentUserId)
+                {
+                    throw new ArgumentException("Bạn không có quyền để xoá cuộc trò chuyện này");
+                }
+                detailConversation.IsDeleted = true;
+                await _aiconversationRepository.UpdateAsync(detailConversation);
+                int executeResult = await _unitOfWork.SaveChanges();
+                if (executeResult > 0)
+                {
+                    return new MessageModel
+                    {
+                        Message = "Xoá thành công cuộc trò chuyện này",
+                        StatusCode = StatusCodes.Status200OK,
+                    };
+
+                }
+                return new MessageModel
+                {
+                    Message = "Xoá thất bại cuộc trò chuyện này",
+                    StatusCode = StatusCodes.Status400BadRequest,
+                };
+
+
+            }
+            catch (ArgumentException ex)
+            {
+                return new MessageModel
+                {
+                    Message = ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new MessageModel
+                {
+                    Message = "Xoá thất bại cuộc trò chuyện này",
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                };
+            }
+        }
+
         public async Task<List<Aiconversation>> GetAllAIConversation()
         {
             try
@@ -105,6 +158,14 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 return null;
             }
+        }
+
+        public async Task<Aiconversation> GetConversationDetailByID(int id)
+        {
+            int currentUserId = _currentUserService.GetUserId();
+            List<Aiconversation> listConversation = await _aiconversationRepository.GetAll(null, x => x.UserId == currentUserId && x.AiconversationId == id
+            , x => x.OrderBy(x => x.CreatedAt), [x => x.SuggestedOutfits, x => x.Messages]);
+            return listConversation.FirstOrDefault();
         }
 
         public async Task<MessageModelWithData<Aiconversation>> UpdateAICurrentConversationStyle(int conversationID, string userStyleJsonString)
