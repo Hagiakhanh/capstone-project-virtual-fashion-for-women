@@ -67,6 +67,21 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<Product> GetProductByIdAsync(string productId)
+        {
+            return await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.Color)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductImages)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductVariants)
+                        .ThenInclude(pv => pv.Size)
+                .Where(p => p.ProductId == productId && p.IsDeleted != true)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<Product> GetProductByVariantIdAsync(string variantId)
         {
             return await _context.Products
@@ -92,6 +107,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                     .ThenInclude(pc => pc.Color)
                 .Include(p => p.ProductColors)
                     .ThenInclude(pc => pc.ProductImages)
+                .Include(p => p.Wishlists)
                 .Include(p => p.ProductInSaleCampaigns)
                 .Include(p => p.Category)
                 .Where(p => p.IsDeleted != true)

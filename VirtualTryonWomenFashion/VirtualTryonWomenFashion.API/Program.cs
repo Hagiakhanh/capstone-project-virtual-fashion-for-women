@@ -12,6 +12,7 @@ using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Services;
 using VirtualTryonWomenFashion.Service.Utils;
 using VirtualTryonWomenFashion.Service.Workers;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,8 @@ builder.Services.Configure<RouteOptions>(options =>
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 builder.Services.Configure<GHNSettings>(builder.Configuration.GetSection("GHNSetttings"));
 builder.Services.AddHttpClient<IShippingService, ShippingService>();
+builder.Services.AddHttpClient<IGeminiService, GeminiService>();
+builder.Services.AddHttpClient<IVectorDbService, PineconeService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
@@ -50,7 +53,7 @@ builder.Services.AddControllers()
             var errorResponse = new MessageModelWithData<object>
             {
                 StatusCode = StatusCodes.Status400BadRequest,
-                Message = "Error: "+ string.Join(", ", errors.SelectMany(e => e.Value)),
+                Message = "Error: " + string.Join(", ", errors.SelectMany(e => e.Value)),
                 Data = null
             };
             return new BadRequestObjectResult(errorResponse);
@@ -122,12 +125,8 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

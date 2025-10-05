@@ -1,0 +1,62 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.Characteristic;
+using VirtualTryonWomenFashion.Service.Helpers;
+using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Services;
+
+// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+
+namespace VirtualTryonWomenFashion.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CharacteristicController : ControllerBase
+    {
+        private readonly ICharacteristicService _characteristicService;
+        public CharacteristicController(ICharacteristicService characteristicService)
+        {
+            _characteristicService = characteristicService;
+        }
+        // GET: api/<CharacteristicController>
+        [HttpGet]
+        public IEnumerable<string> Get()
+        {
+            return new string[] { "value1", "value2" };
+        }
+
+        // GET api/<CharacteristicController>/5
+        [HttpGet("{id}")]
+        public string Get(int id)
+        {
+            return "value";
+        }
+
+        // POST api/<CharacteristicController>
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] RequestCreateUserCharacteristics requestModel)
+        {
+            try
+            {
+                MessageModelWithData<Characteristic> result = await _characteristicService.CreateCharacteristic(requestModel);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Tạo phong cách cá nhân thất bại");
+            }
+        }
+
+        // PUT api/<CharacteristicController>/5
+        [HttpPut("{id}")]
+        public void Put(int id, [FromBody] string value)
+        {
+        }
+
+        // DELETE api/<CharacteristicController>/5
+        [HttpDelete("{id}")]
+        public void Delete(int id)
+        {
+        }
+    }
+}

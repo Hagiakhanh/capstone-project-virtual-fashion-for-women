@@ -14,6 +14,7 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
         Task<List<Product>> GetAllProductsWithIncludes(PaginationParameter? pagination = null);
         Task<List<string>> GetSlugsAsync(string baseSlug);
         Task<Product> GetProductBySlugAsync(string slug);
+        Task<Product> GetProductByIdAsync(string productId);
         Task<Product> GetProductByVariantIdAsync(string variantId);
         Task<List<Product>> SearchProductsWithIncludes(string productName, string productSort, PaginationParameter pagination);
         Task<int> CountSearchProductsAsync(string productName);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,5 +16,14 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         public WishlistRepository(VirtualTryonWomenFashionContext context) : base(context)
         {
         }
+
+        public async Task<List<string>> GetUserWishlistProductIdsAsync(int userId)
+        {
+            return await _context.Wishlists
+                .Where(w => w.UserId == userId)
+                .Select(w => w.ProductId)
+                .ToListAsync();
+        }
+
     }
 }
