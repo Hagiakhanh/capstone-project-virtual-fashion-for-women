@@ -5,7 +5,6 @@ export async function GET(request: Request) {
     try {
 
         const api = createApiInstance(request);
-        console.log("api :", api)
         const responseBE = await api.get('/cart')
         if (responseBE.status === 200) {
             const cartItems = responseBE.data?.data;
