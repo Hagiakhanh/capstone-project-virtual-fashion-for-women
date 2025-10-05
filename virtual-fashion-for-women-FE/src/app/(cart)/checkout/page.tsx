@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { ChevronRight, Plus, Minus, Copy, ShoppingBag } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronRight, Plus, Minus, Copy, ShoppingBag, MapPin } from 'lucide-react';
 import { CartItemDTO } from '@/models/CartItemDTO';
 import { CheckoutDTO } from '@/models/CheckoutDTO';
 import { RequestCheckout } from '@/models/RequestCheckout';
@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 
 export default function CheckoutForm() {
     const router = useRouter();
+    const isSelectingRef = useRef(false);
     const [checkoutDTO, setCheckoutDTO] = useState<CheckoutDTO>({
         items: [],
         totalProductPrice: 0,
@@ -38,6 +39,8 @@ export default function CheckoutForm() {
     const [showAddressDropdown, setShowAddressDropdown] = useState(false);
     const [currentAddressTab, setCurrentAddressTab] = useState('city'); // city, district, ward
 
+    const [addressSuggestions, setAddressSuggestions] = useState<{ placeId: string, description: string }[]>([]);
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
     const [selectedPayment, setSelectedPayment] = useState('Momo');
 
@@ -64,13 +67,11 @@ export default function CheckoutForm() {
             wardName: addressInformation.wardName,
             note: formData.note
         }
-        console.log(payload)
 
         try {
             const response = await api.post('/payment', payload);
             if (response.status === 200) {
                 const paymentUrl = response.data;
-                console.log("Payment URL: ", paymentUrl);
                 router.push(paymentUrl);
             }
         } catch (error) {
@@ -86,6 +87,7 @@ export default function CheckoutForm() {
                 districtName: '',
                 wardName: ''
             });
+            clearAddressSelection();
             await fetchDistrictData(provinceId).then(
                 () => {
                     setCurrentAddressTab('district');
@@ -103,6 +105,7 @@ export default function CheckoutForm() {
                 districtName,
                 wardName: ''
             });
+            clearAddressSelection();
             await fetchWardData(districtId).then(() => {
                 setCurrentAddressTab('ward');
             });
@@ -115,6 +118,7 @@ export default function CheckoutForm() {
                 ...addressInformation,
                 wardName
             });
+            clearAddressSelection();
         }
         setShowAddressDropdown(false);
         setCurrentAddressTab('city');
@@ -130,6 +134,10 @@ export default function CheckoutForm() {
 
     const handleAddressTabClick = (tab: string) => {
         setCurrentAddressTab(tab);
+    };
+
+    const clearAddressSelection = () => {
+        setFormData({ ...formData, address: '' });
     };
 
     const fetchCheckoutData = async (payload: RequestCheckout) => {
@@ -156,30 +164,128 @@ export default function CheckoutForm() {
         }
     }
 
-    const fetchDistrictData = async (provinceId: string) => {
+    const fetchDistrictData = async (provinceId: string): Promise<Record<string, string>> => {
         try {
             const response = await api.get(`/location/districts/${provinceId}`);
             if (response.status === 200) {
                 const data: Record<string, string> = response.data;
-                console.log("District: ", data);
                 setDistrict(data);
+                return data;
             }
         } catch (error) {
             console.error("Fetch district data error:", error);
+            return {};
         }
-    }
+        return {};
+    };
 
-    const fetchWardData = async (districtId: string) => {
+    const fetchWardData = async (districtId: string): Promise<Record<string, string>> => {
         try {
             const response = await api.get(`/location/wards/${districtId}`);
             if (response.status === 200) {
                 const data: Record<string, string> = response.data;
                 setWard(data);
+                return data; // ✅ Trả về dữ liệu
             }
         } catch (error) {
             console.error("Fetch ward data error:", error);
+            return {};
         }
-    }
+        return {};
+    };
+
+    const fetchAddressSuggestions = async (query: string) => {
+        if (!query) {
+            setAddressSuggestions([]);
+            return;
+        }
+        try {
+            setIsLoadingSuggestions(true);
+            const response = await api.get(`/location/googleMap/${encodeURIComponent(query)}`);
+            if (response.status === 200) {
+                // giả sử BE trả về object: { placeId: description }
+                const data: Record<string, string> = response.data;
+
+                // convert sang array
+                const arr = Object.entries(data).map(([placeId, description]) => ({
+                    placeId,
+                    description
+                }));
+
+                setAddressSuggestions(arr);
+            }
+        } catch (error) {
+            console.error("Error fetching address suggestions:", error);
+        } finally {
+            setIsLoadingSuggestions(false);
+        }
+    };
+
+    const fetchAddressDetails = async (placeId: string) => {
+        try {
+            const response = await api.post(`/location/googleMap/place/${placeId}`);
+            if (response.status === 200) {
+                const data = response.data;
+
+                const matchedProvinceEntry = Object.entries(provinces).find(
+                    ([, name]) => name.toLowerCase().includes(data.provinceName.toLowerCase())
+                );
+
+
+                if (matchedProvinceEntry) {
+                    const [provinceId, provinceName] = matchedProvinceEntry;
+
+                    const districtsData = await fetchDistrictData(provinceId);
+
+                    const matchedDistrictEntry = Object.entries(districtsData).find(
+                        ([, name]) => name.toLowerCase().includes(data.districtName.toLowerCase())
+                    );
+
+                    if (matchedDistrictEntry) {
+                        const [districtId, districtName] = matchedDistrictEntry;
+
+
+                        const wardsData = await fetchWardData(districtId);
+
+                        const matchedWardEntry = Object.entries(wardsData).find(
+                            ([, name]) => name.toLowerCase().includes(data.wardName.toLowerCase())
+                        );
+
+                        if (matchedWardEntry) {
+                            const [wardId, wardName] = matchedWardEntry;
+                            setAddressInformation({
+                                provinceName: provinceName,
+                                districtName: districtName,
+                                wardName: wardName
+                            });
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching address details:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (isSelectingRef.current) {
+            // ✅ bỏ qua debounce khi là chọn địa chỉ
+            isSelectingRef.current = false;
+            return;
+        }
+        const handler = setTimeout(() => {
+            if (formData.address.length > 1) { // chỉ gọi khi có >1 ký tự
+                fetchAddressSuggestions(formData.address);
+            } else {
+                setAddressSuggestions([]);
+            }
+        }, 500); // 500ms
+
+        return () => {
+            clearTimeout(handler); // clear nếu user vẫn đang gõ
+        };
+    }, [formData.address]);
+
 
     useEffect(() => {
         fetchProvinceData();
@@ -189,15 +295,12 @@ export default function CheckoutForm() {
         const idsStr = localStorage.getItem("checkoutCartIds");
         if (idsStr) {
             const ids: number[] = JSON.parse(idsStr);
-            console.log(ids);
-            // Gọi API lấy cart item theo list id
             const payload = {
                 cartIds: ids,
                 provinceName: addressInformation.provinceName,
                 districtName: addressInformation.districtName,
                 wardName: addressInformation.wardName
             }
-            console.log("Vào hàm gọi fetchData: ");
             fetchCheckoutData(payload);
         }
     }, [addressInformation]);
@@ -229,14 +332,43 @@ export default function CheckoutForm() {
                                     className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent pr-12"
                                 />
                             </div>
-                            <input
-                                type="text"
-                                name="address"
-                                placeholder="Địa chỉ"
-                                value={formData.address}
-                                onChange={handleInputChange}
-                                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                            />
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    name="address"
+                                    placeholder="Địa chỉ"
+                                    value={formData.address}
+                                    onChange={handleInputChange}
+                                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                />
+                                {isLoadingSuggestions && (
+                                    <div className="absolute right-3 top-3 text-gray-400 text-sm">...</div>
+                                )}
+
+                                {addressSuggestions.length > 0 && (
+                                    <div className="absolute z-20 w-full bg-white border rounded-md mt-1 shadow-md max-h-60 overflow-y-auto">
+                                        {addressSuggestions.map((s, idx) => (
+                                            <div
+                                                key={s.placeId}
+                                                onClick={() => {
+                                                    isSelectingRef.current = true;
+                                                    setFormData({ ...formData, address: s.description });
+                                                    fetchAddressDetails(s.placeId);
+                                                    setAddressSuggestions([]);
+                                                }}
+                                                className={`flex items-center gap-2 p-2 hover:bg-gray-100 cursor-pointer ${idx !== addressSuggestions.length - 1 ? "border-b border-gray-300" : ""
+                                                    }`}
+                                            >
+                                                <MapPin className="w-4 h-4 text-red-500" />
+                                                <span>{s.description}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+
+
 
                             {/* Combined Address Dropdown */}
                             <div className="relative">

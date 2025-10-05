@@ -1,12 +1,15 @@
 // src/app/admin/product/create/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Trash2, Upload, X, AlertCircle } from "lucide-react";
 import {
     CreateProductFormData,
     ApiResponse,
     Product,
+    Category,
+    Color,
+    Size,
 } from "@/models/RequestCreateProduct";
 import {
     convertToFormData,
@@ -21,13 +24,52 @@ export default function CreateProductPage() {
         description: "",
         price: 0,
         mainImageUrl: null,
-        categoryId: 1,
+        categoryId: 0,
         productColor: [],
     });
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [errors, setErrors] = useState<string[]>([]);
+
+    // Master data
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [colors, setColors] = useState<Color[]>([]);
+    const [sizes, setSizes] = useState<Size[]>([]);
+    const [loadingMasterData, setLoadingMasterData] = useState(true);
+
+    // Fetch master data
+    useEffect(() => {
+    const fetchMasterData = async () => {
+        try {
+        const [categoriesRes, colorsRes, sizesRes] = await Promise.all([
+            fetch("/api/category"),
+            fetch("/api/color"),
+            fetch("/api/size"),
+        ]);
+
+        // Backend trả về trực tiếp array/entity, không có wrapper
+        const categoriesData = await categoriesRes.json();
+        const colorsData = await colorsRes.json();
+        const sizesData = await sizesRes.json();
+
+        // Kiểm tra nếu response là array thì dùng luôn, nếu không thì là []
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        setColors(Array.isArray(colorsData) ? colorsData : []);
+        setSizes(Array.isArray(sizesData) ? sizesData : []);
+        
+        console.log("Categories:", categoriesData);
+        console.log("Colors:", colorsData);
+        console.log("Sizes:", sizesData);
+        } catch (error) {
+        console.error("Error fetching master data:", error);
+        } finally {
+        setLoadingMasterData(false);
+        }
+    };
+
+    fetchMasterData();
+    }, []);
 
     const addColor = () => {
         setFormData({
@@ -49,6 +91,34 @@ export default function CreateProductPage() {
         ...updatedColors[colorIndex],
         [field]: value,
         };
+        setFormData({ ...formData, productColor: updatedColors });
+    };
+
+    // Handle color selection from dropdown
+    const handleColorSelect = (colorIndex: number, colorId: number) => {
+        const updatedColors = [...formData.productColor];
+        if (colorId === 0) {
+        // Create new color
+        updatedColors[colorIndex] = {
+            ...updatedColors[colorIndex],
+            colorId: 0,
+            colorName: "",
+            colorPrefix: "",
+            hexCode: "#ffffff",
+        };
+        } else {
+        // Use existing color
+        const selectedColor = colors.find((c) => c.colorId === colorId);
+        if (selectedColor) {
+            updatedColors[colorIndex] = {
+            ...updatedColors[colorIndex],
+            colorId: selectedColor.colorId,
+            colorName: selectedColor.colorName,
+            colorPrefix: selectedColor.colorPrefix,
+            hexCode: selectedColor.hexCode,
+            };
+        }
+        }
         setFormData({ ...formData, productColor: updatedColors });
     };
 
@@ -77,6 +147,30 @@ export default function CreateProductPage() {
         ...updatedColors[colorIndex].variants[variantIndex],
         [field]: value,
         };
+        setFormData({ ...formData, productColor: updatedColors });
+    };
+
+    // Handle size selection from dropdown
+    const handleSizeSelect = (colorIndex: number, variantIndex: number, sizeId: number) => {
+        const updatedColors = [...formData.productColor];
+        if (sizeId === 0) {
+        // Create new size
+        updatedColors[colorIndex].variants[variantIndex] = {
+            ...updatedColors[colorIndex].variants[variantIndex],
+            sizeId: 0,
+            sizeCode: "",
+        };
+        } else {
+        // Use existing size
+        const selectedSize = sizes.find((s) => s.sizeId === sizeId);
+        if (selectedSize) {
+            updatedColors[colorIndex].variants[variantIndex] = {
+            ...updatedColors[colorIndex].variants[variantIndex],
+            sizeId: selectedSize.sizeId,
+            sizeCode: selectedSize.sizeCode,
+            };
+        }
+        }
         setFormData({ ...formData, productColor: updatedColors });
     };
 
@@ -136,7 +230,7 @@ export default function CreateProductPage() {
             description: "",
             price: 0,
             mainImageUrl: null,
-            categoryId: 1,
+            categoryId: 0,
             productColor: [],
             });
         } else {
@@ -148,6 +242,17 @@ export default function CreateProductPage() {
         setLoading(false);
         }
     };
+
+    if (loadingMasterData) {
+        return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+            </div>
+        </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -223,15 +328,21 @@ export default function CreateProductPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Danh mục *
                     </label>
-                    <input
-                        type="number"
+                    <select
                         required
                         value={formData.categoryId}
                         onChange={(e) =>
                         setFormData({ ...formData, categoryId: parseInt(e.target.value) })
                         }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                    >
+                        <option value={0}>-- Chọn danh mục --</option>
+                        {categories.map((category) => (
+                        <option key={category.categoryId} value={category.categoryId}>
+                            {category.categoryName}
+                        </option>
+                        ))}
+                    </select>
                     </div>
                 </div>
 
@@ -286,55 +397,90 @@ export default function CreateProductPage() {
                     </div>
 
                     <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
+                    {/* Color Selection Dropdown */}
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Tên màu
+                        Chọn màu *
                         </label>
-                        <input
+                        <select
+                        value={color.colorId}
+                        onChange={(e) => handleColorSelect(colorIndex, parseInt(e.target.value))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                        <option value={0}>-- Tạo màu mới --</option>
+                        {colors.map((c) => (
+                            <option key={c.colorId} value={c.colorId}>
+                            {c.colorName} ({c.colorPrefix})
+                            </option>
+                        ))}
+                        </select>
+                    </div>
+
+                    {/* Show input fields if creating new color */}
+                    {color.colorId === 0 && (
+                        <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Tên màu *
+                            </label>
+                            <input
                             type="text"
                             value={color.colorName}
                             onChange={(e) => updateColor(colorIndex, "colorName", e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
+                            />
                         </div>
 
                         <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Mã màu (Prefix)
-                        </label>
-                        <input
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Mã màu (Prefix) *
+                            </label>
+                            <input
                             type="text"
                             value={color.colorPrefix}
                             onChange={(e) => updateColor(colorIndex, "colorPrefix", e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
+                            />
                         </div>
 
                         <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Hex Code *
+                            </label>
+                            <div className="flex gap-2">
+                            <input
+                                type="color"
+                                value={color.hexCode}
+                                onChange={(e) => updateColor(colorIndex, "hexCode", e.target.value)}
+                                className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                            />
+                            <input
+                                type="text"
+                                value={color.hexCode}
+                                onChange={(e) => updateColor(colorIndex, "hexCode", e.target.value)}
+                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            />
+                            </div>
+                        </div>
+                        </div>
+                    )}
+
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Hex Code
+                        Lens ID (tùy chọn)
                         </label>
-                        <div className="flex gap-2">
-                            <input
-                            type="color"
-                            value={color.hexCode}
-                            onChange={(e) => updateColor(colorIndex, "hexCode", e.target.value)}
-                            className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
-                            />
-                            <input
-                            type="text"
-                            value={color.hexCode}
-                            onChange={(e) => updateColor(colorIndex, "hexCode", e.target.value)}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-                        </div>
+                        <input
+                        type="text"
+                        value={color.lensId}
+                        onChange={(e) => updateColor(colorIndex, "lensId", e.target.value)}
+                        placeholder="Nhập Lens ID nếu có"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Ảnh không nền
+                        Ảnh không nền (tùy chọn)
                         </label>
                         <label className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer hover:bg-blue-600 w-fit">
                         <Upload size={20} />
@@ -405,23 +551,52 @@ export default function CreateProductPage() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
-                            <div>
+                            {/* Size Selection Dropdown */}
+                            <div className="col-span-2">
                                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Mã size
+                                Chọn size *
                                 </label>
-                                <input
-                                type="text"
-                                value={variant.sizeCode}
+                                <select
+                                value={variant.sizeId}
                                 onChange={(e) =>
-                                    updateVariant(colorIndex, variantIndex, "sizeCode", e.target.value)
+                                    handleSizeSelect(colorIndex, variantIndex, parseInt(e.target.value))
                                 }
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                                />
+                                >
+                                <option value={0}>-- Tạo size mới --</option>
+                                {sizes.map((s) => (
+                                    <option key={s.sizeId} value={s.sizeId}>
+                                    {s.sizeCode}
+                                    </option>
+                                ))}
+                                </select>
                             </div>
+
+                            {/* Show input if creating new size */}
+                            {variant.sizeId === 0 && (
+                                <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Mã size *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={variant.sizeCode}
+                                    onChange={(e) =>
+                                    updateVariant(
+                                        colorIndex,
+                                        variantIndex,
+                                        "sizeCode",
+                                        e.target.value
+                                    )
+                                    }
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                />
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Tên biến thể
+                                Tên biến thể *
                                 </label>
                                 <input
                                 type="text"
@@ -440,7 +615,7 @@ export default function CreateProductPage() {
 
                             <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Số lượng
+                                Số lượng *
                                 </label>
                                 <input
                                 type="number"
@@ -540,7 +715,7 @@ export default function CreateProductPage() {
 
                             <div className="col-span-2">
                                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Ảnh variant
+                                Ảnh variant *
                                 </label>
                                 <label className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white text-sm rounded cursor-pointer hover:bg-blue-600 w-fit">
                                 <Upload size={16} />

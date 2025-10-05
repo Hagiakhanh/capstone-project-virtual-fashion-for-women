@@ -1,8 +1,6 @@
-// src/models/ProductDTO.ts hoặc src/types/product.ts
-
 export interface ProductVariantRequest {
-  sizeId?: number;
-  sizeCode?: string;
+  sizeId: number;
+  sizeCode: string;
   variantName: string;
   quantity: number;
   imageUrl: File | null;
@@ -12,13 +10,32 @@ export interface ProductVariantRequest {
   productHeight: number;
 }
 
+// Backend entities
+export interface Category {
+  categoryId: number;
+  categoryName: string;
+  bodyPart?: string;
+}
+
+export interface Color {
+  colorId: number;
+  colorName: string;
+  colorPrefix: string;
+  hexCode: string;
+}
+
+export interface Size {
+  sizeId: number;
+  sizeCode: string;
+}
+
 export interface ProductColorRequest {
-  colorId?: number;
-  colorName?: string;
-  colorPrefix?: string;
-  hexCode?: string;
+  colorId: number;
+  colorName: string;
+  colorPrefix: string;
+  hexCode: string;
   noBgImgUrl: File | null;
-  lensId?: string;
+  lensId: string;
   productVariantImages: File[];
   variants: ProductVariantRequest[];
 }

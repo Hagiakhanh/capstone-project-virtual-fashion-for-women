@@ -6,6 +6,8 @@ import { Spin } from "antd";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { defaultToastContainerProps } from "@/helpers/toastHelper";
+import { AuthProvider } from "@/contexts/AuthContext";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -36,7 +38,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${frankRuhlLibre.variable} antialiased`}
       >
-        <Suspense fallback={<Spin />}>{children}</Suspense>
+        <AuthProvider>
+          <Suspense fallback={<Spin />}>{children}</Suspense>
+        </AuthProvider>
         <ToastContainer {...defaultToastContainerProps} />
       </body>
     </html>

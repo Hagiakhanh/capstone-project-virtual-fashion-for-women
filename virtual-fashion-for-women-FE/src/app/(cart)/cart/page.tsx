@@ -18,16 +18,13 @@ export default function CartContainer() {
     const updateQuantity = useCallback(async (id: number, change: number) => {
         try {
 
-            console.log("CartItems: ", cartItems);
             const selectedItem = cartItems.find(item => item.cartId == id);
-            console.log("Update quantity for item:", selectedItem);
             const payload = {
                 productVariantId: selectedItem?.productVariantId,
                 quantity: (selectedItem?.quantityItem ?? 0) + change
             };
             const res = await api.put('/cartItem', payload);
             if (res.status === 200) {
-                console.log("Quantity updated:", res.data);
                 const data: CartItemDTO = {
                     ...res.data,
                     selected: true
