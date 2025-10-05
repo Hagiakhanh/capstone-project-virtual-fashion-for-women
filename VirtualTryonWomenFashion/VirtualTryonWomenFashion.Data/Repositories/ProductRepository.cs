@@ -107,6 +107,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                     .ThenInclude(pc => pc.Color)
                 .Include(p => p.ProductColors)
                     .ThenInclude(pc => pc.ProductImages)
+                .Include(p => p.Wishlists)
                 .Include(p => p.ProductInSaleCampaigns)
                 .Include(p => p.Category)
                 .Where(p => p.IsDeleted != true)
