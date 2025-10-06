@@ -52,6 +52,10 @@ namespace VirtualTryonWomenFashion.Service.Services
             IOptions<GHNSettings> ghnSettings
             )
         {
+            _orderDetailService = orderDetailService;
+            _currentUserService = currentUserService;
+            _cartService = cartService;
+            _productVariantService = productVariantService;
             _orderRepository = orderRepository;
             _unitOfWork = unitOfWork;
             _ghnSettings = ghnSettings.Value;

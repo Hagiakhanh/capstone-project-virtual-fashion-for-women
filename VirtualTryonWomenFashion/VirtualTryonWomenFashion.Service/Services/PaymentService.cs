@@ -459,7 +459,10 @@ public class PaymentService : IPaymentService
 
             var jsonRequestData = JsonConvert.SerializeObject(requestData);
 
-            using var client = new HttpClient();
+            var handler = new HttpClientHandler();
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+
+            using var client = new HttpClient(handler);
             var content = new StringContent(jsonRequestData, Encoding.UTF8, "application/json");
             var response =
                 await client.PostAsync("https://sandbox.vnpayment.vn/merchant_webapi/api/transaction", content);
@@ -562,10 +565,12 @@ public class PaymentService : IPaymentService
                         break;
                 }
             }
-
-            await _transactionService.UpdateTransactionStatusAsync(pendingTransactions);
-            await _orderService.HandleSuccessfulOrders(successfulOrders);
-            await _orderService.HandleFailedOrders(failedOrders);
+            if(pendingTransactions.Count > 0)
+            {
+                await _transactionService.UpdateTransactionStatusAsync(pendingTransactions);
+                await _orderService.HandleSuccessfulOrders(successfulOrders);
+                await _orderService.HandleFailedOrders(failedOrders);
+            }
             await _unitOfWork.CommitTransactionAsync();
         }
         catch (Exception ex)

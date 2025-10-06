@@ -365,34 +365,39 @@ namespace VirtualTryonWomenFashion.Service.Services
                     (int)Math.Ceiling((cartItem.QuantityItem * responseGetVariantPriceInfo.CurrentPrice) ?? 0);
                 totalProductPrice += productPrice;
             }
+            (decimal serviceFree, decimal insuranceFree) = (0.0m, 0.0m);
 
-            (int provinceId, int districtId, string wardCode) =
-                await this.GetAddressCodeAsync(requestCheckout.ProvinceName, requestCheckout.DistrictName,
-                    requestCheckout.WardName);
-            int totalWeight =
-                (int)Math.Ceiling(
-                    selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductWeight) ?? 0);
-            int totalHeight =
-                (int)Math.Ceiling(
-                    selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductHeight) ?? 0);
-            int totalLength =
-                (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductLength) ?? 0);
-            int totalWidth =
-                (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductWidth) ?? 0);
-            ShippingObjectRequest shippingObjectRequest = new ShippingObjectRequest()
+            if(!string.IsNullOrEmpty(requestCheckout.ProvinceName) && !string.IsNullOrEmpty(requestCheckout.DistrictName) && !string.IsNullOrEmpty(requestCheckout.WardName))
             {
-                ToWardCode = wardCode,
-                ToDistrictId = districtId,
-                Weight = totalWeight,
-                Length = totalLength,
-                Width = totalWidth,
-                Height = totalHeight,
-                InsuranceValue = totalProductPrice
-            };
-            (decimal serviceFree, decimal insuranceFree) =
-                await _shippingService.CalculateShippingFee(shippingObjectRequest);
+                (int provinceId, int districtId, string wardCode) =
+                await this.GetAddressCodeAsync(requestCheckout.ProvinceName, requestCheckout.DistrictName,requestCheckout.WardName);
+                
+                int totalWeight =
+                    (int)Math.Ceiling(
+                        selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductWeight) ?? 0);
+                int totalHeight =
+                    (int)Math.Ceiling(
+                        selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductHeight) ?? 0);
+                int totalLength =
+                    (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductLength) ?? 0);
+                int totalWidth =
+                    (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductWidth) ?? 0);
+                ShippingObjectRequest shippingObjectRequest = new ShippingObjectRequest()
+                {
+                    ToWardCode = wardCode,
+                    ToDistrictId = districtId,
+                    Weight = totalWeight,
+                    Length = totalLength,
+                    Width = totalWidth,
+                    Height = totalHeight,
+                    InsuranceValue = totalProductPrice
+                };
+                (serviceFree, insuranceFree) =
+                    await _shippingService.CalculateShippingFee(shippingObjectRequest);
+            }
             ResponseCheckout responseCheckout = new ResponseCheckout()
             {
+                Items = selectedCartItems,
                 TotalProductPrice = totalProductPrice,
                 ServiceFree = serviceFree,
                 InsuranceFee = insuranceFree,

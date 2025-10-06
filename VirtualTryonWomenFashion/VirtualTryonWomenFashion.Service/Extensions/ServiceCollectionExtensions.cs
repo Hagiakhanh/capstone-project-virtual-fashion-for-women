@@ -80,6 +80,9 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<IShippingService, ShippingService>();
             services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IGoogleMapService, GoogleMapService>();
+
+           
            
             return services;
         }

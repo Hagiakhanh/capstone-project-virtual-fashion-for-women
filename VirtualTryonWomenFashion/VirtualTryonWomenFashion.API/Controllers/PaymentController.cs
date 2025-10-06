@@ -20,8 +20,6 @@ public class PaymentController : ControllerBase
     [HttpPost("momo/momo-callback")]
     public async Task<IActionResult> MomoCallback([FromBody] MomoReturnModel momoReturnModel)
     {
-        Console.WriteLine("===== Momo Callback Data =====");
-        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(momoReturnModel));
         await _paymentService.HandleMomoCallback(momoReturnModel);
         return Ok(momoReturnModel);
     }
@@ -34,8 +32,6 @@ public class PaymentController : ControllerBase
         {
             try
             {
-                Console.WriteLine("===== Momo Callback Data =====");
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(Request.Query));
                 await _paymentService.HandleVnPayCallback(Request.Query);
                 return Ok(Request.Query);
 

@@ -39,31 +39,8 @@ public class CartController : ControllerBase
             });
         }
     }
-    // Đang bị lỗi chưa fix được
-    [HttpGet("selected-items")]
-    public async Task<IActionResult> GetSelectedCartItemsAsync([FromQuery] List<int> cartIds)
-    {
-        try
-        {
-            var selectedCartItems = await _cartService.GetSelectedCartItemsAsync(cartIds);
-            return Ok(new MessageModelWithData<object>()
-            {
-                StatusCode = StatusCodes.Status200OK,
-                Message = "Get selected item in cart successfully",
-                Data = selectedCartItems
-            });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new MessageModelWithData<object>()
-            {
-                StatusCode = StatusCodes.Status400BadRequest,
-                Message = ex.Message,
-                Data = null
-            });
-        }
-    }
-    
+
+
     [HttpPost("add-item")]
     public async Task<IActionResult> AddItemToCartAsync([FromBody] RequestAddProductToCart requestAddProductToCart)
     {
