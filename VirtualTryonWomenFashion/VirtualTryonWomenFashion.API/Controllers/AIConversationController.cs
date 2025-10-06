@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Reflection.PortableExecutable;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.AIChatModel;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -19,25 +21,41 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // GET: api/<AIConversationController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        public async Task<IActionResult> Get()
         {
-            return new string[] { "value1", "value2" };
+            try
+            {
+                List<Aiconversation> result = await _aiConversationService.GetAllAIConversation();
+                return StatusCode(200, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Lấy danh sách các cuộc trò chuyện thất bại lỗi server");
+            }
         }
 
         // GET api/<AIConversationController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
-            return "value";
+            try
+            {
+                Aiconversation result = await _aiConversationService.GetConversationDetailByID(id);
+                return StatusCode(200, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Lấy chi tiết của cuộc trò chuyện thất bại lỗi server");
+            }
         }
 
         // POST api/<AIConversationController>
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] int? characteristicID)
+        public async Task<IActionResult> Post([FromBody] RequestCreateAIConversation requestModel)
         {
             try
             {
-                MessageModelWithData<Aiconversation> result = await _aiConversationService.CreateAIConversation(characteristicID);
+                MessageModelWithData<Aiconversation> result = await _aiConversationService.CreateAIConversation(requestModel.CharacteristicId);
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
@@ -46,16 +64,19 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
-        // PUT api/<AIConversationController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
         // DELETE api/<AIConversationController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
+            try
+            {
+                MessageModel result = await _aiConversationService.DeleteConversationById(id);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Xoá cuộc trò chuyện thất bại lỗi server");
+            }
         }
     }
 }
