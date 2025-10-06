@@ -3,11 +3,11 @@ import { Input, Form } from "antd";
 import { CloseOutlined } from '@ant-design/icons';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "antd";
 
 import { typeLogin } from "@/types/auth";
 import bgLogin from '../../../assets/auth/bg-login.png'
 import googleIcon from '../../../assets/auth/GoogleIcon.webp'
-import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
 import { api } from "@/api/instance";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -92,9 +92,11 @@ function LoginPage() {
             </p>
             <Form.Item>
               <div>
-                <AntButtonCommon label="Đăng nhập" style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FAE3B6' }} className="mt-5 w-full !py-6 !text-black !hover:text-black" shape="round" size="large"
+                <Button style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FAE3B6' }} className="mt-5 w-full !py-6 !text-black !hover:text-black" shape="round" size="large"
                   htmlType="submit"
-                />
+                >
+                  Đăng nhập
+                </Button>
               </div>
             </Form.Item>
           </Form>
@@ -104,7 +106,9 @@ function LoginPage() {
             <div className="flex-grow border-t border-gray-300"></div>
           </div>
           <div>
-            <AntButtonCommon label="Đăng nhập với Google" icon={<img src={googleIcon.src} alt="Google" className="w-6 h-6" />} style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FFFFFF' }} className="mt-5 w-full !py-6 !text-black !hover:text-black !border-black" shape="round" size="large" />
+            <Button icon={<img src={googleIcon.src} alt="Google" className="w-6 h-6" />} style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FFFFFF' }} className="mt-5 w-full !py-6 !text-black !hover:text-black !border-black" shape="round" size="large">
+              Đăng nhập với Google
+            </Button>
           </div>
         </div>
       </div>
