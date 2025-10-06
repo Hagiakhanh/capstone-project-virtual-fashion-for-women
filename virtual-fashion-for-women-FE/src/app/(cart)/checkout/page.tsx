@@ -149,6 +149,7 @@ export default function CheckoutForm() {
             }
         } catch (error) {
             console.error("Fetch checkout data error:", error);
+            router.push('/cart');
         }
     };
 
@@ -586,8 +587,13 @@ export default function CheckoutForm() {
                             </div>
                         </div>
 
-                        <button className="w-full bg-black text-white py-4 rounded-md mt-6 font-semibold text-lg hover:bg-gray-800 transition-colors"
+                        <button className={`w-full py-4 rounded-md mt-6 font-semibold text-lg transition-colors
+                                ${checkoutDTO.serviceFree === 0
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-black text-white hover:bg-gray-800"
+                            }`}
                             onClick={handlePayment}
+                            disabled={checkoutDTO.serviceFree === 0}
                         >
                             Đặt hàng
                         </button>
