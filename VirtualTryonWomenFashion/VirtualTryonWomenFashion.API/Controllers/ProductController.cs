@@ -71,8 +71,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
             return Ok(product);
         }
 
-        [HttpPut]
-        public async Task<IActionResult> UpdateAsync(string productId, UpdateProductRequest request)
+        [HttpPut("{productId}")]
+        public async Task<IActionResult> UpdateAsync(string productId, [FromForm] UpdateProductRequest request)
         {
             try
             {
