@@ -147,9 +147,9 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
         }
         }
 
-        if (!color.noBgImgUrl) {
-        errors.push(`Màu ${index + 1}: Vui lòng chọn ảnh không nền`);
-        }
+        // if (!color.noBgImgUrl) {
+        // errors.push(`Màu ${index + 1}: Vui lòng chọn ảnh không nền`);
+        // }
 
         if (color.variants.length === 0) {
         errors.push(`Màu ${index + 1}: Phải có ít nhất một biến thể (size)`);

@@ -3,6 +3,9 @@ import { Geist, Geist_Mono, Frank_Ruhl_Libre } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import { Spin } from "antd";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { defaultToastContainerProps } from "@/helpers/toastHelper";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
@@ -38,6 +41,7 @@ export default function RootLayout({
         <AuthProvider>
           <Suspense fallback={<Spin />}>{children}</Suspense>
         </AuthProvider>
+        <ToastContainer {...defaultToastContainerProps} />
       </body>
     </html>
   );
