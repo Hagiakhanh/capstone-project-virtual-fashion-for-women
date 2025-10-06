@@ -3,9 +3,9 @@ import { CloseOutlined } from '@ant-design/icons';
 import { Input, Form } from "antd";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
+import { Button } from "antd";
 
 import bgRegister from '../../../assets/auth/bg-login.png'
-import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
 import googleIcon from '../../../assets/auth/GoogleIcon.webp'
 import { typeRegister } from '@/types/auth';
 import { api } from '@/api/instance';
@@ -20,7 +20,7 @@ export default function RegisterPage() {
       setLoading(true);
       try {
          const response = await api.post('/register', values);
-         if(response.status === 200) {
+         if (response.status === 200) {
             router.replace("/login");
             //Thông báo vào mail để xác nhận tài khoản
          }
@@ -117,9 +117,9 @@ export default function RegisterPage() {
                   </Form.Item>
                   <Form.Item>
                      <div>
-                        <AntButtonCommon label="Đăng ký" style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FAE3B6' }} className="mt-3 w-full !py-6 !text-black !hover:text-black" shape="round" size="large"
+                        <Button style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FAE3B6' }} className="mt-3 w-full !py-6 !text-black !hover:text-black" shape="round" size="large"
                            htmlType='submit' disabled={loading} loading={loading}
-                        />
+                        >Đăng ký</Button>
                      </div>
                   </Form.Item>
                </Form>
@@ -129,7 +129,9 @@ export default function RegisterPage() {
                   <div className="flex-grow border-t border-gray-300"></div>
                </div>
                <div>
-                  <AntButtonCommon label="Đăng ký với Google" icon={<img src={googleIcon.src} alt="Google" className="w-6 h-6" />} style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FFFFFF' }} className="mt-5 w-full !py-6 !text-black !hover:text-black !border-black" shape="round" size="large" />
+                  <Button icon={<img src={googleIcon.src} alt="Google" className="w-6 h-6" />} style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FFFFFF' }} className="mt-5 w-full !py-6 !text-black !hover:text-black !border-black" shape="round" size="large">
+                     Đăng ký với Google
+                  </Button>
                </div>
             </div>
          </div>
