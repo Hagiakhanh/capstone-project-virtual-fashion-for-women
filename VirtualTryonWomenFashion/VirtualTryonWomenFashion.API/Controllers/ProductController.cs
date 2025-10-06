@@ -44,7 +44,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<List<ResponseProductDto>>> Search([FromQuery] PaginationParameter pagination, ProductSearchRequest request)
+        public async Task<ActionResult<List<ResponseProductDto>>> Search([FromQuery] PaginationParameter pagination, [FromQuery] ProductSearchRequest request)
         {
             var result = await _productService.SearchProductAsync(request, pagination);
             return StatusCode(result.StatusCode, result);
