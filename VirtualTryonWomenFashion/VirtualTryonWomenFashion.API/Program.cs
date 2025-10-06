@@ -12,6 +12,7 @@ using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Services;
 using VirtualTryonWomenFashion.Service.Utils;
 using VirtualTryonWomenFashion.Service.Workers;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 

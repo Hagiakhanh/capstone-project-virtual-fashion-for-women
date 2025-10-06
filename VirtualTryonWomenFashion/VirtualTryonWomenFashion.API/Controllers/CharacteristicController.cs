@@ -20,16 +20,17 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
         // GET: api/<CharacteristicController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        public async Task<IActionResult> GetCurrentCharacteristicForUser()
         {
-            return new string[] { "value1", "value2" };
-        }
-
-        // GET api/<CharacteristicController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
+            try
+            {
+                Characteristic result = await _characteristicService.GetCurrentCharacteristicForUser();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Lấy phong cách cá nhân thất bại");
+            }
         }
 
         // POST api/<CharacteristicController>
@@ -48,15 +49,24 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         // PUT api/<CharacteristicController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPut]
+        public async Task<IActionResult> Put([FromBody] RequestCreateUserCharacteristics model)
         {
+            try
+            {
+                MessageModelWithData<Characteristic> result = await _characteristicService.UpdateCharacteristic(model);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Cập nhật phong cách cá nhân thất bại");
+            }
         }
 
-        // DELETE api/<CharacteristicController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
+        //// DELETE api/<CharacteristicController>/5
+        //[HttpDelete("{id}")]
+        //public void Delete(int id)
+        //{
+        //}
     }
 }
