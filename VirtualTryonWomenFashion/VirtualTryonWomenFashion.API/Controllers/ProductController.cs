@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Commons;
@@ -44,6 +45,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpGet("search")]
+        [AllowAnonymous]
         public async Task<ActionResult<List<ResponseProductDto>>> Search([FromQuery] PaginationParameter pagination, [FromQuery] ProductSearchRequest request)
         {
             var result = await _productService.SearchProductAsync(request, pagination);

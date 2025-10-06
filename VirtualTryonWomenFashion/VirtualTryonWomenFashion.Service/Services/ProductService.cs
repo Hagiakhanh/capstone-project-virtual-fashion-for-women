@@ -41,6 +41,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICategoryRepository _categoryRepository;
         private readonly ICurrentUserService _currentUserService;
         private readonly IWishlistRepository _wishlistRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             ICloudinaryService cloudinaryService,
@@ -55,7 +56,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             IGeminiService geminiService,
             ICategoryRepository categoryRepository,
             ICurrentUserService currentUserService,
-            IWishlistRepository wishlistRepository)
+            IWishlistRepository wishlistRepository,
+            IHttpContextAccessor httpContextAccessor)
         {
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
@@ -72,6 +74,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _categoryRepository = categoryRepository;
             _currentUserService = currentUserService;
             _wishlistRepository = wishlistRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public static string GenerateFixedLengthString(int length)
@@ -258,7 +261,20 @@ namespace VirtualTryonWomenFashion.Service.Services
             ProductSearchRequest request,
             PaginationParameter pagination)
         {
-            int? userId = _currentUserService.GetUserId();
+            int? userId = null;
+
+            // Lấy HttpContext
+            var httpContext = _httpContextAccessor.HttpContext;
+
+            if (httpContext != null && httpContext.User.Identity != null && httpContext.User.Identity.IsAuthenticated)
+            {
+                var userIdClaim = httpContext.User.FindFirst("UserID")?.Value;
+                if (int.TryParse(userIdClaim, out int parsedId))
+                {
+                    userId = parsedId;
+                }
+            }
+
             // Lấy danh sách product theo filter + sort
             var products = await _productRepository.SearchProductsWithIncludes(request.ProductName, request.ProductSort.ToString(), pagination);
 
