@@ -7,16 +7,41 @@ import logo from '../../assets/home/Logo.png';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
+import { useEffect, useState } from 'react';
+import { api } from '@/api/instance';
+import { CartItemDTO } from '@/models/CartItemDTO';
 
 function HeaderComponent() {
    const { user } = useAuth();
+   const [cartCount, setCartCount] = useState<number>(0);
 
+   const fetchCartTotal = async () => {
+      try {
+         const res = await api.get('/cartItem');
+         if (res.status == 200) {
+            const data: CartItemDTO[] = res.data;
+            setCartCount(data.reduce((total, item) => total + item.quantityItem, 0));
+         }
+      } catch (error) {
+         console.error("Lỗi khi lấy tổng giỏ hàng:", error);
+      }
+   };
    const items: MenuProps['items'] = [
       { key: '1', label: <span style={{ fontSize: '1rem' }}>Áo</span> },
       { key: '2', label: <span style={{ fontSize: '1rem' }}>Quần</span> },
       { key: '3', label: <span style={{ fontSize: '1rem' }}>Váy</span> },
       { key: '4', label: <span style={{ fontSize: '1rem' }}>Đầm</span> },
    ];
+
+   useEffect(() => {
+      fetchCartTotal();
+   }, []);
+
+   useEffect(() => {
+      const handleCartUpdated = () => fetchCartTotal();
+      window.addEventListener("cart-updated", handleCartUpdated);
+      return () => window.removeEventListener("cart-updated", handleCartUpdated);
+   }, []);
 
    console.log('Current user in header:', user);
 
@@ -62,8 +87,23 @@ function HeaderComponent() {
                {user?.role == 'customer' ? (
                   <>
                      <UserOutlined className='text-2xl cursor-pointer' />
-                     <ShoppingCartOutlined className='text-3xl cursor-pointer' />
+
+                     <div className="relative cursor-pointer" onClick={() => (window.location.href = '/cart')}>
+                        <ShoppingCartOutlined className="text-3xl" />
+
+                        {cartCount > 0 && (
+                           <span
+                              className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold 
+                 rounded-full min-w-[20px] h-[20px] flex items-center justify-center 
+                 shadow-md border-2 border-white"
+                           >
+                              {cartCount > 99 ? '99+' : cartCount}
+                           </span>
+                        )}
+
+                     </div>
                   </>
+
                ) : (
                   <div className='flex items-center gap-3'>
                      <Link href="/login">
