@@ -109,7 +109,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
-        [HttpPut]
+        [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsync(string id, UpdateProductVariantRequest request)
         {
             try
