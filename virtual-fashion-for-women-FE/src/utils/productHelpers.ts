@@ -221,3 +221,111 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
         productHeight: 0.2,
     };
 }
+
+/**
+ * Helper function to append array items to FormData with proper indexing
+ */
+export const appendArrayToFormData = (
+  formData: FormData,
+  arrayName: string,
+  items: any[],
+  fieldMapping?: Record<string, string>
+) => {
+  items.forEach((item, index) => {
+    Object.entries(item).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        const fieldName = fieldMapping?.[key] || key;
+        const formKey = `${arrayName}[${index}].${fieldName}`;
+        
+        if (value instanceof File) {
+          formData.append(formKey, value);
+        } else if (Array.isArray(value)) {
+          value.forEach((v) => {
+            if (v instanceof File) {
+              formData.append(formKey, v);
+            } else {
+              formData.append(formKey, v.toString());
+            }
+          });
+        } else {
+          formData.append(formKey, value.toString());
+        }
+      }
+    });
+  });
+};
+
+/**
+ * Helper to create FormData from an object, handling nested structures
+ */
+export const objectToFormData = (
+  obj: Record<string, any>,
+  formData = new FormData(),
+  parentKey = ''
+): FormData => {
+  Object.entries(obj).forEach(([key, value]) => {
+    const formKey = parentKey ? `${parentKey}.${key}` : key;
+    
+    if (value === undefined || value === null) {
+      return;
+    }
+    
+    if (value instanceof File) {
+      formData.append(formKey, value);
+    } else if (Array.isArray(value)) {
+      value.forEach((item, index) => {
+        if (item instanceof File) {
+          formData.append(`${formKey}[${index}]`, item);
+        } else if (typeof item === 'object' && item !== null) {
+          objectToFormData(item, formData, `${formKey}[${index}]`);
+        } else if (item !== undefined && item !== null) {
+          formData.append(`${formKey}[${index}]`, item.toString());
+        }
+      });
+    } else if (typeof value === 'object' && !(value instanceof Blob)) {
+      objectToFormData(value, formData, formKey);
+    } else {
+      formData.append(formKey, value.toString());
+    }
+  });
+  
+  return formData;
+};
+
+/**
+ * Validate file size and type
+ */
+export const validateFile = (
+  file: File,
+  maxSizeMB = 5,
+  allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+): { valid: boolean; error?: string } => {
+  if (!allowedTypes.includes(file.type)) {
+    return {
+      valid: false,
+      error: `File type not allowed. Allowed types: ${allowedTypes.join(', ')}`,
+    };
+  }
+  
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+  if (file.size > maxSizeBytes) {
+    return {
+      valid: false,
+      error: `File size exceeds ${maxSizeMB}MB`,
+    };
+  }
+  
+  return { valid: true };
+};
+
+/**
+ * Preview image file
+ */
+export const getImagePreview = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};

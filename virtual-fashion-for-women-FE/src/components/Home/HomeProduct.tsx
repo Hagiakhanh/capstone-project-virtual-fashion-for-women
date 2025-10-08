@@ -12,7 +12,7 @@ function HomeProductSection() {
 
    const fetchProducts = async () => {
       try {
-         const response = await api.get('/product', {
+         const response = await api.get('/product/search', {
             params: {
                PageIndex: 1,
                PageSize: 8,
