@@ -472,13 +472,13 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         // Lấy category và bodyPart
                         var category = await _categoryRepository.GetByIdAsync(product.CategoryId.Value);
-                        string bodyPartText = category.BodyPart switch
-                        {
-                            "upperBody" => "Thân trên",
-                            "underBody" => "Thân dưới",
-                            "fullBody" => "Nguyên bộ",
-                            _ => "Không xác định"
-                        };
+                        //string bodyPartText = category.BodyPart switch
+                        //{
+                        //    "Upper body" => "Thân trên",
+                        //    "Lower body" => "Thân dưới",
+                        //    "Full body" => "Nguyên bộ",
+                        //    _ => "Không xác định"
+                        //};
 
                         // Ghép text cho embedding
                         var textParts = new List<string>
@@ -486,7 +486,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             $"Tên sản phẩm: {product.ProductName}",
                             $"Mô tả: {product.Description}",
                             $"Danh mục: {category.CategoryName}",
-                            $"Có thể mặc: {bodyPartText}",
+                            $"Có thể mặc: {category.BodyPart}",
                             $"Màu sắc: {productColor.Color?.ColorName ?? "Không rõ"}",
                             $"Mã màu: {productColor.Color?.ColorPrefix ?? ""} ({productColor.Color?.HexCode ?? ""})",
                             $"Size: {variant.Size?.SizeCode ?? "Free size"}",
@@ -504,7 +504,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                             { "productSlug", product.ProductSlug },
                             { "categoryId", category.CategoryId.ToString() },
                             { "categoryName", category.CategoryName },
-                            { "bodyPart", bodyPartText },
+                            { "itemType", category.CategoryName },
+                            { "bodyPart", category.BodyPart },
                             { "productColorId", productColor.ProductColorId },
                             { "colorId", productColor.ColorId?.ToString() ?? "" },
                             { "colorName", productColor.Color?.ColorName ?? "" },

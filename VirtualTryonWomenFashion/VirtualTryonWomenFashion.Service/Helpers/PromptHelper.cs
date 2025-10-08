@@ -58,11 +58,11 @@ namespace VirtualTryonWomenFashion.Service.Helpers
             var historyText = new StringBuilder();
             if (history != null)
             {
-            foreach (var msg in history)
-            {
-                historyText.AppendLine((msg.IsAiresponse ? "AI" : "User")
-                + $": {msg.Content}");
-            }
+                foreach (var msg in history)
+                {
+                    historyText.AppendLine((msg.IsAiresponse ? "AI" : "User")
+                    + $": {msg.Content}");
+                }
             }
             StringBuilder textRuleCategories = new StringBuilder();
             textRuleCategories.AppendLine("**QUY TẮC LỌC KHI `provide_suggestions`:**");
@@ -72,7 +72,7 @@ namespace VirtualTryonWomenFashion.Service.Helpers
             foreach (Category cat in listCategory)
             {
                 textRuleCategories.AppendLine(
-                    $"-   Tìm '{cat.CategoryName}': `\"filters\": {{ \"bodyPart\": \"{cat.BodyPart}\", \"item_type\": \"{cat.CategoryName}\" }}`"
+                    $"-   Tìm '{cat.CategoryName}': `\"filters\": {{ \"bodyPart\": \"{cat.BodyPart}\", \"itemType\": \"{cat.CategoryName}\" }}`"
                 );
             }
             string currentStyleJson = JsonSerializer.Serialize(currentStyle);
@@ -104,7 +104,7 @@ namespace VirtualTryonWomenFashion.Service.Helpers
     -   `provide_suggestions`: Nếu bạn đã có đủ thông tin (`FashionStyle` VÀ `ItemType`). Hãy tạo kế hoạch phối đồ.
 3.  Bạn PHẢI trả lời bằng một đối tượng JSON duy nhất, có các trường: `action`, `updatedStyle`, `outfitName`, `components`, `responseText`.
 **QUY TẮC QUAN TRỌNG KHI `provide_suggestions`:**
-- Trong `responseText`, bạn có đưa gợi ý thì sẽ trả về một nội dung chung chung không cụ thể về tên chính xác của sản phẩm.
+- Trong `responseText`, bạn có đưa gợi ý thì sẽ trả về một nội dung chung chung như váy không cụ thể về tên chính xác của sản phẩm và đặc tính của nó quá chỉ nói theo đúng hướng mà người dùng hướng tới về phong cách hay mục tiêu mặc.
 **LƯU Ý QUAN TRỌNG: Câu trả lời của bạn KHÔNG được chứa bất kỳ ký tự markdown nào, đặc biệt là dấu ```. Chỉ trả về đối tượng JSON thô.**
 
 {textRuleCategories}
@@ -120,20 +120,19 @@ namespace VirtualTryonWomenFashion.Service.Helpers
 }}
 
 **Ví dụ 2: Đủ thông tin (ÁP DỤNG QUY TẮC NÂNG CAO)**
-User Request: ""Tìm cho mình một chiếc áo dài cách tân màu đỏ để đi ăn cưới""
+User Request: ""Tìm cho mình một chiếc áo đầm cách tân màu đỏ để đi ăn cưới""
 Your JSON output:
 {{
   ""action"": ""provide_suggestions"",
-  ""updatedStyle"": {{ ""Occasion"": ""đi tiệc"", ""FashionStyle"": ""cách tân"", ""ItemType"": ""áo dài"", ""Color"": ""đỏ"" }},
-  ""outfitName"": ""Áo dài tiệc sự kiện màu đỏ cách tân đi tiệc cho dịp đám cưới "",
+  ""updatedStyle"": {{ ""Occasion"": ""đi tiệc"", ""FashionStyle"": ""cách tân"", ""ItemType"": ""Đầm"", ""Color"": ""đỏ"" }},
+  ""outfitName"": ""Áo đầm tiệc sự kiện màu đỏ cách tân đi tiệc cho dịp đám cưới "",
   ""components"": [ 
     {{ 
-      ""SearchQuery"": ""áo dài cách tân màu đỏ chất liệu lụa mềm mại cho dịp tiệc cưới"", 
+      ""SearchQuery"": ""Đầm Maxi cách tân màu đỏ chất liệu lụa mềm mại cho dịp tiệc cưới"", 
       ""filters"": {{ 
-        ""bodyPart"": ""Nguyên bộ"", 
-        ""item_type"": ""áo dài"", 
-        ""color"": ""đỏ"",
-        ""occasion"": ""đi tiệc""
+        ""bodyPart"": ""Toàn thân"", 
+        ""itemType"": ""Đầm"", 
+        ""color"": ""đỏ""
       }} 
     }} 
   ],
@@ -155,7 +154,7 @@ Your JSON output:
             foreach (Category cat in listCategory)
             {
                 categoryRules.AppendLine(
-                    $"- '{cat.CategoryName}': `\"filters\": {{ \"bodyPart\": \"{cat.BodyPart}\", \"item_type\": \"{cat.CategoryName}\" }}`"
+                    $"- '{cat.CategoryName}': `\"filters\": {{ \"bodyPart\": \"{cat.BodyPart}\", \"itemType\": \"{cat.CategoryName}\" }}`"
                 );
             }
 
@@ -169,7 +168,7 @@ Your JSON output:
                 foreach (var pv in kv.Value)
                 {
                     groupedBuilder.AppendLine(
-                        $"- Id: {pv.ProductVariantId}, Tên: {pv.ProductColor.Product?.ProductName}, Màu: {pv.ProductColor}, Size: {pv.Size}"
+                        $"- Id: {pv.ProductVariantId}, Tên: {pv.VariantName}, Màu: {pv.ProductColor.Color.ColorName}, Size: {pv.Size.SizeCode}, ImageUrl: {pv.ImageUrl}"
                     );
                 }
                 groupedBuilder.AppendLine();
@@ -200,7 +199,7 @@ Nhiệm vụ của bạn: reasoning và chọn **một sản phẩm duy nhất t
 Một JSON duy nhất với các trường:
 {{
   ""selectedProducts"": [
-    {{ ""id"": ..., ""name"": ..., ""reason"": ""{textSuggestion}: giải thích ngắn tại sao phù hợp"" }}
+    {{ ""id"": ..., ""name"": ...,""ImageUrl"":..., ""reason"": ""{textSuggestion}: giải thích ngắn tại sao phù hợp"" }}
   ],
   ""responseText"": ""câu trả lời ngắn gọn, tự nhiên cho user""
 }}
