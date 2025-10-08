@@ -34,26 +34,14 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-    try {
-        //const payload: typeRequestListProduct = await request.json();
-        const { searchParams } = new URL(request.url);
-        const PageIndex = searchParams.get('PageIndex');
-        const PageSize = searchParams.get('PageSize');
-        const ProductSort = searchParams.get('ProductSort');
-
-        const api = createApiInstance(request);
-        const responseBE = await api.get('/product/search', {
-            params: {
-                PageIndex: PageIndex,
-                PageSize: PageSize,
-                ProductSort: ProductSort
-            }
-        });
-        if (responseBE.status === 200) {
-            return NextResponse.json(responseBE.data?.data, { status: 200 });
-        }
-    } catch (error) {
-        console.error("Error when calling list products:", error);
-        return NextResponse.json({ message: "Lỗi không lấy được danh sách sản phẩm." }, { status: 500 });
-    }
+  try {
+    const api = createApiInstance(request);
+    const response = await api.get('/product');
+    return NextResponse.json(response.data);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.response?.data?.message || 'Failed to fetch products' },
+      { status: error.response?.status || 500 }
+    );
+  }
 }
