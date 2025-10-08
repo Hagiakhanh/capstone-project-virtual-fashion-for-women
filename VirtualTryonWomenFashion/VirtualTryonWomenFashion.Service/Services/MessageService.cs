@@ -27,9 +27,11 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICategoryRepository _categoryRepository;
         private readonly IVectorDbService _vectorDbService;
         private readonly IProductVariantRepository _productVariantRepository;
+        private readonly ISuggestedOutfitRepository _suggestedOutfitRepository;
         public MessageService(IMessageRepository messageRepository, IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService, IAiconversationRepository aiconversationRepository,
-            IGeminiService geminiService, ICategoryRepository categoryRepository, IVectorDbService vectorDbService, IProductVariantRepository productVariantRepository)
+            IGeminiService geminiService, ICategoryRepository categoryRepository, IVectorDbService vectorDbService,
+            IProductVariantRepository productVariantRepository, ISuggestedOutfitRepository suggestedOutfitRepository)
         {
             _messageRepository = messageRepository;
             _unitOfWork = unitOfWork;
@@ -39,6 +41,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _categoryRepository = categoryRepository;
             _vectorDbService = vectorDbService;
             _productVariantRepository = productVariantRepository;
+            _suggestedOutfitRepository = suggestedOutfitRepository;
         }
         public async Task<ResponseAIChatModelWithSuggestion> SendMessageToAIConversation(int conversationChatID, string message)
         {
@@ -46,6 +49,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 int userId = _currentUserService.GetUserId();
                 Aiconversation conversationModel = await _aiConversationRepository.GetByIdAsync(userId);
+                ProductReasoningSelectionResponse reasoningResponse = new();
                 if (conversationModel == null)
                 {
                     throw new Exception("Cuộc trò chuyện AI không hợp lệ");
@@ -103,8 +107,9 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                         if (vectorResult.Any())
                         {
-                            var varianceIds = vectorResult.Select(x => x.metadata["varianceId"]).ToList();
-                            var productVariants = await _productVariantRepository.GetAll(null, x => varianceIds.Contains(x.ProductVariantId));
+                            var varianceIds = vectorResult.Select(x => x.metadata["productVariantId"]).ToList();
+                            var productVariants = await _productVariantRepository.GetAllThenInclude(null, x => varianceIds.Contains(x.ProductVariantId), null,
+                                includes: [x => x.Size, x => x.ProductColor.Color]);
 
                             // Gom theo ItemType (nếu bạn muốn gom theo Category thì đổi key)
                             string key = vectorResult.FirstOrDefault().metadata["bodyPart"] ?? "unknown";
@@ -128,16 +133,49 @@ namespace VirtualTryonWomenFashion.Service.Services
                         string refinedResponse = await _geminiService.CallGeminiAsync(reasoningPrompt);
                         finalOutfit.ResponseText = JsonHelper.CleanJsonString(refinedResponse);
 
+                        reasoningResponse = JsonSerializer.Deserialize<ProductReasoningSelectionResponse>(finalOutfit.ResponseText
+                            , new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
                         // Có thể parse lại response nếu AI chọn ra 1 item cụ thể trong list
+
+                        var allTrackedVariants = groupedVariants
+    .SelectMany(g => g.Value)
+    .ToDictionary(v => v.ProductVariantId, v => v);
+
+                        List<ProductVariant> productVariantsSuggested = new();
+
+                        foreach (var selected in reasoningResponse.SelectedProducts)
+                        {
+                            if (allTrackedVariants.TryGetValue(selected.Id, out var trackedVariant))
+                            {
+                                productVariantsSuggested.Add(trackedVariant); // dùng entity đã được tracking
+                            }
+                            else
+                            {
+                                // fallback: nếu AI chọn item không có trong groupedVariants thì bỏ qua
+                                Console.WriteLine($"⚠️ Variant {selected.Id} not found in tracked list");
+                            }
+                        }
+
+                        DateTime dateSuggested = DateTime.UtcNow.AddHours(7);
+                        SuggestedOutfit outfitSuggested = new SuggestedOutfit()
+                        {
+                            AiconversationId = conversationChatID,
+                            UserStyleJson = currentUserStyle.ToString(),
+                            IsDeleted = false,
+                            CreatedAt = dateSuggested,
+                            ProductVariants = productVariantsSuggested
+                        };
+                        await _suggestedOutfitRepository.InsertAsync(outfitSuggested);
                     }
                     else
                     {
                         finalOutfit.ResponseText = "Xin lỗi, mình chưa tìm được gợi ý phù hợp. Bạn có thể thử lại nhé.";
+                        analysis.ResponseText = "Xin lỗi, mình chưa tìm được gợi ý phù hợp. Bạn có thể thử lại nhé.";
                     }
                 }
 
                 // Check dieu kien goi y ra cac bo do neu co -> them vao bang SuggestedOutfits
-
                 // Save user sent message
                 await _messageRepository.InsertAsync(new Data.Models.Message()
                 {
@@ -170,12 +208,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Content = responseMessage.Content,
                     CreatedAt = responseMessage.CreatedAt,
                     IsAiresponse = true,
-                    Components = []
+                    Components = reasoningResponse.SelectedProducts
                 };
                 return responseToClient;
             }
             catch (Exception ex)
-             {
+            {
                 return null;
             }
         }

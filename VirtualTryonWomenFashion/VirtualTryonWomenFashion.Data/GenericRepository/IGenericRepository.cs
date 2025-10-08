@@ -17,6 +17,11 @@ namespace VirtualTryonWomenFashion.Data.GenericRepository
             Expression<Func<TEntity, bool>>? filter = null,
             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
             params Expression<Func<TEntity, object>>[] includes); // Optional parameter for pagination (number of records per page)
+        public Task<List<TEntity>> GetAllThenInclude(
+    PaginationParameter? pagination = null,
+    Expression<Func<TEntity, bool>>? filter = null,
+    Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+     params Expression<Func<TEntity, object>>[] includes);
         Task<TEntity> GetByIdAsync(object id);
         TEntity GetById(object id);
 

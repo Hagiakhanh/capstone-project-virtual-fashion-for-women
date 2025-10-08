@@ -74,6 +74,53 @@ namespace VirtualTryonWomenFashion.Data.GenericRepository
 
             return query.ToListAsync();
         }
+        public async Task<List<TEntity>> GetAllThenInclude(
+      PaginationParameter? pagination = null,
+      Expression<Func<TEntity, bool>>? filter = null,
+      Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+      params Expression<Func<TEntity, object>>[] includes)
+        {
+            IQueryable<TEntity> query = dbSet;
+
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            // Xử lý includes sâu (ProductColor.Color)
+            foreach (var include in includes)
+            {
+                var includeString = GetIncludePath(include.Body);
+                query = query.Include(includeString);
+            }
+
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+
+            if (pagination != null)
+            {
+                query = query
+                    .Skip((pagination.PageIndex - 1) * pagination.PageSize)
+                    .Take(pagination.PageSize);
+            }
+
+            return await query.ToListAsync();
+        }
+
+        private static string GetIncludePath(Expression expression)
+        {
+            // Duyệt ngược MemberExpression để xây chuỗi đường dẫn
+            var members = new List<string>();
+            while (expression is MemberExpression memberExpression)
+            {
+                members.Insert(0, memberExpression.Member.Name);
+                expression = memberExpression.Expression!;
+            }
+            return string.Join(".", members);
+        }
+
         public virtual TEntity GetById(object id)
         {
             return dbSet.Find(id);
