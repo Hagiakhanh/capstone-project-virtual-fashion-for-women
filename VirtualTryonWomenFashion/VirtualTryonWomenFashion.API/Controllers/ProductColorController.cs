@@ -15,7 +15,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
     {
         private readonly IProductColorService _productColorService;
 
-        public ProductColorController(IProductColorService productColorService) 
+        public ProductColorController(IProductColorService productColorService)
         {
             _productColorService = productColorService;
         }
@@ -49,7 +49,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             return Ok(productColor);
         }
 
-        [HttpPut]
+        [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsync(string id, UpdateProductColorDto request)
         {
             try

@@ -20,5 +20,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<ResponsePaginationModel<List<ResponseProductDto>>> SearchProductAsync(
             ProductSearchRequest request,
             PaginationParameter pagination);
+        Task<MessageModel> DeleteProductAsync(string productId, bool hardDelete = false);
     }
 }
