@@ -34,14 +34,14 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    const api = createApiInstance(request);
-    const response = await api.get('/product');
-    return NextResponse.json(response.data);
-  } catch (error: any) {
-    return NextResponse.json(
-      { message: error.response?.data?.message || 'Failed to fetch products' },
-      { status: error.response?.status || 500 }
-    );
-  }
+    try {
+        const api = createApiInstance(request);
+        const response = await api.get('/product');
+        return NextResponse.json(response.data);
+    } catch (error: any) {
+        return NextResponse.json(
+          { message: error.response?.data?.message || 'Failed to fetch products' },
+          { status: error.response?.status || 500 }
+        );
+    }
 }
