@@ -9,10 +9,10 @@ interface AIConversationDetailPageProps {
   params: { conversationid: string };
 }
 
-export default async  function AIConversationDetailPage({
+export default  function AIConversationDetailPage({
   params,
 }: AIConversationDetailPageProps) {
-  const resolvedParams = await params; 
+  const resolvedParams = params; 
   const conversationIdNumber = Number(resolvedParams.conversationid);
   // nếu muốn kiểm tra invalid id
   if (isNaN(conversationIdNumber)) {
