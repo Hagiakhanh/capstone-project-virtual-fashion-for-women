@@ -10,5 +10,8 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface ISuggestedOutfitRepository : IGenericRepository<SuggestedOutfit>
     {
+
+        public Task<bool> CreateSuggestedOutfit(SuggestedOutfit requestModel);
     }
+
 }

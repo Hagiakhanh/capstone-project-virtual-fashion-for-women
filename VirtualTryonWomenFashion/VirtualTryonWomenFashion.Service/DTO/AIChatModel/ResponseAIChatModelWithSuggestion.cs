@@ -13,6 +13,6 @@ namespace VirtualTryonWomenFashion.Service.DTO.AIChatModel
         public string Content { get; set; }
 
         public DateTime CreatedAt { get; set; }
-        public List<ProductSuggestionDTO>? Components { get; set; } = new List<ProductSuggestionDTO>();
+        public List<SelectedProduct>? Components { get; set; } = new List<SelectedProduct>();
     }
 }
