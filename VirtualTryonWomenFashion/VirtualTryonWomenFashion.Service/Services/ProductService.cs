@@ -189,6 +189,15 @@ namespace VirtualTryonWomenFashion.Service.Services
             return await MapToResponseProductDto(product);
         }
 
+        public async Task<ResponseProductDto> GetProductByIdAsync(string productId)
+        {
+            var product = await _productRepository.GetProductByIdAsync(productId);
+            if (product == null)
+                return null;
+
+            return await MapToResponseProductDto(product);
+        }
+
         public async Task<ResponseProductDto> GetProductByVariantIdAsync(string variantId)
         {
             var product = await _productRepository.GetProductByVariantIdAsync(variantId);
@@ -637,7 +646,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                     filter: x => x.ProductId == productId,
                     includes: x => x.ProductVariants);
 
-                await UpdateProductColorsAsync(product, request.ProductColor, dbColors);
+                if (request.ProductColor != null && request.ProductColor.Any())
+                {
+                    await UpdateProductColorsAsync(product, request.ProductColor, dbColors);
+                }
 
                 int result = await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
@@ -681,6 +693,13 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public async Task UpdateProductColorsAsync(Product product, List<UpdateProductColorDto> requestColors, IEnumerable<ProductColor> dbColors)
         {
+            if (requestColors == null)
+                return; // Không đụng đến dữ liệu cũ
+
+            // Nếu request trống thì không xóa, chỉ bỏ qua
+            if (!requestColors.Any())
+                return;
+
             var requestColorIds = requestColors.Where(c => !string.IsNullOrEmpty(c.ProductColorId))
                                                .Select(c => c.ProductColorId).ToList();
 
