@@ -1,12 +1,13 @@
 ﻿using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.Order;
+using VirtualTryonWomenFashion.Service.DTO.OrderDetail;
 using VirtualTryonWomenFashion.Service.DTO.User;
 
 namespace VirtualTryonWomenFashion.Service.Mappers;
 
 public static class OrderMapper
 {
-    public static ResponseOrder? MapToResponseOrder(this Order model, UserInformation userInformation)
+    public static ResponseOrder? MapToResponseOrder(this Order model, UserInformation userInformation, List<ResponseOrderDetail> responseOrderDetails)
     {
         if (model == null) return null;
 
@@ -21,9 +22,11 @@ public static class OrderMapper
             Amount = model.Amount,
             Note = model.Note,
             ShippingMoney = model.ShippingMoney,
+            InsuranceFree = model.InsuranceFree,
             ShippingCode = model.ShippingCode,
             EstimatedDelivery = model.EstimatedDelivery,
-            UserInformation = userInformation
+            UserInformation = userInformation,
+            ResponseOrderDetails = responseOrderDetails
         };
     }
 }
