@@ -44,7 +44,9 @@ function HeaderComponent() {
    }
 
    useEffect(() => {
-      fetchCartTotal();
+      if (user?.role === 'customer') {
+         fetchCartTotal();
+      }
       fetchCategories();
    }, []);
 
