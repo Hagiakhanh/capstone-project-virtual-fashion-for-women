@@ -32,6 +32,7 @@ using VirtualTryonWomenFashion.Service.Utils;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
+    
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
@@ -153,8 +154,12 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<ResponseOrder?> GetOrderByIdAsync(int orderId, int userId)
+        public async Task<ResponseOrder?> GetOrderByIdAsync(int orderId, int? userId = null)
         {
+            if (userId == null)
+            {
+                userId = _currentUserService.GetUserId();
+            }
             var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
             {
@@ -167,7 +172,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             var userInformation = new UserInformation();
-            ResponseOrder responseOrder = order.MapToResponseOrder(userInformation);
+            List<ResponseOrderDetail> responseOrderDetails = await _orderDetailService.GetOrderDetailsByOrderIdAsync(orderId);
+            ResponseOrder responseOrder = order.MapToResponseOrder(userInformation, responseOrderDetails);
             return responseOrder;
         }
 
@@ -211,6 +217,24 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             var orders = await _orderRepository.GetOrdersByStatus(OrderStatusEnum.Pending.ToString());
             return orders;
+        }
+
+        public async Task<Pagination<ResponseOrder>> GetAllOrdersForCustomer(PaginationParameter page, string orderStatus)
+        {
+            int userId = _currentUserService.GetUserId();
+            List<Order> rawOrders = await _orderRepository.GetAll(
+                filter: o=>o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString() && (o.Status == orderStatus|| string.IsNullOrEmpty(orderStatus)),
+                pagination: page,
+                orderBy: o=> o.OrderByDescending(x => x.CreatedAt)
+                );
+            int totalRecords = _orderRepository.Count(o => o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString());
+            List<ResponseOrder> responseOrders = new List<ResponseOrder>();
+            foreach (Order order in rawOrders)
+            {
+                List<ResponseOrderDetail> responseOrderDetails = await _orderDetailService.GetOrderDetailsByOrderIdAsync(order.OrderId);
+                responseOrders.Add(order.MapToResponseOrder(new UserInformation(), responseOrderDetails));
+            }
+            return  new Pagination<ResponseOrder>(responseOrders,totalRecords,page.PageIndex,page.PageSize);
         }
 
         public async Task HandleFailedOrders(List<Order> failedOrders)

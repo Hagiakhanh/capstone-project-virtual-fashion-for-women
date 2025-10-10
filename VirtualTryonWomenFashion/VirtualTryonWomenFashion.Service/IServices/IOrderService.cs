@@ -18,10 +18,11 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModelWithData<ResponseOrderDetailForStaff>> GetOrderDetailForStaff(int orderID);
         public Task<MessageModelWithData<string>> UpdateOrderStatusForStaff(int orderID);
         public Task<Order> CreateOrderAsync(RequestCreateOrder requestCreateOrder);
-        Task<ResponseOrder?> GetOrderByIdAsync(int orderId, int userId);
+        Task<ResponseOrder?> GetOrderByIdAsync(int orderId, int? userId = null);
         Task<int> UpdateOrderStatusAsync(string status, int orderId);
         Task<int> UpdatePaymentUrlAsync(string paymentUrl, int orderId);
         Task<List<Order>> GetOrdersByStatusAsync(string status);
+        Task<Pagination<ResponseOrder>> GetAllOrdersForCustomer(PaginationParameter page, string orderStatus);
         Task HandleFailedOrders(List<Order> failedOrders);
         Task HandleSuccessfulOrders(List<Order> successfulOrders);
     }
