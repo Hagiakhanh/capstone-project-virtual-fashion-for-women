@@ -128,18 +128,13 @@ export default function CartContainer() {
                         </div>
                     ) : (
                         cartItems.map(item => (
-                            <div
-                                key={item.cartId}
-                                className="p-4 border border-gray-200 rounded-xl hover:shadow-sm transition-all"
-                            >
-                                <CartItems
-                                    item={item}
-                                    onUpdateQuantity={updateQuantity}
-                                    onRemoveItem={removeItem}
-                                    showCheckbox
-                                    onToggleSelection={toggleItemSelection}
-                                />
-                            </div>
+                            <CartItems
+                                item={item}
+                                onUpdateQuantity={updateQuantity}
+                                onRemoveItem={removeItem}
+                                showCheckbox
+                                onToggleSelection={toggleItemSelection}
+                            />
                         ))
                     )}
                 </div>
