@@ -774,7 +774,20 @@ namespace VirtualTryonWomenFashion.Service.Services
             // Xóa color không còn trong request
             var toRemove = dbColors.Where(c => !requestColorIds.Contains(c.ProductColorId)).ToList();
             if (toRemove.Any())
+            {
+                foreach (var color in toRemove)
+                {
+                    // Xóa ảnh con
+                    if (color.ProductImages.Any())
+                        _productImageRepository.DeleteRange(color.ProductImages);
+
+                    // Xóa variants con
+                    if (color.ProductVariants.Any())
+                        _productVariantRepository.DeleteRange(color.ProductVariants);
+                }
+
                 _productColorRepository.DeleteRange(toRemove);
+            }
         }
 
         private async Task AddNewProductColorAsync(Product product, UpdateProductColorDto colorReq)
