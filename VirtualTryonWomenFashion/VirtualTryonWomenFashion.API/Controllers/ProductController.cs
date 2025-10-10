@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Commons;
@@ -44,7 +45,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<List<ResponseProductDto>>> Search([FromQuery] PaginationParameter pagination, ProductSearchRequest request)
+        [AllowAnonymous]
+        public async Task<ActionResult<List<ResponseProductDto>>> Search([FromQuery] PaginationParameter pagination, [FromQuery] ProductSearchRequest request)
         {
             var result = await _productService.SearchProductAsync(request, pagination);
             return StatusCode(result.StatusCode, result);
@@ -71,8 +73,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
             return Ok(product);
         }
 
-        [HttpPut]
-        public async Task<IActionResult> UpdateAsync(string productId, UpdateProductRequest request)
+        [HttpPut("{productId}")]
+        public async Task<IActionResult> UpdateAsync(string productId, [FromForm] UpdateProductRequest request)
         {
             try
             {
@@ -83,6 +85,20 @@ namespace VirtualTryonWomenFashion.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpDelete("{productId}")]
+        public async Task<IActionResult> DeleteProduct(string productId)
+        {
+            try
+            {
+                MessageModel result = await _productService.DeleteProductAsync(productId, false);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
         }
     }

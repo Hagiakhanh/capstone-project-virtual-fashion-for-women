@@ -20,6 +20,7 @@ using VirtualTryonWomenFashion.Service.Extensions;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
 using VirtualTryonWomenFashion.Service.IServices;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -40,6 +41,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICategoryRepository _categoryRepository;
         private readonly ICurrentUserService _currentUserService;
         private readonly IWishlistRepository _wishlistRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             ICloudinaryService cloudinaryService,
@@ -54,7 +56,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             IGeminiService geminiService,
             ICategoryRepository categoryRepository,
             ICurrentUserService currentUserService,
-            IWishlistRepository wishlistRepository)
+            IWishlistRepository wishlistRepository,
+            IHttpContextAccessor httpContextAccessor)
         {
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
@@ -71,6 +74,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _categoryRepository = categoryRepository;
             _currentUserService = currentUserService;
             _wishlistRepository = wishlistRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public static string GenerateFixedLengthString(int length)
@@ -83,7 +87,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                                   .Replace("+", "")
                                   .Replace("/", "");
                 string result = baseStr.Substring(0, Math.Min(length, baseStr.Length));
-                return result;
+                return result.ToUpper();
             }
         }
 
@@ -257,7 +261,20 @@ namespace VirtualTryonWomenFashion.Service.Services
             ProductSearchRequest request,
             PaginationParameter pagination)
         {
-            int? userId = _currentUserService.GetUserId();
+            int? userId = null;
+
+            // Lấy HttpContext
+            var httpContext = _httpContextAccessor.HttpContext;
+
+            if (httpContext != null && httpContext.User.Identity != null && httpContext.User.Identity.IsAuthenticated)
+            {
+                var userIdClaim = httpContext.User.FindFirst("UserID")?.Value;
+                if (int.TryParse(userIdClaim, out int parsedId))
+                {
+                    userId = parsedId;
+                }
+            }
+
             // Lấy danh sách product theo filter + sort
             var products = await _productRepository.SearchProductsWithIncludes(request.ProductName, request.ProductSort.ToString(), pagination);
 
@@ -322,7 +339,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         // Dùng màu có sẵn
                         colorId = productColorRequest.ColorId;
-                        colorPrefix = _colorRepository.GetByIdAsync(productColorRequest.ColorId).Result.ColorPrefix;
+                        colorPrefix = _colorRepository.GetById(productColorRequest.ColorId).ColorPrefix;
                     }
                     else
                     {
@@ -393,7 +410,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             {
                                 // Dùng size có sẵn
                                 sizeId = variantRequest.SizeId;
-                                sizeCode = _sizeRepository.GetByIdAsync(variantRequest.SizeId).Result.SizeCode;
+                                sizeCode = _sizeRepository.GetById(variantRequest.SizeId).SizeCode;
                             }
                             else
                             {
@@ -455,13 +472,13 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         // Lấy category và bodyPart
                         var category = await _categoryRepository.GetByIdAsync(product.CategoryId.Value);
-                        string bodyPartText = category.BodyPart switch
-                        {
-                            "upperBody" => "Thân trên",
-                            "underBody" => "Thân dưới",
-                            "fullBody" => "Nguyên bộ",
-                            _ => "Không xác định"
-                        };
+                        //string bodyPartText = category.BodyPart switch
+                        //{
+                        //    "Upper body" => "Thân trên",
+                        //    "Lower body" => "Thân dưới",
+                        //    "Full body" => "Nguyên bộ",
+                        //    _ => "Không xác định"
+                        //};
 
                         // Ghép text cho embedding
                         var textParts = new List<string>
@@ -469,7 +486,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             $"Tên sản phẩm: {product.ProductName}",
                             $"Mô tả: {product.Description}",
                             $"Danh mục: {category.CategoryName}",
-                            $"Có thể mặc: {bodyPartText}",
+                            $"Có thể mặc: {category.BodyPart}",
                             $"Màu sắc: {productColor.Color?.ColorName ?? "Không rõ"}",
                             $"Mã màu: {productColor.Color?.ColorPrefix ?? ""} ({productColor.Color?.HexCode ?? ""})",
                             $"Size: {variant.Size?.SizeCode ?? "Free size"}",
@@ -487,7 +504,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                             { "productSlug", product.ProductSlug },
                             { "categoryId", category.CategoryId.ToString() },
                             { "categoryName", category.CategoryName },
-                            { "bodyPart", bodyPartText },
+                            { "itemType", category.CategoryName },
+                            { "bodyPart", category.BodyPart },
                             { "productColorId", productColor.ProductColorId },
                             { "colorId", productColor.ColorId?.ToString() ?? "" },
                             { "colorName", productColor.Color?.ColorName ?? "" },
@@ -606,380 +624,30 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                var existingProduct = await _productRepository.GetByIdAsync(productId);
-                if (existingProduct == null)
-                {
+                var product = await _productRepository.GetByIdAsync(productId);
+                if (product == null)
                     return new MessageModelWithData<Product>
                     {
-                        Message = "Không tìm thấy Product",
+                        Message = $"Không tìm thấy Product",
                         StatusCode = StatusCodes.Status404NotFound
                     };
-                }
 
-                // ================== UPDATE PRODUCT FIELDS ==================
-                existingProduct.ProductName = request.ProductName ?? existingProduct.ProductName;
-                existingProduct.Description = request.Description ?? existingProduct.Description;
-                existingProduct.CategoryId = request.CategoryId ?? existingProduct.CategoryId;
+                await UpdateProductFieldsAsync(product, request);
 
-                if (request.MainImageUrl != null)
-                {
-                    existingProduct.MainImageUrl = await _cloudinaryService.UploadImageAsync(request.MainImageUrl);
-                }
-
-                // ================== KIỂM TRA VÀ CẬP NHẬT GIÁ ==================
-                if (request.Price.HasValue && request.Price != existingProduct.Price)
-                {
-                    // Kiểm tra xem sản phẩm có đang trong sale campaign không
-                    var productInSaleCampaigns = await _productInSaleCampaignService.GetProductInSaleCampaign(productId);
-
-                    if (productInSaleCampaigns != null && productInSaleCampaigns.Any())
-                    {
-                        return new MessageModelWithData<Product>
-                        {
-                            Message = "Không thể cập nhật giá sản phẩm vì đang trong chiến dịch sale",
-                            StatusCode = StatusCodes.Status400BadRequest
-                        };
-                    }
-
-                    existingProduct.Price = request.Price.Value;
-                }
-
-                // ================== LẤY PRODUCT COLORS TỪ DB ==================
                 var dbColors = await _productColorRepository.GetAll(
                     filter: x => x.ProductId == productId,
                     includes: x => x.ProductVariants);
 
-                var requestColorIds = request.ProductColor
-                    .Where(c => !string.IsNullOrEmpty(c.ProductColorId))
-                    .Select(c => c.ProductColorId)
-                    .ToList();
+                await UpdateProductColorsAsync(product, request.ProductColor, dbColors);
 
-                // ================== ADD/UPDATE COLOR ==================
-                foreach (var colorReq in request.ProductColor)
-                {
-                    ProductColor? dbColor = null;
-                    if (!string.IsNullOrEmpty(colorReq.ProductColorId))
-                    {
-                        dbColor = dbColors.FirstOrDefault(c => c.ProductColorId == colorReq.ProductColorId);
-                    }
-
-                    // Nếu chưa có trong DB → thêm mới
-                    if (dbColor == null)
-                    {
-                        // 2.1. Xử lý Color
-                        int colorId;
-                        string colorPrefix;
-                        if (colorReq.ColorId.HasValue && colorReq.ColorId > 0)
-                        {
-                            // Dùng màu có sẵn
-                            colorId = colorReq.ColorId.Value;
-                            colorPrefix = _colorRepository.GetByIdAsync(colorReq.ColorId.Value).Result.ColorPrefix;
-                        }
-                        else
-                        {
-                            // Kiểm tra màu đã tồn tại chưa
-                            var existingColor = await _colorRepository.GetFirstOrDefaultAsync(
-                                                        x => x.ColorPrefix.ToLower() == colorReq.ColorPrefix.ToLower());
-
-                            if (existingColor != null)
-                            {
-                                colorId = existingColor.ColorId;
-                                colorPrefix = existingColor.ColorPrefix;
-                            }
-                            else
-                            {
-                                // Tạo màu mới
-                                var newColor = new Color
-                                {
-                                    ColorPrefix = colorReq.ColorPrefix,
-                                    HexCode = colorReq.HexCode,
-                                    ColorName = colorReq.ColorName,
-                                };
-                                await _colorRepository.InsertAsync(newColor);
-                                await _unitOfWork.SaveChanges(); // Save để lấy ColorId
-                                colorId = newColor.ColorId;
-                                colorPrefix = newColor.ColorPrefix;
-                            }
-                        }
-
-                        string productColorId = string.IsNullOrEmpty(colorReq.ProductColorId)
-                            ? $"{productId}-{colorPrefix}"
-                            : colorReq.ProductColorId;
-
-                        string noBgImageUrl = colorReq.NoBgImgUrl != null
-                            ? await _cloudinaryService.UploadImageAsync(colorReq.NoBgImgUrl)
-                            : string.Empty;
-
-                        var newProductColor = new ProductColor
-                        {
-                            ProductColorId = productColorId,
-                            ProductId = productId,
-                            NoBgImgUrl = noBgImageUrl,
-                            LensId = colorReq.LensId,
-                            ColorId = colorId
-                        };
-
-                        // 2.3. Tạo ProductImages
-                        if (colorReq.ProductVariantImages != null && colorReq.ProductVariantImages.Count > 0)
-                        {
-                            var imageUrls = await _cloudinaryService.UploadMultipleImagesAsync(colorReq.ProductVariantImages);
-                            foreach (var imageUrl in imageUrls)
-                            {
-                                newProductColor.ProductImages.Add(new ProductImage
-                                {
-                                    ProductColorId = productColorId,
-                                    ImageUrl = imageUrl
-                                });
-                            }
-                        }
-
-                        // Thêm Variants
-                        if (colorReq.Variants != null && colorReq.Variants.Count > 0)
-                        {
-                            foreach (var variantReq in colorReq.Variants)
-                            {
-                                // Xử lý Size
-                                int sizeId;
-                                string sizeCode;
-                                if (variantReq.SizeId.HasValue && variantReq.SizeId > 0)
-                                {
-                                    // Dùng size có sẵn
-                                    sizeId = variantReq.SizeId.Value;
-                                    sizeCode = _sizeRepository.GetByIdAsync(variantReq.SizeId.Value).Result.SizeCode;
-                                }
-                                else
-                                {
-                                    // Kiểm tra size đã tồn tại chưa
-                                    var existingSize = await _sizeRepository.GetFirstOrDefaultAsync(
-                                    x => x.SizeCode.ToLower() == variantReq.SizeCode.ToLower());
-
-                                    if (existingSize != null)
-                                    {
-                                        sizeId = existingSize.SizeId;
-                                        sizeCode = existingSize.SizeCode;
-                                    }
-                                    else
-                                    {
-                                        // Tạo size mới
-                                        var newSize = new Size
-                                        {
-                                            SizeCode = variantReq.SizeCode,
-                                        };
-                                        await _sizeRepository.InsertAsync(newSize);
-                                        await _unitOfWork.SaveChanges(); // Save để lấy SizeId
-                                        sizeId = newSize.SizeId;
-                                        sizeCode = newSize.SizeCode;
-                                    }
-                                }
-
-                                string productVariantId = string.IsNullOrEmpty(variantReq.ProductVariantId)
-                                    ? $"{productColorId}-{sizeCode}"
-                                    : variantReq.ProductVariantId;
-
-                                var imageUrl = variantReq.ImageUrl != null
-                                    ? await _cloudinaryService.UploadImageAsync(variantReq.ImageUrl)
-                                    : string.Empty;
-
-                                var newVariant = new ProductVariant
-                                {
-                                    ProductVariantId = productVariantId,
-                                    ProductColorId = productColorId,
-                                    SizeId = sizeId,
-                                    VariantName = variantReq.VariantName,
-                                    Quantity = variantReq.Quantity,
-                                    ImageUrl = imageUrl,
-                                    Status = variantReq.Status ?? "Active",
-                                    ProductWeight = variantReq.ProductWeight,
-                                    ProductLength = variantReq.ProductLength,
-                                    ProductWidth = variantReq.ProductWidth,
-                                    ProductHeight = variantReq.ProductHeight
-                                };
-
-                                newProductColor.ProductVariants.Add(newVariant);
-                            }
-                        }
-
-                        await _productColorRepository.InsertAsync(newProductColor);
-                    }
-                    else
-                    {
-                        // Update Color
-                        dbColor.LensId = colorReq.LensId ?? dbColor.LensId;
-
-                        if (colorReq.ColorId.HasValue && colorReq.ColorId > 0)
-                        {
-                            dbColor.ColorId = colorReq.ColorId.Value;
-                        }
-
-                        if (colorReq.NoBgImgUrl != null)
-                        {
-                            dbColor.NoBgImgUrl = await _cloudinaryService.UploadImageAsync(colorReq.NoBgImgUrl);
-                        }
-
-                        // Handle ProductImages update
-                        if (colorReq.ProductVariantImages != null && colorReq.ProductVariantImages.Count > 0)
-                        {
-                            // Clear existing images and add new ones
-                            dbColor.ProductImages.Clear();
-                            var imageUrls = await _cloudinaryService.UploadMultipleImagesAsync(colorReq.ProductVariantImages);
-                            foreach (var imageUrl in imageUrls)
-                            {
-                                dbColor.ProductImages.Add(new ProductImage
-                                {
-                                    ProductColorId = dbColor.ProductColorId,
-                                    ImageUrl = imageUrl
-                                });
-                            }
-                        }
-
-                        // ================== VARIANTS ==================
-                        var dbVariants = dbColor.ProductVariants.ToList();
-                        var reqVariantIds = colorReq.Variants
-                            .Where(v => !string.IsNullOrEmpty(v.ProductVariantId))
-                            .Select(v => v.ProductVariantId)
-                            .ToList();
-
-                        if (colorReq.Variants != null)
-                        {
-                            foreach (var variantReq in colorReq.Variants)
-                            {
-                                var dbVariant = dbVariants.FirstOrDefault(v => v.ProductVariantId == variantReq.ProductVariantId);
-
-                                if (dbVariant == null)
-                                {
-                                    // Xử lý Size cho variant mới
-                                    int sizeId;
-                                    string sizeCode;
-                                    if (variantReq.SizeId.HasValue && variantReq.SizeId > 0)
-                                    {
-                                        sizeId = variantReq.SizeId.Value;
-                                        sizeCode = _sizeRepository.GetByIdAsync(sizeId).Result.SizeCode;
-                                    }
-                                    else
-                                    {
-                                        var existingSize = await _sizeRepository.GetFirstOrDefaultAsync(
-                                                                    x => x.SizeCode.ToLower() == variantReq.SizeCode.ToLower());
-
-                                        if (existingSize != null)
-                                        {
-                                            sizeId = existingSize.SizeId;
-                                            sizeCode = existingSize.SizeCode;
-                                        }
-                                        else
-                                        {
-                                            var newSize = new Size { SizeCode = variantReq.SizeCode };
-                                            await _sizeRepository.InsertAsync(newSize);
-                                            await _unitOfWork.SaveChanges();
-                                            sizeId = newSize.SizeId;
-                                            sizeCode = newSize.SizeCode;
-                                        }
-                                    }
-
-                                    string productVariantId = string.IsNullOrEmpty(variantReq.ProductVariantId)
-                                        ? $"{dbColor.ProductColorId}-{sizeCode}"
-                                        : variantReq.ProductVariantId;
-
-                                    var imageUrl = variantReq.ImageUrl != null
-                                        ? await _cloudinaryService.UploadImageAsync(variantReq.ImageUrl)
-                                        : string.Empty;
-
-                                    var newVariant = new ProductVariant
-                                    {
-                                        ProductVariantId = productVariantId,
-                                        ProductColorId = dbColor.ProductColorId,
-                                        SizeId = sizeId,
-                                        VariantName = variantReq.VariantName,
-                                        Quantity = variantReq.Quantity,
-                                        Status = variantReq.Status ?? "Active",
-                                        ProductWeight = variantReq.ProductWeight,
-                                        ProductLength = variantReq.ProductLength,
-                                        ProductWidth = variantReq.ProductWidth,
-                                        ProductHeight = variantReq.ProductHeight,
-                                        ImageUrl = imageUrl
-                                    };
-
-                                    dbColor.ProductVariants.Add(newVariant);
-                                }
-                                else
-                                {
-                                    string sizeCode = null;
-
-                                    // Update existing variant
-                                    if (variantReq.SizeId.HasValue && variantReq.SizeId > 0)
-                                    {
-                                        dbVariant.SizeId = variantReq.SizeId.Value;
-                                        sizeCode = _sizeRepository.GetByIdAsync(variantReq.SizeId.Value).Result.SizeCode;
-                                    }
-                                    else if (!string.IsNullOrEmpty(variantReq.SizeCode))
-                                    {
-                                        var existingSize = await _sizeRepository.GetFirstOrDefaultAsync(
-                                                                       x => x.SizeCode.ToLower() == variantReq.SizeCode.ToLower());
-
-                                        if (existingSize != null)
-                                        {
-                                            dbVariant.SizeId = existingSize.SizeId;
-                                            sizeCode = _sizeRepository.GetByIdAsync(existingSize.SizeCode).Result.SizeCode;
-                                        }
-                                        else
-                                        {
-                                            var newSize = new Size { SizeCode = variantReq.SizeCode };
-                                            await _sizeRepository.InsertAsync(newSize);
-                                            await _unitOfWork.SaveChanges();
-                                            dbVariant.SizeId = newSize.SizeId;
-                                            sizeCode = newSize.SizeCode;
-                                        }
-                                    }
-
-                                    dbVariant.ProductVariantId = string.IsNullOrEmpty(variantReq.ProductVariantId)
-                                        ? $"{dbColor.ProductColorId}-{sizeCode}"
-                                        : variantReq.ProductVariantId;
-                                    dbVariant.VariantName = string.IsNullOrEmpty(variantReq.VariantName) ? dbVariant.VariantName : variantReq.VariantName;
-                                    dbVariant.Quantity = variantReq.Quantity ?? dbVariant.Quantity;
-                                    dbVariant.Status = variantReq.Status ?? dbVariant.Status;
-                                    dbVariant.ProductWeight = variantReq.ProductWeight ?? dbVariant.ProductWeight;
-                                    dbVariant.ProductLength = variantReq.ProductLength ?? dbVariant.ProductLength;
-                                    dbVariant.ProductWidth = variantReq.ProductWidth ?? dbVariant.ProductWidth;
-                                    dbVariant.ProductHeight = variantReq.ProductHeight ?? dbVariant.ProductHeight;
-
-                                    if (variantReq.ImageUrl != null)
-                                    {
-                                        dbVariant.ImageUrl = await _cloudinaryService.UploadImageAsync(variantReq.ImageUrl);
-                                    }
-                                }
-                            }
-                        }
-
-                        // Xóa variants không có trong request
-                        var toRemoveVariants = dbVariants
-                            .Where(v => !reqVariantIds.Contains(v.ProductVariantId))
-                            .ToList();
-
-                        if (toRemoveVariants.Any())
-                        {
-                            _productVariantRepository.DeleteRange(toRemoveVariants);
-                        }
-                    }
-                }
-
-                // ================== XÓA COLOR KHÔNG CÓ TRONG REQUEST ==================
-                var toRemoveColors = dbColors
-                    .Where(c => !requestColorIds.Contains(c.ProductColorId))
-                    .ToList();
-
-                if (toRemoveColors.Any())
-                {
-                    _productColorRepository.DeleteRange(toRemoveColors);
-                }
-
-                // Lưu thay đổi
                 int result = await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
 
                 return new MessageModelWithData<Product>
                 {
-                    Message = "Cập nhật Product thành công",
+                    Message = "Cập nhật sản phẩm thành công",
                     StatusCode = StatusCodes.Status200OK,
-                    Data = existingProduct
+                    Data = product
                 };
             }
             catch (Exception ex)
@@ -991,6 +659,217 @@ namespace VirtualTryonWomenFashion.Service.Services
                     StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
+        }
+
+        private async Task UpdateProductFieldsAsync(Product product, UpdateProductRequest request)
+        {
+            product.ProductName = request.ProductName ?? product.ProductName;
+            product.Description = request.Description ?? product.Description;
+            product.CategoryId = request.CategoryId ?? product.CategoryId;
+
+            if (request.MainImageUrl != null)
+                product.MainImageUrl = await _cloudinaryService.UploadImageAsync(request.MainImageUrl);
+
+            if (request.Price.HasValue && request.Price != product.Price)
+            {
+                var productInSale = await _productInSaleCampaignService.GetProductInSaleCampaign(product.ProductId);
+                if (productInSale.Any())
+                    throw new InvalidOperationException("Không thể cập nhật giá sản phẩm vì đang trong chiến dịch sale.");
+
+                product.Price = request.Price.Value;
+            }
+        }
+
+        public async Task UpdateProductColorsAsync(Product product, List<UpdateProductColorDto> requestColors, IEnumerable<ProductColor> dbColors)
+        {
+            var requestColorIds = requestColors.Where(c => !string.IsNullOrEmpty(c.ProductColorId))
+                                               .Select(c => c.ProductColorId).ToList();
+
+            foreach (var colorReq in requestColors)
+            {
+                var existingColor = dbColors.FirstOrDefault(c => c.ProductColorId == colorReq.ProductColorId);
+
+                if (existingColor == null)
+                    await AddNewProductColorAsync(product, colorReq);
+                else
+                    await UpdateExistingProductColorAsync(existingColor, colorReq);
+            }
+
+            // Xóa color không còn trong request
+            var toRemove = dbColors.Where(c => !requestColorIds.Contains(c.ProductColorId)).ToList();
+            if (toRemove.Any())
+                _productColorRepository.DeleteRange(toRemove);
+        }
+
+        private async Task AddNewProductColorAsync(Product product, UpdateProductColorDto colorReq)
+        {
+            var colorEntity = await GetOrCreateColorAsync(colorReq);
+            var colorPrefix = colorEntity.ColorPrefix;
+
+            var productColorId = string.IsNullOrEmpty(colorReq.ProductColorId)
+                ? $"{product.ProductId}-{colorPrefix}"
+                : colorReq.ProductColorId;
+
+            var noBgUrl = colorReq.NoBgImgUrl != null
+                ? await _cloudinaryService.UploadImageAsync(colorReq.NoBgImgUrl)
+                : string.Empty;
+
+            var newColor = new ProductColor
+            {
+                ProductColorId = productColorId,
+                ProductId = product.ProductId,
+                Color = colorEntity,
+                NoBgImgUrl = noBgUrl,
+                LensId = colorReq.LensId
+            };
+
+            // Upload multiple images
+            if (colorReq.ProductVariantImages?.Any() == true)
+            {
+                var urls = await _cloudinaryService.UploadMultipleImagesAsync(colorReq.ProductVariantImages);
+                newColor.ProductImages = urls.Select(url => new ProductImage
+                {
+                    ProductColorId = productColorId,
+                    ImageUrl = url
+                }).ToList();
+            }
+
+            await UpdateOrAddVariantsAsync(newColor, colorReq.Variants);
+            await _productColorRepository.InsertAsync(newColor);
+        }
+
+        private async Task UpdateExistingProductColorAsync(ProductColor existingColor, UpdateProductColorDto colorReq)
+        {
+            if (colorReq.NoBgImgUrl != null)
+                existingColor.NoBgImgUrl = await _cloudinaryService.UploadImageAsync(colorReq.NoBgImgUrl);
+
+            if (colorReq.LensId != null)
+                existingColor.LensId = colorReq.LensId;
+
+            // Replace images
+            if (colorReq.ProductVariantImages?.Any() == true)
+            {
+                // CHỈ THỊ XÓA CÁC ĐỐI TƯỢNG CŨ TỪ DATABASE
+                if (existingColor.ProductImages.Any())
+                {
+                    // Sử dụng Repository để đánh dấu các đối tượng cũ là Deleted
+                    _productImageRepository.DeleteRange(existingColor.ProductImages);
+                }
+
+                existingColor.ProductImages.Clear();
+                var urls = await _cloudinaryService.UploadMultipleImagesAsync(colorReq.ProductVariantImages);
+                existingColor.ProductImages = urls.Select(u => new ProductImage
+                {
+                    ProductColorId = existingColor.ProductColorId,
+                    ImageUrl = u
+                }).ToList();
+            }
+
+            await UpdateOrAddVariantsAsync(existingColor, colorReq.Variants);
+        }
+
+        public async Task UpdateOrAddVariantsAsync(ProductColor color, List<UpdateProductVariantRequest>? variants)
+        {
+            if (variants == null) return;
+
+            if (!variants.Any())
+                return;
+
+            var dbVariants = (await _productVariantRepository
+                                            .GetAll(filter: v => v.ProductColorId == color.ProductColorId)).ToList();
+            var reqIds = variants.Where(v => !string.IsNullOrEmpty(v.ProductVariantId))
+                                 .Select(v => v.ProductVariantId).ToList();
+
+            foreach (var vReq in variants)
+            {
+                var dbVariant = dbVariants.FirstOrDefault(v => v.ProductVariantId == vReq.ProductVariantId);
+
+                if (dbVariant == null)
+                {
+                    var sizeEntity = await GetOrCreateSizeAsync(vReq);
+                    var sizeCode = sizeEntity.SizeCode;
+
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(vReq.ImageUrl);
+                    color.ProductVariants.Add(new ProductVariant
+                    {
+                        ProductVariantId = $"{color.ProductColorId}-{sizeCode}",
+                        ProductColorId = color.ProductColorId,
+                        Size = sizeEntity,
+                        VariantName = vReq.VariantName,
+                        Quantity = vReq.Quantity,
+                        ImageUrl = imageUrl,
+                        Status = vReq.Status ?? "Active",
+                        ProductWeight = vReq.ProductWeight,
+                        ProductLength = vReq.ProductLength,
+                        ProductWidth = vReq.ProductWidth,
+                        ProductHeight = vReq.ProductHeight
+                    });
+                }
+                else
+                {
+                    await UpdateExistingVariantAsync(dbVariant, vReq);
+                }
+            }
+
+            // Xóa variant không có trong request
+            var toRemove = dbVariants.Where(v => !reqIds.Contains(v.ProductVariantId)).ToList();
+            if (toRemove.Any())
+                _productVariantRepository.DeleteRange(toRemove);
+        }
+
+        private async Task UpdateExistingVariantAsync(ProductVariant dbVariant, UpdateProductVariantRequest req)
+        {
+            if (req.ImageUrl != null)
+                dbVariant.ImageUrl = await _cloudinaryService.UploadImageAsync(req.ImageUrl);
+
+            dbVariant.Quantity = req.Quantity ?? dbVariant.Quantity;
+            dbVariant.Status = req.Status ?? dbVariant.Status;
+            dbVariant.VariantName = req.VariantName ?? dbVariant.VariantName;
+            dbVariant.ProductWeight = req.ProductWeight ?? dbVariant.ProductWeight;
+            dbVariant.ProductLength = req.ProductLength ?? dbVariant.ProductLength;
+            dbVariant.ProductWidth = req.ProductWidth ?? dbVariant.ProductWidth;
+            dbVariant.ProductHeight = req.ProductHeight ?? dbVariant.ProductHeight;
+        }
+
+        public async Task<Color> GetOrCreateColorAsync(UpdateProductColorDto colorReq)
+        {
+            if (colorReq.ColorId.HasValue && colorReq.ColorId > 0)
+            {
+                return await _colorRepository.GetByIdAsync(colorReq.ColorId.Value);
+            }
+
+            var existing = await _colorRepository.GetFirstOrDefaultAsync(
+                x => x.ColorPrefix.ToLower() == colorReq.ColorPrefix.ToLower());
+
+            if (existing != null)
+                return existing;
+
+            var newColor = new Color
+            {
+                ColorPrefix = colorReq.ColorPrefix,
+                HexCode = colorReq.HexCode,
+                ColorName = colorReq.ColorName
+            };
+            await _colorRepository.InsertAsync(newColor);
+            return newColor;
+        }
+
+        public async Task<Size> GetOrCreateSizeAsync(UpdateProductVariantRequest vReq)
+        {
+            if (vReq.SizeId.HasValue && vReq.SizeId > 0)
+            {
+                return await _sizeRepository.GetByIdAsync(vReq.SizeId.Value);
+            }
+
+            var existing = await _sizeRepository.GetFirstOrDefaultAsync(
+                x => x.SizeCode.ToLower() == vReq.SizeCode.ToLower());
+
+            if (existing != null)
+                return existing;
+
+            var newSize = new Size { SizeCode = vReq.SizeCode };
+            await _sizeRepository.InsertAsync(newSize);
+            return newSize;
         }
 
         public async Task<MessageModel> DeleteProductAsync(string productId, bool hardDelete = false)
