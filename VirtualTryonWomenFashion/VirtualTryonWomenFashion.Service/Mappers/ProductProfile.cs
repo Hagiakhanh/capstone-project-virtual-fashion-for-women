@@ -60,6 +60,8 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                                .Select(pv => pv.Size)
                                .Distinct()
                                .ToList()))
+                .ForMember(dest => dest.ProductImagesDto,
+                           opt => opt.MapFrom(src => src.ProductImages))
                 .ForMember(dest => dest.ProductVariants,
                            opt => opt.MapFrom(src => src.ProductVariants));
 
@@ -74,8 +76,15 @@ namespace VirtualTryonWomenFashion.Service.Mappers
 
             // ProductVariant -> ResponseProductVariantDto
             CreateMap<ProductVariant, ResponseProductVariantDto>()
+                .ForMember(dest => dest.SizeDto,
+                           opt => opt.MapFrom(src => src.Size))
                 .ForMember(dest => dest.ProductImagesDto,
                            opt => opt.MapFrom(src => src.ProductColor.ProductImages))
+                .ForMember(dest => dest.ColorDto,
+                           opt => opt.MapFrom(src => src.ProductColor.Color));
+
+            // ProductVariant -> ResponseProductVariantNoListImageDto
+            CreateMap<ProductVariant, ResponseProductVariantNoListImageDto>()
                 .ForMember(dest => dest.SizeDto,
                            opt => opt.MapFrom(src => src.Size))
                 .ForMember(dest => dest.ColorDto,

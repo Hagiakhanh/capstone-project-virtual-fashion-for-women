@@ -37,7 +37,6 @@ namespace VirtualTryonWomenFashion.Service.DTO.Product
         public DateTime CreatedAt { get; set; }
         public int CategoryId { get; set; }
         public List<ResponseColorDto> Color { get; set; }
-
         public List<ResponseSizeDto> SizeDto { get; set; }
         public List<ResponProductColorWithListSize> ProductColors { get; set; } = new List<ResponProductColorWithListSize>();
     }
