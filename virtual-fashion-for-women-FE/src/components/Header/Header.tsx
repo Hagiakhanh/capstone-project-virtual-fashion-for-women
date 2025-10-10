@@ -34,13 +34,16 @@ function HeaderComponent() {
    ];
 
    useEffect(() => {
-      fetchCartTotal();
+      if (user?.role === 'customer')
+         fetchCartTotal();
    }, []);
 
    useEffect(() => {
-      const handleCartUpdated = () => fetchCartTotal();
-      window.addEventListener("cart-updated", handleCartUpdated);
-      return () => window.removeEventListener("cart-updated", handleCartUpdated);
+      if (user?.role === 'customer') {
+         const handleCartUpdated = () => fetchCartTotal();
+         window.addEventListener("cart-updated", handleCartUpdated);
+         return () => window.removeEventListener("cart-updated", handleCartUpdated);
+      }
    }, []);
 
    console.log('Current user in header:', user);
@@ -86,7 +89,7 @@ function HeaderComponent() {
                </div>
                {user?.role == 'customer' ? (
                   <>
-                     <UserOutlined className='text-2xl cursor-pointer' />
+                     <UserOutlined className='text-2xl cursor-pointer' onClick={() => (window.location.href = '/account')} />
 
                      <div className="relative cursor-pointer" onClick={() => (window.location.href = '/cart')}>
                         <ShoppingCartOutlined className="text-3xl" />
