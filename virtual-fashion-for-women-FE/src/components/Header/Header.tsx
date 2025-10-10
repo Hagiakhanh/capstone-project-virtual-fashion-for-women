@@ -1,12 +1,11 @@
 'use client';
 import { SearchOutlined, UserOutlined, ShoppingCartOutlined, DownOutlined } from '@ant-design/icons';
 import { Input, Dropdown } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button } from "antd";
 
 import logo from '../../assets/home/Logo.png';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
 import { useEffect, useState } from 'react';
 import { api } from '@/api/instance';
 import { CartItemDTO } from '@/models/CartItemDTO';
@@ -14,6 +13,7 @@ import { CartItemDTO } from '@/models/CartItemDTO';
 function HeaderComponent() {
    const { user } = useAuth();
    const [cartCount, setCartCount] = useState<number>(0);
+   const [menuItems, setMenuItems] = useState([]);
 
    const fetchCartTotal = async () => {
       try {
@@ -26,16 +26,26 @@ function HeaderComponent() {
          console.error("Lỗi khi lấy tổng giỏ hàng:", error);
       }
    };
-   const items: MenuProps['items'] = [
-      { key: '1', label: <span style={{ fontSize: '1rem' }}>Áo</span> },
-      { key: '2', label: <span style={{ fontSize: '1rem' }}>Quần</span> },
-      { key: '3', label: <span style={{ fontSize: '1rem' }}>Váy</span> },
-      { key: '4', label: <span style={{ fontSize: '1rem' }}>Đầm</span> },
-   ];
+   const fetchCategories = async () => {
+      try {
+         const response = await api.get('/category');
+         if (response.status === 200) {
+            const newItems = response.data.map((category: any) => ({
+               key: String(category.categoryId),
+               label: <span style={{ fontSize: '1rem' }}>{category.categoryName}</span>,
+            }));
+            setMenuItems(newItems);
+         } else {
+            setMenuItems([]);
+         }
+      } catch (error) {
+         console.error("Lỗi khi lấy danh mục:", error);
+      }
+   }
 
    useEffect(() => {
-      if (user?.role === 'customer')
-         fetchCartTotal();
+      fetchCartTotal();
+      fetchCategories();
    }, []);
 
    useEffect(() => {
@@ -45,8 +55,6 @@ function HeaderComponent() {
          return () => window.removeEventListener("cart-updated", handleCartUpdated);
       }
    }, []);
-
-   console.log('Current user in header:', user);
 
    return (
       <header className='bg-[#FAE3B6] border-b-1'>
@@ -64,7 +72,7 @@ function HeaderComponent() {
                   Phối đồ thông minh
                </li>
                <li className='flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100'>
-                  <Dropdown menu={{ items }} placement="bottomLeft">
+                  <Dropdown menu={{ items: menuItems }} placement="bottomLeft">
                      <span className='flex items-center h-full'>
                         Danh mục sản phẩm
                         <DownOutlined style={{ fontSize: '0.875rem', marginLeft: '0.5rem' }} />
@@ -110,10 +118,10 @@ function HeaderComponent() {
                ) : (
                   <div className='flex items-center gap-3'>
                      <Link href="/login">
-                        <AntButtonCommon label="Đăng nhập" style={{ border: '2px solid #000' }} className="w-full !py-2 !px-4 !text-black !hover:text-black !rounded-full !text-xl !bg-transparent" size="large" />
+                        <Button style={{ border: '2px solid #000' }} className="w-full !py-2 !px-4 !text-black !hover:text-black !rounded-full !text-xl !bg-transparent" size="large">Đăng nhập</Button>
                      </Link>
                      <Link href="/register">
-                        <AntButtonCommon label="Đăng ký" style={{ border: 'none' }} className="w-full !py-2 !px-4 !text-black !hover:text-black !rounded-full !text-xl !bg-[#FFAF37]" size="large" />
+                        <Button style={{ border: 'none' }} className="w-full !py-2 !px-4 !text-black !hover:text-black !rounded-full !text-xl !bg-[#FFAF37]" size="large">Đăng ký</Button>
                      </Link>
                   </div>
                )}

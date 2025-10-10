@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createApiInstance } from "@/api/instance";
+import { typeRequestListProduct } from "@/types/product";
 
 export async function POST(request: NextRequest) {
     try {
@@ -9,10 +10,10 @@ export async function POST(request: NextRequest) {
         // Gọi sang backend bằng axios instance
         const api = createApiInstance(request);
         const responseBE = await api.post("/product", formData, {
-        headers: {
-            // Đừng set Content-Type ở đây,
-            // axios sẽ tự set khi body là FormData
-        },
+            headers: {
+                // Đừng set Content-Type ở đây,
+                // axios sẽ tự set khi body là FormData
+            },
         });
 
         // Backend trả dữ liệu
@@ -23,11 +24,24 @@ export async function POST(request: NextRequest) {
         console.error("Error when calling backend:", error?.message || error);
 
         return NextResponse.json(
-        {
-            message: `Lỗi kết nối đến backend: ${error.message}`,
-            statusCode: 500,
-        },
-        { status: 500 }
+            {
+                message: `Lỗi kết nối đến backend: ${error.message}`,
+                statusCode: 500,
+            },
+            { status: 500 }
         );
     }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const api = createApiInstance(request);
+    const response = await api.get('/product');
+    return NextResponse.json(response.data);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.response?.data?.message || 'Failed to fetch products' },
+      { status: error.response?.status || 500 }
+    );
+  }
 }
