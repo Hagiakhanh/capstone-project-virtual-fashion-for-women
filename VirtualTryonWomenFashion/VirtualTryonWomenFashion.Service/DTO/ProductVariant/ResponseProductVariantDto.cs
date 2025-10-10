@@ -21,7 +21,6 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductVariant
         public decimal? ProductWidth { get; set; }
         public decimal? ProductHeight { get; set; }
         public ResponseSizeDto SizeDto { get; set; }
-        
         public ResponseColorDto ColorDto { get; set; } = new ResponseColorDto();
         public List<ResponseProductImageDto> ProductImagesDto { get; set; } = new List<ResponseProductImageDto>();
     }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -180,13 +181,65 @@ namespace VirtualTryonWomenFashion.Service.Services
             return dto;
         }
 
-        public async Task<ResponseProductDto> GetProductBySlugAsync(string slug)
+        private async Task<ResponseProductWithListColorAndSizeDto> MapToResponseProductWithListColorAndSizeDto(Product product)
+        {
+            // Lấy giá trong campaign (nếu có)
+            var productActiveInSaleCampaign =
+                await _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(product.ProductId);
+
+            // Map entity -> DTO
+            var dto = _mapper.Map<ResponseProductWithListColorAndSizeDto>(product);
+
+            // Gán giá PriceAtTime tuỳ theo campaign
+            dto.PriceAtTime = productActiveInSaleCampaign != null
+                ? productActiveInSaleCampaign.SalePrice
+                : product.Price;
+
+            return dto;
+        }
+
+        /*public async Task<ResponseProductDto> GetProductBySlugAsync(string slug)
         {
             var product = await _productRepository.GetProductBySlugAsync(slug);
             if (product == null)
                 return null;
 
             return await MapToResponseProductDto(product);
+        }*/
+
+        public async Task<ResponseProductWithListColorAndSizeDto> GetProductBySlugAsync(string slug)
+        {
+            int? userId = null;
+
+            // Lấy HttpContext và user id nếu có
+            var httpContext = _httpContextAccessor.HttpContext;
+
+            if (httpContext?.User?.Identity?.IsAuthenticated == true)
+            {
+                var userIdClaim = httpContext.User.FindFirst("UserID")?.Value;
+                if (int.TryParse(userIdClaim, out int parsedId))
+                    userId = parsedId;
+            }
+
+            // Lấy sản phẩm theo slug
+            var product = await _productRepository.GetProductBySlugAsync(slug);
+            if (product == null)
+                return null;
+
+            // Map sang DTO + cập nhật giá từ campaign
+            var dto = await MapToResponseProductWithListColorAndSizeDto(product);
+
+            bool isInWishlist = false;
+            // Nếu có user đăng nhập, kiểm tra wishlist
+            if (userId.HasValue && userId.Value > 0)
+            {
+                isInWishlist = await _wishlistRepository
+                    .IsProductInWishlistAsync(userId.Value, product.ProductId);
+            }
+
+            dto.IsInWishlist = isInWishlist;
+
+            return dto;
         }
 
         public async Task<ResponseProductDto> GetProductByIdAsync(string productId)
@@ -203,12 +256,12 @@ namespace VirtualTryonWomenFashion.Service.Services
             var product = await _productRepository.GetProductByVariantIdAsync(variantId);
             if (product == null)
                 return null;
-            return MapToResponseProductDtoForVariant(product, variantId);
+            return await MapToResponseProductDtoForVariant(product, variantId);
         }
 
-        private ResponseProductDto MapToResponseProductDtoForVariant(Product product, string variantId)
+        private async Task<ResponseProductDto> MapToResponseProductDtoForVariant(Product product, string variantId)
         {
-            var productActiveInSaleCampaign = _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(product.ProductId);
+            var productActiveInSaleCampaign = await _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(product.ProductId);
             // Tìm ProductColor chứa variant được yêu cầu
             var targetProductColor = product.ProductColors
                 .FirstOrDefault(pc => pc.ProductVariants.Any(pv => pv.ProductVariantId == variantId));
@@ -227,8 +280,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             var response = _mapper.Map<ResponseProductDto>(product);
 
             // Set giá ở thời điểm hiện tại
-            response.PriceAtTime = productActiveInSaleCampaign.Result != null
-                ? productActiveInSaleCampaign.Result.SalePrice
+            response.PriceAtTime = productActiveInSaleCampaign != null
+                ? productActiveInSaleCampaign.SalePrice
                 : product.Price;
 
             // Chỉ giữ lại đúng 1 ProductColor và 1 Variant
@@ -305,6 +358,10 @@ namespace VirtualTryonWomenFashion.Service.Services
             var productDtos = products.Select(p =>
             {
                 var dto = _mapper.Map<ResponseProductDto>(p);
+                var productActiveInSaleCampaign = _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(p.ProductId);
+                dto.PriceAtTime = productActiveInSaleCampaign.Result != null
+                    ? productActiveInSaleCampaign.Result.SalePrice
+                    : dto.Price;
                 dto.IsInWishlist = userId.HasValue && userWishlistProductIds.Contains(p.ProductId);
                 return dto;
             }).ToList();
