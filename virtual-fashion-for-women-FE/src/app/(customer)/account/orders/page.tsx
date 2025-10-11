@@ -16,7 +16,6 @@ const statusTabs = [
     { key: 'Delivering', label: 'Đang giao', icon: Truck },
     { key: 'Delivered', label: 'Đã giao', icon: Home },
     { key: 'Completed', label: 'Hoàn tất', icon: CheckCircle },
-    { key: 'Failed', label: 'Thất bại', icon: XCircle },
 ];
 
 export default function OrderManagement() {

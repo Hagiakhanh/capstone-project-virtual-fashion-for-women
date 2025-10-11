@@ -18,7 +18,7 @@ export default function CheckoutForm() {
     const [checkoutDTO, setCheckoutDTO] = useState<CheckoutDTO>({
         items: [],
         totalProductPrice: 0,
-        serviceFree: 0,
+        serviceFee: 0,
         insuranceFee: 0,
         totalPrice: 0
     });
@@ -419,7 +419,7 @@ export default function CheckoutForm() {
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Phí vận chuyển</span>
                                 <span className="font-semibold">
-                                    {checkoutDTO.serviceFree === 0 ? "" : `${checkoutDTO.serviceFree.toLocaleString('vi-VN')}đ`}
+                                    {checkoutDTO.serviceFee === 0 ? "" : `${checkoutDTO.serviceFee.toLocaleString('vi-VN')}đ`}
                                 </span>
                             </div>
                             {checkoutDTO.insuranceFee > 0 && (
@@ -439,12 +439,12 @@ export default function CheckoutForm() {
                             className={`w-full py-4 mt-6 text-lg font-semibold rounded-xl transition-all duration-300 flex justify-center items-center gap-2
                             ${isProcessing
                                     ? 'bg-gray-400 text-white cursor-not-allowed'
-                                    : checkoutDTO.serviceFree === 0
+                                    : checkoutDTO.serviceFee === 0
                                         ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                                         : 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
                                 }`}
                             onClick={handlePayment}
-                            disabled={isProcessing || checkoutDTO.serviceFree === 0}
+                            disabled={isProcessing || checkoutDTO.serviceFee === 0}
                         >
                             {isProcessing ? (
                                 <>

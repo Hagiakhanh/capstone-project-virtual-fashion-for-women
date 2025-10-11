@@ -1,4 +1,5 @@
 import { OrderDetailDTO } from "./OrderDetailDTO";
+import { TransactionInformation } from "./TransactionInformation";
 import { UserInformation } from "./UserInformation";
 
 export interface OrderDTO {
@@ -11,9 +12,10 @@ export interface OrderDTO {
     amount: number | null;
     note: string;
     shippingMoney: number | null;
-    insuranceFree: number | null;
+    insuranceFee: number | null;
     shippingCode: string;
     estimatedDelivery: string | null;
+    transactionInformation: TransactionInformation;
     userInformation: UserInformation;
     responseOrderDetails: OrderDetailDTO[];
 }
