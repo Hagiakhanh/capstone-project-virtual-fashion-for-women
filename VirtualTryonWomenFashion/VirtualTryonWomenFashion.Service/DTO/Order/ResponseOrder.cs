@@ -1,4 +1,5 @@
 ﻿using VirtualTryonWomenFashion.Service.DTO.OrderDetail;
+using VirtualTryonWomenFashion.Service.DTO.Transaction;
 using VirtualTryonWomenFashion.Service.DTO.User;
 
 namespace VirtualTryonWomenFashion.Service.DTO.Order;
@@ -16,8 +17,8 @@ public class ResponseOrder
     public decimal? ShippingMoney { get; set; }
     public decimal? InsuranceFee { get; set; }
     public string ShippingCode { get; set; }
-
     public DateTime? EstimatedDelivery { get; set; }
+    public TransactionInformation TransactionInformation { get; set; }
     public UserInformation UserInformation { get; set; }
     public List<ResponseOrderDetail> ResponseOrderDetails { get; set; }
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -173,7 +174,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             var userInformation = order.Customer.MapToUserInformation();
             List<ResponseOrderDetail> responseOrderDetails = await _orderDetailService.GetOrderDetailsByOrderIdAsync(orderId);
-            ResponseOrder responseOrder = order.MapToResponseOrder(userInformation, responseOrderDetails);
+            ResponseOrder responseOrder = order.MapToResponseOrder(responseOrderDetails);
             return responseOrder;
         }
 
@@ -225,16 +226,20 @@ namespace VirtualTryonWomenFashion.Service.Services
             List<Order> rawOrders = await _orderRepository.GetAll(
                 filter: o=>o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString() && (o.Status == orderStatus|| string.IsNullOrEmpty(orderStatus)),
                 pagination: page,
-                includes: o => o.Customer,
-                orderBy: o=> o.OrderByDescending(x => x.CreatedAt)
+                orderBy: o=> o.OrderByDescending(x => x.CreatedAt),
+                includes:
+                new Expression<Func<Order, object>>[]
+                {
+                    o => o.Customer,
+                    o => o.Transactions
+                }
                 );
             int totalRecords = _orderRepository.Count(o => o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString());
             List<ResponseOrder> responseOrders = new List<ResponseOrder>();
             foreach (Order order in rawOrders)
             {
                 List<ResponseOrderDetail> responseOrderDetails = await _orderDetailService.GetOrderDetailsByOrderIdAsync(order.OrderId);
-                UserInformation userInformation = order.Customer.MapToUserInformation();
-                responseOrders.Add(order.MapToResponseOrder(userInformation, responseOrderDetails));
+                responseOrders.Add(order.MapToResponseOrder(responseOrderDetails));
             }
             return  new Pagination<ResponseOrder>(responseOrders,totalRecords,page.PageIndex,page.PageSize);
         }
