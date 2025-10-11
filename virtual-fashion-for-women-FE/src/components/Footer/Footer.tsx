@@ -4,7 +4,7 @@ import logo from '../../assets/home/Logo.png';
 
 function FooterComponent() {
    return (
-      <div className='border-t-2 border-gray-200 mt-10 mb-5 bg-[#FAE3B6]'>
+      <div className='border-t-2 border-gray-200 bg-[#FAE3B6]'>
          <div className="w-[80%] mx-auto py-10 text-center">
             <div className="flex">
                <div className='flex-1'>

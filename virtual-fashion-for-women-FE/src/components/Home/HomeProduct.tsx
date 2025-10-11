@@ -1,6 +1,7 @@
 'use client';
 import { Button } from "antd";
 import { ArrowRightOutlined } from '@ant-design/icons';
+import Link from "next/link";
 
 import ProductItemHome from "../Product/ProductItemHome";
 import { useEffect, useState } from "react";
@@ -54,7 +55,7 @@ function HomeProductSection() {
                {/* Product List Here */}
                {
                   products.map((product) => (
-                     <ProductItemHome key={product.productId} product={product} />
+                     <ProductItemHome product={product} key={product.productId} />
                   ))
                }
             </div>

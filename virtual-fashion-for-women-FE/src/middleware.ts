@@ -9,12 +9,12 @@ const routePermissions: Record<string, string[]> = {
   "/cart": ["Customer"],
   "/recommendation": ["Customer"],
   "/manage": ["Admin", "Staff"],
-  "/profile": ["Admin", "Staff", "Customer"],
+  "/profile": ["Admin", "Staff", "Customer"]
 };
 
 // Routes public (không cần login)
 
-const publicRoutes = ["/login", "/register", "/payment/return", "/confirm-email"];
+const publicRoutes = ["/login", "/register", "/payment/return", "/confirm-email", "/products"];
 
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
@@ -30,7 +30,16 @@ export async function middleware(req: NextRequest) {
   }
 
   // Nếu route public thì cho qua
-  if (publicRoutes.some((route) => url.pathname === route)) {
+  const isPublicRoute = publicRoutes.some((route) => {
+    if (url.pathname === route) {
+      return true;
+    }
+    if (url.pathname.startsWith(`${route}/`)) {
+      return true;
+    }
+    return false;
+  });
+  if (isPublicRoute) {
     return NextResponse.next();
   }
 
