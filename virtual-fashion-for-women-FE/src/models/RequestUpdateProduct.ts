@@ -32,10 +32,11 @@ export interface ProductVariant {
     productLength?: number;
     productWidth?: number;
     productHeight?: number;
+    productImagesDto?: ProductImage[];
 }
 
 export interface ProductImage {
-    productImageId?: string;
+    productImageId?: number;
     productColorId: string;
     imageUrl: string;
 }
@@ -71,8 +72,10 @@ export interface UpdateProductColorFormData {
     productColorId?: string;
     colorId?: number;
     noBgImgUrl?: File;
+    noBgImgPreview?: string;
     lensId?: string;
     productVariantImages?: File[];
+    productVariantImagePreviews?: string[];
     variants?: UpdateProductVariantFormData[];
     // For creating new color
     colorName?: string;
@@ -86,6 +89,7 @@ export interface UpdateProductVariantFormData {
     variantName?: string;
     quantity?: number;
     imageUrl?: File;
+    imagePreview?: string;
     status?: string;
     productWeight?: number;
     productLength?: number;
