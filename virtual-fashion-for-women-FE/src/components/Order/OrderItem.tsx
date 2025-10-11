@@ -6,6 +6,7 @@ import { OrderDTO } from '@/models/OrderDTO';
 import formatPrice from '@/utils/formatPrice';
 import statusMap from '@/helpers/statusMapper';
 import { AntButtonCommon } from '../AntDesign/Button/AntButtonCommon';
+import formatDate from '@/utils/formatDate';
 
 interface OrderItemProps {
     order: OrderDTO;
@@ -55,13 +56,7 @@ export default function OrderItem({ order }: OrderItemProps) {
                         <div className="flex items-center gap-2">
                             <Calendar size={18} className="text-gray-400" />
                             <span>
-                                {new Date(order.createdAt).toLocaleString('vi-VN', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                })}
+                                {formatDate(order.createdAt)}
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -126,7 +121,7 @@ export default function OrderItem({ order }: OrderItemProps) {
                 {/* Right - Nút bấm */}
                 <div className="flex flex-shrink-0 gap-2">
                     <button
-                        onClick={() => router.push(`/orders/${order.orderId}`)}
+                        onClick={() => router.push(`/account/orders/${order.orderId}`)}
                         className="px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-700 transition-all"
                     >
                         Xem chi tiết

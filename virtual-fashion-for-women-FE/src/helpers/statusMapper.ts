@@ -54,5 +54,11 @@ const statusMap: Record<
         bg: '#FDEDEC',
         icon: XCircle,
     },
+    Success: {
+        label: 'Thành công',
+        color: '#27AE60',
+        bg: '#E9F7EF',
+        icon: CheckCircle,
+    },
 };
 export default statusMap;
