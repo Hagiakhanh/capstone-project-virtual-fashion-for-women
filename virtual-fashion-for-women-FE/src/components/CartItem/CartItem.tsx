@@ -13,7 +13,6 @@ export default function CartItems({
     showCheckbox = false,
     showDeleteButton = false,
     showQuantityControls = true, // control quantity +/- buttons
-    variant = "default" // "default" | "cart" | "order" | "checkout"
 }: {
     item: CartItemDTO;
     onUpdateQuantity?: (id: number, change: number) => void;
@@ -22,15 +21,11 @@ export default function CartItems({
     showCheckbox?: boolean;
     showDeleteButton?: boolean;
     showQuantityControls?: boolean;
-    variant?: "default" | "cart" | "order" | "checkout";
 }) {
 
-    const containerClasses = variant === "cart"
-        ? "flex items-start gap-4 p-4 border border-gray-200 rounded-lg"
-        : "flex items-start gap-4 p-4 bg-white rounded-lg border border-gray-100";
 
     return (
-        <div className={containerClasses}>
+        <div className="flex items-start gap-4 p-4 min-h-[120px] hover:shadow-sm transition-all rounded-lg border border-gray-200">
             {/* Checkbox - chỉ hiển thị khi showCheckbox = true */}
             {showCheckbox && onToggleSelection && (
                 <input

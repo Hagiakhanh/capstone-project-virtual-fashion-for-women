@@ -105,88 +105,88 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
      * Validate product form data
      */
     export function validateProductForm(
-    formData: CreateProductFormData
+        formData: CreateProductFormData
     ): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
+        const errors: string[] = [];
 
-    if (!formData.productName.trim()) {
-        errors.push("Tên sản phẩm không được để trống");
-    }
-
-    if (!formData.description.trim()) {
-        errors.push("Mô tả không được để trống");
-    }
-
-    if (formData.price <= 0) {
-        errors.push("Giá sản phẩm phải lớn hơn 0");
-    }
-
-    if (!formData.mainImageUrl) {
-        errors.push("Vui lòng chọn ảnh chính cho sản phẩm");
-    }
-
-    if (formData.productColor.length === 0) {
-        errors.push("Sản phẩm phải có ít nhất một màu");
-    }
-
-    if (formData.categoryId === 0) {
-        errors.push("Vui lòng chọn danh mục");
-    }
-
-    formData.productColor.forEach((color, index) => {
-        // Nếu tạo màu mới (colorId = 0) thì phải nhập đủ thông tin
-        if (color.colorId === 0) {
-        if (!color.colorName.trim()) {
-            errors.push(`Màu ${index + 1}: Tên màu không được để trống`);
-        }
-        if (!color.colorPrefix.trim()) {
-            errors.push(`Màu ${index + 1}: Mã màu không được để trống`);
-        }
-        if (!color.hexCode.trim()) {
-            errors.push(`Màu ${index + 1}: Hex code không được để trống`);
-        }
+        if (!formData.productName.trim()) {
+            errors.push("Tên sản phẩm không được để trống");
         }
 
-        // if (!color.noBgImgUrl) {
-        // errors.push(`Màu ${index + 1}: Vui lòng chọn ảnh không nền`);
-        // }
-
-        if (color.variants.length === 0) {
-        errors.push(`Màu ${index + 1}: Phải có ít nhất một biến thể (size)`);
+        if (!formData.description.trim()) {
+            errors.push("Mô tả không được để trống");
         }
 
-        color.variants.forEach((variant, vIndex) => {
-        // Nếu tạo size mới (sizeId = 0) thì phải nhập sizeCode
-        if (variant.sizeId === 0 && !variant.sizeCode.trim()) {
-            errors.push(
-            `Màu ${index + 1}, Size ${vIndex + 1}: Mã size không được để trống`
-            );
+        if (formData.price <= 0) {
+            errors.push("Giá sản phẩm phải lớn hơn 0");
         }
 
-        if (!variant.variantName.trim()) {
-            errors.push(
-            `Màu ${index + 1}, Size ${vIndex + 1}: Tên biến thể không được để trống`
-            );
+        if (!formData.mainImageUrl) {
+            errors.push("Vui lòng chọn ảnh chính cho sản phẩm");
         }
 
-        if (variant.quantity < 0) {
-            errors.push(
-            `Màu ${index + 1}, Size ${vIndex + 1}: Số lượng không được âm`
-            );
+        if (formData.productColor.length === 0) {
+            errors.push("Sản phẩm phải có ít nhất một màu");
         }
 
-        if (!variant.imageUrl) {
-            errors.push(
-            `Màu ${index + 1}, Size ${vIndex + 1}: Vui lòng chọn ảnh cho biến thể`
-            );
+        if (formData.categoryId === 0) {
+            errors.push("Vui lòng chọn danh mục");
         }
+
+        formData.productColor.forEach((color, index) => {
+            // Nếu tạo màu mới (colorId = 0) thì phải nhập đủ thông tin
+            if (color.colorId === 0) {
+            if (!color.colorName.trim()) {
+                errors.push(`Màu ${index + 1}: Tên màu không được để trống`);
+            }
+            if (!color.colorPrefix.trim()) {
+                errors.push(`Màu ${index + 1}: Mã màu không được để trống`);
+            }
+            if (!color.hexCode.trim()) {
+                errors.push(`Màu ${index + 1}: Hex code không được để trống`);
+            }
+            }
+
+            // if (!color.noBgImgUrl) {
+            // errors.push(`Màu ${index + 1}: Vui lòng chọn ảnh không nền`);
+            // }
+
+            if (color.variants.length === 0) {
+            errors.push(`Màu ${index + 1}: Phải có ít nhất một biến thể (size)`);
+            }
+
+            color.variants.forEach((variant, vIndex) => {
+            // Nếu tạo size mới (sizeId = 0) thì phải nhập sizeCode
+            if (variant.sizeId === 0 && !variant.sizeCode.trim()) {
+                errors.push(
+                `Màu ${index + 1}, Size ${vIndex + 1}: Mã size không được để trống`
+                );
+            }
+
+            if (!variant.variantName.trim()) {
+                errors.push(
+                `Màu ${index + 1}, Size ${vIndex + 1}: Tên biến thể không được để trống`
+                );
+            }
+
+            if (variant.quantity < 0) {
+                errors.push(
+                `Màu ${index + 1}, Size ${vIndex + 1}: Số lượng không được âm`
+                );
+            }
+
+            if (!variant.imageUrl) {
+                errors.push(
+                `Màu ${index + 1}, Size ${vIndex + 1}: Vui lòng chọn ảnh cho biến thể`
+                );
+            }
+            });
         });
-    });
 
-    return {
-        isValid: errors.length === 0,
-        errors,
-    };
+        return {
+            isValid: errors.length === 0,
+            errors,
+        };
     }
 
     /**
@@ -226,106 +226,106 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
  * Helper function to append array items to FormData with proper indexing
  */
 export const appendArrayToFormData = (
-  formData: FormData,
-  arrayName: string,
-  items: any[],
-  fieldMapping?: Record<string, string>
+    formData: FormData,
+    arrayName: string,
+    items: any[],
+    fieldMapping?: Record<string, string>
 ) => {
-  items.forEach((item, index) => {
-    Object.entries(item).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        const fieldName = fieldMapping?.[key] || key;
-        const formKey = `${arrayName}[${index}].${fieldName}`;
-        
-        if (value instanceof File) {
-          formData.append(formKey, value);
-        } else if (Array.isArray(value)) {
-          value.forEach((v) => {
-            if (v instanceof File) {
-              formData.append(formKey, v);
-            } else {
-              formData.append(formKey, v.toString());
+    items.forEach((item, index) => {
+        Object.entries(item).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                const fieldName = fieldMapping?.[key] || key;
+                const formKey = `${arrayName}[${index}].${fieldName}`;
+                
+                if (value instanceof File) {
+                    formData.append(formKey, value);
+                } else if (Array.isArray(value)) {
+                    value.forEach((v) => {
+                        if (v instanceof File) {
+                            formData.append(formKey, v);
+                        } else {
+                            formData.append(formKey, v.toString());
+                        }
+                    });
+                } else {
+                    formData.append(formKey, value.toString());
+                }
             }
-          });
-        } else {
-          formData.append(formKey, value.toString());
-        }
-      }
+        });
     });
-  });
 };
 
 /**
  * Helper to create FormData from an object, handling nested structures
  */
 export const objectToFormData = (
-  obj: Record<string, any>,
-  formData = new FormData(),
-  parentKey = ''
+    obj: Record<string, any>,
+    formData = new FormData(),
+    parentKey = ''
 ): FormData => {
-  Object.entries(obj).forEach(([key, value]) => {
-    const formKey = parentKey ? `${parentKey}.${key}` : key;
-    
-    if (value === undefined || value === null) {
-      return;
-    }
-    
-    if (value instanceof File) {
-      formData.append(formKey, value);
-    } else if (Array.isArray(value)) {
-      value.forEach((item, index) => {
-        if (item instanceof File) {
-          formData.append(`${formKey}[${index}]`, item);
-        } else if (typeof item === 'object' && item !== null) {
-          objectToFormData(item, formData, `${formKey}[${index}]`);
-        } else if (item !== undefined && item !== null) {
-          formData.append(`${formKey}[${index}]`, item.toString());
-        }
-      });
-    } else if (typeof value === 'object' && !(value instanceof Blob)) {
-      objectToFormData(value, formData, formKey);
-    } else {
-      formData.append(formKey, value.toString());
-    }
-  });
+    Object.entries(obj).forEach(([key, value]) => {
+      const formKey = parentKey ? `${parentKey}.${key}` : key;
+      
+      if (value === undefined || value === null) {
+          return;
+      }
+      
+      if (value instanceof File) {
+          formData.append(formKey, value);
+      } else if (Array.isArray(value)) {
+          value.forEach((item, index) => {
+            if (item instanceof File) {
+                formData.append(`${formKey}[${index}]`, item);
+            } else if (typeof item === 'object' && item !== null) {
+                objectToFormData(item, formData, `${formKey}[${index}]`);
+            } else if (item !== undefined && item !== null) {
+                formData.append(`${formKey}[${index}]`, item.toString());
+            }
+          });
+      } else if (typeof value === 'object' && !(value instanceof Blob)) {
+          objectToFormData(value, formData, formKey);
+      } else {
+          formData.append(formKey, value.toString());
+      }
+    });
   
-  return formData;
+    return formData;
 };
 
 /**
  * Validate file size and type
  */
 export const validateFile = (
-  file: File,
-  maxSizeMB = 5,
-  allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+    file: File,
+    maxSizeMB = 5,
+    allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
 ): { valid: boolean; error?: string } => {
-  if (!allowedTypes.includes(file.type)) {
-    return {
-      valid: false,
-      error: `File type not allowed. Allowed types: ${allowedTypes.join(', ')}`,
-    };
-  }
-  
-  const maxSizeBytes = maxSizeMB * 1024 * 1024;
-  if (file.size > maxSizeBytes) {
-    return {
-      valid: false,
-      error: `File size exceeds ${maxSizeMB}MB`,
-    };
-  }
-  
-  return { valid: true };
+    if (!allowedTypes.includes(file.type)) {
+        return {
+            valid: false,
+            error: `File type not allowed. Allowed types: ${allowedTypes.join(', ')}`,
+        };
+    }
+    
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+        return {
+          valid: false,
+          error: `File size exceeds ${maxSizeMB}MB`,
+        };
+    }
+    
+    return { valid: true };
 };
 
 /**
  * Preview image file
  */
 export const getImagePreview = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 };
