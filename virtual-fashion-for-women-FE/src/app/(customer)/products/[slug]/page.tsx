@@ -220,7 +220,7 @@ function ProductDetailsPage() {
                               return (
                                  <div key={size.sizeId} onClick={() => {
                                     if (isAvailable) {
-                                       setChooseProduct({ ...chooseProduct, sizeCode: size.sizeCode })
+                                       setChooseProduct({ ...chooseProduct, sizeCode: size.sizeCode, quantity: 1 });
                                     }
                                  }} className={`bg-white rounded-lg border-1 px-3 ${selectedClasses} ${disabledClasses}`}>
                                     <span className="text-lg">{size.sizeCode}</span>
