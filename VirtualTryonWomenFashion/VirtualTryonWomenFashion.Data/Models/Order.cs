@@ -45,7 +45,7 @@ public partial class Order
 
     public string WardCode { get; set; }
 
-    public decimal? InsuranceFree { get; set; }
+    public decimal? InsuranceFee { get; set; }
 
     public int? ProvinceId { get; set; }
 

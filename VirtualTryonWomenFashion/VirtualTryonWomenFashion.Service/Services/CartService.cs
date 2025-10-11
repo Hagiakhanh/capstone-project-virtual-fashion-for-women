@@ -365,7 +365,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     (int)Math.Ceiling((cartItem.QuantityItem * responseGetVariantPriceInfo.CurrentPrice) ?? 0);
                 totalProductPrice += productPrice;
             }
-            (decimal serviceFree, decimal insuranceFree) = (0.0m, 0.0m);
+            (decimal serviceFee, decimal insuranceFree) = (0.0m, 0.0m);
 
             if(!string.IsNullOrEmpty(requestCheckout.ProvinceName) && !string.IsNullOrEmpty(requestCheckout.DistrictName) && !string.IsNullOrEmpty(requestCheckout.WardName))
             {
@@ -392,16 +392,16 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Height = totalHeight,
                     InsuranceValue = totalProductPrice
                 };
-                (serviceFree, insuranceFree) =
+                (serviceFee, insuranceFree) =
                     await _shippingService.CalculateShippingFee(shippingObjectRequest);
             }
             ResponseCheckout responseCheckout = new ResponseCheckout()
             {
                 Items = selectedCartItems,
                 TotalProductPrice = totalProductPrice,
-                ServiceFree = serviceFree,
+                ServiceFee = serviceFee,
                 InsuranceFee = insuranceFree,
-                TotalPrice = totalProductPrice + serviceFree + insuranceFree
+                TotalPrice = totalProductPrice + serviceFee + insuranceFree
             };
             return responseCheckout;
         }

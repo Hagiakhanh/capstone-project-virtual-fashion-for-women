@@ -1,6 +1,7 @@
 ﻿using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Color;
 using VirtualTryonWomenFashion.Service.DTO.OrderDetail;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -49,6 +50,13 @@ namespace VirtualTryonWomenFashion.Service.Services
                     ProductLength = item.ProductVariant.ProductLength,
                     ProductWidth = item.ProductVariant.ProductWidth,
                     ProductHeight = item.ProductVariant.ProductHeight,
+                    ColorDto = item.ProductVariant.ProductColor.Color != null ? new ResponseColorDto()
+                    {
+                        ColorId = item.ProductVariant.ProductColor.Color.ColorId,
+                        ColorName = item.ProductVariant.ProductColor.Color.ColorName,
+                        ColorPrefix = item.ProductVariant.ProductColor.Color.ColorPrefix,
+                        HexCode = item.ProductVariant.ProductColor.Color.HexCode
+                    } : null,
                     SizeDto = item.ProductVariant.Size != null ? new ResponseSizeDto
                     {
                         SizeId = item.ProductVariant.Size.SizeId,

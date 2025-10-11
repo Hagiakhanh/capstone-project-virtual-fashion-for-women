@@ -24,8 +24,11 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(od =>od.ProductVariant)
                     .ThenInclude(pv => pv.Size)
                 .Include(od=>od.ProductVariant)
-                .ThenInclude(pv =>pv.ProductColor)
-                .ThenInclude(pc => pc.ProductImages)
+                    .ThenInclude(pv =>pv.ProductColor)
+                        .ThenInclude(pc => pc.ProductImages)
+                .Include(od=>od.ProductVariant)
+                    .ThenInclude(pv =>pv.ProductColor)
+                        .ThenInclude(pc => pc.Color)
                 .ToListAsync();
             return orderDetails ??= new List<OrderDetail>();
         }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -98,8 +99,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                     PackageHeight = totalHeight,
                     PackageWidth = totalWidth,
                     PackageLength = totalLength,
-                    ShippingMoney = responseCheckout.ServiceFree,
-                    InsuranceFree = responseCheckout.InsuranceFee,
+                    ShippingMoney = responseCheckout.ServiceFee,
+                    InsuranceFee = responseCheckout.InsuranceFee,
                     ProvinceId = provinceId,
                     DistrictId = districtId,
                     WardCode = wardCode,
@@ -160,7 +161,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 userId = _currentUserService.GetUserId();
             }
-            var order = await _orderRepository.GetByIdAsync(orderId);
+            var order = await _orderRepository.GetOrderByOrderID(orderId);
             if (order == null)
             {
                 throw new Exception("Order không tồn tại");
@@ -171,9 +172,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception("Bạn không có quyền xem đơn hàng này");
             }
 
-            var userInformation = new UserInformation();
+            var userInformation = order.Customer.MapToUserInformation();
             List<ResponseOrderDetail> responseOrderDetails = await _orderDetailService.GetOrderDetailsByOrderIdAsync(orderId);
-            ResponseOrder responseOrder = order.MapToResponseOrder(userInformation, responseOrderDetails);
+            ResponseOrder responseOrder = order.MapToResponseOrder(responseOrderDetails);
             return responseOrder;
         }
 
@@ -225,14 +226,20 @@ namespace VirtualTryonWomenFashion.Service.Services
             List<Order> rawOrders = await _orderRepository.GetAll(
                 filter: o=>o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString() && (o.Status == orderStatus|| string.IsNullOrEmpty(orderStatus)),
                 pagination: page,
-                orderBy: o=> o.OrderByDescending(x => x.CreatedAt)
+                orderBy: o=> o.OrderByDescending(x => x.CreatedAt),
+                includes:
+                new Expression<Func<Order, object>>[]
+                {
+                    o => o.Customer,
+                    o => o.Transactions
+                }
                 );
             int totalRecords = _orderRepository.Count(o => o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString());
             List<ResponseOrder> responseOrders = new List<ResponseOrder>();
             foreach (Order order in rawOrders)
             {
                 List<ResponseOrderDetail> responseOrderDetails = await _orderDetailService.GetOrderDetailsByOrderIdAsync(order.OrderId);
-                responseOrders.Add(order.MapToResponseOrder(new UserInformation(), responseOrderDetails));
+                responseOrders.Add(order.MapToResponseOrder(responseOrderDetails));
             }
             return  new Pagination<ResponseOrder>(responseOrders,totalRecords,page.PageIndex,page.PageSize);
         }
