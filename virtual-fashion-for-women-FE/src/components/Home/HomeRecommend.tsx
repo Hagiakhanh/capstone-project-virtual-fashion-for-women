@@ -44,7 +44,7 @@ function HomeRecommendSection() {
                      product.map((item, index) => {
                         return (
                            <SwiperSlide key={index}>
-                              <ProductItemHome />
+                              {/* <ProductItemHome /> */}
                            </SwiperSlide>
                         )
                      })
