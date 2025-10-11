@@ -11,5 +11,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     public interface IWishlistRepository : IGenericRepository<Wishlist>
     {
         Task<List<string>> GetUserWishlistProductIdsAsync(int userId);
+        Task<bool> IsProductInWishlistAsync(int userId, string productId);
     }
 }

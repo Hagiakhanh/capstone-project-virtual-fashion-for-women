@@ -30,7 +30,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpGet("{slug}")]
+        [HttpGet("slug/{slug}")]
         public async Task<IActionResult> GetProductBySlug(string slug)
         {
             if (string.IsNullOrWhiteSpace(slug))
@@ -40,6 +40,20 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
             if (product == null)
                 return NotFound($"Product with slug '{slug}' not found");
+
+            return Ok(product);
+        }
+
+        [HttpGet("id/{productId}")]
+        public async Task<IActionResult> GetProductByID(string productId)
+        {
+            if (string.IsNullOrWhiteSpace(productId))
+                return BadRequest("Product slug is required");
+
+            var product = await _productService.GetProductByIdAsync(productId);
+
+            if (product == null)
+                return NotFound($"Product with slug '{productId}' not found");
 
             return Ok(product);
         }
