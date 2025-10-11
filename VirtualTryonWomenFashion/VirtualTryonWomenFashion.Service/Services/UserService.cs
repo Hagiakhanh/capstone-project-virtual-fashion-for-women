@@ -15,6 +15,7 @@ using VirtualTryonWomenFashion.Service.DTO.Mail;
 using VirtualTryonWomenFashion.Service.DTO.User;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Mappers;
 using VirtualTryonWomenFashion.Service.Utils;
 
 namespace VirtualTryonWomenFashion.Service.Services
@@ -73,10 +74,6 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         }
 
-        public Task<UserInformation> GetUserInformationByIdAsync(int userId)
-        {
-            throw new NotImplementedException();
-        }
 
         public async Task<MessageModelWithData<string>> LoginAccount(RequestLoginAccount requestLoginAccount)
         {

@@ -14,7 +14,7 @@ public class ResponseOrder
     public decimal? Amount { get; set; }
     public string Note { get; set; }
     public decimal? ShippingMoney { get; set; }
-    public decimal? InsuranceFree { get; set; }
+    public decimal? InsuranceFee { get; set; }
     public string ShippingCode { get; set; }
 
     public DateTime? EstimatedDelivery { get; set; }

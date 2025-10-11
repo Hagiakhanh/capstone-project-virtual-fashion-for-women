@@ -20,7 +20,9 @@ namespace VirtualTryonWomenFashion.Data.Repositories
 
         public async Task<Order?> GetOrderByOrderID(int orderID)
         {
-            return await _context.Orders.Include(x => x.OrderDetails)
+            return await _context.Orders
+                .Include(x=>x.Customer)
+                .Include(x => x.OrderDetails)
                 .ThenInclude(x => x.ProductVariant)
                 .SingleOrDefaultAsync(x => x.OrderId == orderID);
         }

@@ -98,8 +98,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                     PackageHeight = totalHeight,
                     PackageWidth = totalWidth,
                     PackageLength = totalLength,
-                    ShippingMoney = responseCheckout.ServiceFree,
-                    InsuranceFree = responseCheckout.InsuranceFee,
+                    ShippingMoney = responseCheckout.ServiceFee,
+                    InsuranceFee = responseCheckout.InsuranceFee,
                     ProvinceId = provinceId,
                     DistrictId = districtId,
                     WardCode = wardCode,
@@ -160,7 +160,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 userId = _currentUserService.GetUserId();
             }
-            var order = await _orderRepository.GetByIdAsync(orderId);
+            var order = await _orderRepository.GetOrderByOrderID(orderId);
             if (order == null)
             {
                 throw new Exception("Order không tồn tại");
@@ -171,7 +171,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception("Bạn không có quyền xem đơn hàng này");
             }
 
-            var userInformation = new UserInformation();
+            var userInformation = order.Customer.MapToUserInformation();
             List<ResponseOrderDetail> responseOrderDetails = await _orderDetailService.GetOrderDetailsByOrderIdAsync(orderId);
             ResponseOrder responseOrder = order.MapToResponseOrder(userInformation, responseOrderDetails);
             return responseOrder;
@@ -225,6 +225,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             List<Order> rawOrders = await _orderRepository.GetAll(
                 filter: o=>o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString() && (o.Status == orderStatus|| string.IsNullOrEmpty(orderStatus)),
                 pagination: page,
+                includes: o => o.Customer,
                 orderBy: o=> o.OrderByDescending(x => x.CreatedAt)
                 );
             int totalRecords = _orderRepository.Count(o => o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString());
@@ -232,7 +233,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             foreach (Order order in rawOrders)
             {
                 List<ResponseOrderDetail> responseOrderDetails = await _orderDetailService.GetOrderDetailsByOrderIdAsync(order.OrderId);
-                responseOrders.Add(order.MapToResponseOrder(new UserInformation(), responseOrderDetails));
+                UserInformation userInformation = order.Customer.MapToUserInformation();
+                responseOrders.Add(order.MapToResponseOrder(userInformation, responseOrderDetails));
             }
             return  new Pagination<ResponseOrder>(responseOrders,totalRecords,page.PageIndex,page.PageSize);
         }

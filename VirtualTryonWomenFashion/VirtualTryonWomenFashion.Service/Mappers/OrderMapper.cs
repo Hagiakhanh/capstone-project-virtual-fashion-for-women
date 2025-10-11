@@ -22,7 +22,7 @@ public static class OrderMapper
             Amount = model.Amount,
             Note = model.Note,
             ShippingMoney = model.ShippingMoney,
-            InsuranceFree = model.InsuranceFree,
+            InsuranceFee = model.InsuranceFee,
             ShippingCode = model.ShippingCode,
             EstimatedDelivery = model.EstimatedDelivery,
             UserInformation = userInformation,

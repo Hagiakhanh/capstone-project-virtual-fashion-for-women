@@ -34,13 +34,13 @@ public class PaymentWorkerService : BackgroundService
                     await saleCampaignService.HandleOrderStatusAndTransactionStatus();
                 }
                 _logger.LogInformation("Function HandleOrderStatusAndTransactionStatus executed successfully at: {time}", DateTimeOffset.Now);
-                _logger.LogInformation("Next execution scheduled in 1 minute");
+                _logger.LogInformation("Next execution scheduled in 15 minute");
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error when executing HandleOrderStatusAndTransactionStatus");
             }
-            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Adjust the delay as needed
+            await Task.Delay(TimeSpan.FromMinutes(15), stoppingToken); // Adjust the delay as needed
         }
         _logger.LogInformation("Scheduled Background Service stopped");
     }
