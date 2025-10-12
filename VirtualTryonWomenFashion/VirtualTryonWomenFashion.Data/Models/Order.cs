@@ -17,6 +17,12 @@ public partial class Order
 
     public string ReceiverAddress { get; set; }
 
+    public int? ProvinceId { get; set; }
+
+    public int? DistrictId { get; set; }
+
+    public string WardCode { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public string Status { get; set; }
@@ -35,19 +41,13 @@ public partial class Order
 
     public decimal? ShippingMoney { get; set; }
 
+    public decimal? InsuranceFee { get; set; }
+
     public string ShippingCode { get; set; }
 
     public DateTime? EstimatedDelivery { get; set; }
 
     public string PaymentUrl { get; set; }
-
-    public int? DistrictId { get; set; }
-
-    public string WardCode { get; set; }
-
-    public decimal? InsuranceFee { get; set; }
-
-    public int? ProvinceId { get; set; }
 
     public virtual User Customer { get; set; }
 

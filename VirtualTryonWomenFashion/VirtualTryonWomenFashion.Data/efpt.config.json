@@ -43,6 +43,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[OccasionPreferences]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[OrderDetails]",
          "ObjectType": 0
       },
@@ -91,7 +95,15 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[SkinTones]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[StatusLogs]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[StyleTypes]",
          "ObjectType": 0
       },
       {
@@ -140,6 +152,7 @@
    "UseHandleBars": false,
    "UseHierarchyId": false,
    "UseInflector": true,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
    "UseLegacyPluralizer": false,
    "UseManyToManyEntity": false,
    "UseNoDefaultConstructor": false,
