@@ -10,7 +10,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
 {
     public interface ICartService
     {
-        Task<bool> AddProductToCartAsync(RequestAddProductToCart requestAddProductToCart);
+        Task<ResponseCartItem> AddProductToCartAsync(RequestAddProductToCart requestAddProductToCart);
         Task<bool> RemoveProductFromCartAsync(int cartId);
         Task<int> RemoveMultipleProductsFromCartAsync(List<string> productVariantIds, int userId);
         Task<int> HideCartItemsAsync(List<string> productVariantIds);
