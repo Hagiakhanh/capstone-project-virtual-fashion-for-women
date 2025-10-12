@@ -6,7 +6,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/api/instance';
 
 import hinh1 from "@/assets/temImage/pic1.jpg";
@@ -17,8 +17,12 @@ import hinh5 from "@/assets/temImage/pic5.jpg";
 import PolicyInProductDetail from '@/components/Product/PolicyInProductDetail';
 import formatPrice from '@/utils/formatPrice';
 import { typeProductColor, typeProductSize } from '@/types/product';
+import { messageToast } from '@/helpers/toastHelper';
+import { useAuth } from '@/contexts/AuthContext';
 
 function ProductDetailsPage() {
+   const { user } = useAuth();
+   const router = useRouter();
    const params = useParams();
    const productSlug = params.slug as string;
    const [productDetail, setProductDetail] = useState();
@@ -30,6 +34,7 @@ function ProductDetailsPage() {
       productVariant: null,
       quantity: 1,
    });
+   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
    const fetchProductDetails = async () => {
       try {
@@ -83,6 +88,9 @@ function ProductDetailsPage() {
       if (chooseProduct.productVariant) {
          const currentQuantity = chooseProduct.quantity;
          const maxQuantity = chooseProduct.productVariant?.quantity;
+         console.log('maxQuantity', maxQuantity);
+         console.log('currentQuantity', currentQuantity);
+         // Tăng/giảm số lượng trong phạm vi từ 1 đến maxQuantity
          if (type === 'INCREASE' && currentQuantity < maxQuantity) {
             setChooseProduct(prev => ({ ...prev, quantity: currentQuantity + 1 }));
          } else if (type === 'DECREASE' && currentQuantity > 1) {
@@ -104,6 +112,70 @@ function ProductDetailsPage() {
       );
       return sizeIsAvailable;
    }
+
+   const handleAddToCart = async () => {
+      if (!chooseProduct.sizeCode) {
+         setErrorMessage('Vui lòng chọn size trước khi thêm vào giỏ hàng');
+         return;
+      }
+
+      setErrorMessage(null);
+
+      if (user?.role === 'guest') {
+         messageToast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+         return;
+      }
+
+      try {
+         const payload = {
+            productVariantId: chooseProduct.productVariant?.productVariantId,
+            quantity: chooseProduct.quantity,
+         };
+         const response = await api.post('/cartItem', payload);
+         if (response.status === 201) {
+            console.log('response.data', response.data);
+            messageToast.success('Thêm vào giỏ hàng thành công');
+            window.dispatchEvent(new Event("cart-updated"));
+         }
+      } catch (error) {
+         console.error('Lỗi khi thêm vào giỏ hàng:', error);
+         messageToast.error('Thêm vào giỏ hàng thất bại');
+      }
+   };
+
+   const handleBuyNow = async () => {
+      if (!chooseProduct.sizeCode) {
+         setErrorMessage('Vui lòng chọn size trước khi mua hàng');
+         return;
+      }
+
+      setErrorMessage(null);
+      if (user?.role === 'guest') {
+         messageToast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+         return;
+      }
+
+      localStorage.setItem("checkoutCartIds", JSON.stringify([]));
+      try {
+         const payload = {
+            productVariantId: chooseProduct.productVariant?.productVariantId,
+            quantity: chooseProduct.quantity,
+         };
+         const response = await api.post('/cartItem', payload);
+         if (response.status === 201) {
+
+            localStorage.setItem(
+               "checkoutCartIds",
+               JSON.stringify([response.data.data.cartId])
+            );
+            router.push('/checkout');
+            window.dispatchEvent(new Event("cart-updated"));
+         }
+      } catch (error) {
+         console.error('Lỗi khi mua ngay sản phẩm:', error);
+         messageToast.error('Mua ngay sản phẩm thất bại');
+      }
+   };
 
    useEffect(() => {
       fetchProductDetails();
@@ -143,7 +215,7 @@ function ProductDetailsPage() {
    return (
       <>
          <div className='bg-[#f9f9f9]'>
-            <div className="flex gap-7 w-[65%] mx-auto pt-20">
+            <div className="flex gap-7 w-[65%] mx-auto pt-20 items-start">
                {/* Bên trái */}
                <div className="flex gap-6 flex-1">
                   <div className="aspect-[4/5] overflow-hidden flex-1">
@@ -229,6 +301,11 @@ function ProductDetailsPage() {
                            })
                         }
                      </div>
+                     {errorMessage && (
+                        <div className="mt-3 bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-sm transition-all duration-300">
+                           {errorMessage}
+                        </div>
+                     )}
                   </div>
                   <div className="flex gap-2 mt-3 items-center">
                      <p className='text-xl font-normal underline cursor-pointer'>
@@ -239,16 +316,28 @@ function ProductDetailsPage() {
                   <div className='mt-3 flex items-center gap-4'>
                      <span className='text-xl font-normal'>Số lượng</span>
                      <div className='flex gap-1'>
-                        <Button onClick={() => handleQuantityChange('DECREASE')} style={{ border: 'none' }}><MinusOutlined /></Button>
+                        <Button onClick={() => handleQuantityChange('DECREASE')} style={{ border: 'none' }} disabled={chooseProduct.quantity === 1}><MinusOutlined /></Button>
                         <div className='rounded-full border-1 px-5 flex justify-center items-center min-w-[60px]'>
                            {chooseProduct.quantity}
                         </div>
-                        <Button onClick={() => handleQuantityChange('INCREASE')} style={{ border: 'none' }}><PlusOutlined /></Button>
+                        <Button onClick={() => handleQuantityChange('INCREASE')} style={{ border: 'none' }} disabled={chooseProduct.quantity === chooseProduct.productVariant?.quantity || !chooseProduct.sizeCode}><PlusOutlined /></Button>
                      </div>
                   </div>
                   <div className='flex gap-4 mt-3 items-center'>
-                     <Button style={{ fontWeight: 'normal', border: '1px solid' }} className="!px-5 !py-5 !text-black !hover:text-black !rounded-2xl !text-xl" size="large">Thêm vào giỏ</Button>
-                     <Button style={{ fontWeight: 'normal', backgroundColor: '#FAE3B6', border: 'none' }} className="!px-5 !py-5 !text-black !hover:text-black !rounded-xl !text-xl" size="large">Mua ngay</Button>
+                     <Button
+                        style={{ fontWeight: 'normal', border: '1px solid' }}
+                        className="!px-5 !py-5 !text-black !hover:text-black !rounded-2xl !text-xl"
+                        size="large"
+                        onClick={handleAddToCart}
+                     >Thêm vào giỏ
+                     </Button>
+                     <Button
+                        style={{ fontWeight: 'normal', backgroundColor: '#FAE3B6', border: 'none' }}
+                        className="!px-5 !py-5 !text-black !hover:text-black !rounded-xl !text-xl"
+                        size="large"
+                        onClick={handleBuyNow}
+                     >Mua ngay
+                     </Button>
                   </div>
                   <div className='border-[0.5px] border-[#e3ddbb] mt-5'></div>
                   <p className='my-5 font-normal text-lg line-clamp-5'>

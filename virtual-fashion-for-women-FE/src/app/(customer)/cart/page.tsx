@@ -2,8 +2,11 @@
 
 import { api } from "@/api/instance";
 import CartItems from "@/components/CartItem/CartItem";
+import { messageToast } from "@/helpers/toastHelper";
 import { CartItemDTO } from "@/models/CartItemDTO";
 import formatPrice from "@/utils/formatPrice";
+import { message } from "antd";
+import { debounce } from "lodash";
 import { ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -17,8 +20,10 @@ export default function CartContainer() {
         try {
             const res = await api.get('/cartItem');
             if (res.status == 200) {
+                localStorage.setItem("checkoutCartIds", JSON.stringify([]));
                 const data: CartItemDTO[] = res.data;
                 const mappedData = data.map(item => ({ ...item, selected: true }));
+                localStorage.setItem("checkoutCartIds", JSON.stringify(mappedData.map(i => i.cartId)));
                 setCartItems(mappedData);
             }
         } catch (error) { console.error("Fetch error:", error); }
@@ -26,6 +31,7 @@ export default function CartContainer() {
 
     useEffect(() => {
         fetchCartItem();
+
     }, []);
 
     const toggleItemSelection = (id: number) => {
@@ -58,32 +64,52 @@ export default function CartContainer() {
         });
     };
 
-    const updateQuantity = async (id: number, change: number) => {
-        const item = cartItems.find(i => i.cartId === id);
-        if (!item) return;
-
-        const payload = {
-            productVariantId: item.productVariantId,
-            quantity: item.quantityItem + change,
-        };
-
-        try {
-            const res = await api.put('/cartItem', payload);
-            if (res.status === 200) {
-                setCartItems(prev =>
-                    prev.map(i => (i.cartId === id ? { ...res.data, selected: i.selected } : i))
-                );
+    const debouncedUpdate = useCallback(
+        debounce(async (id: number, productVariantId: string, quantity: number) => {
+            try {
+                await api.put('/cartItem', {
+                    productVariantId,
+                    quantity
+                });
                 window.dispatchEvent(new Event("cart-updated"));
+            } catch (error) {
+                console.error(error);
             }
-        } catch (error) {
-            console.error(error);
-        }
-    };
+        }, 1500),
+        []
+    );
+
+
+    const updateQuantity = useCallback((id: number, change: number) => {
+        setCartItems(prev => {
+            const updatedItems = prev.map(item => {
+                if (item.cartId === id) {
+                    const newQuantity = Math.min(
+                        Math.max(item.quantityItem + change, 1),
+                        item.responseProductVariantDto.quantity
+                    );
+
+                    debouncedUpdate(id, item.productVariantId, newQuantity);
+
+                    return { ...item, quantityItem: newQuantity };
+                }
+                return item;
+            });
+
+            return updatedItems;
+        });
+    }, [debouncedUpdate]);
+
 
     const removeItem = async (id: number) => {
         const res = await api.delete(`/cartItem/${id}`);
         if (res.status === 200) {
+            const storedIds: number[] = JSON.parse(localStorage.getItem("checkoutCartIds") || "[]");
+            const updatedIds = storedIds.filter((cartId: number) => cartId !== id);
+            localStorage.setItem("checkoutCartIds", JSON.stringify(updatedIds));
+
             fetchCartItem();
+            messageToast.success("Xóa sản phẩm khỏi giỏ hàng thành công");
             window.dispatchEvent(new Event("cart-updated"));
         }
     };
@@ -129,8 +155,10 @@ export default function CartContainer() {
                     ) : (
                         cartItems.map(item => (
                             <CartItems
+                                key={item.cartId}
                                 item={item}
                                 onUpdateQuantity={updateQuantity}
+                                showDeleteButton={true}
                                 onRemoveItem={removeItem}
                                 showCheckbox
                                 onToggleSelection={toggleItemSelection}

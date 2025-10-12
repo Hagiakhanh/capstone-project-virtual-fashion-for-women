@@ -20,6 +20,23 @@ export async function GET(request: Request) {
 
 }
 
+export async function POST(request: Request) {
+    try {
+        const payload = await request.json();
+        const api = createApiInstance(request);
+        const responseBE = await api.post('/cart/add-item', payload)
+        if (responseBE.status === 200) {
+            const dataResponse = responseBE.data || [];
+            return NextResponse.json(dataResponse, { status: responseBE.data?.statusCode });
+        }
+    } catch (error) {
+        return NextResponse.json({
+            message: "Lỗi thêm vào giỏ hàng thất bại: " + error,
+        }, { status: 400 });
+    }
+}
+
+
 export async function PUT(request: Request) {
     try {
         const payload = await request.json();
