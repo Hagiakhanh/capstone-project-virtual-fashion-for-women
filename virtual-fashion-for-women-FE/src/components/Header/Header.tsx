@@ -9,8 +9,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { api } from '@/api/instance';
 import { CartItemDTO } from '@/models/CartItemDTO';
+import { useRouter } from 'next/navigation';
 
 function HeaderComponent() {
+   const router = useRouter();
    const { user } = useAuth();
    const [cartCount, setCartCount] = useState<number>(0);
    const [menuItems, setMenuItems] = useState([]);
@@ -45,10 +47,12 @@ function HeaderComponent() {
 
    useEffect(() => {
       if (user?.role === 'customer') {
+         console.log("Fetching cart total for user:");
          fetchCartTotal();
       }
+      console.log("Fetching cart total for user outside if:");
       fetchCategories();
-   }, []);
+   }, [user]);
 
    useEffect(() => {
       if (user?.role === 'customer') {
@@ -56,7 +60,7 @@ function HeaderComponent() {
          window.addEventListener("cart-updated", handleCartUpdated);
          return () => window.removeEventListener("cart-updated", handleCartUpdated);
       }
-   }, []);
+   }, [user]);
 
    return (
       <header className='bg-[#FAE3B6] border-b-1'>
@@ -99,9 +103,9 @@ function HeaderComponent() {
                </div>
                {user?.role == 'customer' ? (
                   <>
-                     <UserOutlined className='text-2xl cursor-pointer' onClick={() => (window.location.href = '/account')} />
+                     <UserOutlined className='text-2xl cursor-pointer' onClick={() => router.push('/account')} />
 
-                     <div className="relative cursor-pointer" onClick={() => (window.location.href = '/cart')}>
+                     <div className="relative cursor-pointer" onClick={() => router.push('/cart')}>
                         <ShoppingCartOutlined className="text-3xl" />
 
                         {cartCount > 0 && (

@@ -5,7 +5,7 @@ export interface ProductVariantDTO {
     sizeId?: number;
     variantName: string;
     currentPrice: number;
-    quantity?: number;
+    quantity: number;
     imageUrl: string;
     status: string;
     productWeight?: number;
