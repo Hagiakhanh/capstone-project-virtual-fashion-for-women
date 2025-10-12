@@ -56,14 +56,14 @@ public class CartController : ControllerBase
         try
         {
             
-            bool result = await _cartService.AddProductToCartAsync(requestAddProductToCart);
-            if (result)
+            var result = await _cartService.AddProductToCartAsync(requestAddProductToCart);
+            if (result != null)
             {
                 return Ok(new MessageModelWithData<object>()
                 {
                     StatusCode = StatusCodes.Status201Created,
                     Message =  "Product added to cart successfully." ,
-                    Data = null
+                    Data = result
                 });
             }
             return BadRequest(new MessageModelWithData<object>()

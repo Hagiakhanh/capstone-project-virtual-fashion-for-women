@@ -43,7 +43,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _productService = productService;
         }
 
-        public async Task<bool> AddProductToCartAsync(RequestAddProductToCart requestAddProductToCart)
+        public async Task<ResponseCartItem> AddProductToCartAsync(RequestAddProductToCart requestAddProductToCart)
         {
             int userId = _currentUserService.GetUserId();
 
@@ -78,7 +78,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             ProductVariantId = requestAddProductToCart.ProductVariantId,
                             Quantity = requestAddProductToCart.Quantity + existingCartItem.Quantity
                         });
-                    return responseCartItem != null;
+                    return responseCartItem;
                 }
                 else
                 {
@@ -95,7 +95,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                     await _cartRepository.InsertAsync(newCartItem);
                     await _unitOfWork.SaveChanges();
                     await _unitOfWork.CommitTransactionAsync();
-                    return true;
+                    
+                    return newCartItem.MapToResponseCartItem(new ResponseProductVariantDto());
                 }
             }
             catch (Exception ex)
