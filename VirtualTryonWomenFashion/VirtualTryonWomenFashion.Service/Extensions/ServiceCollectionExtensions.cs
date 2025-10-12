@@ -47,7 +47,9 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IUserInteractionRepository, UserInteractionRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IWishlistRepository, WishlistRepository>();
-
+            services.AddScoped<IOccasionPreferenceRepository, OccasionPreferenceRepository>();
+            services.AddScoped<ISkinToneRepository, SkinToneRepository>();
+            services.AddScoped<IStyleTypeRepository, StyleTypeRepository>();
             //Services
             services.AddScoped<IAiconversationService, AiconversationService>();
             services.AddScoped<ICartService, CartService>();
@@ -81,9 +83,10 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IShippingService, ShippingService>();
             services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<IGoogleMapService, GoogleMapService>();
+            services.AddScoped<IOccasionPreferenceService, OccasionPreferenceService>();
+            services.AddScoped<ISkinToneService, SkinToneService>();
+            services.AddScoped<IStyleTypeService, StyleTypeService>();
 
-           
-           
             return services;
         }
         public static IServiceCollection RegistAutoMapperService(this IServiceCollection services)
