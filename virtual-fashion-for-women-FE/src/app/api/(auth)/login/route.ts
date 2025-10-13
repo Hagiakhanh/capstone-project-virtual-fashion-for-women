@@ -25,7 +25,7 @@ export async function POST(request: Request) {
          nextResponse.cookies.set('token', jwtToken, {
             httpOnly: true,
             secure: false,
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: maxAge,
             path: '/',
          });
