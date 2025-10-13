@@ -8,18 +8,20 @@ namespace VirtualTryonWomenFashion.Service.DTO.Characteristic
 {
     public class RequestCreateUserCharacteristics
     {
-        public decimal? Weight { get; set; }
+        public double? Weight { get; set; }
 
         public int? Age { get; set; }
 
-        public decimal? Height { get; set; }
+        public double? Height { get; set; }
 
-        public string ColorPreference { get; set; }
+        public int? StyleTypeID { get; set; }
 
-        public string StyleType { get; set; }
+        public string StyleTypeNote { get; set; }
 
-        public string OccasionPreference { get; set; }
+        public int? OccasionPreferenceID { get; set; }
 
-        public string SkinTone { get; set; }
+        public string OccasionPreferenceNote { get; set; }
+        public int? SkinToneID { get; set; }
+        public string SkinToneNote { get; set; }
     }
 }

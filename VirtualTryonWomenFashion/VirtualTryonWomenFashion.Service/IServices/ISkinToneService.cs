@@ -9,10 +9,10 @@ using VirtualTryonWomenFashion.Service.Helpers;
 
 namespace VirtualTryonWomenFashion.Service.IServices
 {
-    public interface IStyleTypeService
+    public interface ISkinToneService
     {
-        public Task<List<StyleType>> GetAllAsync();
-        public Task<MessageModelWithData<StyleType>> CreateAsync(string name, IFormFile imageFile);
+        public Task<List<SkinTone>> GetAllAsync();
+        public Task<MessageModelWithData<SkinTone>> CreateAsync(string name, IFormFile imageFile);
 
     }
 }
