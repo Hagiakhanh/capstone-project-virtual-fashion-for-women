@@ -16,12 +16,16 @@ export function SelectPersonalStyle({
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setConversationId: React.Dispatch<React.SetStateAction<number | null>>;
 }) {
+  // KHÔNG auto chọn: bắt buộc người dùng chọn radio
   const [usePersonalStyle, setUsePersonalStyle] = useState<
     "personal" | "skip" | null
-  >("personal");
+  >(null);
 
   const [characteristicData, setCharacteristicData] =
     useState<Characteristic | null>(null);
+
+  // trạng thái để hiển thị lỗi validation (sau khi user cố submit mà chưa chọn)
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   const handleGetCharacteristic = async () => {
     try {
@@ -29,6 +33,7 @@ export function SelectPersonalStyle({
       const data = result.data?.data || result.data;
       if (data) {
         setCharacteristicData(data);
+        // Không tự set usePersonalStyle — người dùng phải chọn thủ công
       }
     } catch (error) {
       console.error("Lỗi khi lấy characteristic:", error);
@@ -36,6 +41,13 @@ export function SelectPersonalStyle({
   };
 
   const handleNextStep = async () => {
+    // validation client-side: đảm bảo đã chọn radio
+    if (!usePersonalStyle) {
+      setAttemptedSubmit(true);
+      messageToast.error("Vui lòng chọn một lựa chọn trước khi tiếp tục");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const characteristicId =
@@ -72,14 +84,16 @@ export function SelectPersonalStyle({
   }, []);
 
   return (
-    <div className="md:w-1/2 bg-white rounded-2xl mt-6 shadow-xl p-6 mx-auto space-y-6">
+    <div className="md:w-1/2 bg-white rounded-2xl mt-6 shadow-xl p-6 mx-auto space-y-6" >
       <h2 className="text-6xl w-[80%] mx-auto font-semibold text-center leading-relaxed from-[#FFAF37] to-[#996921] bg-gradient-to-r bg-clip-text text-transparent">
         Chọn phong cách cá nhân
       </h2>
 
       <div className="w-[80%] mx-auto">
         <Radio.Group
-          onChange={(e) => setUsePersonalStyle(e.target.value)}
+          onChange={(e) =>
+            setUsePersonalStyle(e.target.value as "personal" | "skip")
+          }
           value={usePersonalStyle}
         >
           {characteristicData && (
@@ -118,14 +132,22 @@ export function SelectPersonalStyle({
             </Card>
           </Radio>
         </Radio.Group>
+
+        {/* Thông báo validation nếu người dùng cố submit mà chưa chọn */}
+        {attemptedSubmit && !usePersonalStyle && (
+          <p className="text-red-600 mt-2 text-sm">Vui lòng chọn một lựa chọn.</p>
+        )}
       </div>
 
       <div className="flex justify-center pt-6">
         <AntButtonCommon
           colorType="primary"
           label="Xác nhận"
-          disabled={!usePersonalStyle}
+          // disabled nếu chưa chọn radio
+          disabled={usePersonalStyle === null|| attemptedSubmit}
           onClick={handleNextStep}
+          aria-disabled={usePersonalStyle === null}
+          
         />
       </div>
     </div>

@@ -15,13 +15,13 @@ export async function POST(request: Request) {
         status: responseBE.data?.statusCode,
       });
     }
-    return NextResponse.json("Tạo cuộc trò chuyện AI thất bại", {
+    return NextResponse.json("Gửi tin nhắn đến AI thất bại", {
       status: 400,
     });
   } catch (error) {
-    console.error("Tạo cuộc trò chuyện AI thất bại", error);
+    console.error("Gửi tin nhắn đến AI thất bại", error);
     return NextResponse.json(
-      { message: "Lỗi tạo cuộc trò chuyện AI thất bại" },
+      { message: "Gửi tin nhắn đến AI thất bại" },
       { status: 400 }
     );
   }
