@@ -52,6 +52,38 @@ namespace VirtualTryonWomenFashion.Service.Helpers
             queryBuilder.Append(".");
             return queryBuilder.ToString();
         }
+        public static string BuildAskQuestionCategoryHint(List<Category> listCategory)
+        {
+            if (listCategory == null || listCategory.Count == 0)
+                return "Hiện chỉ có các loại sản phẩm cơ bản để gợi ý.";
+
+            // Lấy tên các loại sản phẩm (đầm, váy, quần, áo thun, ...)
+            var itemNames = listCategory
+                .Select(c => c.CategoryName.Trim())
+                .Distinct()
+                .ToList();
+
+            // Ghép danh sách tự nhiên: "đầm, váy, quần và áo thun"
+            string joinedNames = string.Join(", ", itemNames.Take(itemNames.Count - 1))
+                + (itemNames.Count > 1 ? " và " + itemNames.Last() : itemNames.First());
+
+            var sb = new StringBuilder();
+            sb.AppendLine("**QUY TẮC HỎI GỢI Ý KHI `ask_question`:**");
+            sb.AppendLine($"- Chỉ được hỏi hoặc đề xuất trong phạm vi các loại sản phẩm hiện có: {joinedNames}.");
+            sb.AppendLine($"- Không được hỏi, gợi ý hoặc tạo ra các loại ngoài danh mục này (ví dụ: đồ bơi, bikini, tankini...).");
+            sb.AppendLine($"- Nếu người dùng nói đến loại sản phẩm không nằm trong danh mục, hãy lịch sự giải thích rằng hiện chỉ hỗ trợ {joinedNames} thôi.");
+            sb.AppendLine($"- Khi đặt câu hỏi, nên hỏi tự nhiên, ví dụ: “Bạn muốn tìm {joinedNames} ạ?”.");
+
+            sb.AppendLine("**QUY TẮC XÁC ĐỊNH `ItemType`:**");
+            sb.AppendLine($"- Khi tạo hoặc cập nhật `ItemType` trong `updatedStyle`, bạn chỉ được phép sử dụng các giá trị nằm trong danh mục hiện có: {joinedNames}.");
+            sb.AppendLine($"- Tuyệt đối KHÔNG được sinh ra các loại ngoài danh mục (ví dụ: đồ bơi, bikini, áo khoác, tankini...).");
+            sb.AppendLine($"- Nếu người dùng đề cập đến sản phẩm không nằm trong danh mục, bạn phải phản hồi lịch sự rằng hiện chỉ hỗ trợ {joinedNames}.");
+            sb.AppendLine($"- `ItemType` PHẢI khớp chính xác với `CategoryName` được cung cấp. Không tự ý viết khác chính tả hoặc biến thể (ví dụ: 'váy ngắn' phải quy về 'Váy').");
+            sb.AppendLine($"- Nếu người dùng chỉ muốn một loại, chỉ điền `ItemType` tương ứng đó. Nếu muốn phối nhiều loại, có thể thêm nhiều phần tử trong `components` theo danh mục này.");
+
+
+            return sb.ToString();
+        }
 
         public static string BuildConversationalStylistPrompt(List<Message>? history, SuggestRequirement currentStyle, List<Category> listCategory, string newMessage)
         {
@@ -103,6 +135,16 @@ namespace VirtualTryonWomenFashion.Service.Helpers
     - `ask_question`: Nếu bạn vẫn cần thêm thông tin (chưa có `FashionStyle` hoặc `ItemType`).
     -   `provide_suggestions`: Nếu bạn đã có đủ thông tin (`FashionStyle` VÀ `ItemType`). Hãy tạo kế hoạch phối đồ.
 3.  Bạn PHẢI trả lời bằng một đối tượng JSON duy nhất, có các trường: `action`, `updatedStyle`, `outfitName`, `components`, `responseText`.
+
+{BuildAskQuestionCategoryHint(listCategory)}
+QUY TẮC PHONG CÁCH VÀ NGỮ CẢNH (LOGIC RULES)
+- `FashionStyle` và `Occasion` phải phù hợp với nhau. Không được tạo các tổ hợp phi lý như 'đi biển công sở', 'thể thao dự tiệc', 'dạo phố văn phòng'.
+Nếu người dùng nhập hai thông tin xung đột, hãy ưu tiên `FashionStyle` và điều chỉnh `Occasion` sao cho hợp lý.
+ Một số quy tắc tương thích gợi ý:
+`FashionStyle`: 'công sở' → `Occasion` nên là 'đi làm', 'gặp khách hàng', 'phỏng vấn'...
+`FashionStyle`: 'đi biển' → `Occasion` nên là 'nghỉ dưỡng', 'du lịch', 'chụp ảnh biển'...
+ `FashionStyle`: 'dự tiệc' → `Occasion` nên là 'tiệc cưới', 'sự kiện', 'hẹn hò'...
+Nếu không chắc, hãy hỏi lại người dùng để làm rõ thay vì tự kết hợp.
 **QUY TẮC QUAN TRỌNG KHI `provide_suggestions`:**
 - Trong `responseText`, bạn có đưa gợi ý thì sẽ trả về một nội dung chung chung như váy không cụ thể về tên chính xác của sản phẩm và đặc tính của nó quá chỉ nói theo đúng hướng mà người dùng hướng tới về phong cách hay mục tiêu mặc.
 **LƯU Ý QUAN TRỌNG: Câu trả lời của bạn KHÔNG được chứa bất kỳ ký tự markdown nào, đặc biệt là dấu ```. Chỉ trả về đối tượng JSON thô.**
@@ -168,7 +210,7 @@ Your JSON output:
                 foreach (var pv in kv.Value)
                 {
                     groupedBuilder.AppendLine(
-                        $"- Id: {pv.ProductVariantId}, Tên: {pv.VariantName}, Màu: {pv.ProductColor.Color.ColorName}, Size: {pv.Size.SizeCode}, ImageUrl: {pv.ImageUrl}"
+                        $"- Id: {pv.ProductVariantId}, Tên: {pv.VariantName}, Màu: {pv.ProductColor.Color.ColorName}, Size: {pv.Size.SizeCode}, ImageUrl: {pv.ImageUrl}, ProductId: {pv.ProductColor.ProductId}"
                     );
                 }
                 groupedBuilder.AppendLine();
@@ -199,7 +241,7 @@ Nhiệm vụ của bạn: reasoning và chọn **một sản phẩm duy nhất t
 Một JSON duy nhất với các trường:
 {{
   ""selectedProducts"": [
-    {{ ""id"": ..., ""name"": ...,""ImageUrl"":..., ""reason"": ""{textSuggestion}: giải thích ngắn tại sao phù hợp"" }}
+    {{ ""id"": ..., ""name"": ...,""ImageUrl"":...,""productId"":..., ""reason"": ""{textSuggestion}: giải thích ngắn tại sao phù hợp"" }}
   ],
   ""responseText"": ""câu trả lời ngắn gọn, tự nhiên cho user""
 }}
