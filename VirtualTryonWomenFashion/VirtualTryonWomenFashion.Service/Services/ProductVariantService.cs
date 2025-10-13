@@ -58,18 +58,19 @@ namespace VirtualTryonWomenFashion.Service.Services
                 else
                 {
                     // Tạo size mới
-                    var sizeResult = await _sizeService.CreateAsync(request.SizeCode);
+                    //var sizeResult = await _sizeService.CreateAsync(request.SizeCode);
 
-                    if (sizeResult.StatusCode != StatusCodes.Status201Created)
-                        //throw new Exception("Không thể tạo size mới");
-                        return new MessageModelWithData<ProductVariant>
-                        {
-                            Message = "Tạo thất bại: Không thể tạo size lúc tạo variant",
-                            StatusCode = StatusCodes.Status400BadRequest
+                    //if (sizeResult.StatusCode != StatusCodes.Status201Created)
+                    //    //throw new Exception("Không thể tạo size mới");
+                    //    return new MessageModelWithData<ProductVariant>
+                    //    {
+                    //        Message = "Tạo thất bại: Không thể tạo size lúc tạo variant",
+                    //        StatusCode = StatusCodes.Status400BadRequest
 
-                        };
+                    //    };
 
-                    sizeId = sizeResult.Data.SizeId;
+                    //sizeId = sizeResult.Data.SizeId;
+                    throw new Exception("Size không thể tạo mới");
                 }
 
                 string productVariantId = $"{productColorId}-{sizeId}";
@@ -152,16 +153,18 @@ namespace VirtualTryonWomenFashion.Service.Services
                 else if (!string.IsNullOrEmpty(request.SizeCode))
                 {
                     // Nếu nhập size code mới => tạo size mới
-                    var sizeResult = await _sizeService.CreateAsync(request.SizeCode);
-                    if (sizeResult.StatusCode != StatusCodes.Status201Created)
-                    {
-                        return new MessageModelWithData<ProductVariant>
-                        {
-                            Message = "Cập nhật thất bại: Không thể tạo size mới",
-                            StatusCode = StatusCodes.Status400BadRequest
-                        };
-                    }
-                    sizeId = sizeResult.Data.SizeId;
+
+                    //var sizeResult = await _sizeService.CreateAsync(request.SizeCode);
+                    //if (sizeResult.StatusCode != StatusCodes.Status201Created)
+                    //{
+                    //    return new MessageModelWithData<ProductVariant>
+                    //    {
+                    //        Message = "Cập nhật thất bại: Không thể tạo size mới",
+                    //        StatusCode = StatusCodes.Status400BadRequest
+                    //    };
+                    //}
+                    throw new Exception("Size không thể tạo mới");
+                    //sizeId = sizeResult.Data.SizeId;
                 }
 
                 // Upload lại ảnh nếu có

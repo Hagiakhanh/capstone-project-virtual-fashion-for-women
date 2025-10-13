@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.Size;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -33,11 +34,11 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // POST api/<SizeController>
         [HttpPost]
-        public async Task<IActionResult> Post([FromForm] string sizeName)
+        public async Task<IActionResult> Post([FromForm] RequestCreateSizeModel sizeModel)
         {
             try
             {
-                MessageModelWithData<Size> result = await _sizeService.CreateAsync(sizeName);
+                MessageModelWithData<Size> result = await _sizeService.CreateAsync(sizeModel);
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)

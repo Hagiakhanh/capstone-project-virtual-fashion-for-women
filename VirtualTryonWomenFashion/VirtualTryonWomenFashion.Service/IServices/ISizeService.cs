@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.Size;
 using VirtualTryonWomenFashion.Service.Helpers;
 
 namespace VirtualTryonWomenFashion.Service.IServices
@@ -11,7 +12,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
     public interface ISizeService
     {
         public Task<List<Size>> GetAllAsync();
-        public Task<MessageModelWithData<Size>> CreateAsync(string sizeName);
+        public Task<MessageModelWithData<Size>> CreateAsync(RequestCreateSizeModel sizeModel);
         
     }
 }
