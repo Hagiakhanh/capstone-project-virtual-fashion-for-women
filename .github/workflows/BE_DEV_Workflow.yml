@@ -1,4 +1,4 @@
-name: BE build & deploy CI/CD Workflow
+name: BE Build & Deploy CI/CD Workflow
 
 on:
   push:
@@ -14,13 +14,52 @@ env:
   PUBLISH_OUTPUT_PATH: ${{ github.workspace }}/publish
 
 jobs:
-  build-and-deploy:
+  # -------------------------------
+  # 🔹 Job 1: Build & Test (for PR)
+  # -------------------------------
+  build:
+    name: Build & Test
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout source
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-dotnet@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore solution
+        working-directory: ./VirtualTryonWomenFashion
+        run: dotnet restore VirtualTryonWomenFashion.sln
+
+      - name: Build solution
+        working-directory: ./VirtualTryonWomenFashion
+        run: dotnet build VirtualTryonWomenFashion.sln --configuration Release --no-restore
+
+  # -------------------------------
+  # 🔹 Job 2: Deploy (after merge)
+  # -------------------------------
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'   # chỉ chạy khi merge vào branch BE
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
 
@@ -41,7 +80,7 @@ jobs:
         run: dotnet build VirtualTryonWomenFashion.sln --configuration Release --no-restore
 
       - name: Publish API project
-        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --no-build --output ${{ env.PUBLISH_OUTPUT_PATH }}
+        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --output ${{ env.PUBLISH_OUTPUT_PATH }}
 
       - name: Create Production appsettings.json
         run: echo '${{ secrets.APPSETTINGS_DEV_JSON }}' > ${{ env.PUBLISH_OUTPUT_PATH }}/appsettings.json
