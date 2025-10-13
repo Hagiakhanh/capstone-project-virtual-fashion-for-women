@@ -1,5 +1,5 @@
 import { CreateProductFormData } from "@/models/RequestCreateProduct";
-
+import { Product, UpdateProductColorFormData } from '@/models/RequestUpdateProduct';
 /**
  * Convert form data to FormData object for API submission
  */
@@ -329,3 +329,101 @@ export const getImagePreview = (file: File): Promise<string> => {
         reader.readAsDataURL(file);
     });
 };
+
+export function convertUpdateToFormData(
+    product: Product | null,
+    productName: string,
+    description: string,
+    price: number | '',
+    categoryId: number | '',
+    mainImageFile: File | null,
+    productColors: UpdateProductColorFormData[]
+    ): FormData {
+    const formData = new FormData();
+
+    // Add basic fields only if they changed
+    if (productName !== product?.productName) {
+        formData.append('ProductName', productName);
+    }
+    if (description !== product?.description) {
+        formData.append('Description', description);
+    }
+    if (price !== '' && price !== product?.price) {
+        formData.append('Price', price.toString());
+    }
+    if (categoryId !== '' && categoryId !== product?.categoryId) {
+        formData.append('CategoryId', categoryId.toString());
+    }
+    if (mainImageFile) {
+        formData.append('MainImageUrl', mainImageFile);
+    }
+
+    // Add product colors
+    productColors.forEach((pc, i) => {
+        if (pc.productColorId) {
+        formData.append(`ProductColor[${i}].ProductColorId`, pc.productColorId);
+        }
+
+        // Use existing color or create new one
+        if (pc.colorId && pc.colorId > 0) {
+        formData.append(`ProductColor[${i}].ColorId`, pc.colorId.toString());
+        } else if (pc.colorPrefix) {
+        formData.append(`ProductColor[${i}].ColorPrefix`, pc.colorPrefix);
+        if (pc.colorName) formData.append(`ProductColor[${i}].ColorName`, pc.colorName);
+        if (pc.hexCode) formData.append(`ProductColor[${i}].HexCode`, pc.hexCode);
+        }
+
+        if (pc.noBgImgUrl) {
+        formData.append(`ProductColor[${i}].NoBgImgUrl`, pc.noBgImgUrl);
+        }
+        if (pc.lensId) {
+        formData.append(`ProductColor[${i}].LensId`, pc.lensId);
+        }
+
+        // Add variant images
+        pc.productVariantImages?.forEach((img) => {
+        formData.append(`ProductColor[${i}].ProductVariantImages`, img);
+        });
+
+        // Add variants
+        pc.variants?.forEach((v, j) => {
+        if (v.productVariantId) {
+            formData.append(`ProductColor[${i}].Variants[${j}].ProductVariantId`, v.productVariantId);
+        }
+
+        // Use existing size or create new one
+        if (v.sizeId && v.sizeId > 0) {
+            formData.append(`ProductColor[${i}].Variants[${j}].SizeId`, v.sizeId.toString());
+        } else if (v.sizeCode) {
+            formData.append(`ProductColor[${i}].Variants[${j}].SizeCode`, v.sizeCode);
+        }
+
+        if (v.variantName) {
+            formData.append(`ProductColor[${i}].Variants[${j}].VariantName`, v.variantName);
+        }
+        if (v.quantity !== undefined) {
+            formData.append(`ProductColor[${i}].Variants[${j}].Quantity`, v.quantity.toString());
+        }
+        if (v.imageUrl) {
+            formData.append(`ProductColor[${i}].Variants[${j}].ImageUrl`, v.imageUrl);
+        }
+        if (v.status) {
+            formData.append(`ProductColor[${i}].Variants[${j}].Status`, v.status);
+        }
+        if (v.productWeight !== undefined) {
+            formData.append(`ProductColor[${i}].Variants[${j}].ProductWeight`, v.productWeight.toString());
+        }
+        if (v.productLength !== undefined) {
+            formData.append(`ProductColor[${i}].Variants[${j}].ProductLength`, v.productLength.toString());
+        }
+        if (v.productWidth !== undefined) {
+            formData.append(`ProductColor[${i}].Variants[${j}].ProductWidth`, v.productWidth.toString());
+        }
+        if (v.productHeight !== undefined) {
+            formData.append(`ProductColor[${i}].Variants[${j}].ProductHeight`, v.productHeight.toString());
+        }
+        });
+    });
+
+    return formData;
+}
