@@ -98,7 +98,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<List<Product>> SearchProductsWithIncludes(string productName, string productSort, PaginationParameter pagination)
+        public async Task<List<Product>> SearchProductsWithIncludes(string searchText, string productSort, PaginationParameter pagination)
         {
             var query = _context.Products
                 .Include(p => p.ProductColors)
@@ -114,9 +114,9 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .AsQueryable();
 
             // Filter theo ProductName
-            if (!string.IsNullOrEmpty(productName))
+            if (!string.IsNullOrEmpty(searchText))
             {
-                query = query.Where(p => p.ProductName.Contains(productName));
+                query = query.Where(p => p.ProductName.Contains(searchText) || p.Category.CategoryName.Contains(searchText));
             }
 
             // Sort

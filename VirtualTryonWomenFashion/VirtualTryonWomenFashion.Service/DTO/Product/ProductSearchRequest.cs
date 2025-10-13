@@ -9,7 +9,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.Product
 {
     public class ProductSearchRequest
     {
-        public string? ProductName { get; set; }
+        public string? SearchText { get; set; }
         public ProductSortEnum ProductSort {  get; set; }
     }
 }
