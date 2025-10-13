@@ -102,7 +102,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
 
         }
-        
+
         [HttpGet("customer/{orderId}")]
         public async Task<IActionResult> GetOrderDetailForCustomer([FromRoute] int orderId)
         {
@@ -126,6 +126,20 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 });
             }
 
+        }
+
+        [HttpPut("staff/{orderID}/ghn-status")]
+        public async Task<IActionResult> UpdateOrderStatusInGHNByCode(int orderID)
+        {
+            try
+            {
+                MessageModel result = await _orderService.UpdateOrderStatusInGHNByCode(orderID);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }
