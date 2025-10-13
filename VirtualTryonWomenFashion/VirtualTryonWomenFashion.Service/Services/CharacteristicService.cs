@@ -20,44 +20,133 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
         private readonly IMapper _mapper;
-        public CharacteristicService(ICharacteristicRepository characteristicRepository, IUnitOfWork unitOfWork, ICurrentUserService currentUserService, IMapper mapper)
+        private readonly ISkinToneRepository _skinToneRepository;
+        private readonly IStyleTypeRepository _styleTypeRepository;
+        private readonly IOccasionPreferenceRepository _OccasionPreferenceRepository;
+
+
+        public CharacteristicService(ICharacteristicRepository characteristicRepository, IUnitOfWork unitOfWork, ICurrentUserService currentUserService, IMapper mapper
+            , ISkinToneRepository skinToneRepository, IOccasionPreferenceRepository occasionPreferenceRepository, IStyleTypeRepository styleTypeRepository)
         {
             _characteristicRepository = characteristicRepository;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
             _mapper = mapper;
+            _skinToneRepository = skinToneRepository;
+            _styleTypeRepository = styleTypeRepository;
+            _OccasionPreferenceRepository = occasionPreferenceRepository;
         }
         public async Task<MessageModelWithData<Characteristic>> CreateCharacteristic(RequestCreateUserCharacteristics requestModel)
         {
             try
             {
                 int currentUserId = _currentUserService.GetUserId();
+
+                // Kiểm tra đã tồn tại đặc điểm người dùng hay chưa
                 int existedCharacteristic = _characteristicRepository.Count(x => x.UserId == currentUserId);
                 if (existedCharacteristic > 0)
                 {
                     return new MessageModelWithData<Characteristic>()
                     {
                         Data = null,
-                        Message = "Tạo thất bại - đã tồn tại phong cách thời trang của bạn.",
+                        Message = "Tạo thất bại - bạn đã có phong cách thời trang được lưu.",
                         StatusCode = StatusCodes.Status400BadRequest
                     };
                 }
-                Characteristic characteristicCreateModel = _mapper.Map<Characteristic>(requestModel);
-                characteristicCreateModel.UserId = currentUserId;
-                await _characteristicRepository.InsertAsync(characteristicCreateModel);
+
+                // Tạo đối tượng mới
+                var newCharacteristic = new Characteristic
+                {
+                    UserId = currentUserId,
+                    Weight = requestModel.Weight,
+                    Height = requestModel.Height,
+                    Age = requestModel.Age
+                };
+
+                // ---- Xử lý StyleType ----
+                if (requestModel.StyleTypeID == null)
+                {
+                    newCharacteristic.StyleTypeId = null;
+                    newCharacteristic.StyleTypeNote = requestModel.StyleTypeNote?.Trim();
+                }
+                else
+                {
+                    var styleType = await _styleTypeRepository.GetByIdAsync(requestModel.StyleTypeID);
+                    if (styleType != null)
+                    {
+                        newCharacteristic.StyleTypeId = requestModel.StyleTypeID;
+                        newCharacteristic.StyleTypeNote = "";
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Loại phong cách được chọn không hợp lệ");
+                    }
+                }
+
+                // ---- Xử lý OccasionPreference ----
+                if (requestModel.OccasionPreferenceID == null)
+                {
+                    newCharacteristic.OccasionPreferenceId = null;
+                    newCharacteristic.OccasionNote = requestModel.OccasionPreferenceNote?.Trim();
+                }
+                else
+                {
+                    var occasion = await _OccasionPreferenceRepository.GetByIdAsync(requestModel.OccasionPreferenceID);
+                    if (occasion != null)
+                    {
+                        newCharacteristic.OccasionPreferenceId = requestModel.OccasionPreferenceID;
+                        newCharacteristic.OccasionNote = "";
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Mục tiêu mặc đồ được chọn không hợp lệ");
+                    }
+                }
+
+                // ---- Xử lý SkinTone ----
+                if (requestModel.SkinToneID == null)
+                {
+                    newCharacteristic.SkinToneId = null;
+                    newCharacteristic.SkinToneNote = requestModel.SkinToneNote?.Trim();
+                }
+                else
+                {
+                    var skinTone = await _skinToneRepository.GetByIdAsync(requestModel.SkinToneID);
+                    if (skinTone != null)
+                    {
+                        newCharacteristic.SkinToneId = requestModel.SkinToneID;
+                        newCharacteristic.SkinToneNote = "";
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Tông da được chọn không hợp lệ");
+                    }
+                }
+
+                // ---- Lưu vào DB ----
+                await _characteristicRepository.InsertAsync(newCharacteristic);
                 await _unitOfWork.SaveChanges();
+
                 return new MessageModelWithData<Characteristic>()
                 {
-                    Data = characteristicCreateModel,
-                    Message = "Tạo thành công phong cách thời trang của cá nhân",
+                    Data = newCharacteristic,
+                    Message = "Tạo thành công phong cách thời trang cá nhân.",
                     StatusCode = StatusCodes.Status201Created
+                };
+            }
+            catch (ArgumentException ex)
+            {
+                return new MessageModelWithData<Characteristic>()
+                {
+                    Message = "Tạo phong cách thời trang thất bại - " + ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
                 };
             }
             catch (Exception ex)
             {
                 return new MessageModelWithData<Characteristic>()
                 {
-                    Message = "Tạo phong cách thời trang thất bại",
+                    Message = "Tạo phong cách thời trang thất bại.",
                     StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
@@ -78,27 +167,37 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (c.Weight.HasValue)
                 parts.Add($"nặng {c.Weight} kg");
 
-            if (!string.IsNullOrWhiteSpace(c.SkinTone))
-                parts.Add($"có làn da {c.SkinTone}");
+            // Làn da (SkinTone hoặc SkinToneNote)
+            string skinTone = c.SkinTone != null
+                ? c.SkinTone.SkinToneName
+                : c.SkinToneNote;
+
+            if (!string.IsNullOrWhiteSpace(skinTone))
+                parts.Add($"có làn da {skinTone.ToLower()}");
 
             var sentence = string.Join(", ", parts);
             if (!string.IsNullOrWhiteSpace(sentence))
                 sentence = sentence.TrimEnd(',') + ".";
 
-            // Thêm sở thích về màu sắc
-            if (!string.IsNullOrWhiteSpace(c.ColorPreference))
-                sentence += $" Tôi thích màu {c.ColorPreference}.";
+            // Phong cách (StyleType hoặc StyleTypeNote)
+            string styleType = c.StyleType != null
+                ? c.StyleType.StyleTypeName
+                : c.StyleTypeNote;
 
-            // Thêm phong cách
-            if (!string.IsNullOrWhiteSpace(c.StyleType))
-                sentence += $" Phong cách tôi yêu thích là {c.StyleType.ToLower()}.";
+            if (!string.IsNullOrWhiteSpace(styleType))
+                sentence += $" Phong cách tôi yêu thích là {styleType.ToLower()}.";
 
-            // Thêm dịp
-            if (!string.IsNullOrWhiteSpace(c.OccasionPreference))
-                sentence += $" Tôi thường chọn trang phục cho dịp {c.OccasionPreference.ToLower()}.";
+            // Dịp (OccasionPreference hoặc OccasionNote)
+            string occasion = c.OccasionPreference != null
+                ? c.OccasionPreference.OccasionPreferenceName
+                : c.OccasionNote;
+
+            if (!string.IsNullOrWhiteSpace(occasion))
+                sentence += $" Tôi thường chọn trang phục cho dịp {occasion.ToLower()}.";
 
             return sentence;
         }
+
 
         public async Task<Characteristic> GetCurrentCharacteristicForUser()
         {
@@ -179,10 +278,60 @@ namespace VirtualTryonWomenFashion.Service.Services
                 existingCharacteristic.Weight = requestModel.Weight;
                 existingCharacteristic.Height = requestModel.Height;
                 existingCharacteristic.Age = requestModel.Age;
-                existingCharacteristic.ColorPreference = requestModel.ColorPreference;
-                existingCharacteristic.StyleType = requestModel.StyleType;
-                existingCharacteristic.OccasionPreference = requestModel.OccasionPreference;
-                existingCharacteristic.SkinTone = requestModel.SkinTone;
+
+                if (requestModel.StyleTypeID == null)
+                {
+                    existingCharacteristic.StyleTypeNote = requestModel.StyleTypeNote.Trim();
+                }
+                else
+                {
+                    StyleType styleTypeSelected = await _styleTypeRepository.GetByIdAsync(requestModel.StyleTypeID);
+                    if (styleTypeSelected != null)
+                    {
+                        existingCharacteristic.StyleTypeId = requestModel.StyleTypeID;
+                        existingCharacteristic.StyleTypeNote = "";
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Loại phong cách được chọn không hợp lệ");
+                    }
+                }
+                if (requestModel.OccasionPreferenceID == null)
+                {
+                    existingCharacteristic.OccasionNote = requestModel.OccasionPreferenceNote.Trim();
+                }
+                else
+                {
+                    OccasionPreference occasionPreferenceSelected = await _OccasionPreferenceRepository.GetByIdAsync(requestModel.OccasionPreferenceID);
+                    if (occasionPreferenceSelected != null)
+                    {
+                        existingCharacteristic.OccasionPreferenceId = requestModel.OccasionPreferenceID;
+                        existingCharacteristic.OccasionNote = "";
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Mục tiêu mặc đồ được chọn không hợp lệ");
+                    }
+                }
+                if (requestModel.SkinToneID == null)
+                {
+                    existingCharacteristic.SkinToneNote = requestModel.SkinToneNote.Trim();
+                }
+                else
+                {
+
+                    SkinTone skinToneSelected = await _skinToneRepository.GetByIdAsync(requestModel.SkinToneID);
+                    if (skinToneSelected != null)
+                    {
+                        existingCharacteristic.SkinToneId = requestModel.SkinToneID;
+                        existingCharacteristic.SkinToneNote = "";
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Tông da được chọn không hợp lệ");
+                    }
+                }
+
 
                 await _characteristicRepository.UpdateAsync(existingCharacteristic);
                 await _unitOfWork.SaveChanges();
@@ -192,6 +341,14 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Data = existingCharacteristic,
                     Message = "Cập nhật phong cách thời trang thành công.",
                     StatusCode = StatusCodes.Status200OK
+                };
+            }
+            catch (ArgumentException ex)
+            {
+                return new MessageModelWithData<Characteristic>()
+                {
+                    Message = "Cập nhật phong cách thời trang thất bại - " + ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest,
                 };
             }
             catch (Exception ex)
