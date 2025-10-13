@@ -33,7 +33,7 @@ using VirtualTryonWomenFashion.Service.Utils;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
-    
+
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
@@ -68,12 +68,12 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 int userId = _currentUserService.GetUserId();
                 var cartItems = await _cartService.GetSelectedCartItemsAsync(requestCreateOrder.cartIds);
-               
-                int totalWeight = (int) Math.Ceiling(cartItems.Sum(item => item.ResponseProductVariantDto.ProductWeight * item.QuantityItem) ?? 0);
-                int totalHeight = (int) Math.Ceiling(cartItems.Sum(item => item.ResponseProductVariantDto.ProductHeight * item.QuantityItem) ?? 0);
-                int totalWidth = (int) Math.Ceiling(cartItems.Max(c => c.ResponseProductVariantDto.ProductWidth) ?? 0);
-                int totalLength = (int) Math.Ceiling(cartItems.Max(c => c.ResponseProductVariantDto.ProductLength) ?? 0);
-                
+
+                int totalWeight = (int)Math.Ceiling(cartItems.Sum(item => item.ResponseProductVariantDto.ProductWeight * item.QuantityItem) ?? 0);
+                int totalHeight = (int)Math.Ceiling(cartItems.Sum(item => item.ResponseProductVariantDto.ProductHeight * item.QuantityItem) ?? 0);
+                int totalWidth = (int)Math.Ceiling(cartItems.Max(c => c.ResponseProductVariantDto.ProductWidth) ?? 0);
+                int totalLength = (int)Math.Ceiling(cartItems.Max(c => c.ResponseProductVariantDto.ProductLength) ?? 0);
+
                 ResponseCheckout responseCheckout = await _cartService.CheckoutAsync(new RequestCheckout()
                 {
                     cartIds = requestCreateOrder.cartIds,
@@ -81,7 +81,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     DistrictName = requestCreateOrder.DistrictName,
                     WardName = requestCreateOrder.WardName,
                 });
-                
+
                 (int provinceId, int districtId, string wardCode) =
                     await _cartService.GetAddressCodeAsync(requestCreateOrder.ProvinceName, requestCreateOrder.DistrictName,
                         requestCreateOrder.WardName);
@@ -95,7 +95,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Note = requestCreateOrder.Note,
                     Status = OrderStatusEnum.Pending.ToString(),
                     Amount = responseCheckout.TotalPrice,
-                    PackageWeight =totalWeight,
+                    PackageWeight = totalWeight,
                     PackageHeight = totalHeight,
                     PackageWidth = totalWidth,
                     PackageLength = totalLength,
@@ -113,13 +113,13 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     var responseGetVariantPriceInfo = await _productVariantService.GetVariantPriceInfoAsync(item.ProductVariantId);
                     var productVariant = await _productVariantService.GetProductVariantById(item.ProductVariantId);
-                    
+
                     OrderDetail orderDetail = new OrderDetail()
                     {
                         OrderId = order.OrderId,
                         ProductVariantId = item.ProductVariantId,
                         Quantity = item.QuantityItem,
-                        PriceAtTime =(decimal)responseGetVariantPriceInfo.CurrentPrice,
+                        PriceAtTime = (decimal)responseGetVariantPriceInfo.CurrentPrice,
                         CampaignId = responseGetVariantPriceInfo.HasActiveCampaign ? responseGetVariantPriceInfo.SaleCampaignInfo.CampaignId : null
                     };
                     int newQuantity = (int)productVariant?.Quantity - item.QuantityItem;
@@ -127,14 +127,14 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         throw new Exception("Số lượng sản phẩm trong kho không đủ");
                     }
-                    await _productVariantService.UpdateAsync(item.ProductVariantId,new UpdateProductVariantRequest()
+                    await _productVariantService.UpdateAsync(item.ProductVariantId, new UpdateProductVariantRequest()
                     {
                         Quantity = productVariant?.Quantity - item.QuantityItem
-                    },true);
+                    }, true);
                     productVariantIds.Add(item.ProductVariantId);
                     orderDetails.Add(orderDetail);
                 }
-                
+
 
                 int result = await _orderDetailService.CreateOrderDetailAsync(orderDetails);
                 if (result > 0)
@@ -146,7 +146,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     throw new Exception("Create order failed");
                 }
-                              
+
             }
             catch (Exception ex)
             {
@@ -166,8 +166,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 throw new Exception("Order không tồn tại");
             }
-            
-            if(order.CustomerId != userId)
+
+            if (order.CustomerId != userId)
             {
                 throw new Exception("Bạn không có quyền xem đơn hàng này");
             }
@@ -190,7 +190,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 order.Status = status;
                 await _orderRepository.UpdateAsync(order);
                 return await _unitOfWork.SaveChanges();
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new Exception($"Lỗi khi cập nhật trạng thái của order: {ex.Message}");
             }
@@ -208,7 +209,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 order.PaymentUrl = paymentUrl;
                 await _orderRepository.UpdateAsync(order);
                 return await _unitOfWork.SaveChanges();
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new Exception($"Lỗi khi cập nhật link thanh toán của order: {ex.Message}");
             }
@@ -224,9 +226,9 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             int userId = _currentUserService.GetUserId();
             List<Order> rawOrders = await _orderRepository.GetAll(
-                filter: o=>o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString() && (o.Status == orderStatus|| string.IsNullOrEmpty(orderStatus)),
+                filter: o => o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString() && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)),
                 pagination: page,
-                orderBy: o=> o.OrderByDescending(x => x.CreatedAt),
+                orderBy: o => o.OrderByDescending(x => x.CreatedAt),
                 includes:
                 new Expression<Func<Order, object>>[]
                 {
@@ -241,16 +243,16 @@ namespace VirtualTryonWomenFashion.Service.Services
                 List<ResponseOrderDetail> responseOrderDetails = await _orderDetailService.GetOrderDetailsByOrderIdAsync(order.OrderId);
                 responseOrders.Add(order.MapToResponseOrder(responseOrderDetails));
             }
-            return  new Pagination<ResponseOrder>(responseOrders,totalRecords,page.PageIndex,page.PageSize);
+            return new Pagination<ResponseOrder>(responseOrders, totalRecords, page.PageIndex, page.PageSize);
         }
 
         public async Task HandleFailedOrders(List<Order> failedOrders)
         {
             var allOrderDetails =
                 await _orderDetailService.GetOrderDetailsByOrderIdsAsync(failedOrders.Select(o => o.OrderId).ToList());
-            
+
             var variantQuantityAdjustments = new Dictionary<string, int>();
-            
+
             // Số lượng item trong cart cần được khôi phục
             var cartRestores = new Dictionary<(int userId, string variantId), int>();
             foreach (var detail in allOrderDetails)
@@ -259,7 +261,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     variantQuantityAdjustments[detail.ProductVariantId] = 0;
 
                 variantQuantityAdjustments[detail.ProductVariantId] += detail.Quantity;
-                
+
                 var key = (detail.Order.CustomerId, detail.ProductVariantId);
                 if (!cartRestores.ContainsKey(key))
                     cartRestores[key] = 0;
@@ -275,16 +277,16 @@ namespace VirtualTryonWomenFashion.Service.Services
                     restore.Value
                 );
             }
-            
+
             await _productVariantService.UpdateQuantityAsync(variantQuantityAdjustments);
-            
+
             foreach (var order in failedOrders)
             {
                 order.Status = OrderStatusEnum.Failed.ToString();
                 order.PaymentUrl = null;
             }
 
-            if(failedOrders == null || failedOrders.Count == 0)
+            if (failedOrders == null || failedOrders.Count == 0)
                 return;
             await _orderRepository.UpdateRangeAsync(failedOrders);
             await _unitOfWork.SaveChanges();
@@ -299,12 +301,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                 order.PaymentUrl = null;
             }
 
-            if(successfulOrders == null || successfulOrders.Count == 0)
+            if (successfulOrders == null || successfulOrders.Count == 0)
                 return;
             await _orderRepository.UpdateRangeAsync(successfulOrders);
             await _unitOfWork.SaveChanges();
         }
-        
+
         public async Task<MessageModelWithData<List<ResponseOrderForStaff>>> GetAllOrderForStaff(PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease)
         {
             List<Order> listOrder = new();
@@ -506,6 +508,101 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _unitOfWork.RollbackTransactionAsync();
                 throw;
             }
+        }
+
+        public async Task<MessageModel> UpdateOrderStatusInGHNByCode(int orderId)
+        {
+            Order order = await _orderRepository.GetOrderByOrderID(orderId);
+            if (order == null)
+            {
+                throw new Exception("ID của đơn hàng không hợp lệ");
+            }
+            if (order.Status != OrderStatusEnum.Packed.ToString() && order.Status != OrderStatusEnum.Delivering.ToString())
+            {
+                throw new Exception($"Trạng thái hiện tại của đơn hàng là {order.Status}. Không thể cập nhật GHN");
+            }
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    GhnOrderStatusRequest ghnOrderStatusRequest = new GhnOrderStatusRequest
+                    {
+                        OrderCode = order.ShippingCode,
+                    };
+                    client.BaseAddress = new Uri(_ghnSettings.GHNBaseUrl);
+                    client.DefaultRequestHeaders.Add("Token", _ghnSettings.Token);
+                    var options = new JsonSerializerOptions
+                    {
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, // bỏ qua field null
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase // GHN dùng snake_case -> mình map lại bằng [JsonPropertyName]
+                    };
+                    var jsonContent = new StringContent(
+                                    JsonSerializer.Serialize(ghnOrderStatusRequest, options),
+                                    Encoding.UTF8,
+                                    "application/json");
+                    var response = await client.PostAsync("shiip/public-api/v2/shipping-order/detail", jsonContent);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var resultGHN = await response.Content.ReadAsStringAsync();
+                        GhnOrderStatusResponse responseGHNObject = JsonSerializer.Deserialize<GhnOrderStatusResponse>(resultGHN);
+                        if (responseGHNObject != null)
+                        {
+                            string oldStatus = order.Status;
+                            switch (responseGHNObject.Data.Status)
+                            {
+                                case "delivering":
+                                    {
+                                        order.Status = OrderStatusEnum.Delivering.ToString();
+                                        break;
+                                    }
+                                case "delivered":
+                                    {
+                                        order.Status = OrderStatusEnum.Delivered.ToString();
+                                        break;
+                                    }
+                            }
+                            if(oldStatus == order.Status)
+                            {
+                                await _unitOfWork.CommitTransactionAsync();
+                                return new MessageModel
+                                {
+                                    Message = $"Trạng thái đơn hàng vẫn là {order.Status}. Không có thay đổi nào được thực hiện.",
+                                    StatusCode = StatusCodes.Status200OK,
+                                };
+                            }
+                            await _orderRepository.UpdateAsync(order);
+                            int result = await _unitOfWork.SaveChanges();
+                            await _unitOfWork.CommitTransactionAsync();
+                            if (result > 0)
+                            {
+                                return new MessageModel
+                                {
+                                    Message = $"Cập nhật trạng thái đơn từ {oldStatus} thành {order.Status}",
+                                    StatusCode = StatusCodes.Status200OK,
+                                };
+                            }
+                        }
+                    }
+                }
+
+                return new MessageModel
+                {
+                    Message = "Cập nhật trạng thái thất bại",
+                    StatusCode = StatusCodes.Status400BadRequest
+                };
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
+        }
+
+        public Task UpdateAllOrderStatusInGHN()
+        {
+            throw new NotImplementedException();
         }
     }
 }
