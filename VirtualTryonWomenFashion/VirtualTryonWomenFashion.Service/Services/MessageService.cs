@@ -48,13 +48,16 @@ namespace VirtualTryonWomenFashion.Service.Services
             try
             {
                 int userId = _currentUserService.GetUserId();
-                Aiconversation conversationModel = await _aiConversationRepository.GetByIdAsync(userId);
+                Aiconversation conversationModel = await _aiConversationRepository.GetByIdAsync(conversationChatID);
                 ProductReasoningSelectionResponse reasoningResponse = new();
                 if (conversationModel == null)
                 {
                     throw new Exception("Cuộc trò chuyện AI không hợp lệ");
                 }
-
+                if (userId != conversationModel.UserId)
+                {
+                    throw new Exception("Bạn không có quyền để nhắn tin cho AI ở cuộc trò chuyện này");
+                }
                 List<Message> listHistoryMessage = await _messageRepository.GetAll(new Data.Commons.PaginationParameter { PageIndex = 1, PageSize = 15 },
                     x => x.AiconversationId == conversationChatID,
                     x => x.OrderByDescending(x => x.CreatedAt));
