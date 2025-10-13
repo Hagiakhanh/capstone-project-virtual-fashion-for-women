@@ -6,7 +6,7 @@ export interface AIConversationDTO {
   updatedAt: string | null;
   isDeleted: boolean;
   messages: ChatMessageItem[];
-  suggestedOutfits: SuggestedOutfitDTO[];
+  suggestedOutfits: ComponentSuggested[];
   user: UserDTO | null;
 }
 
@@ -34,3 +34,11 @@ export interface UserDTO {
   email?: string;
   avatarUrl?: string;
 }
+
+export type ComponentSuggested = {
+  id: string;
+  name: string;
+  ImageUrl: string;
+  reason: string;
+  productId: string;
+};
