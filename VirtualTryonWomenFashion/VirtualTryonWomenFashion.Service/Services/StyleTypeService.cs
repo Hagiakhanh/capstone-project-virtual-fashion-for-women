@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
@@ -25,9 +26,31 @@ namespace VirtualTryonWomenFashion.Service.Services
             _cloudinaryService = cloudinaryService;
         }
 
-        public Task<MessageModelWithData<StyleType>> CreateAsync(string name, IFormFile imageFile)
+        public async Task<MessageModelWithData<StyleType>> CreateAsync(string name, IFormFile imageFile)
         {
-            throw new NotImplementedException();
+            try
+            {
+                StyleType styleTypeCreate = new StyleType { StyleTypeName = name };
+                string imageUrl = await _cloudinaryService.UploadImageAsync(imageFile);
+                styleTypeCreate.ImageUrl = imageUrl;
+                await _styleTypeRepository.InsertAsync(styleTypeCreate);
+                await _unitOfWork.SaveChanges();
+                return new MessageModelWithData<StyleType>()
+                {
+                    Data = styleTypeCreate,
+                    Message = "Tạo loại phong cách thành công",
+                    StatusCode = StatusCodes.Status201Created,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new MessageModelWithData<StyleType>()
+                {
+                    Data = null,
+                    Message = "Tạo loại phong cách thất bại",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+            }
         }
 
         public async Task<List<StyleType>> GetAllAsync()

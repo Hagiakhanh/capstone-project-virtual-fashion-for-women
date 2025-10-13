@@ -22,12 +22,34 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             _skinToneRepository = skinToneRepository;
             _unitOfWork = unitOfWork;
-            _cloudinaryService= cloudinaryService;
+            _cloudinaryService = cloudinaryService;
         }
 
-        public Task<MessageModelWithData<SkinTone>> CreateAsync(string name, IFormFile imageFile)
+        public async Task<MessageModelWithData<SkinTone>> CreateAsync(string name, IFormFile imageFile)
         {
-            throw new NotImplementedException();
+            try
+            {
+                SkinTone skinToneCreate = new SkinTone { SkinToneName = name };
+                string imageUrl = await _cloudinaryService.UploadImageAsync(imageFile);
+                skinToneCreate.ImageUrl = imageUrl;
+                await _skinToneRepository.InsertAsync(skinToneCreate);
+                await _unitOfWork.SaveChanges();
+                return new MessageModelWithData<SkinTone>()
+                {
+                    Data = skinToneCreate,
+                    Message = "Tạo tông da cá nhân thành công",
+                    StatusCode = StatusCodes.Status201Created,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new MessageModelWithData<SkinTone>()
+                {
+                    Data = null,
+                    Message = "Tạo tông da cá nhân thất bại",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+            }
         }
 
         public async Task<List<SkinTone>> GetAllAsync()

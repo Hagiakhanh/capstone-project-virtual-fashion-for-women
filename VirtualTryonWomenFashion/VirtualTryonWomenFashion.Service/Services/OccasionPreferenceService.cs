@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
@@ -25,9 +26,31 @@ namespace VirtualTryonWomenFashion.Service.Services
             _cloudinaryService = cloudinaryService;
         }
 
-        public Task<MessageModelWithData<OccasionPreference>> CreateAsync(string name, IFormFile imageFile)
+        public async Task<MessageModelWithData<OccasionPreference>> CreateAsync(string name, IFormFile imageFile)
         {
-            throw new NotImplementedException();
+            try
+            {
+                OccasionPreference occasionPreferenceCreate = new OccasionPreference { OccasionPreferenceName = name };
+                string imageUrl = await _cloudinaryService.UploadImageAsync(imageFile);
+                occasionPreferenceCreate.ImageUrl = imageUrl;
+                await _occasionPreferenceRepository.InsertAsync(occasionPreferenceCreate);
+                await _unitOfWork.SaveChanges();
+                return new MessageModelWithData<OccasionPreference>()
+                {
+                    Data = occasionPreferenceCreate,
+                    Message = "Tạo mục đích cá nhân thành công",
+                    StatusCode = StatusCodes.Status201Created,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new MessageModelWithData<OccasionPreference>()
+                {
+                    Data = null,
+                    Message = "Tạo mục đích cá nhân thất bại",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+            }
         }
 
         public async Task<List<OccasionPreference>> GetAllAsync()
