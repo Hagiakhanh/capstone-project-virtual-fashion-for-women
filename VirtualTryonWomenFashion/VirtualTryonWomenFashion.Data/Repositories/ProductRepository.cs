@@ -98,7 +98,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<List<Product>> SearchProductsWithIncludes(string searchText, string productSort, PaginationParameter pagination)
+        public async Task<List<Product>> SearchProductsWithIncludes(string productName, string categoryName, string productSort, PaginationParameter pagination)
         {
             var query = _context.Products
                 .Include(p => p.ProductColors)
@@ -114,9 +114,16 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .AsQueryable();
 
             // Filter theo ProductName
-            if (!string.IsNullOrEmpty(searchText))
+            if (!string.IsNullOrEmpty(productName))
             {
-                query = query.Where(p => p.ProductName.Contains(searchText) || p.Category.CategoryName.Contains(searchText));
+                query = query.Where(p => p.ProductName.Contains(productName));
+            }
+
+            // Filter theo CategoryName
+            if (!string.IsNullOrEmpty(categoryName))
+            {
+                query = query.Where(p => p.Category != null &&
+                                         p.Category.CategoryName.Contains(categoryName));
             }
 
             // Sort
@@ -140,7 +147,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<int> CountSearchProductsAsync(string productName)
+        public async Task<int> CountSearchProductsAsync(string productName, string categoryName)
         {
             var query = _context.Products.Where(p => p.IsDeleted != true);
 
@@ -148,6 +155,12 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             {
                 query = query.Where(p => p.ProductName.Contains(productName));
             }
+            if (!string.IsNullOrEmpty(categoryName))
+            {
+                query = query.Where(p => p.Category != null &&
+                                         p.Category.CategoryName.Contains(categoryName));
+            }
+
 
             return await query.CountAsync();
         }
