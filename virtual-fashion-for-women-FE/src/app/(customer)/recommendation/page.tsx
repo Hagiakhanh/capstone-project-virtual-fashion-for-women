@@ -10,7 +10,7 @@ export default function RecommendationPage() {
     number | null
   >(null);
   return (
-    <div className=" bg-gradient-to-b from-[#FAE3B6] via-[#FAE3B6] via-60% to-white">
+    <div className=" bg-gradient-to-b from-[#FAE3B6] via-[#FAE3B6] via-60% to-white pt-10 mb-40">
       <div className="md:w-1/2 pt-4 mx-auto">
         <AIStateStepComponent currentStep={currentStep} />
       </div>

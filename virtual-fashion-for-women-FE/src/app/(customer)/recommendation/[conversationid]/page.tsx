@@ -9,7 +9,7 @@ interface AIConversationDetailPageProps {
   params: { conversationid: string };
 }
 
-export default  function AIConversationDetailPage({
+export default function AIConversationDetailPage({
   params,
 }: AIConversationDetailPageProps) {
   const resolvedParams = params; 
