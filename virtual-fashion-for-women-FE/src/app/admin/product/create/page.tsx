@@ -11,6 +11,7 @@ import {
     Category,
     Color,
     Size,
+    Tag,
 } from "@/models/RequestCreateProduct";
 import {
     convertToFormData,
@@ -19,6 +20,7 @@ import {
 } from "@/utils/productHelpers";
 import BasicInfoSection from "@/components/ManageProduct/BasicInfoSection";
 import ColorSection from "@/components/ManageProduct/ColorSection";
+import TagsSection from "@/components/ManageProduct/TagsSection";
 import ErrorDisplay from "@/components/ManageProduct/ErrorDisplay";
 import LoadingSpinner from "@/components/ManageProduct/LoadingSpinner";
 
@@ -30,6 +32,8 @@ export default function CreateProductPage() {
         mainImageUrl: null,
         categoryId: 0,
         productColor: [],
+        existingTagIds: [],
+        newTags: [],
     });
 
     const [loading, setLoading] = useState(false);
@@ -39,24 +43,28 @@ export default function CreateProductPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [colors, setColors] = useState<Color[]>([]);
     const [sizes, setSizes] = useState<Size[]>([]);
+    const [tags, setTags] = useState<Tag[]>([]);
     const [loadingMasterData, setLoadingMasterData] = useState(true);
 
     useEffect(() => {
         const fetchMasterData = async () => {
             try {
-                const [categoriesRes, colorsRes, sizesRes] = await Promise.all([
+                const [categoriesRes, colorsRes, sizesRes, tagsRes] = await Promise.all([
                     api.get("/category"),
                     api.get("/color"),
                     api.get("/size"),
+                    api.get("/tag"),
                 ]);
 
                 setCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
                 setColors(Array.isArray(colorsRes.data) ? colorsRes.data : []);
                 setSizes(Array.isArray(sizesRes.data) ? sizesRes.data : []);
+                setTags(Array.isArray(tagsRes.data) ? tagsRes.data : []);
 
                 console.log("Categories:", categoriesRes.data);
                 console.log("Colors:", colorsRes.data);
                 console.log("Sizes:", sizesRes.data);
+                console.log("Tags:", tagsRes.data);
             } catch (error) {
                 console.error("Error fetching master data:", error);
             } finally {
@@ -69,6 +77,39 @@ export default function CreateProductPage() {
 
     const updateBasicInfo = (field: string, value: any) => {
         setFormData({ ...formData, [field]: value });
+    };
+
+    // Tag handlers
+    const handleSelectTag = (tagId: number) => {
+        if (!formData.existingTagIds.includes(tagId)) {
+            setFormData({
+                ...formData,
+                existingTagIds: [...formData.existingTagIds, tagId],
+            });
+        }
+    };
+
+    const handleRemoveTag = (tagId: number) => {
+        setFormData({
+            ...formData,
+            existingTagIds: formData.existingTagIds.filter((id) => id !== tagId),
+        });
+    };
+
+    const handleAddNewTag = (tagName: string) => {
+        if (!formData.newTags.includes(tagName)) {
+            setFormData({
+                ...formData,
+                newTags: [...formData.newTags, tagName],
+            });
+        }
+    };
+
+    const handleRemoveNewTag = (index: number) => {
+        setFormData({
+            ...formData,
+            newTags: formData.newTags.filter((_, i) => i !== index),
+        });
     };
 
     const addColor = () => {
@@ -126,10 +167,10 @@ export default function CreateProductPage() {
             sizeCode: "",
             variantName: "",
             quantity: 0,
-            productWeight: 0,
-            productLength: 0,
-            productWidth: 0,
-            productHeight: 0,
+            productWeight: 0.1,
+            productLength: 15,
+            productWidth: 10,
+            productHeight: 0.2,
             imageUrl: null,
         });
         setFormData({ ...formData, productColor: updatedColors });
@@ -228,6 +269,8 @@ export default function CreateProductPage() {
                     mainImageUrl: null,
                     categoryId: 0,
                     productColor: [],
+                    existingTagIds: [],
+                    newTags: [],
                 });
             } else {
                 setMessage(`Lỗi: ${response.data.message || "Không thể tạo sản phẩm"}`);
@@ -263,6 +306,16 @@ export default function CreateProductPage() {
                         categories={categories}
                         onUpdate={updateBasicInfo}
                         onFileChange={(file) => updateBasicInfo("mainImageUrl", file)}
+                    />
+
+                    <TagsSection
+                        availableTags={tags}
+                        selectedTagIds={formData.existingTagIds}
+                        newTags={formData.newTags}
+                        onSelectTag={handleSelectTag}
+                        onRemoveTag={handleRemoveTag}
+                        onAddNewTag={handleAddNewTag}
+                        onRemoveNewTag={handleRemoveNewTag}
                     />
 
                     <div>

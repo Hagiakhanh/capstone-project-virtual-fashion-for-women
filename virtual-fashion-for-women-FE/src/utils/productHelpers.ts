@@ -1,5 +1,5 @@
 import { CreateProductFormData } from "@/models/RequestCreateProduct";
-import { Product, UpdateProductColorFormData } from '@/models/RequestUpdateProduct';
+import { Product, UpdateProductColorFormData, TagDto } from '@/models/RequestUpdateProduct';
 /**
  * Convert form data to FormData object for API submission
  */
@@ -14,6 +14,20 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
 
     if (formData.mainImageUrl) {
         formDataToSend.append("MainImageUrl", formData.mainImageUrl);
+    }
+
+    // Tags - Existing tags
+    if (formData.existingTagIds && formData.existingTagIds.length > 0) {
+        formData.existingTagIds.forEach((tagId, index) => {
+            formDataToSend.append(`ExistingTagIds[${index}]`, tagId.toString());
+        });
+    }
+
+    // Tags - New tags
+    if (formData.newTags && formData.newTags.length > 0) {
+        formData.newTags.forEach((tagName, index) => {
+            formDataToSend.append(`NewTags[${index}]`, tagName.trim());
+        });
     }
 
     // Product colors and variants
@@ -131,6 +145,15 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
 
         if (formData.categoryId === 0) {
             errors.push("Vui lòng chọn danh mục");
+        }
+
+        // Validate new tags
+        if (formData.newTags && formData.newTags.length > 0) {
+            formData.newTags.forEach((tag, index) => {
+                if (!tag.trim()) {
+                    errors.push(`Tag mới ${index + 1}: Tên tag không được để trống`);
+                }
+            });
         }
 
         formData.productColor.forEach((color, index) => {
@@ -337,7 +360,8 @@ export function convertUpdateToFormData(
     price: number | '',
     categoryId: number | '',
     mainImageFile: File | null,
-    productColors: UpdateProductColorFormData[]
+    productColors: UpdateProductColorFormData[],
+    tags: TagDto[]
     ): FormData {
     const formData = new FormData();
 
@@ -356,6 +380,18 @@ export function convertUpdateToFormData(
     }
     if (mainImageFile) {
         formData.append('MainImageUrl', mainImageFile);
+    }
+
+    // Add tags
+    if (tags && tags.length > 0) {
+        tags.forEach((tag, index) => {
+            if (tag.tagId !== undefined && tag.tagId !== null) {
+                // Tag có sẵn
+                formData.append(`Tags[${index}].TagId`, tag.tagId.toString());
+            }
+            // Luôn append TagName (cho cả tag có sẵn và tag mới)
+            formData.append(`Tags[${index}].TagName`, tag.tagName);
+        });
     }
 
     // Add product colors
