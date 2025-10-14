@@ -224,7 +224,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             int userId = _currentUserService.GetUserId();
             List<Order> rawOrders = await _orderRepository.GetAll(
-                filter: o=>o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString() && (o.Status == orderStatus|| string.IsNullOrEmpty(orderStatus)),
+                filter: o=>o.CustomerId == userId && (o.Status == orderStatus|| string.IsNullOrEmpty(orderStatus)),
                 pagination: page,
                 orderBy: o=> o.OrderByDescending(x => x.CreatedAt),
                 includes:
@@ -234,7 +234,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     o => o.Transactions
                 }
                 );
-            int totalRecords = _orderRepository.Count(o => o.CustomerId == userId && o.Status != OrderStatusEnum.Failed.ToString());
+            int totalRecords = _orderRepository.Count(o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)));
             List<ResponseOrder> responseOrders = new List<ResponseOrder>();
             foreach (Order order in rawOrders)
             {
