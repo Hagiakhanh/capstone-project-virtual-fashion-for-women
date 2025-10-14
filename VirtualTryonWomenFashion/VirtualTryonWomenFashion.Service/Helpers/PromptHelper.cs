@@ -139,6 +139,9 @@ namespace VirtualTryonWomenFashion.Service.Helpers
 {BuildAskQuestionCategoryHint(listCategory)}
 QUY TẮC PHONG CÁCH VÀ NGỮ CẢNH (LOGIC RULES)
 - `FashionStyle` và `Occasion` phải phù hợp với nhau. Không được tạo các tổ hợp phi lý như 'đi biển công sở', 'thể thao dự tiệc', 'dạo phố văn phòng'.
+- Khi hỏi về `FashionStyle`, chỉ được gợi ý trong phạm vi các phong cách hợp lệ (ví dụ: công sở, dạo phố, đi biển, dự tiệc...). 
+- Không được tự thêm hoặc mở rộng sang kiểu dáng sản phẩm như maxi, suông, chữ A, bodycon...
+
 Nếu người dùng nhập hai thông tin xung đột, hãy ưu tiên `FashionStyle` và điều chỉnh `Occasion` sao cho hợp lý.
  Một số quy tắc tương thích gợi ý:
 `FashionStyle`: 'công sở' → `Occasion` nên là 'đi làm', 'gặp khách hàng', 'phỏng vấn'...
