@@ -60,7 +60,12 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                             ImageUrl = pi.ImageUrl
                         }).ToList() ?? new List<ResponseProductImageDto>()
                     }).ToList() ?? new List<ResponseProductVariantDto>()
-                }).ToList() ?? new List<ResponseProductColorDto>()
+                }).ToList() ?? new List<ResponseProductColorDto>(),
+                Tags = product.Tags?.Select(tag => new TagDto
+                {
+                    TagId = tag.TagId,
+                    TagName = tag.TagName
+                }).ToList() ?? new List<TagDto>()
             };
         }
     }

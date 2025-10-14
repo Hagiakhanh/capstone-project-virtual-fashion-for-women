@@ -50,6 +50,7 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IOccasionPreferenceRepository, OccasionPreferenceRepository>();
             services.AddScoped<ISkinToneRepository, SkinToneRepository>();
             services.AddScoped<IStyleTypeRepository, StyleTypeRepository>();
+            services.AddScoped<ITagRepository, TagRepository>();
             //Services
             services.AddScoped<IAiconversationService, AiconversationService>();
             services.AddScoped<ICartService, CartService>();
@@ -86,6 +87,7 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IOccasionPreferenceService, OccasionPreferenceService>();
             services.AddScoped<ISkinToneService, SkinToneService>();
             services.AddScoped<IStyleTypeService, StyleTypeService>();
+            services.AddScoped<ITagService, TagService>();
 
             return services;
         }

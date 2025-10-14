@@ -21,7 +21,9 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 .ForMember(dest => dest.CategoryId,
                            opt => opt.MapFrom(src => src.CategoryId ?? 0)) // nullable -> int
                 .ForMember(dest => dest.PriceAtTime,
-                           opt => opt.Ignore()); // set riêng sau khi lấy sale campaign
+                           opt => opt.Ignore())
+                .ForMember(dest => dest.Tags,
+                       opt => opt.MapFrom(src => src.Tags)); // set riêng sau khi lấy sale campaign
 
             // Product -> ResponseProductWithListColorDto
             CreateMap<Product, ResponseProductWithListColorAndSizeDto>()
@@ -47,6 +49,8 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                            opt => opt.MapFrom(src => src.ProductColors))
                 .ForMember(dest => dest.PriceAtTime,
                            opt => opt.Ignore()); // set riêng sau khi lấy sale campaign
+
+            CreateMap<Tag, TagDto>();
 
             // ProductColor -> ResponseProductColorDto
             CreateMap<ProductColor, ResponseProductColorDto>();
