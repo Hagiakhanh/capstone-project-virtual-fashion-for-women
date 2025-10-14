@@ -22,6 +22,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.Product
         public DateTime CreatedAt { get; set; }
         public int CategoryId { get; set; }
         public List<ResponseProductColorDto> ProductColors { get; set; } = new List<ResponseProductColorDto>();
+        public List<TagDto> Tags { get; set; } = new List<TagDto>(); 
     }
 
     public class ResponseProductWithListColorAndSizeDto
@@ -39,5 +40,11 @@ namespace VirtualTryonWomenFashion.Service.DTO.Product
         public List<ResponseColorDto> Color { get; set; }
         public List<ResponseSizeDto> SizeDto { get; set; }
         public List<ResponProductColorWithListSize> ProductColors { get; set; } = new List<ResponProductColorWithListSize>();
+    }
+
+    public class TagDto
+    {
+        public int? TagId { get; set; }
+        public string TagName { get; set; }
     }
 }

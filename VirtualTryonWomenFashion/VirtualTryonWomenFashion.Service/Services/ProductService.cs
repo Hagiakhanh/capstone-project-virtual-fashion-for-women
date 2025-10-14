@@ -43,6 +43,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICurrentUserService _currentUserService;
         private readonly IWishlistRepository _wishlistRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ITagRepository _tagRepository;
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             ICloudinaryService cloudinaryService,
@@ -58,7 +59,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             ICategoryRepository categoryRepository,
             ICurrentUserService currentUserService,
             IWishlistRepository wishlistRepository,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            ITagRepository tagRepository)
         {
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
@@ -76,6 +78,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _currentUserService = currentUserService;
             _wishlistRepository = wishlistRepository;
             _httpContextAccessor = httpContextAccessor;
+            _tagRepository = tagRepository;
         }
 
         public static string GenerateFixedLengthString(int length)
@@ -395,6 +398,49 @@ namespace VirtualTryonWomenFashion.Service.Services
                 };
                 await _productRepository.InsertAsync(product);
 
+                // Xử lý Tag (chọn hoặc tạo mới)
+                // Thêm tag cũ
+                if (request.ExistingTagIds != null && request.ExistingTagIds.Any())
+                {
+                    foreach (var tagId in request.ExistingTagIds)
+                    {
+                        var existingTag = await _tagRepository.GetByIdAsync(tagId);
+                        if (existingTag != null)
+                        {
+                            product.Tags.Add(existingTag);
+                        }
+                    }
+                }
+
+                // Thêm tag mới
+                if (request.NewTags != null && request.NewTags.Any())
+                {
+                    foreach (var tagName in request.NewTags)
+                    {
+                        var normalizedTagName = tagName.Trim().ToLower();
+
+                        // Kiểm tra tag đã tồn tại chưa
+                        var existingTag = await _tagRepository.GetFirstOrDefaultAsync(
+                            t => t.TagName.ToLower() == normalizedTagName
+                        );
+
+                        Tag tagToUse;
+                        if (existingTag != null)
+                        {
+                            tagToUse = existingTag;
+                        }
+                        else
+                        {
+                            tagToUse = new Tag { TagName = tagName.Trim() };
+                            await _tagRepository.InsertAsync(tagToUse);
+                            await _unitOfWork.SaveChanges(); // cần Save để có TagId
+                        }
+
+                        // Thêm vào bảng trung gian ProductTag
+                        product.Tags.Add(tagToUse);
+                    }
+                }
+
                 // 2. Tạo ProductColors + Images + Variants
                 foreach (var productColorRequest in request.ProductColor)
                 {
@@ -437,7 +483,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     // 2.2. Tạo ProductColor
                     string productColorId = $"{product.ProductId}-{colorPrefix}";
 
-                    string noBgImageUrl = await _cloudinaryService.UploadImageAsync(productColorRequest.NoBgImgUrl);
+                    string noBgImageUrl = await _cloudinaryService.UploadImageAsync(productColorRequest.NoBgImgUrl) ?? string.Empty;
 
                     var productColor = new ProductColor
                     {
@@ -475,7 +521,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                             // Tạo ProductVariant
                             string productVariantId = $"{productColorId}-{sizeCode}";
-                            var imageUrl = await _cloudinaryService.UploadImageAsync(variantRequest.ImageUrl);
+                            var imageUrl = await _cloudinaryService.UploadImageAsync(variantRequest.ImageUrl) ?? string.Empty;
 
                             var variant = new ProductVariant
                             {
@@ -501,6 +547,14 @@ namespace VirtualTryonWomenFashion.Service.Services
                 var result = await _unitOfWork.SaveChanges();
 
                 var productWithRelations = await _productRepository.GetProductByIdAsync(product.ProductId);
+
+                // Lấy danh sách tags của product
+                var productTags = await _tagRepository.GetTagsByProductIdAsync(product.ProductId);
+
+                string tagsText = productTags != null && productTags.Any()
+                    ? string.Join(", ", productTags.Select(t => t.TagName))
+                    : "Không có thẻ gắn";
+
                 // Sau khi SaveChanges xong, ta đã có đầy đủ ID cho product, productColor, variant
                 foreach (var productColor in productWithRelations.ProductColors)
                 {
@@ -508,13 +562,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         // Lấy category và bodyPart
                         var category = await _categoryRepository.GetByIdAsync(product.CategoryId.Value);
-                        //string bodyPartText = category.BodyPart switch
-                        //{
-                        //    "Upper body" => "Thân trên",
-                        //    "Lower body" => "Thân dưới",
-                        //    "Full body" => "Nguyên bộ",
-                        //    _ => "Không xác định"
-                        //};
 
                         // Ghép text cho embedding
                         var textParts = new List<string>
@@ -523,6 +570,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             $"Mô tả: {product.Description}",
                             $"Danh mục: {category.CategoryName}",
                             $"Có thể mặc: {category.BodyPart}",
+                            $"Tag: {tagsText}",
                             $"Màu sắc: {productColor.Color?.ColorName ?? "Không rõ"}",
                             $"Mã màu: {productColor.Color?.ColorPrefix ?? ""} ({productColor.Color?.HexCode ?? ""})",
                             $"Size: {variant.Size?.SizeCode ?? "Free size"}",
@@ -542,6 +590,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             { "categoryName", category.CategoryName },
                             { "itemType", category.CategoryName },
                             { "bodyPart", category.BodyPart },
+                            { "tags", tagsText ?? ""},
                             { "productColorId", productColor.ProductColorId },
                             { "colorId", productColor.ColorId?.ToString() ?? "" },
                             { "colorName", productColor.Color?.ColorName ?? "" },
@@ -552,7 +601,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             { "sizeId", variant.SizeId?.ToString() ?? "" },
                             { "sizeCode", variant.Size?.SizeCode ?? "" },
                             { "price", product.Price?.ToString() ?? "" },
-                            { "imageUrl", variant.ImageUrl },
+                            { "imageUrl", variant.ImageUrl ?? ""},
                             { "noBgImageUrl", productColor.NoBgImgUrl ?? "" },
                             { "createdAt", product.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss") }
                         };
@@ -626,9 +675,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                         if (variant.SizeId <= 0)
                             return (false, "Thông tin size không đầy đủ");
 
-                        //if (variant.Price <= 0)
-                        //    return (false, "Giá sản phẩm phải lớn hơn 0");
-
                         if (variant.Quantity < 0)
                             return (false, "Số lượng không được âm");
                     }
@@ -669,6 +715,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                     };
 
                 await UpdateProductFieldsAsync(product, request);
+
+                await UpdateProductTagsAsync(product, request.Tags);
 
                 var dbColors = await _productColorRepository.GetAll(
                     filter: x => x.ProductId == productId,
@@ -716,6 +764,72 @@ namespace VirtualTryonWomenFashion.Service.Services
                     throw new InvalidOperationException("Không thể cập nhật giá sản phẩm vì đang trong chiến dịch sale.");
 
                 product.Price = request.Price.Value;
+            }
+        }
+
+        private async Task UpdateProductTagsAsync(Product product, List<TagDto> tags)
+        {
+            if (tags == null) return;
+
+            if (!tags.Any()) return;
+
+            var currentTags = await _tagRepository.GetTagsByProductIdAsync(product.ProductId);
+            var currentTagIds = currentTags.Select(t => t.TagId).ToList();
+
+            var requestTagIds = tags.Where(t => t.TagId.HasValue)
+                                    .Select(t => t.TagId.Value)
+                                    .ToList();
+            var requestTagNames = tags.Where(t => !t.TagId.HasValue && !string.IsNullOrWhiteSpace(t.TagName))
+                                      .Select(t => t.TagName.Trim())
+                                      .ToList();
+
+            var newTagsToAdd = new List<Tag>();
+
+            foreach (var tagId in requestTagIds)
+            {
+                if (!currentTagIds.Contains(tagId))
+                {
+                    var existingTag = await _tagRepository.GetByIdAsync(tagId);
+                    if (existingTag != null)
+                        newTagsToAdd.Add(existingTag);
+                }
+            }
+
+            foreach (var tagName in requestTagNames)
+            {
+                var normalized = tagName.ToLower();
+                var existingTag = await _tagRepository.GetFirstOrDefaultAsync(t => t.TagName.ToLower() == normalized);
+                if (existingTag != null)
+                {
+                    if (!currentTagIds.Contains(existingTag.TagId))
+                        newTagsToAdd.Add(existingTag);
+                }
+                else
+                {
+                    var newTag = new Tag { TagName = tagName };
+                    await _tagRepository.InsertAsync(newTag);
+                    await _unitOfWork.SaveChanges();
+                    newTagsToAdd.Add(newTag);
+                }
+            }
+
+            var normalizedRequestTagNames = requestTagNames.Select(n => n.ToLower()).ToList();
+
+            var tagsToRemove = currentTags.Where(ct =>
+                                !requestTagIds.Contains(ct.TagId) &&
+                                !normalizedRequestTagNames.Contains(ct.TagName.ToLower()))
+                                            .ToList();
+            if (tagsToRemove.Any())
+            {
+                foreach (var t in tagsToRemove)
+                {
+                    product.Tags.Remove(t);
+                }
+            }
+
+            foreach (var t in newTagsToAdd)
+            {
+                product.Tags.Add(t);
             }
         }
 
@@ -973,7 +1087,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     return new MessageModel
                     {
                         Message = hardDelete ? "Xóa sản phẩm hoàn toàn thành công" : "Xóa sản phẩm thành công (đã xóa tất cả màu sắc và biến thể)",
-                        StatusCode = StatusCodes.Status200OK
+                        StatusCode = StatusCodes.Status204NoContent
                     };
                 }
 

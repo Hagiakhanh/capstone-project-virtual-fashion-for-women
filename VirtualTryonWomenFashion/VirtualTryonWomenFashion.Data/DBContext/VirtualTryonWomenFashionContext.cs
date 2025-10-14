@@ -79,7 +79,6 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
     public virtual DbSet<Wishlist> Wishlists { get; set; }
 
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
 
@@ -744,7 +743,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Users__RoleID__29572725");
+                .HasConstraintName("FK__Users__RoleID__3C69FB99");
         });
 
         modelBuilder.Entity<UserInteraction>(entity =>
