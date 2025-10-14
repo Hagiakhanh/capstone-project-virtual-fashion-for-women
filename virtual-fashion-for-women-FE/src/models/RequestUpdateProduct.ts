@@ -6,6 +6,17 @@ export interface Product {
     mainImageUrl: string;
     categoryId: number;
     productColors?: ProductColor[];
+    tags?: Tag[];
+}
+
+export interface Tag {
+    tagId: number;
+    tagName: string;
+}
+
+export interface TagDto {
+    tagId?: number;  // Có tagId nghĩa là tag có sẵn
+    tagName: string; // Không có tagId nghĩa là tag mới
 }
 
 export interface ProductColor {
@@ -66,6 +77,7 @@ export interface UpdateProductFormData {
     mainImageUrl?: File;
     categoryId?: number;
     productColor?: UpdateProductColorFormData[];
+    tags?: TagDto[];
 }
 
 export interface UpdateProductColorFormData {

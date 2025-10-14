@@ -29,6 +29,11 @@ export interface Size {
     sizeCode: string;
 }
 
+export interface Tag {
+    tagId: number;
+    tagName: string;
+}
+
 export interface ProductColorRequest {
     colorId: number;
     colorName: string;
@@ -47,6 +52,8 @@ export interface CreateProductFormData {
     mainImageUrl: File | null;
     categoryId: number;
     productColor: ProductColorRequest[];
+    existingTagIds: number[];
+    newTags: string[];
 }
 
 export interface ApiResponse<T> {
