@@ -159,17 +159,24 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 Console.WriteLine($"⚠️ Variant {selected.Id} not found in tracked list");
                             }
                         }
+                        var options = new JsonSerializerOptions
+                        {
+                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                        };
 
+                        string userStyleJson = JsonSerializer.Serialize(currentUserStyle, options);
                         DateTime dateSuggested = DateTime.UtcNow.AddHours(7);
                         SuggestedOutfit outfitSuggested = new SuggestedOutfit()
                         {
                             AiconversationId = conversationChatID,
-                            UserStyleJson = currentUserStyle.ToString(),
+                            UserStyleJson = userStyleJson,
                             IsDeleted = false,
+                            Reason = reasoningResponse.ResponseText,
                             CreatedAt = dateSuggested,
                             ProductVariants = productVariantsSuggested
                         };
                         await _suggestedOutfitRepository.InsertAsync(outfitSuggested);
+                        analysis.ResponseText = reasoningResponse.ResponseText;
                     }
                     else
                     {
