@@ -25,13 +25,13 @@ export default function CartContainer() {
                 const mappedData = data.map(item => ({ ...item, selected: true }));
                 localStorage.setItem("checkoutCartIds", JSON.stringify(mappedData.map(i => i.cartId)));
                 setCartItems(mappedData);
+                window.dispatchEvent(new Event("cart-updated"));
             }
         } catch (error) { console.error("Fetch error:", error); }
     }, []);
 
     useEffect(() => {
         fetchCartItem();
-
     }, []);
 
     const toggleItemSelection = (id: number) => {

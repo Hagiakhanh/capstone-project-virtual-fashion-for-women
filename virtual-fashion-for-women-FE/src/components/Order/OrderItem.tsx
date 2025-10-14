@@ -8,11 +8,7 @@ import statusMap from '@/helpers/statusMapper';
 import { AntButtonCommon } from '../AntDesign/Button/AntButtonCommon';
 import formatDate from '@/utils/formatDate';
 
-interface OrderItemProps {
-    order: OrderDTO;
-}
-
-export default function OrderItem({ order }: OrderItemProps) {
+export default function OrderItem({ order }: { order: OrderDTO }) {
     const router = useRouter();
     const statusInfo = statusMap[order.status] || {
         label: 'Không xác định',
@@ -126,6 +122,17 @@ export default function OrderItem({ order }: OrderItemProps) {
                     >
                         Xem chi tiết
                     </button>
+
+                    {
+                        (order.status === 'Pending' && order.paymentUrl) && (
+                            <button
+                                onClick={() => router.push(order.paymentUrl)}
+                                className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-all"
+                            >
+                                Quay lại thanh toán
+                            </button>
+                        )
+                    }
 
                     {(order.status === 'Delivered' || order.status === 'Completed') && (
                         <button

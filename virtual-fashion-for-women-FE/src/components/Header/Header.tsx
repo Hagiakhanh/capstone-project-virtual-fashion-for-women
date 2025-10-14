@@ -47,10 +47,8 @@ function HeaderComponent() {
 
    useEffect(() => {
       if (user?.role === 'customer') {
-         console.log("Fetching cart total for user:");
          fetchCartTotal();
       }
-      console.log("Fetching cart total for user outside if:");
       fetchCategories();
    }, [user]);
 
@@ -66,7 +64,9 @@ function HeaderComponent() {
       <header className='bg-[#FAE3B6] border-b-1'>
          <div className="flex px-15 w-full justify-between">
             <div className='flex-[1.5]'>
-               <img src={logo.src} alt="Logo"
+               <img onClick={() => {
+                  router.push("/")
+               }} src={logo.src} alt="Logo"
                   className='w-20 object-cover'
                />
             </div>

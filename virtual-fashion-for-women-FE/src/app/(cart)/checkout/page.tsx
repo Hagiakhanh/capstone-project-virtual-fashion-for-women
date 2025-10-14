@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, ShoppingBag, MapPin } from 'lucide-react';
 import { CheckoutDTO } from '@/models/CheckoutDTO';
 import { RequestCheckout } from '@/models/RequestCheckout';
@@ -41,6 +41,16 @@ export default function CheckoutForm() {
     const [addressSuggestions, setAddressSuggestions] = useState<{ placeId: string, description: string }[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [selectedPayment, setSelectedPayment] = useState('Momo');
+    const isFormValid = useMemo(() => {
+        return (
+            formData.fullName.trim() !== '' &&
+            formData.phone.trim() !== '' &&
+            formData.address.trim() !== '' &&
+            addressInformation.provinceName.trim() !== '' &&
+            addressInformation.districtName.trim() !== '' &&
+            addressInformation.wardName.trim() !== ''
+        );
+    }, [formData, addressInformation]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
@@ -52,10 +62,13 @@ export default function CheckoutForm() {
     const handlePayment = async () => {
         if (isProcessing) return;
         setIsProcessing(true);
-        if (!formData.fullName || !formData.phone || !formData.address) {
-            alert("Vui lòng nhập đầy đủ họ tên, số điện thoại và địa chỉ trước khi đặt hàng!");
+
+        if (!isFormValid) {
+            messageToast.error("Vui lòng nhập đầy đủ thông tin giao hàng!");
+            setIsProcessing(false);
             return;
         }
+
         const payload = {
             cartIds: checkoutDTO.items.map(item => item.cartId),
             recieverName: formData.fullName,
@@ -77,9 +90,9 @@ export default function CheckoutForm() {
                 messageToast.error("Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau.");
                 setIsProcessing(false);
             }
-        } catch (error) {
-            console.error("Payment error:", error);
-            messageToast.error("Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau.");
+        } catch (error: any) {
+            console.error("Payment error:", error.response.data.message);
+            messageToast.error(error.response.data.message);
             setIsProcessing(false);
         }
     };
@@ -200,30 +213,37 @@ export default function CheckoutForm() {
         }
     };
 
-    const fetchAddressDetails = async (placeId: string) => {
+    const fetchAddressDetails = async (placeId: string, placeName: string) => {
         try {
-            const response = await api.post(`/location/googleMap/place/${placeId}`);
-            if (response.status === 200) {
-                const data = response.data;
-                const matchedProvinceEntry = Object.entries(provinces).find(
-                    ([, name]) => name.toLowerCase().includes(data.provinceName.toLowerCase())
+            const parts = placeName.split(',').map(part => part.trim());
+
+            const lastThree = parts.slice(-4, -1);
+
+            const data = {
+                provinceName: lastThree[2],
+                districtName: lastThree[1],
+                wardName: lastThree[0]
+            }
+            console.log(data);
+            const matchedProvinceEntry = Object.entries(provinces).find(
+                ([, name]) => name.toLowerCase().includes(data.provinceName.toLowerCase())
+            );
+            if (matchedProvinceEntry) {
+                const [provinceId, provinceName] = matchedProvinceEntry;
+                const districtsData = await fetchDistrictData(provinceId);
+                if (data.districtName === "Thủ Đức") data.districtName = "Thành phố Thủ Đức";
+                const matchedDistrictEntry = Object.entries(districtsData).find(
+                    ([, name]) => name.toLowerCase().includes(data.districtName.toLowerCase())
                 );
-                if (matchedProvinceEntry) {
-                    const [provinceId, provinceName] = matchedProvinceEntry;
-                    const districtsData = await fetchDistrictData(provinceId);
-                    const matchedDistrictEntry = Object.entries(districtsData).find(
-                        ([, name]) => name.toLowerCase().includes(data.districtName.toLowerCase())
+                if (matchedDistrictEntry) {
+                    const [districtId, districtName] = matchedDistrictEntry;
+                    const wardsData = await fetchWardData(districtId);
+                    const matchedWardEntry = Object.entries(wardsData).find(
+                        ([, name]) => name.toLowerCase().includes(data.wardName.toLowerCase())
                     );
-                    if (matchedDistrictEntry) {
-                        const [districtId, districtName] = matchedDistrictEntry;
-                        const wardsData = await fetchWardData(districtId);
-                        const matchedWardEntry = Object.entries(wardsData).find(
-                            ([, name]) => name.toLowerCase().includes(data.wardName.toLowerCase())
-                        );
-                        if (matchedWardEntry) {
-                            const [, wardName] = matchedWardEntry;
-                            setAddressInformation({ provinceName, districtName, wardName });
-                        }
+                    if (matchedWardEntry) {
+                        const [, wardName] = matchedWardEntry;
+                        setAddressInformation({ provinceName, districtName, wardName });
                     }
                 }
             }
@@ -291,7 +311,7 @@ export default function CheckoutForm() {
                                                 onClick={() => {
                                                     isSelectingRef.current = true;
                                                     setFormData({ ...formData, address: s.description });
-                                                    fetchAddressDetails(s.placeId);
+                                                    fetchAddressDetails(s.placeId, s.description);
                                                     setAddressSuggestions([]);
                                                 }}
                                                 className="flex items-center gap-2 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0 border-gray-100">
@@ -437,14 +457,14 @@ export default function CheckoutForm() {
                         </div>
                         <button
                             className={`w-full py-4 mt-6 text-lg font-semibold rounded-xl transition-all duration-300 flex justify-center items-center gap-2
-                            ${isProcessing
+                            ${isProcessing || !isFormValid
                                     ? 'bg-gray-400 text-white cursor-not-allowed'
                                     : checkoutDTO.serviceFee === 0
                                         ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                                         : 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
                                 }`}
                             onClick={handlePayment}
-                            disabled={isProcessing || checkoutDTO.serviceFee === 0}
+                            disabled={isProcessing || !isFormValid || checkoutDTO.serviceFee === 0}
                         >
                             {isProcessing ? (
                                 <>
@@ -474,6 +494,7 @@ export default function CheckoutForm() {
                                 'Đặt hàng'
                             )}
                         </button>
+
                     </div>
                 </div>
             </div>

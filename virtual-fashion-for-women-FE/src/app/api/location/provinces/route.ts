@@ -10,7 +10,6 @@ export async function GET(request: Request) {
             return NextResponse.json(cities, { status: 200 });
         }
     } catch (error) {
-        console.error("Error fetching cities:", error);
         return NextResponse.json("Error fetching cities", { status: 500 });
     }
 }   

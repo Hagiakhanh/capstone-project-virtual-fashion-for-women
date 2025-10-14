@@ -123,6 +123,7 @@ function ProductDetailsPage() {
 
       if (user?.role === 'guest') {
          messageToast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+         router.push("/login");
          return;
       }
 
@@ -152,6 +153,7 @@ function ProductDetailsPage() {
       setErrorMessage(null);
       if (user?.role === 'guest') {
          messageToast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+         router.push("/login");
          return;
       }
 

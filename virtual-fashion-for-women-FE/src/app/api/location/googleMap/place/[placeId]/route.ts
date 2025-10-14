@@ -11,7 +11,6 @@ export async function POST(request: Request,
             return new Response(JSON.stringify(data), { status: 200 });
         }
     } catch (error) {
-        console.error("Error fetching place details:", error);
         return new Response("Error fetching place details", { status: 500 });
     }
 }
