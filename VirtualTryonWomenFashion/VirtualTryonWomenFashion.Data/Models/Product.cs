@@ -34,4 +34,6 @@ public partial class Product
     public virtual ICollection<UserInteraction> UserInteractions { get; set; } = new List<UserInteraction>();
 
     public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
+
+    public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
 }
