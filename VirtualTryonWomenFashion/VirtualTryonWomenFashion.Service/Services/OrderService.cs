@@ -30,6 +30,7 @@ using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Mappers;
 using VirtualTryonWomenFashion.Service.Utils;
+using Newtonsoft.Json.Serialization;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -43,6 +44,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICartService _cartService;
         private readonly IProductVariantService _productVariantService;
         private readonly GHNSettings _ghnSettings;
+        private readonly HttpClient _client;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -51,7 +53,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             ICurrentUserService currentUserService,
             ICartService cartService,
             IProductVariantService productVariantService,
-            IOptions<GHNSettings> ghnSettings
+            IOptions<GHNSettings> ghnSettings,
+            HttpClient client
             )
         {
             _orderDetailService = orderDetailService;
@@ -61,6 +64,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _orderRepository = orderRepository;
             _unitOfWork = unitOfWork;
             _ghnSettings = ghnSettings.Value;
+            _client = client;
         }
         public async Task<Order> CreateOrderAsync(RequestCreateOrder requestCreateOrder)
         {
@@ -415,86 +419,86 @@ namespace VirtualTryonWomenFashion.Service.Services
                 order.Status = OrderStatusEnum.Packed.ToString();
 
                 // Gửi request cho giao hàng nhanh
-                using (var client = new HttpClient())
+                /*using (var client = new HttpClient())
+                {*/
+                //string url = $"{_ghnSettings.GHNBaseUrl}/shiip/public-api/v2/shipping-order/create";
+                GhnCreateOrderRequest ghnCreateOrderRequest = new GhnCreateOrderRequest
                 {
-                    //string url = $"{_ghnSettings.GHNBaseUrl}/shiip/public-api/v2/shipping-order/create";
-                    GhnCreateOrderRequest ghnCreateOrderRequest = new GhnCreateOrderRequest
-                    {
-                        PaymentTypeId = 1,  // Người trả phí shop | 1: Seller, 2: Buyer
-                        Note = order.Note,  // Note của khách hàng cho shipper
-                        RequiredNote = "CHOXEMHANGKHONGTHU",    // Các phương thức khi nhận hàng | CHOTHUHANG , CHOXEMHANGKHONGTHU , KHONGCHOXEMHANG 
-                        FromName = "Tên của cửa hàng",  // Tên của bên gửi 
-                        FromPhone = "0868728859",   // Số điện thoại của bên gửi
-                        FromAddress = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam",  // Địa chỉ gửi
-                        FromWardName = "Phường Long Thạnh Mỹ", // Tên phường gửi | Phải theo api của GHN
-                        FromDistrictName = "Thành Phố Thủ Đức", // Tên huyện gửi | Phải theo api của GHN
-                        FromProvinceName = "Hồ Chí Minh", // Tên tỉnh gửi | Phải theo api của GHN
-                        ReturnPhone = "0868728859", // Số điện thoại để trả lại hàng
-                        ReturnAddress = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam",    // Địa chỉ trả hàng
-                        ReturnDistrictId = 3695,    // ID địa chỉ của huyện trả hàng | Phải theo api của GHN
-                        ReturnWardCode = "90752",   // ID địa chỉ của phường trả hàng | Phải theo api của GHN
-                        ClientOrderCode = "",   // Không thêm trường này
-                        ToName = order.ReceiverName,    // Tên của khách hàng
-                        ToPhone = order.ReceiverPhone,  // Số điện thoại của khách hàng
-                        ToAddress = order.ReceiverAddress, // Địa chỉ của khách hàng
-                        ToWardCode = order.WardCode,   // Phường của người nhận hàng | Phải theo api của GHN
-                        ToDistrictId = (int)order.DistrictId,    // Huyện của người nhận hàng | Phải theo api của GHN
-                        CodAmount = 0,  // Tiền COD mà shipper phải thu
-                        Content = "Cửa hàng thời trang nữ",   // Có thể đặt tên sản phẩm ở đây
-                        Weight = (int)order.PackageWeight.Value,    // Cân nặng đơn
-                        Length = (int)order.PackageLength.Value,    // Chiều dài đơn
-                        Width = (int)order.PackageWidth.Value,  // Chiều rộng đơn
-                        Height = (int)order.PackageHeight.Value,    // Chiều cao đơn
-                        PickStationId = 1444,   // Chưa rõ
-                        //DeliverStationId = null,    // Chưa rõ
-                        InsuranceValue = (int)order.Amount.Value,    // Giá trị đơn hàng
-                        ServiceId = 0,  // Chưa rõ
-                        ServiceTypeId = 2, // Loại dịch vụ giao | 2: E-commerce Delivery
-                        //Coupon = null,  // Mã phiếu giảm giá
-                        PickShift = new List<int> { 3 } // Ca lấy hàng | 3: (7h00 - 12h00)
-                    };
+                    PaymentTypeId = 1,  // Người trả phí shop | 1: Seller, 2: Buyer
+                    Note = order.Note,  // Note của khách hàng cho shipper
+                    RequiredNote = "CHOXEMHANGKHONGTHU",    // Các phương thức khi nhận hàng | CHOTHUHANG , CHOXEMHANGKHONGTHU , KHONGCHOXEMHANG 
+                    FromName = "Tên của cửa hàng",  // Tên của bên gửi 
+                    FromPhone = "0868728859",   // Số điện thoại của bên gửi
+                    FromAddress = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam",  // Địa chỉ gửi
+                    FromWardName = "Phường Long Thạnh Mỹ", // Tên phường gửi | Phải theo api của GHN
+                    FromDistrictName = "Thành Phố Thủ Đức", // Tên huyện gửi | Phải theo api của GHN
+                    FromProvinceName = "Hồ Chí Minh", // Tên tỉnh gửi | Phải theo api của GHN
+                    ReturnPhone = "0868728859", // Số điện thoại để trả lại hàng
+                    ReturnAddress = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam",    // Địa chỉ trả hàng
+                    ReturnDistrictId = 3695,    // ID địa chỉ của huyện trả hàng | Phải theo api của GHN
+                    ReturnWardCode = "90752",   // ID địa chỉ của phường trả hàng | Phải theo api của GHN
+                    ClientOrderCode = "",   // Không thêm trường này
+                    ToName = order.ReceiverName,    // Tên của khách hàng
+                    ToPhone = order.ReceiverPhone,  // Số điện thoại của khách hàng
+                    ToAddress = order.ReceiverAddress, // Địa chỉ của khách hàng
+                    ToWardCode = order.WardCode,   // Phường của người nhận hàng | Phải theo api của GHN
+                    ToDistrictId = (int)order.DistrictId,    // Huyện của người nhận hàng | Phải theo api của GHN
+                    CodAmount = 0,  // Tiền COD mà shipper phải thu
+                    Content = "Cửa hàng thời trang nữ",   // Có thể đặt tên sản phẩm ở đây
+                    Weight = (int)order.PackageWeight.Value,    // Cân nặng đơn
+                    Length = (int)order.PackageLength.Value,    // Chiều dài đơn
+                    Width = (int)order.PackageWidth.Value,  // Chiều rộng đơn
+                    Height = (int)order.PackageHeight.Value,    // Chiều cao đơn
+                    PickStationId = 1444,   // Chưa rõ
+                                            //DeliverStationId = null,    // Chưa rõ
+                    InsuranceValue = (int)order.Amount.Value,    // Giá trị đơn hàng
+                    ServiceId = 0,  // Chưa rõ
+                    ServiceTypeId = 2, // Loại dịch vụ giao | 2: E-commerce Delivery
+                                       //Coupon = null,  // Mã phiếu giảm giá
+                    PickShift = new List<int> { 3 } // Ca lấy hàng | 3: (7h00 - 12h00)
+                };
 
-                    client.BaseAddress = new Uri(_ghnSettings.GHNBaseUrl);
-                    client.DefaultRequestHeaders.Add("Token", _ghnSettings.Token);
-                    client.DefaultRequestHeaders.Add("ShopId", _ghnSettings.ShopId.ToString());
+                /*client.BaseAddress = new Uri(_ghnSettings.GHNBaseUrl);
+                client.DefaultRequestHeaders.Add("Token", _ghnSettings.Token);
+                client.DefaultRequestHeaders.Add("ShopId", _ghnSettings.ShopId.ToString());*/
 
-                    var options = new JsonSerializerOptions
-                    {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, // bỏ qua field null
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase // GHN dùng snake_case -> mình map lại bằng [JsonPropertyName]
-                    };
-                    var jsonContent = new StringContent(
-                                    JsonSerializer.Serialize(ghnCreateOrderRequest, options),
-                                    Encoding.UTF8,
-                                    "application/json");
-                    var response = await client.PostAsync("shiip/public-api/v2/shipping-order/create", jsonContent);
+                var options = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, // bỏ qua field null
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase // GHN dùng snake_case -> mình map lại bằng [JsonPropertyName]
+                };
+                var jsonContent = new StringContent(
+                                JsonSerializer.Serialize(ghnCreateOrderRequest, options),
+                                Encoding.UTF8,
+                                "application/json");
+                var response = await _client.PostAsync("shiip/public-api/v2/shipping-order/create", jsonContent);
 
-                    if (response.IsSuccessStatusCode)
+                if (response.IsSuccessStatusCode)
+                {
+                    var resultGHN = await response.Content.ReadAsStringAsync();
+                    GhnCreateOrderResponse resultGHNObj = JsonSerializer.Deserialize<GhnCreateOrderResponse>(resultGHN);
+                    // ... xử lý result
+                    order.ShippingCode = resultGHNObj.Data.OrderCode;
+                    await _orderRepository.UpdateAsync(order);
+                    int result = await _unitOfWork.SaveChanges();
+                    await _unitOfWork.CommitTransactionAsync();
+                    if (result > 0)
                     {
-                        var resultGHN = await response.Content.ReadAsStringAsync();
-                        GhnCreateOrderResponse resultGHNObj = JsonSerializer.Deserialize<GhnCreateOrderResponse>(resultGHN);
-                        // ... xử lý result
-                        order.ShippingCode = resultGHNObj.Data.OrderCode;
-                        await _orderRepository.UpdateAsync(order);
-                        int result = await _unitOfWork.SaveChanges();
-                        await _unitOfWork.CommitTransactionAsync();
-                        if (result > 0)
+                        return new MessageModelWithData<string>
                         {
-                            return new MessageModelWithData<string>
-                            {
-                                Message = "Cập nhật trạng thái và tạo đơn vận chuyển thành công",
-                                StatusCode = StatusCodes.Status200OK,
-                                Data = $"{resultGHNObj.Data.OrderCode}"
-                            };
-                        }
+                            Message = "Cập nhật trạng thái và tạo đơn vận chuyển thành công",
+                            StatusCode = StatusCodes.Status200OK,
+                            Data = $"{resultGHNObj.Data.OrderCode}"
+                        };
                     }
-                    else
-                    {
-                        var error = await response.Content.ReadAsStringAsync();
-                        throw new Exception($"Không thể tạo đơn hàng vận chuyển. Lỗi GHN: {error}");
-                    }
-
                 }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Không thể tạo đơn hàng vận chuyển. Lỗi GHN: {error}");
+                }
+
+                //}
 
                 return new MessageModelWithData<string>
                 {
@@ -524,67 +528,67 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                using (var client = new HttpClient())
+                /*using (var client = new HttpClient())
+                {*/
+                GhnOrderStatusRequest ghnOrderStatusRequest = new GhnOrderStatusRequest
                 {
-                    GhnOrderStatusRequest ghnOrderStatusRequest = new GhnOrderStatusRequest
+                    OrderCode = order.ShippingCode,
+                };
+                /*client.BaseAddress = new Uri(_ghnSettings.GHNBaseUrl);
+                client.DefaultRequestHeaders.Add("Token", _ghnSettings.Token);*/
+                var options = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, // bỏ qua field null
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase // GHN dùng snake_case -> mình map lại bằng [JsonPropertyName]
+                };
+                var jsonContent = new StringContent(
+                                JsonSerializer.Serialize(ghnOrderStatusRequest, options),
+                                Encoding.UTF8,
+                                "application/json");
+                var response = await _client.PostAsync("shiip/public-api/v2/shipping-order/detail", jsonContent);
+                if (response.IsSuccessStatusCode)
+                {
+                    var resultGHN = await response.Content.ReadAsStringAsync();
+                    GhnOrderStatusResponse responseGHNObject = JsonSerializer.Deserialize<GhnOrderStatusResponse>(resultGHN);
+                    if (responseGHNObject != null)
                     {
-                        OrderCode = order.ShippingCode,
-                    };
-                    client.BaseAddress = new Uri(_ghnSettings.GHNBaseUrl);
-                    client.DefaultRequestHeaders.Add("Token", _ghnSettings.Token);
-                    var options = new JsonSerializerOptions
-                    {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, // bỏ qua field null
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase // GHN dùng snake_case -> mình map lại bằng [JsonPropertyName]
-                    };
-                    var jsonContent = new StringContent(
-                                    JsonSerializer.Serialize(ghnOrderStatusRequest, options),
-                                    Encoding.UTF8,
-                                    "application/json");
-                    var response = await client.PostAsync("shiip/public-api/v2/shipping-order/detail", jsonContent);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var resultGHN = await response.Content.ReadAsStringAsync();
-                        GhnOrderStatusResponse responseGHNObject = JsonSerializer.Deserialize<GhnOrderStatusResponse>(resultGHN);
-                        if (responseGHNObject != null)
+                        string oldStatus = order.Status;
+                        switch (responseGHNObject.Data.Status)
                         {
-                            string oldStatus = order.Status;
-                            switch (responseGHNObject.Data.Status)
-                            {
-                                case "delivering":
-                                    {
-                                        order.Status = OrderStatusEnum.Delivering.ToString();
-                                        break;
-                                    }
-                                case "delivered":
-                                    {
-                                        order.Status = OrderStatusEnum.Delivered.ToString();
-                                        break;
-                                    }
-                            }
-                            if(oldStatus == order.Status)
-                            {
-                                await _unitOfWork.CommitTransactionAsync();
-                                return new MessageModel
+                            case "delivering":
                                 {
-                                    Message = $"Trạng thái đơn hàng vẫn là {order.Status}. Không có thay đổi nào được thực hiện.",
-                                    StatusCode = StatusCodes.Status200OK,
-                                };
-                            }
-                            await _orderRepository.UpdateAsync(order);
-                            int result = await _unitOfWork.SaveChanges();
+                                    order.Status = OrderStatusEnum.Delivering.ToString();
+                                    break;
+                                }
+                            case "delivered":
+                                {
+                                    order.Status = OrderStatusEnum.Delivered.ToString();
+                                    break;
+                                }
+                        }
+                        if (oldStatus == order.Status)
+                        {
                             await _unitOfWork.CommitTransactionAsync();
-                            if (result > 0)
+                            return new MessageModel
                             {
-                                return new MessageModel
-                                {
-                                    Message = $"Cập nhật trạng thái đơn từ {oldStatus} thành {order.Status}",
-                                    StatusCode = StatusCodes.Status200OK,
-                                };
-                            }
+                                Message = $"Trạng thái đơn hàng vẫn là {order.Status}. Không có thay đổi nào được thực hiện.",
+                                StatusCode = StatusCodes.Status200OK,
+                            };
+                        }
+                        await _orderRepository.UpdateAsync(order);
+                        int result = await _unitOfWork.SaveChanges();
+                        await _unitOfWork.CommitTransactionAsync();
+                        if (result > 0)
+                        {
+                            return new MessageModel
+                            {
+                                Message = $"Cập nhật trạng thái đơn từ {oldStatus} thành {order.Status}",
+                                StatusCode = StatusCodes.Status200OK,
+                            };
                         }
                     }
                 }
+                //}
 
                 return new MessageModel
                 {
@@ -600,9 +604,145 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         }
 
-        public Task UpdateAllOrderStatusInGHN()
+        public async Task<MessageModel> UpdateAllOrderStatusInGHN()
         {
-            throw new NotImplementedException();
+            List<Order> orders = await _orderRepository.GetAllOrdersReadyForGHNUpdate();
+            if (orders == null || orders.Count == 0)
+            {
+                return new MessageModel
+                {
+                    Message = "Không có đơn hàng nào để cập nhật",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+            var updateTasks = new List<Task<Tuple<Order, string>>>();
+            foreach (Order order in orders)
+            {
+                // Khởi tạo một Task để lấy trạng thái GHN.
+                // Hàm này trả về một Tuple chứa Order và trạng thái mới từ GHN.
+                updateTasks.Add(GetGhnStatusForOrder(order));
+            }
+
+            try
+            {
+                // Chờ tất cả Task kết thúc.
+                await Task.WhenAll(updateTasks);
+            }
+            catch (Exception)
+            {
+            }
+
+            var resultsFromGHN = new List<Tuple<Order, string>>();
+            var errors = new List<Exception>();
+            foreach (var task in updateTasks)
+            {
+                if (task.Status == TaskStatus.RanToCompletion)
+                {
+                    resultsFromGHN.Add(task.Result);
+                }
+                else if (task.Status == TaskStatus.Faulted)
+                {
+                    if (task.Exception is AggregateException aggEx)
+                    {
+                        errors.AddRange(aggEx.InnerExceptions);
+                    }
+                    else
+                    {
+                        errors.Add(task.Exception);
+                    }
+                }
+            }
+
+            int successCount = 0;
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                foreach (var (order, newGhnStatus) in resultsFromGHN)
+                {
+                    string oldStatus = order.Status;
+                    string newSystemStatus = oldStatus;
+                    switch (newGhnStatus)
+                    {
+                        case "delivering":
+                            newSystemStatus = OrderStatusEnum.Delivering.ToString();
+                            break;
+                        case "delivered":
+                            newSystemStatus = OrderStatusEnum.Delivered.ToString();
+                            break;
+                    }
+                    if (!oldStatus.Equals(newSystemStatus))
+                    {
+                        order.Status = newSystemStatus;
+                        await _orderRepository.UpdateAsync(order);
+                        successCount++;
+                    }
+                }
+                if (successCount > 0)
+                {
+                    await _unitOfWork.SaveChanges();
+                    await _unitOfWork.CommitTransactionAsync();
+                    return new MessageModel
+                    {
+                        Message = $"Đã cập nhật trạng thái cho {successCount} đơn hàng",
+                        StatusCode = StatusCodes.Status200OK
+                    };
+                }
+                return new MessageModel
+                {
+
+                    Message = "Cập nhật trạng thái cho đơn hàng thất bại",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
+        }
+
+        private async Task<Tuple<Order, string>> GetGhnStatusForOrder(Order order)
+        {
+            if (string.IsNullOrEmpty(order.ShippingCode))
+            {
+                throw new ArgumentException($"Order ID {order.OrderId} không có mã vận đơn GHN (ShippingCode).");
+            }
+            try
+            {
+                GhnOrderStatusRequest ghnOrderStatusRequest = new GhnOrderStatusRequest
+                {
+                    OrderCode = order.ShippingCode,
+                };
+                var options = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+
+                var jsonContent = new StringContent(
+                    JsonSerializer.Serialize(ghnOrderStatusRequest, options),
+                    Encoding.UTF8,
+                    "application/json");
+                var response = await _client.PostAsync("shiip/public-api/v2/shipping-order/detail", jsonContent);
+                if (response.IsSuccessStatusCode)
+                {
+                    var resultGHN = await response.Content.ReadAsStringAsync();
+                    GhnOrderStatusResponse responseGHNObject = JsonSerializer.Deserialize<GhnOrderStatusResponse>(resultGHN);
+                    if (responseGHNObject?.Data != null && responseGHNObject.Data.Status != null)
+                    {
+                        return new Tuple<Order, string>(order, responseGHNObject.Data.Status);
+                    }
+                    throw new Exception($"Không lấy được trạng thái hợp lệ từ GHN cho mã {order.ShippingCode}.");
+                }
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"GHN API trả về lỗi HTTP {(int)response.StatusCode} cho mã {order.ShippingCode}. Chi tiết: {errorContent}");
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Không thể cập nhật trạng thái GHN cho mã {order.ShippingCode}.", ex);
+            }
         }
     }
 }

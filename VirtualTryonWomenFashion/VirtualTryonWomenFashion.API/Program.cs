@@ -13,6 +13,8 @@ using VirtualTryonWomenFashion.Service.Services;
 using VirtualTryonWomenFashion.Service.Utils;
 using VirtualTryonWomenFashion.Service.Workers;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +37,13 @@ builder.Services.Configure<GHNSettings>(builder.Configuration.GetSection("GHNSet
 builder.Services.AddHttpClient<IShippingService, ShippingService>();
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddHttpClient<IVectorDbService, PineconeService>();
+builder.Services.AddHttpClient<IOrderService, OrderService>((serviceProvider, client) =>
+{
+    var settings = serviceProvider.GetRequiredService<IOptions<GHNSettings>>().Value;
+    client.BaseAddress = new Uri(settings.GHNBaseUrl);
+    client.DefaultRequestHeaders.Add("Token", settings.Token);
+    client.DefaultRequestHeaders.Add("ShopId", settings.ShopId.ToString());
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
