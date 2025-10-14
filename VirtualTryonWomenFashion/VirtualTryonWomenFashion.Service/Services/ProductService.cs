@@ -338,10 +338,10 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             // Lấy danh sách product theo filter + sort
-            var products = await _productRepository.SearchProductsWithIncludes(request.ProductName, request.ProductSort.ToString(), pagination);
+            var products = await _productRepository.SearchProductsWithIncludes(request.SearchText, request.ProductSort.ToString(), pagination);
 
             // Đếm tổng record (áp dụng filter nhưng bỏ phân trang)
-            var totalRecords = await _productRepository.CountSearchProductsAsync(request.ProductName);
+            var totalRecords = await _productRepository.CountSearchProductsAsync(request.SearchText);
             var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.PageSize);
 
             // Nếu user đã đăng nhập -> lấy danh sách Wishlist
@@ -470,38 +470,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                         foreach (var variantRequest in productColorRequest.Variants)
                         {
                             // Xử lý Size
-                            int sizeId;
-                            string sizeCode;
-                            if (variantRequest.SizeId > 0)
-                            {
-                                // Dùng size có sẵn
-                                sizeId = variantRequest.SizeId;
-                                sizeCode = _sizeRepository.GetById(variantRequest.SizeId).SizeCode;
-                            }
-                            else
-                            {
-                                // Kiểm tra size đã tồn tại chưa
-                                var existingSize = await _sizeRepository.GetFirstOrDefaultAsync(
-                                    x => x.SizeCode.ToLower() == variantRequest.SizeCode.ToLower());
-
-                                if (existingSize != null)
-                                {
-                                    sizeId = existingSize.SizeId;
-                                    sizeCode = existingSize.SizeCode;
-                                }
-                                else
-                                {
-                                    // Tạo size mới
-                                    var newSize = new Size
-                                    {
-                                        SizeCode = variantRequest.SizeCode,
-                                    };
-                                    await _sizeRepository.InsertAsync(newSize);
-                                    await _unitOfWork.SaveChanges(); // Save để lấy SizeId
-                                    sizeId = newSize.SizeId;
-                                    sizeCode = newSize.SizeCode;
-                                }
-                            }
+                            int sizeId = variantRequest.SizeId;
+                            string sizeCode = _sizeRepository.GetById(variantRequest.SizeId).SizeCode;
 
                             // Tạo ProductVariant
                             string productVariantId = $"{productColorId}-{sizeCode}";
@@ -653,7 +623,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     foreach (var variant in colorRequest.Variants)
                     {
-                        if (variant.SizeId <= 0 && string.IsNullOrWhiteSpace(variant.SizeCode))
+                        if (variant.SizeId <= 0)
                             return (false, "Thông tin size không đầy đủ");
 
                         //if (variant.Price <= 0)
@@ -945,20 +915,13 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public async Task<Size> GetOrCreateSizeAsync(UpdateProductVariantRequest vReq)
         {
+            Size size = new Size();
             if (vReq.SizeId.HasValue && vReq.SizeId > 0)
             {
-                return await _sizeRepository.GetByIdAsync(vReq.SizeId.Value);
+                size = await _sizeRepository.GetByIdAsync(vReq.SizeId.Value);
             }
 
-            var existing = await _sizeRepository.GetFirstOrDefaultAsync(
-                x => x.SizeCode.ToLower() == vReq.SizeCode.ToLower());
-
-            if (existing != null)
-                return existing;
-
-            var newSize = new Size { SizeCode = vReq.SizeCode };
-            await _sizeRepository.InsertAsync(newSize);
-            return newSize;
+            return size;
         }
 
         public async Task<MessageModel> DeleteProductAsync(string productId, bool hardDelete = false)

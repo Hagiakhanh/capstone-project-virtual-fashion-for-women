@@ -8,10 +8,7 @@ using VirtualTryonWomenFashion.Data.Models;
 
 namespace VirtualTryonWomenFashion.Data.IRepositories
 {
-    public interface IOrderRepository : IGenericRepository<Order>
+    public interface IStyleTypeRepository : IGenericRepository<StyleType>
     {
-        public Task<Order?> GetOrderByOrderID(int orderID);
-        public Task<List<Order>> GetOrdersByStatus(string status);
-        public Task<List<Order>> GetAllOrdersReadyForGHNUpdate();
     }
 }

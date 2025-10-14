@@ -13,6 +13,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductColor
         public string ProductColorId { get; set; }
         public int? ColorId { get; set; }
         public string LensId { get; set; }
+        public string NoBgImgUrl { get; set; }
         public ResponseColorDto Color { get; set; }
         public List<ResponseProductVariantDto> ProductVariants { get; set; } = new List<ResponseProductVariantDto>();
     }

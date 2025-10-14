@@ -11,19 +11,35 @@ public partial class Characteristic
 
     public int UserId { get; set; }
 
-    public decimal? Weight { get; set; }
+    public double? Weight { get; set; }
 
     public int? Age { get; set; }
 
-    public decimal? Height { get; set; }
+    public double? Height { get; set; }
 
-    public string ColorPreference { get; set; }
+    public double? Bust { get; set; }
 
-    public string StyleType { get; set; }
+    public double? Waist { get; set; }
 
-    public string OccasionPreference { get; set; }
+    public double? Hips { get; set; }
 
-    public string SkinTone { get; set; }
+    public string StyleTypeNote { get; set; }
+
+    public string OccasionNote { get; set; }
+
+    public string SkinToneNote { get; set; }
+
+    public int? StyleTypeId { get; set; }
+
+    public int? OccasionPreferenceId { get; set; }
+
+    public int? SkinToneId { get; set; }
+
+    public virtual OccasionPreference OccasionPreference { get; set; }
+
+    public virtual SkinTone SkinTone { get; set; }
+
+    public virtual StyleType StyleType { get; set; }
 
     public virtual User User { get; set; }
 }

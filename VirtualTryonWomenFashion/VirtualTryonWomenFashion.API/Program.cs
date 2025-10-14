@@ -13,6 +13,8 @@ using VirtualTryonWomenFashion.Service.Services;
 using VirtualTryonWomenFashion.Service.Utils;
 using VirtualTryonWomenFashion.Service.Workers;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +36,13 @@ builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailS
 builder.Services.Configure<GHNSettings>(builder.Configuration.GetSection("GHNSetttings"));
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddHttpClient<IVectorDbService, PineconeService>();
+builder.Services.AddHttpClient<IOrderService, OrderService>((serviceProvider, client) =>
+{
+    var settings = serviceProvider.GetRequiredService<IOptions<GHNSettings>>().Value;
+    client.BaseAddress = new Uri(settings.GHNBaseUrl);
+    client.DefaultRequestHeaders.Add("Token", settings.Token);
+    client.DefaultRequestHeaders.Add("ShopId", settings.ShopId.ToString());
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
@@ -112,6 +121,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddHostedService<SaleCampaignWorkerService>();
 builder.Services.AddHostedService<PaymentWorkerService>();
+builder.Services.AddHostedService<GhnSyncStatusService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
