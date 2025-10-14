@@ -338,10 +338,10 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             // Lấy danh sách product theo filter + sort
-            var products = await _productRepository.SearchProductsWithIncludes(request.SearchText, request.ProductSort.ToString(), pagination);
+            var products = await _productRepository.SearchProductsWithIncludes(request.ProductName, request.CategoryName, request.ProductSort.ToString(), pagination);
 
             // Đếm tổng record (áp dụng filter nhưng bỏ phân trang)
-            var totalRecords = await _productRepository.CountSearchProductsAsync(request.SearchText);
+            var totalRecords = await _productRepository.CountSearchProductsAsync(request.ProductName, request.CategoryName);
             var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.PageSize);
 
             // Nếu user đã đăng nhập -> lấy danh sách Wishlist
