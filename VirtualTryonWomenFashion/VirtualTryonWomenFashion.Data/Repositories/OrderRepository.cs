@@ -9,6 +9,7 @@ using VirtualTryonWomenFashion.Data.DBContext;
 using VirtualTryonWomenFashion.Data.GenericRepository;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Data.Enum;
 
 namespace VirtualTryonWomenFashion.Data.Repositories
 {
@@ -18,11 +19,18 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
         }
 
+        public async Task<List<Order>> GetAllOrdersReadyForGHNUpdate()
+        {
+            List<Order> orders = await _context.Orders.Where(x => x.Status == OrderStatusEnum.Packed.ToString() ||
+            x.Status == OrderStatusEnum.Delivering.ToString()).ToListAsync();
+            return orders;
+        }
+
         public async Task<Order?> GetOrderByOrderID(int orderID)
         {
             return await _context.Orders
-                .Include(x=>x.Customer)
-                .Include( x=>x.Transactions)
+                .Include(x => x.Customer)
+                .Include(x => x.Transactions)
                 .Include(x => x.OrderDetails)
                 .ThenInclude(x => x.ProductVariant)
                 .SingleOrDefaultAsync(x => x.OrderId == orderID);

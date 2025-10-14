@@ -26,6 +26,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task HandleFailedOrders(List<Order> failedOrders);
         Task HandleSuccessfulOrders(List<Order> successfulOrders);
         public Task<MessageModel> UpdateOrderStatusInGHNByCode(int orderId);
-        public Task UpdateAllOrderStatusInGHN();
+        public Task<MessageModel> UpdateAllOrderStatusInGHN();
     }
 }
