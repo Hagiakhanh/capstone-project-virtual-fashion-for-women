@@ -122,6 +122,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddHostedService<SaleCampaignWorkerService>();
 builder.Services.AddHostedService<PaymentWorkerService>();
+builder.Services.AddHostedService<GhnSyncStatusService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
