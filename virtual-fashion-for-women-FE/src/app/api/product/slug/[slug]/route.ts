@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
    try {
       const api = createApiInstance(request);
-      const responseBE = await api.get(`/product/slug/${params.slug}`);
+      const { slug } = await params;
+      const responseBE = await api.get(`/product/slug/${slug}`);
       if (responseBE.status == 200) {
          return NextResponse.json(responseBE.data);
       }

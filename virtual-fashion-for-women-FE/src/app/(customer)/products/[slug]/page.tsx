@@ -88,8 +88,6 @@ function ProductDetailsPage() {
       if (chooseProduct.productVariant) {
          const currentQuantity = chooseProduct.quantity;
          const maxQuantity = chooseProduct.productVariant?.quantity;
-         console.log('maxQuantity', maxQuantity);
-         console.log('currentQuantity', currentQuantity);
          // Tăng/giảm số lượng trong phạm vi từ 1 đến maxQuantity
          if (type === 'INCREASE' && currentQuantity < maxQuantity) {
             setChooseProduct(prev => ({ ...prev, quantity: currentQuantity + 1 }));
@@ -110,7 +108,18 @@ function ProductDetailsPage() {
       const sizeIsAvailable = selectedColorVariant.sizeDto.some(
          (size) => size.sizeCode === sizeCode
       );
-      return sizeIsAvailable;
+      const variant = selectedColorVariant.productVariants.find(
+        (v) => v.sizeDto.sizeCode === sizeCode
+    );
+      if (sizeIsAvailable) {
+         return {
+            isSupported: true,
+            isAvailable: variant.quantity > 0
+         };
+      } else {
+         // Size không được hỗ trợ bởi biến thể màu đã chọn.
+         return { isSupported: false, isAvailable: false };
+      }
    }
 
    const handleAddToCart = async () => {
@@ -284,19 +293,38 @@ function ProductDetailsPage() {
                      <p className="font-bold text-xl">Kích thước</p>
                      <div className="flex gap-3">
                         {
+                           // isSupported: có hỗ trợ size đó không
+                           // isAvailable: size đó có còn hàng hay không
                            productSize?.map((size) => {
-                              const isAvailable = checkIsSizeAvailable(size.sizeCode);
+                              const { isSupported, isAvailable } = checkIsSizeAvailable(size.sizeCode);
                               const isSelected = chooseProduct.sizeCode === size.sizeCode;
+                              // Nếu không được hỗ trợ, ẩn nó đi
+                              const supportedClasses = !isSupported ? 'hidden' : 'cursor-pointer';
+                              let stylingClasses = '';
+                              if (isSupported) {
+                                 if (!isAvailable) {
+                                    // Nếu được hỗ trợ nhưng hết hàng -> Làm mờ và không cho click
+                                    stylingClasses = 'opacity-50 !cursor-not-allowed';
+                                 } else if (isSelected) {
+                                    // Nếu có hàng và được chọn
+                                    stylingClasses = 'border-2 border-black';
+                                 } else {
+                                    // Nếu có hàng và chưa được chọn
+                                    stylingClasses = 'border-[#e3ddbb]';
+                                 }
+                              }
                               // Class Disabled: Áp dụng khi size KHÔNG khả dụng
-                              const disabledClasses = !isAvailable ? 'opacity-40 cursor-not-allowed border-dashed' : 'cursor-pointer';
+                              const disabledClasses = !isSupported ? 'hidden' : 'cursor-pointer';
+                              // Class Available: Áp dụng khi size CÓ khả dụng và còn hàng
+                              const availableClasses = isSupported && isAvailable ? '' : 'cursor-not-allowed opacity-50';
                               // Class Selected: Áp dụng khi size ĐƯỢC CHỌN VÀ KHẢ DỤNG
-                              const selectedClasses = isSelected && isAvailable ? 'border-2 border-black' : 'border-[#e3ddbb]';
+                              const selectedClasses = isSelected && isSupported && isAvailable ? 'border-2 border-black' : 'border-[#e3ddbb]';
                               return (
                                  <div key={size.sizeId} onClick={() => {
                                     if (isAvailable) {
                                        setChooseProduct({ ...chooseProduct, sizeCode: size.sizeCode, quantity: 1 });
                                     }
-                                 }} className={`bg-white rounded-lg border-1 px-3 ${selectedClasses} ${disabledClasses}`}>
+                                 }} className={`bg-white rounded-lg border-1 px-3 ${stylingClasses} ${supportedClasses}`}>
                                     <span className="text-lg">{size.sizeCode}</span>
                                  </div>
                               )
