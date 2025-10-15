@@ -22,9 +22,9 @@ export async function GET(request: Request) {
             );
         }
         return NextResponse.json("Lấy đơn hàng thất bại", { status: 400 });
-    } catch (error) {
+    } catch (error: any) {
         return NextResponse.json({
-            message: "Lấy đơn hàng thất bại: ", error,
+            message: "Lấy đơn hàng thất bại: " + error.response.data.message,
         }, { status: 400 });
     }
 }

@@ -11,10 +11,9 @@ export async function GET(request: Request) {
             return NextResponse.json(cartItems, { status: responseBE.data?.statusCode });
         }
     }
-    catch (error) {
-        console.error("Server login error", error);
+    catch (error: any) {
         return NextResponse.json({
-            message: "Lấy dữ liệu thất bại: " + error,
+            message: "Lấy dữ liệu thất bại: " + error.response.data.message,
         }, { status: 400 });
     }
 
@@ -29,9 +28,9 @@ export async function POST(request: Request) {
             const dataResponse = responseBE.data || [];
             return NextResponse.json(dataResponse, { status: responseBE.data?.statusCode });
         }
-    } catch (error) {
+    } catch (error: any) {
         return NextResponse.json({
-            message: "Lỗi thêm vào giỏ hàng thất bại: " + error,
+            message: "Lỗi thêm vào giỏ hàng thất bại: " + error.response.data.message,
         }, { status: 400 });
     }
 }
@@ -48,9 +47,9 @@ export async function PUT(request: Request) {
         }
         return NextResponse.json("Cập nhật thất bại", { status: 400 });
     }
-    catch (error) {
+    catch (error: any) {
         return NextResponse.json({
-            message: "Lỗi cập nhật thất bại: " + error,
+            message: "Lỗi cập nhật thất bại: " + error.response.data.message,
         }, { status: 400 });
     }
 }

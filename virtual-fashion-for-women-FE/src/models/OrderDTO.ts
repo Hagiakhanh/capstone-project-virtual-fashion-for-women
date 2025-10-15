@@ -15,6 +15,7 @@ export interface OrderDTO {
     insuranceFee: number | null;
     shippingCode: string;
     estimatedDelivery: string | null;
+    paymentUrl: string;
     transactionInformation: TransactionInformation;
     userInformation: UserInformation;
     responseOrderDetails: OrderDetailDTO[];

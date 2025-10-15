@@ -11,9 +11,9 @@ export async function POST(request: Request) {
             return NextResponse.json(dataResponse, { status: responseBE.data?.statusCode });
         }
         return NextResponse.json("Checkout thất bại", { status: 400 });
-    } catch (error) {
-        return NextResponse.json({
-            message: error,
-        }, { status: 400 });
+    } catch (error: any) {
+        return NextResponse.json(
+            error.response.data.message,
+            { status: 400 });
     }
 }

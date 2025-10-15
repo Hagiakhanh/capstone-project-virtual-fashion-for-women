@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, ShoppingBag, MapPin } from 'lucide-react';
 import { CheckoutDTO } from '@/models/CheckoutDTO';
 import { RequestCheckout } from '@/models/RequestCheckout';
@@ -41,6 +41,16 @@ export default function CheckoutForm() {
     const [addressSuggestions, setAddressSuggestions] = useState<{ placeId: string, description: string }[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [selectedPayment, setSelectedPayment] = useState('Momo');
+    const isFormValid = useMemo(() => {
+        return (
+            formData.fullName.trim() !== '' &&
+            formData.phone.trim() !== '' &&
+            formData.address.trim() !== '' &&
+            addressInformation.provinceName.trim() !== '' &&
+            addressInformation.districtName.trim() !== '' &&
+            addressInformation.wardName.trim() !== ''
+        );
+    }, [formData, addressInformation]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
@@ -52,10 +62,13 @@ export default function CheckoutForm() {
     const handlePayment = async () => {
         if (isProcessing) return;
         setIsProcessing(true);
-        if (!formData.fullName || !formData.phone || !formData.address) {
-            alert("Vui lòng nhập đầy đủ họ tên, số điện thoại và địa chỉ trước khi đặt hàng!");
+
+        if (!isFormValid) {
+            messageToast.error("Vui lòng nhập đầy đủ thông tin giao hàng!");
+            setIsProcessing(false);
             return;
         }
+
         const payload = {
             cartIds: checkoutDTO.items.map(item => item.cartId),
             recieverName: formData.fullName,
@@ -77,9 +90,9 @@ export default function CheckoutForm() {
                 messageToast.error("Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau.");
                 setIsProcessing(false);
             }
-        } catch (error) {
-            console.error("Payment error:", error);
-            messageToast.error("Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau.");
+        } catch (error: any) {
+            console.error("Payment error:", error.response.data.message);
+            messageToast.error(error.response.data.message);
             setIsProcessing(false);
         }
     };
@@ -149,7 +162,9 @@ export default function CheckoutForm() {
     const fetchProvinceData = async () => {
         try {
             const response = await api.get('/location/provinces');
-            if (response.status === 200) setProvince(response.data);
+            if (response.status === 200) {
+                setProvince(response.data);
+            }
         } catch (error) {
             console.error("Fetch province data error:", error);
         }
@@ -200,30 +215,37 @@ export default function CheckoutForm() {
         }
     };
 
-    const fetchAddressDetails = async (placeId: string) => {
+    const fetchAddressDetails = async (placeId: string, placeName: string) => {
         try {
-            const response = await api.post(`/location/googleMap/place/${placeId}`);
-            if (response.status === 200) {
-                const data = response.data;
-                const matchedProvinceEntry = Object.entries(provinces).find(
-                    ([, name]) => name.toLowerCase().includes(data.provinceName.toLowerCase())
+            const parts = placeName.split(',').map(part => part.trim());
+
+            const lastThree = parts.slice(-4, -1);
+
+            const data = {
+                provinceName: lastThree[2],
+                districtName: lastThree[1],
+                wardName: lastThree[0]
+            }
+            console.log(data);
+            const matchedProvinceEntry = Object.entries(provinces).find(
+                ([, name]) => name.toLowerCase().includes(data.provinceName.toLowerCase())
+            );
+            if (matchedProvinceEntry) {
+                const [provinceId, provinceName] = matchedProvinceEntry;
+                const districtsData = await fetchDistrictData(provinceId);
+                if (data.districtName === "Thủ Đức") data.districtName = "Thành phố Thủ Đức";
+                const matchedDistrictEntry = Object.entries(districtsData).find(
+                    ([, name]) => name.toLowerCase().includes(data.districtName.toLowerCase())
                 );
-                if (matchedProvinceEntry) {
-                    const [provinceId, provinceName] = matchedProvinceEntry;
-                    const districtsData = await fetchDistrictData(provinceId);
-                    const matchedDistrictEntry = Object.entries(districtsData).find(
-                        ([, name]) => name.toLowerCase().includes(data.districtName.toLowerCase())
+                if (matchedDistrictEntry) {
+                    const [districtId, districtName] = matchedDistrictEntry;
+                    const wardsData = await fetchWardData(districtId);
+                    const matchedWardEntry = Object.entries(wardsData).find(
+                        ([, name]) => name.toLowerCase().includes(data.wardName.toLowerCase())
                     );
-                    if (matchedDistrictEntry) {
-                        const [districtId, districtName] = matchedDistrictEntry;
-                        const wardsData = await fetchWardData(districtId);
-                        const matchedWardEntry = Object.entries(wardsData).find(
-                            ([, name]) => name.toLowerCase().includes(data.wardName.toLowerCase())
-                        );
-                        if (matchedWardEntry) {
-                            const [, wardName] = matchedWardEntry;
-                            setAddressInformation({ provinceName, districtName, wardName });
-                        }
+                    if (matchedWardEntry) {
+                        const [, wardName] = matchedWardEntry;
+                        setAddressInformation({ provinceName, districtName, wardName });
                     }
                 }
             }
@@ -246,7 +268,7 @@ export default function CheckoutForm() {
 
     useEffect(() => { fetchProvinceData(); }, []);
     useEffect(() => {
-        const idsStr = localStorage.getItem("checkoutCartIds");
+        const idsStr = sessionStorage.getItem("checkoutCartIds");
         if (idsStr) {
             const ids: number[] = JSON.parse(idsStr);
             const payload = {
@@ -291,7 +313,7 @@ export default function CheckoutForm() {
                                                 onClick={() => {
                                                     isSelectingRef.current = true;
                                                     setFormData({ ...formData, address: s.description });
-                                                    fetchAddressDetails(s.placeId);
+                                                    fetchAddressDetails(s.placeId, s.description);
                                                     setAddressSuggestions([]);
                                                 }}
                                                 className="flex items-center gap-2 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0 border-gray-100">
@@ -305,47 +327,105 @@ export default function CheckoutForm() {
 
                             {/* Dropdown */}
                             <div className="relative">
-                                <div onClick={() => setShowAddressDropdown(!showAddressDropdown)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg cursor-pointer bg-white flex justify-between items-center hover:border-gray-400 transition-all">
+                                <div
+                                    onClick={() => setShowAddressDropdown(!showAddressDropdown)}
+                                    className="w-full p-3 border border-gray-300 rounded-lg cursor-pointer bg-white flex justify-between items-center hover:border-gray-400 transition-all"
+                                >
                                     <span className={addressInformation.provinceName ? 'text-gray-800' : 'text-gray-500'}>
                                         {getAddressDisplayValue()}
                                     </span>
-                                    <ChevronRight className={`w-5 h-5 text-gray-500 transition-transform ${showAddressDropdown ? 'rotate-90' : ''}`} />
+                                    <ChevronRight
+                                        className={`w-5 h-5 text-gray-500 transition-transform ${showAddressDropdown ? 'rotate-90' : ''
+                                            }`}
+                                    />
                                 </div>
+
                                 {showAddressDropdown && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                                        {/* Tabs */}
                                         <div className="flex border-b">
-                                            {['city', 'district', 'ward'].map(tab => (
-                                                <button key={tab} onClick={() => handleAddressTabClick(tab)}
-                                                    disabled={(tab === 'district' && !addressInformation.provinceName) ||
-                                                        (tab === 'ward' && !addressInformation.districtName)}
-                                                    className={`flex-1 py-2 text-sm font-medium transition-colors ${currentAddressTab === tab
-                                                        ? 'text-red-600 border-b-2 border-red-600'
-                                                        : 'text-gray-500 hover:text-gray-700'}`}>
-                                                    {tab === 'city' ? 'Tỉnh / TP' : tab === 'district' ? 'Quận / Huyện' : 'Phường / Xã'}
-                                                </button>
-                                            ))}
+                                            {['city', 'district', 'ward'].map(tab => {
+                                                const isDisabled =
+                                                    (tab === 'district' && !addressInformation.provinceName) ||
+                                                    (tab === 'ward' && !addressInformation.districtName);
+
+                                                return (
+                                                    <button
+                                                        key={tab}
+                                                        onClick={() => !isDisabled && handleAddressTabClick(tab)}
+                                                        disabled={isDisabled}
+                                                        className={`flex-1 py-2 text-sm font-medium transition-colors relative
+                ${currentAddressTab === tab
+                                                                ? 'text-red-600 font-semibold after:content-[""] after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-red-600'
+                                                                : isDisabled
+                                                                    ? 'text-gray-300 cursor-not-allowed'
+                                                                    : 'text-gray-500 hover:text-gray-700'
+                                                            }`}
+                                                    >
+                                                        {tab === 'city'
+                                                            ? 'Tỉnh / TP'
+                                                            : tab === 'district'
+                                                                ? 'Quận / Huyện'
+                                                                : 'Phường / Xã'}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
+
+                                        {/* Options */}
                                         <div className="max-h-60 overflow-y-auto">
                                             {currentAddressTab === 'city' &&
                                                 Object.entries(provinces).map(([id, name]) => (
-                                                    <div key={id} onClick={() => handleCitySelect(id, name)}
-                                                        className={`p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0 ${addressInformation.provinceName === name ? 'bg-red-50 text-red-600' : ''}`}>{name}</div>
+                                                    <div
+                                                        key={id}
+                                                        onClick={() => handleCitySelect(id, name)}
+                                                        className={`p-3 cursor-pointer border-b last:border-0 transition-all
+                ${addressInformation.provinceName === name
+                                                                ? 'bg-red-50 text-red-600 font-medium'
+                                                                : 'hover:bg-gray-50'
+                                                            }`}
+                                                    >
+                                                        {name}
+                                                    </div>
                                                 ))}
+
                                             {currentAddressTab === 'district' &&
-                                                (addressInformation.provinceName
-                                                    ? Object.entries(districts).map(([id, name]) => (
-                                                        <div key={id} onClick={() => handleDistrictSelect(id, name)}
-                                                            className={`p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0 ${addressInformation.districtName === name ? 'bg-red-50 text-red-600' : ''}`}>{name}</div>
+                                                (addressInformation.provinceName ? (
+                                                    Object.entries(districts).map(([id, name]) => (
+                                                        <div
+                                                            key={id}
+                                                            onClick={() => handleDistrictSelect(id, name)}
+                                                            className={`p-3 cursor-pointer border-b last:border-0 transition-all
+                  ${addressInformation.districtName === name
+                                                                    ? 'bg-red-50 text-red-600 font-medium'
+                                                                    : 'hover:bg-gray-50'
+                                                                }`}
+                                                        >
+                                                            {name}
+                                                        </div>
                                                     ))
-                                                    : <div className="p-3 text-gray-500 text-center">Vui lòng chọn Tỉnh/TP trước</div>)}
+                                                ) : (
+                                                    <div className="p-3 text-gray-400 text-center">Vui lòng chọn Tỉnh/TP trước</div>
+                                                ))}
+
                                             {currentAddressTab === 'ward' &&
-                                                (addressInformation.districtName
-                                                    ? Object.entries(wards).map(([id, name]) => (
-                                                        <div key={id} onClick={() => handleWardSelect(name)}
-                                                            className={`p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0 ${addressInformation.wardName === name ? 'bg-red-50 text-red-600' : ''}`}>{name}</div>
+                                                (addressInformation.districtName ? (
+                                                    Object.entries(wards).map(([id, name]) => (
+                                                        <div
+                                                            key={id}
+                                                            onClick={() => handleWardSelect(name)}
+                                                            className={`p-3 cursor-pointer border-b last:border-0 transition-all
+                  ${addressInformation.wardName === name
+                                                                    ? 'bg-red-50 text-red-600 font-medium'
+                                                                    : 'hover:bg-gray-50'
+                                                                }`}
+                                                        >
+                                                            {name}
+                                                        </div>
                                                     ))
-                                                    : <div className="p-3 text-gray-500 text-center">Vui lòng chọn Quận/Huyện trước</div>)}
+                                                ) : (
+                                                    <div className="p-3 text-gray-400 text-center">Vui lòng chọn Quận/Huyện trước</div>
+                                                ))}
                                         </div>
                                     </div>
                                 )}
@@ -437,14 +517,14 @@ export default function CheckoutForm() {
                         </div>
                         <button
                             className={`w-full py-4 mt-6 text-lg font-semibold rounded-xl transition-all duration-300 flex justify-center items-center gap-2
-                            ${isProcessing
+                            ${isProcessing || !isFormValid
                                     ? 'bg-gray-400 text-white cursor-not-allowed'
                                     : checkoutDTO.serviceFee === 0
                                         ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                                         : 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
                                 }`}
                             onClick={handlePayment}
-                            disabled={isProcessing || checkoutDTO.serviceFee === 0}
+                            disabled={isProcessing || !isFormValid || checkoutDTO.serviceFee === 0}
                         >
                             {isProcessing ? (
                                 <>
@@ -474,6 +554,7 @@ export default function CheckoutForm() {
                                 'Đặt hàng'
                             )}
                         </button>
+
                     </div>
                 </div>
             </div>

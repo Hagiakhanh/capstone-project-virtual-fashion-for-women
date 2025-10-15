@@ -10,12 +10,13 @@ import { PaginationDTO } from '@/models/PaginationDTO';
 
 const statusTabs = [
     { key: '', label: 'Tất cả', icon: null },
-    { key: 'Pending', label: 'Chờ xác nhận', icon: Clock },
+    { key: 'Pending', label: 'Chờ thanh toán', icon: Clock },
     { key: 'Confirmed', label: 'Đã xác nhận', icon: ClipboardCheck },
     { key: 'Packed', label: 'Đã đóng gói', icon: Package },
     { key: 'Delivering', label: 'Đang giao', icon: Truck },
     { key: 'Delivered', label: 'Đã giao', icon: Home },
     { key: 'Completed', label: 'Hoàn tất', icon: CheckCircle },
+    { key: 'Failed', label: 'Thất bại', icon: XCircle },
 ];
 
 export default function OrderManagement() {

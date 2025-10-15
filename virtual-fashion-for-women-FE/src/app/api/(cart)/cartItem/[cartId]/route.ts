@@ -17,9 +17,9 @@ export async function DELETE(request: Request,
             { status: responseBE.data?.statusCode }
         );
     }
-    catch (error) {
+    catch (error: any) {
         return NextResponse.json({
-            message: "Lỗi cập nhật thất bại: " + error,
+            message: "Lỗi cập nhật thất bại: " + error.response.data.message,
         }, { status: 400 });
     }
 }

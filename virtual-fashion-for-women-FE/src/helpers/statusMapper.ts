@@ -13,7 +13,7 @@ const statusMap: Record<
     { label: string; color: string; bg: string; icon: any }
 > = {
     Pending: {
-        label: 'Chờ xác nhận',
+        label: 'Chờ thanh toán',
         color: '#E67E22',
         bg: '#FEF5E7',
         icon: Clock,
