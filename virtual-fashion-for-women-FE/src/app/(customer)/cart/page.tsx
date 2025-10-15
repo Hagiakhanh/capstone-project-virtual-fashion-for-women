@@ -20,10 +20,10 @@ export default function CartContainer() {
         try {
             const res = await api.get('/cartItem');
             if (res.status == 200) {
-                localStorage.setItem("checkoutCartIds", JSON.stringify([]));
+                sessionStorage.setItem("checkoutCartIds", JSON.stringify([]));
                 const data: CartItemDTO[] = res.data;
                 const mappedData = data.map(item => ({ ...item, selected: true }));
-                localStorage.setItem("checkoutCartIds", JSON.stringify(mappedData.map(i => i.cartId)));
+                sessionStorage.setItem("checkoutCartIds", JSON.stringify(mappedData.map(i => i.cartId)));
                 setCartItems(mappedData);
                 window.dispatchEvent(new Event("cart-updated"));
             }
@@ -40,7 +40,7 @@ export default function CartContainer() {
                 item.cartId === id ? { ...item, selected: !item.selected } : item
             );
             setSelectAll(newItems.every(item => item.selected));
-            localStorage.setItem(
+            sessionStorage.setItem(
                 "checkoutCartIds",
                 JSON.stringify(newItems.filter(i => i.selected).map(i => i.cartId))
             );
@@ -58,7 +58,7 @@ export default function CartContainer() {
             const selectedIds = newSelectAll
                 ? newItems.map(i => i.cartId)
                 : [];
-            localStorage.setItem("checkoutCartIds", JSON.stringify(selectedIds));
+            sessionStorage.setItem("checkoutCartIds", JSON.stringify(selectedIds));
 
             return newItems;
         });
@@ -104,9 +104,9 @@ export default function CartContainer() {
     const removeItem = async (id: number) => {
         const res = await api.delete(`/cartItem/${id}`);
         if (res.status === 200) {
-            const storedIds: number[] = JSON.parse(localStorage.getItem("checkoutCartIds") || "[]");
+            const storedIds: number[] = JSON.parse(sessionStorage.getItem("checkoutCartIds") || "[]");
             const updatedIds = storedIds.filter((cartId: number) => cartId !== id);
-            localStorage.setItem("checkoutCartIds", JSON.stringify(updatedIds));
+            sessionStorage.setItem("checkoutCartIds", JSON.stringify(updatedIds));
 
             fetchCartItem();
             messageToast.success("Xóa sản phẩm khỏi giỏ hàng thành công");
@@ -117,7 +117,7 @@ export default function CartContainer() {
     const handleCheckout = () => {
         const ids = cartItems.filter(i => i.selected).map(i => i.cartId);
         if (ids.length === 0) return;
-        localStorage.setItem("checkoutCartIds", JSON.stringify(ids));
+        sessionStorage.setItem("checkoutCartIds", JSON.stringify(ids));
         router.push("/checkout");
     };
 

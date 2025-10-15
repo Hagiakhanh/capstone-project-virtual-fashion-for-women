@@ -2,17 +2,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { Plus, Upload } from 'lucide-react';
-import TopSelectModal from '@/components/TryOn/SelectItemTryOn';
 import { Category } from '@/models/RequestCreateProduct';
 import { api } from '@/api/instance';
+import SelectItemTryOn from '@/components/TryOn/SelectItemTryOn';
+import { set } from 'lodash';
 
 export default function VirtualTryOnPage() {
     const [category, setCategory] = useState<Category[]>([]);
-    const [selectedTop, setSelectedTop] = useState<File | null>(null);
-    const [selectedBottom, setSelectedBottom] = useState<File | null>(null);
+    const [selectedTop, setSelectedTop] = useState<any>(null);
+    const [selectedBottom, setSelectedBottom] = useState<any>(null);
     const [userImage, setUserImage] = useState<File | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState<'top' | 'bottom' | null>(null);
+    const [isDress, setIsDress] = useState(false);
 
     const handleFileChange = (
         event: React.ChangeEvent<HTMLInputElement>,
@@ -31,6 +33,10 @@ export default function VirtualTryOnPage() {
             }
         };
         fetchCategories();
+        const productId = sessionStorage.getItem("product_id");
+        if (productId) {
+            console.log("Product ID nhận được:", productId);
+        }
     }, []);
 
     const topCategories = category.filter(
@@ -45,7 +51,7 @@ export default function VirtualTryOnPage() {
             <div className="w-full max-w-6xl">
                 {/* Title */}
                 <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 text-center mb-10 tracking-tight">
-                    Mặc thử đồ trực tuyến
+                    Thử đồ trực tuyến
                 </h1>
 
                 <div className="flex flex-col lg:flex-row bg-gray-700 rounded-3xl overflow-hidden shadow-2xl">
@@ -54,22 +60,25 @@ export default function VirtualTryOnPage() {
                         <div className="text-4xl sm:text-4xl font-semibold text-white text-center mb-10">
                             Quần áo được chọn
                         </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                            {/* Áo */}
-                            <div className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all"
+                        <div className={`grid grid-cols-1 sm:grid-cols-${isDress ? 1 : 2} gap-8`}>
+                            {/* Khung chọn áo */}
+                            <div
+                                className={`bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all
+                                ${isDress ? 'col-span-2 h-[300px]' : 'h-[250px]'}
+                                `}
                                 onClick={() => {
                                     setShowModal(true);
                                     setModalType('top');
-                                }}>
+                                }}
+                            >
                                 <label htmlFor="top-upload" className="cursor-pointer block h-full">
                                     <div className="flex flex-col h-full">
-                                        <div className="flex-1 flex items-center justify-center bg-gray-100 p-8">
+                                        <div className={`flex-1 flex items-center justify-center bg-gray-100 p-8 ${isDress ? 'h-[320px]' : 'h-[220px]'}`}>
                                             {selectedTop ? (
                                                 <img
-                                                    src={URL.createObjectURL(selectedTop)}
-                                                    alt="Top"
-                                                    className="max-h-44 object-contain rounded-lg"
+                                                    src={selectedTop.noBgImgUrl}
+                                                    alt={selectedTop.productName}
+                                                    className={`${isDress ? 'max-h-80' : 'max-h-44'} object-contain rounded-lg`}
                                                 />
                                             ) : (
                                                 <div className="bg-orange-400 rounded-full p-4 shadow-lg">
@@ -77,48 +86,51 @@ export default function VirtualTryOnPage() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="bg-white text-center py-4 font-medium text-gray-800 text-sm border-t border-gray-200">
-                                            Chọn một loại áo để phối
+
+                                        <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px]">
+                                            {selectedTop ? selectedTop.productName : 'Chọn một loại áo để phối'}
                                         </div>
                                     </div>
                                 </label>
-                                {/* <input
-                                    id="top-upload"
-                                    onChange={() => setShowTopModal(true)}
-                                    className="hidden"
-                                /> */}
                             </div>
 
-                            {/* Quần / Váy */}
-                            <div className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all"
-                                onClick={() => {
-                                    setShowModal(true);
-                                    setModalType('bottom');
-                                }}>
-                                <label htmlFor="bottom-upload" className="cursor-pointer block h-full">
-                                    <div className="flex flex-col h-full">
-                                        <div className="flex-1 flex items-center justify-center bg-gray-100 p-8">
-                                            {selectedBottom ? (
-                                                <img
-                                                    src={URL.createObjectURL(selectedBottom)}
-                                                    alt="Bottom"
-                                                    className="max-h-44 object-contain rounded-lg"
-                                                />
-                                            ) : (
-                                                <div className="bg-orange-400 rounded-full p-4 shadow-lg">
-                                                    <Plus className="w-10 h-10 text-white" strokeWidth={3} />
-                                                </div>
-                                            )}
+                            {/* Khung chọn quần/váy */}
+                            {!isDress && (
+                                <div
+                                    className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all"
+                                    onClick={() => {
+                                        setShowModal(true);
+                                        setModalType('bottom');
+                                    }}
+                                >
+                                    <label htmlFor="bottom-upload" className="cursor-pointer block h-full">
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex-1 flex items-center justify-center bg-gray-100 p-8">
+                                                {selectedBottom ? (
+                                                    <img
+                                                        src={selectedBottom.noBgImgUrl}
+                                                        alt={selectedBottom.productName}
+                                                        className="max-h-44 object-contain rounded-lg"
+                                                    />
+                                                ) : (
+                                                    <div className="bg-orange-400 rounded-full p-4 shadow-lg">
+                                                        <Plus className="w-10 h-10 text-white" strokeWidth={3} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px]">
+                                                {selectedBottom
+                                                    ? selectedBottom.productName
+                                                    : 'Chọn một loại quần hoặc váy để phối'}
+                                            </div>
                                         </div>
-                                        <div className="bg-white text-center py-4 font-medium text-gray-800 text-sm border-t border-gray-200">
-                                            Chọn một loại quần hoặc váy để phối
-                                        </div>
-                                    </div>
-                                </label>
-
-                            </div>
+                                    </label>
+                                </div>
+                            )}
                         </div>
+
                     </div>
+
 
                     {/* Right panel */}
                     <div className="lg:w-[40%] bg-white p-8 lg:p-10 flex flex-col justify-between rounded-t-3xl lg:rounded-t-none lg:rounded-r-3xl">
@@ -136,15 +148,12 @@ export default function VirtualTryOnPage() {
                                 className="cursor-pointer border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center min-h-[230px] hover:border-orange-400 transition-all"
                             >
                                 {userImage ? (
-                                    <div className="text-center">
+                                    <div className="flex items-center justify-center max-h-[350px] w-full overflow-hidden">
                                         <img
                                             src={URL.createObjectURL(userImage)}
                                             alt="User"
-                                            className="w-28 h-28 object-cover rounded-full mx-auto mb-3 shadow-md"
+                                            className="max-h-[350px] w-auto object-contain rounded-2xl"
                                         />
-                                        <p className="text-gray-700 font-medium text-sm truncate max-w-[180px] mx-auto">
-                                            {userImage.name}
-                                        </p>
                                     </div>
                                 ) : (
                                     <>
@@ -178,19 +187,37 @@ export default function VirtualTryOnPage() {
                 </div>
             </div>
             {showModal && (
-                <TopSelectModal
+                <SelectItemTryOn
                     category={modalType === 'top' ? topCategories : bottomCategories}
                     onClose={() => setShowModal(false)}
                     onSelect={(item) => {
+                        const fullBodyCategoryIds = category
+                            .filter((c) => c.bodyPart === 'Full body')
+                            .map((c) => c.categoryId);
+
+                        console.log('Item categoryId:', item.categoryId);
+                        console.log('Category with full body:', fullBodyCategoryIds);
+
+                        const isDressItem = fullBodyCategoryIds.includes(item.categoryId);
+                        if (isDressItem) {
+                            setSelectedBottom(null);
+                        }
+                        setIsDress(isDressItem);
+                        console.log('Selected item:', item);
                         if (modalType === 'top') {
-                            setSelectedTop(new File([], item.name));
+                            setSelectedTop(item);
                         } else {
-                            setSelectedBottom(new File([], item.name));
+                            setSelectedBottom(item);
                         }
                         setShowModal(false);
                     }}
                     onReset={() => {
-                        modalType === 'top' ? setSelectedTop(null) : setSelectedBottom(null);
+                        if (modalType === 'top') {
+                            setIsDress(false);
+                            setSelectedTop(null);
+                        } else {
+                            setSelectedBottom(null);
+                        }
                     }}
                 />
             )}

@@ -157,7 +157,7 @@ function ProductDetailsPage() {
          return;
       }
 
-      localStorage.setItem("checkoutCartIds", JSON.stringify([]));
+      sessionStorage.setItem("checkoutCartIds", JSON.stringify([]));
       try {
          const payload = {
             productVariantId: chooseProduct.productVariant?.productVariantId,
@@ -166,7 +166,7 @@ function ProductDetailsPage() {
          const response = await api.post('/cartItem', payload);
          if (response.status === 201) {
 
-            localStorage.setItem(
+            sessionStorage.setItem(
                "checkoutCartIds",
                JSON.stringify([response.data.data.cartId])
             );
@@ -325,22 +325,46 @@ function ProductDetailsPage() {
                         <Button onClick={() => handleQuantityChange('INCREASE')} style={{ border: 'none' }} disabled={chooseProduct.quantity === chooseProduct.productVariant?.quantity || !chooseProduct.sizeCode}><PlusOutlined /></Button>
                      </div>
                   </div>
-                  <div className='flex gap-4 mt-3 items-center'>
+                  <div className="flex gap-3 mt-5">
                      <Button
-                        style={{ fontWeight: 'normal', border: '1px solid' }}
-                        className="!px-5 !py-5 !text-black !hover:text-black !rounded-2xl !text-xl"
+                        style={{ fontWeight: '500', border: '1.5px solid #d4d4d4' }}
+                        className="!flex-1 !h-12 !bg-white !text-black !rounded-xl !text-base hover:!border-black hover:!bg-gray-50 transition-all"
                         size="large"
                         onClick={handleAddToCart}
-                     >Thêm vào giỏ
+                     >
+                        Thêm vào giỏ
                      </Button>
+
                      <Button
-                        style={{ fontWeight: 'normal', backgroundColor: '#FAE3B6', border: 'none' }}
-                        className="!px-5 !py-5 !text-black !hover:text-black !rounded-xl !text-xl"
+                        style={{ fontWeight: '500', backgroundColor: '#FAE3B6', border: 'none' }}
+                        className="!flex-1 !h-12 !text-black !rounded-xl !text-base hover:!bg-[#f5d89f] transition-colors"
                         size="large"
                         onClick={handleBuyNow}
-                     >Mua ngay
+                     >
+                        Mua ngay
                      </Button>
                   </div>
+
+                  {/* Secondary Action - Virtual Try-on */}
+                  <div className="mt-3">
+                     <Button
+                        onClick={() => {
+                           router.push('/try-on')
+                           // console.log('productDetail', productDetail);
+                           sessionStorage.setItem("product_id", productDetail?.productId);
+                        }}
+                        className="w-full !h-12 px-3 py-2 !rounded-xl !text-base !font-medium
+                     !bg-gradient-to-r !from-teal-400 !to-blue-500
+                     hover:!from-teal-500 hover:!to-blue-600
+                     !text-white !border-none !shadow-sm hover:!shadow-md
+                     transition-all duration-300"
+                     >
+                        <span className="mr-2">✨</span>
+                        Thử đồ ảo ngay
+                     </Button>
+                  </div>
+
+
                   <div className='border-[0.5px] border-[#e3ddbb] mt-5'></div>
                   <p className='my-5 font-normal text-lg line-clamp-5'>
                      {productDetail?.description}
@@ -354,7 +378,7 @@ function ProductDetailsPage() {
                </div>
                <p className='font-normal text-lg text-black'>Thêm vào danh sách yêu thích</p>
             </div>
-         </div>
+         </div >
          <PolicyInProductDetail />
       </>
    );

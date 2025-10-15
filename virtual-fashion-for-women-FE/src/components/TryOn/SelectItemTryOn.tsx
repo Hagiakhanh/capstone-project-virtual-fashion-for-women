@@ -1,40 +1,60 @@
 'use client';
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { X, Search } from "lucide-react";
 import { Category } from "@/models/RequestCreateProduct";
+import { api } from "@/api/instance";
+import { on } from "events";
 
-export default function TopSelectModal({
-    searchKeyword,
+export default function SelectItemTryOn({
     category = [],
     onClose,
     onSelect,
     onReset,
 }: {
-    searchKeyword?: string;
     category?: Category[];
     onClose: () => void;
     onSelect: (item: { image: string; name: string; price: string }) => void;
     onReset: () => void;
 }) {
-    const [selectedCategory, setSelectedCategory] = useState<number | null>(
-        category[0]?.categoryId || null
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+        category[0] || null
     );
-    const [searchText, setSearchText] = useState(searchKeyword || "");
+    const [searchText, setSearchText] = useState("");
+    const [products, setProducts] = useState<any[]>([]);
 
-    const products = [
-        { image: "/shirt1.jpg", name: "Áo sơ mi trắng nữ", price: "300.000 VND" },
-        { image: "/shirt2.jpg", name: "Áo sơ mi công sở", price: "350.000 VND" },
-        { image: "/shirt3.jpg", name: "Áo thun nữ basic", price: "250.000 VND" },
-        { image: "/shirt4.jpg", name: "Áo khoác blazer", price: "500.000 VND" },
-        { image: "/shirt5.jpg", name: "Áo dài tay công sở", price: "400.000 VND" },
-    ];
+    const handFetchProducts = async () => {
+        try {
+            const response = await api.get('/product/search', {
+                params: {
+                    PageIndex: 1,
+                    PageSize: 100,
+                    ProductName: searchText,
+                    CategoryName: selectedCategory?.categoryName || ''
+                }
+            });
+            if (response.status === 200) {
+                const data = response.data;
 
-    // Lọc sản phẩm theo từ khóa tìm kiếm
-    const filteredProducts = useMemo(() => {
-        return products.filter((item) =>
-            item.name.toLowerCase().includes(searchText.toLowerCase())
-        );
-    }, [searchText, products]);
+                const productColorsWithProductInfo = data.flatMap((product: any) =>
+                    product.productColors.map((color: any) => ({
+                        ...color,
+                        productName: product.productName + "-" + color.color.colorName,
+                        categoryId: product.categoryId,
+                    }))
+                );
+
+                setProducts(productColorsWithProductInfo);
+            } else {
+                setProducts([]);
+            }
+        } catch (error) {
+            console.error("Lỗi khi lấy sản phẩm:", error);
+        }
+    }
+
+    useEffect(() => {
+        handFetchProducts();
+    }, [selectedCategory, searchText]);
 
     return (
         <div
@@ -63,8 +83,8 @@ export default function TopSelectModal({
                         {category.map((c) => (
                             <button
                                 key={c.categoryId}
-                                onClick={() => setSelectedCategory(c.categoryId)}
-                                className={`px-4 py-1.5 rounded-full border text-sm font-medium transition ${selectedCategory === c.categoryId
+                                onClick={() => setSelectedCategory(c)}
+                                className={`px-4 py-1.5 rounded-full border text-sm font-medium transition ${selectedCategory?.categoryId === c.categoryId
                                     ? "bg-orange-500 text-white border-orange-500"
                                     : "bg-white border-gray-300 hover:border-orange-400 hover:text-orange-500"
                                     }`}
@@ -87,25 +107,23 @@ export default function TopSelectModal({
                     />
                 </div>
 
-                {/* Danh sách sản phẩm */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto pr-2">
-                    {filteredProducts.length > 0 ? (
-                        filteredProducts.map((item, index) => (
+                    {products.length > 0 ? (
+                        products.map((item, index) => (
                             <div
                                 key={index}
                                 onClick={() => onSelect(item)}
                                 className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-orange-50 cursor-pointer transition border border-transparent hover:border-orange-300"
                             >
                                 <img
-                                    src={item.image}
-                                    alt={item.name}
+                                    src={item.noBgImgUrl}
+                                    alt={item.productName}
                                     className="w-32 h-32 rounded-lg object-cover"
                                 />
                                 <div className="text-center">
                                     <p className="font-medium text-gray-800 text-sm">
-                                        {item.name}
+                                        {item.productName}
                                     </p>
-                                    <p className="text-xs text-gray-500">{item.price}</p>
                                 </div>
                             </div>
                         ))
@@ -119,7 +137,10 @@ export default function TopSelectModal({
                 {/* Footer buttons */}
                 <div className="flex justify-end mt-6 gap-3">
                     <button
-                        onClick={onReset}
+                        onClick={() => {
+                            onReset();
+                            onClose();
+                        }}
                         className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-100 hover:border-gray-400 transition-colors"
                     >
                         Reset

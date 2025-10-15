@@ -8,13 +8,17 @@ export async function GET(request: NextRequest) {
         const PageIndex = searchParams.get('PageIndex');
         const PageSize = searchParams.get('PageSize');
         const ProductSort = searchParams.get('ProductSort');
+        const CategoryName = searchParams.get('CategoryName');
+        const ProductName = searchParams.get('ProductName');
 
         const api = createApiInstance(request);
         const responseBE = await api.get('/product/search', {
             params: {
                 PageIndex: PageIndex,
                 PageSize: PageSize,
-                ProductSort: ProductSort
+                ProductSort: ProductSort,
+                CategoryName: CategoryName,
+                ProductName: ProductName
             }
         });
         if (responseBE.status === 200) {
