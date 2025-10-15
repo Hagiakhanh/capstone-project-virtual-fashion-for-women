@@ -28,32 +28,32 @@ export default function UpdateColorSection({
     }: UpdateColorSectionProps) {
     return (
         <div className="bg-white p-6 rounded-lg shadow">
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Màu sắc sản phẩm</h2>
-            <button
-            type="button"
-            onClick={onAddColor}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-            <Plus size={20} />
-            Thêm màu
-            </button>
-        </div>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Màu sắc sản phẩm</h2>
+                <button
+                    type="button"
+                    onClick={onAddColor}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                    <Plus size={20} />
+                    Thêm màu
+                </button>
+            </div>
 
-        {productColors.map((pc, colorIndex) => (
+            {productColors.map((pc, colorIndex) => (
             <UpdateColorItem
-            key={colorIndex}
-            productColor={pc}
-            colorIndex={colorIndex}
-            colors={colors}
-            sizes={sizes}
-            onUpdate={(field, value) => onUpdateColor(colorIndex, field, value)}
-            onRemove={() => onRemoveColor(colorIndex)}
-            onAddVariant={() => onAddVariant(colorIndex)}
-            onRemoveVariant={(variantIndex) => onRemoveVariant(colorIndex, variantIndex)}
-            onUpdateVariant={(variantIndex, field, value) =>
-                onUpdateVariant(colorIndex, variantIndex, field, value)
-            }
+                key={colorIndex}
+                productColor={pc}
+                colorIndex={colorIndex}
+                colors={colors}
+                sizes={sizes}
+                onUpdate={(field, value) => onUpdateColor(colorIndex, field, value)}
+                onRemove={() => onRemoveColor(colorIndex)}
+                onAddVariant={() => onAddVariant(colorIndex)}
+                onRemoveVariant={(variantIndex) => onRemoveVariant(colorIndex, variantIndex)}
+                onUpdateVariant={(variantIndex, field, value) =>
+                    onUpdateVariant(colorIndex, variantIndex, field, value)
+                }
             />
         ))}
         </div>
