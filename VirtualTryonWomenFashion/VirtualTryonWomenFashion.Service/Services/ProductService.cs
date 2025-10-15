@@ -296,6 +296,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     ColorId = targetProductColor.ColorId,
                     LensId = targetProductColor.LensId,
                     Color = _mapper.Map<ResponseColorDto>(targetProductColor.Color),
+                            ProductImagesDto = targetProductColor.ProductImages
+                                .Select(pi => _mapper.Map<ResponseProductImageDto>(pi))
+                                .ToList(),
                     ProductVariants = new List<ResponseProductVariantDto>
                     {
                         new ResponseProductVariantDto
@@ -310,10 +313,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             ProductLength = targetVariant.ProductLength,
                             ProductWidth = targetVariant.ProductWidth,
                             ProductHeight = targetVariant.ProductHeight,
-                            SizeDto = _mapper.Map<ResponseSizeDto>(targetVariant.Size),
-                            ProductImagesDto = targetProductColor.ProductImages
-                                .Select(pi => _mapper.Map<ResponseProductImageDto>(pi))
-                                .ToList()
+                            SizeDto = _mapper.Map<ResponseSizeDto>(targetVariant.Size)
                         }
                     }
                 }

@@ -37,6 +37,11 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                         ColorPrefix = pc.Color.ColorPrefix,
                         HexCode = pc.Color.HexCode
                     } : null,
+                    ProductImagesDto = pc.ProductImages?.Select(pi => new ResponseProductImageDto
+                    {
+                        ProductImageId = pi.ProductImageId,
+                        ImageUrl = pi.ImageUrl
+                    }).ToList() ?? new List<ResponseProductImageDto>(),
                     ProductVariants = pc.ProductVariants?.Select(pv => new ResponseProductVariantDto
                     {
                         ProductVariantId = pv.ProductVariantId,
@@ -53,12 +58,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                         {
                             SizeId = pv.Size.SizeId,
                             SizeCode = pv.Size.SizeCode
-                        } : null,
-                        ProductImagesDto = pc.ProductImages?.Select(pi => new ResponseProductImageDto
-                        {
-                            ProductImageId = pi.ProductImageId,
-                            ImageUrl = pi.ImageUrl
-                        }).ToList() ?? new List<ResponseProductImageDto>()
+                        } : null
                     }).ToList() ?? new List<ResponseProductVariantDto>()
                 }).ToList() ?? new List<ResponseProductColorDto>(),
                 Tags = product.Tags?.Select(tag => new TagDto
