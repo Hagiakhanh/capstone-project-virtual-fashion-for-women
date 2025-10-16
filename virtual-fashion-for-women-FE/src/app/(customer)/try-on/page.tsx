@@ -5,7 +5,6 @@ import { Plus, Upload } from 'lucide-react';
 import { Category } from '@/models/RequestCreateProduct';
 import { api } from '@/api/instance';
 import SelectItemTryOn from '@/components/TryOn/SelectItemTryOn';
-import { set } from 'lodash';
 
 export default function VirtualTryOnPage() {
     const [category, setCategory] = useState<Category[]>([]);
@@ -60,7 +59,7 @@ export default function VirtualTryOnPage() {
                         <div className="text-4xl sm:text-4xl font-semibold text-white text-center mb-10">
                             Quần áo được chọn
                         </div>
-                        <div className={`grid grid-cols-1 sm:grid-cols-${isDress ? 1 : 2} gap-8`}>
+                        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-8`}>
                             {/* Khung chọn áo */}
                             <div
                                 className={`bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all
