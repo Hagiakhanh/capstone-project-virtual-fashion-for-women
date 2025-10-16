@@ -7,6 +7,7 @@ using VirtualTryonWomenFashion.Service.IServices;
 
 namespace VirtualTryonWomenFashion.API.Controllers;
 
+[ApiController]
 [Route("api/[controller]")]
 public class PaymentController : ControllerBase
 {
