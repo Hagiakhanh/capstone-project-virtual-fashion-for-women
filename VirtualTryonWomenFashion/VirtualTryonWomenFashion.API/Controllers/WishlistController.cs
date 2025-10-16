@@ -64,6 +64,29 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
+        [HttpDelete("product/{productId}")]
+        public async Task<IActionResult> RemoveProductFromWishlistByProductId(string productId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new MessageModel
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = "Dữ liệu đầu vào không hợp lệ"
+                });
+            }
+            try
+            {
+                MessageModel result = await _wishlistService.RemoveProductFromWishlistByProductId(productId);
+                return StatusCode(result.StatusCode, result.Message);
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAllWishList([FromQuery] PaginationParameter page)
         {
