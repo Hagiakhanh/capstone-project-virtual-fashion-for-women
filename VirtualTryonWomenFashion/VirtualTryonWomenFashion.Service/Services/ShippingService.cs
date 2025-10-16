@@ -10,12 +10,17 @@ public class ShippingService : IShippingService
     private readonly string _token;
     private readonly string _tokenProduction;
     private readonly string _shopId;
+    private readonly string _ghnDevURL;
+    private readonly string _ghnProductURL;
+
 
     public ShippingService(IConfiguration configuration)
     {
         _token = configuration["GHNSetttings:Token"];
         _shopId = configuration["GHNSetttings:ShopId"];
         _tokenProduction = configuration["GHNSetttings:TokenProduction"];
+        _ghnDevURL = configuration["GHNSetttings:GHNBaseUrl"];
+        _ghnProductURL = configuration["GHNSetttings:GHNProductUrl"];
     }
     public async Task<int> GetProvinceId(string provinceName)
     {
@@ -25,7 +30,7 @@ public class ShippingService : IShippingService
             client.DefaultRequestHeaders.Add("Token", _tokenProduction);
 
             var response = await client.GetAsync(
-                "https://online-gateway.ghn.vn/shiip/public-api/master-data/province"
+                $"{_ghnProductURL}shiip/public-api/master-data/province"
             );
 
             if (!response.IsSuccessStatusCode)
@@ -89,7 +94,7 @@ public class ShippingService : IShippingService
             var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync(
-                "https://online-gateway.ghn.vn/shiip/public-api/master-data/district",
+                $"{_ghnProductURL}shiip/public-api/master-data/district",
                 content
             );
 
@@ -151,7 +156,7 @@ public class ShippingService : IShippingService
             var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync(
-                "https://online-gateway.ghn.vn/shiip/public-api/master-data/ward",
+                $"{_ghnProductURL}shiip/public-api/master-data/ward",
                 content
             );
 
@@ -208,7 +213,7 @@ public class ShippingService : IShippingService
             var jsonRequestBody = JsonSerializer.Serialize(shippingObjectRequest);
             var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
             var response = await client.PostAsync(
-                "https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/fee",
+                $"{_ghnDevURL}shiip/public-api/v2/shipping-order/fee",
                 content
             );
             if (!response.IsSuccessStatusCode)
@@ -254,7 +259,7 @@ public class ShippingService : IShippingService
             clientProduct.DefaultRequestHeaders.Add("Token", _tokenProduction);
 
             var response = await clientProduct.GetAsync(
-                "https://online-gateway.ghn.vn/shiip/public-api/master-data/province"
+                $"{_ghnProductURL}shiip/public-api/master-data/province"
             );
 
             if (!response.IsSuccessStatusCode)
@@ -298,7 +303,7 @@ public class ShippingService : IShippingService
             var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
 
             var response = await clientProduct.PostAsync(
-                "https://online-gateway.ghn.vn/shiip/public-api/master-data/district",
+                $"{_ghnProductURL}shiip/public-api/master-data/district",
                 content
             );
 
@@ -349,7 +354,7 @@ public class ShippingService : IShippingService
             var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
 
             var response = await clientProduct.PostAsync(
-                "https://online-gateway.ghn.vn/shiip/public-api/master-data/ward",
+                $"{_ghnProductURL}shiip/public-api/master-data/ward",
                 content
             );
 
