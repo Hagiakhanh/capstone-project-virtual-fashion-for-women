@@ -30,6 +30,10 @@ function HomeProductSection() {
       }
    }
 
+   const handleProductChange = () => {
+      fetchProducts();
+   };
+
    useEffect(() => {
       fetchProducts();
    }, [activeTab]);
@@ -55,7 +59,7 @@ function HomeProductSection() {
                {/* Product List Here */}
                {
                   products.map((product) => (
-                     <ProductItemHome product={product} key={product.productId} />
+                     <ProductItemHome onWishlistSuccess={handleProductChange} product={product} key={product.productId} />
                   ))
                }
             </div>
