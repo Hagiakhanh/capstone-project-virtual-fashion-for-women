@@ -61,12 +61,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         SizeId = item.ProductVariant.Size.SizeId,
                         SizeCode = item.ProductVariant.Size.SizeCode
-                    } : null,
-                    ProductImagesDto = item.ProductVariant.ProductColor.ProductImages?.Select(pi => new ResponseProductImageDto
-                    {
-                        ProductImageId = pi.ProductImageId,
-                        ImageUrl = pi.ImageUrl
-                    }).ToList() ?? new List<ResponseProductImageDto>()
+                    } : null
                 };
                 
                 listResponseOrderDetail.Add(item.MapToResponseOrderDetail(responseProductVariantDto));
