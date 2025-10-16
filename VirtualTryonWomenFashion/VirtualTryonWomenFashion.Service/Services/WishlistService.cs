@@ -133,5 +133,45 @@ namespace VirtualTryonWomenFashion.Service.Services
             };
 
         }
+
+        public async Task<MessageModel> RemoveProductFromWishlistByProductId(string productId)
+        {
+            int userId = _currentUserService.GetUserId();
+            Product product = await _productRepository.GetProductByIdAsync(productId);
+            if (product == null)
+            {
+                return new MessageModel
+                {
+                    Message = "Sản phẩm không tồn tại",
+                    StatusCode = StatusCodes.Status404NotFound
+                };
+            }
+            bool isProductInWishlist = await _wishlistRepository.IsProductInWishlistAsync(userId, productId);
+            if (isProductInWishlist == false)
+            {
+                return new MessageModel
+                {
+                    Message = "Không tồn tại sản phẩm trong danh sách mong muốn",
+                    StatusCode = StatusCodes.Status400BadRequest
+                };
+            }
+            Wishlist wishlist = await _wishlistRepository.GetWishListByUserIdAndProductId(userId, productId);
+            await _wishlistRepository.Delete(wishlist);
+            int result = await _unitOfWork.SaveChanges();
+            if (result > 0)
+            {
+                return new MessageModel
+                {
+                    Message = $"Xóa khỏi danh sách mong muốn thành công",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+            return new MessageModel
+            {
+                Message = $"Xóa khỏi danh sách mong muốn thất bại",
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
+
+        }
     }
 }
