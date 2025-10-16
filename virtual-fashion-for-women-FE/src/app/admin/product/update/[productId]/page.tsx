@@ -80,14 +80,7 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
                 // Map existing product colors
                 if (prod.productColors && prod.productColors.length > 0) {
                     const mappedColors = prod.productColors.map((pc: ProductColor) => {
-                        const allVariantImages: string[] = [];
-                        pc.productVariants?.forEach((pv: ProductVariant) => {
-                            if (pv.productImagesDto && pv.productImagesDto.length > 0) {
-                                pv.productImagesDto.forEach((img) => {
-                                    allVariantImages.push(img.imageUrl);
-                                });
-                            }
-                        });
+                        const allVariantImages: string[] = pc.productImagesDto?.map(img => img.imageUrl) || [];
 
                         return {
                             productColorId: pc.productColorId,

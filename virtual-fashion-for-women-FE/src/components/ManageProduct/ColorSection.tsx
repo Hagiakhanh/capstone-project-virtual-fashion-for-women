@@ -1,6 +1,7 @@
 import { Trash2, Upload, Plus } from "lucide-react";
 import { Color, Size } from "@/models/RequestCreateProduct";
 import VariantItem from "./VariantItem";
+import { useState } from "react";
 
 interface ColorSectionProps {
     color: {
@@ -50,6 +51,16 @@ export default function ColorSection({
     const handleMultipleImagesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         onMultipleImages(files);
+    };
+
+    const handleHexChange = (value: string) => {
+        let formatted = value.startsWith("#") ? value : `#${value}`;
+        if (formatted.length > 7) formatted = formatted.slice(0, 7);
+
+        const regex = /^#([A-Fa-f0-9]{0,6})$/; // Cho phép nhập dần từng ký tự
+        if (regex.test(formatted)) {
+            onUpdate("hexCode", formatted.toUpperCase());
+        }
     };
 
     return (
@@ -124,7 +135,7 @@ export default function ColorSection({
                                 <input
                                     type="text"
                                     value={color.hexCode}
-                                    onChange={(e) => onUpdate("hexCode", e.target.value)}
+                                    onChange={(e) => handleHexChange(e.target.value)}
                                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>

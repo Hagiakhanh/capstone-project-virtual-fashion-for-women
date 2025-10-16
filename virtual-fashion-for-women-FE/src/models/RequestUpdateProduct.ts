@@ -26,7 +26,7 @@ export interface ProductColor {
     color?: Color;
     noBgImgUrl: string;
     lensId?: string;
-    productImages: ProductImage[];
+    productImagesDto: ProductImage[];
     productVariants: ProductVariant[];
 }
 
@@ -43,7 +43,6 @@ export interface ProductVariant {
     productLength?: number;
     productWidth?: number;
     productHeight?: number;
-    productImagesDto?: ProductImage[];
 }
 
 export interface ProductImage {
