@@ -1,17 +1,54 @@
+import { api } from '@/api/instance';
+import { messageToast } from '@/helpers/toastHelper';
 import formatPrice from '@/utils/formatPrice';
-import { HeartOutlined } from '@ant-design/icons';
+import { HeartOutlined, HeartFilled } from '@ant-design/icons';
 import { Button } from "antd";
 import Link from "next/link";
+import { useEffect, useState } from 'react';
 
-function ProductItemHome({ product }: { product?: any }) {
+function ProductItemHome({ product, onWishlistSuccess }: { product?: any, onWishlistSuccess: () => void }) {
+   const isWishlisted = product?.isInWishlist || false;
+   const [wishlist, setWishlist] = useState<boolean>(product?.isInWishlist);
+
+   const handleToggleWishlist = async (e: React.MouseEvent, productId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+         if (wishlist == false) {
+            // Gọi thêm vào wishlist
+            const payload = { productId };
+            const response = await api.post('/wishlist', payload);
+            if (response.status === 200) {
+               messageToast.success("Thêm vào yêu thích thành công.");
+               onWishlistSuccess();
+            }
+
+         } else if (wishlist == true) {
+            // Gọi xóa khỏi wishlist
+            const response = await api.delete(`/wishlist/product/${productId}`);
+            if (response.status === 200) {
+               messageToast.success("Xóa khỏi yêu thích thành công.");
+               onWishlistSuccess();
+            }
+         }
+
+      } catch (error) {
+         console.error("Lỗi khi thêm sản phẩm vào danh sách yêu thích:", error);
+      }
+   }
+
+   useEffect(() => {
+      setWishlist(product?.isInWishlist);
+   }, [product?.isInWishlist]);
+
    return (
       <Link href={`/products/${product.productSlug}`}>
          <div className="p-[1rem] relative rounded-2xl bg-[#f3f3f3] cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
             {/* Hình ảnh */}
             <div className="flex justify-center aspect-[3/4] overflow-hidden relative">
                <img src={product?.mainImageUrl} alt={product?.productName} className="w-full h-auto object-cover rounded-2xl" />
-               <div className="absolute top-0 right-0 m-2 p-2 rounded-full bg-white text-xl">
-                  <HeartOutlined />
+               <div onClick={(e) => handleToggleWishlist(e, product?.productId)} className="absolute z-30 top-0 right-0 m-2 p-2 rounded-full bg-white text-xl">
+                  {isWishlisted ? <HeartFilled style={{ color: 'red' }} /> : <HeartOutlined />}
                </div>
             </div>
 
