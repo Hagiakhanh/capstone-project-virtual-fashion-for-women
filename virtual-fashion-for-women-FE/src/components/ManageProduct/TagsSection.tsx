@@ -79,7 +79,7 @@ export default function TagsSection({
                     )}
                 </div>
 
-                {/* Dropdown to select existing tags */}
+                {/* Dropdown to select existing tags
                 <div className="relative">
                     <button
                         type="button"
@@ -106,8 +106,45 @@ export default function TagsSection({
                             ))}
                         </div>
                     )}
+                </div>*/}
+            </div> 
+
+                {/* Dropdown to select existing tags */}
+                <div className="relative">
+                    <button
+                        type="button"
+                        onClick={() => setShowTagDropdown(!showTagDropdown)}
+                        className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                    >
+                        Chọn tag có sẵn
+                    </button>
+                    
+                    {showTagDropdown && unselectedTags.length > 0 && (
+                        <div className="absolute z-10 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg">
+                            <div className="max-h-60 overflow-y-auto">
+                                {unselectedTags.map((tag) => (
+                                    <button
+                                        key={tag.tagId}
+                                        type="button"
+                                        onClick={() => onSelectTag(tag.tagId)}
+                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                                    >
+                                        {tag.tagName}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="border-t p-2 bg-gray-50">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTagDropdown(false)}
+                                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
+                                >
+                                    Xong
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            </div>
 
             {/* New tags */}
             <div>
