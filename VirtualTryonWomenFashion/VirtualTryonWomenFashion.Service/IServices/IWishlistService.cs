@@ -15,5 +15,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModelWithData<List<Wishlist>>> GetAllWishList(PaginationParameter paginationParameter);
         public Task<MessageModel> AddProductToWishlist(RequestAddWishlist requestAddWishlist);
         public Task<MessageModel> RemoveProductFromWishlist(int wishlistId);
+        public Task<MessageModel> RemoveProductFromWishlistByProductId(string productId);
     }
 }
