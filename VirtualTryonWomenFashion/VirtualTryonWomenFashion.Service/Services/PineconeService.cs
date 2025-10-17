@@ -25,13 +25,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 vectors = new[]
                 {
-            new
-            {
-                id,
-                values   = vector,
-                metadata = metadata
-            }
-        }
+                    new
+                    {
+                        id,
+                        values   = vector,
+                        metadata = metadata
+                    }
+                }
             };
 
             // 2. Serialize để in log
@@ -158,16 +158,16 @@ namespace VirtualTryonWomenFashion.Service.Services
         }
 
         public async Task<IReadOnlyList<(string id, IDictionary<string, string> metadata, float score)>> QueryAsync(
-    float[] vector,
-    int topK,
-    IDictionary<string, object>? filters = null) // 1. THÊM THAM SỐ FILTERS
+            float[] vector,
+            int topK,
+            IDictionary<string, object>? filters = null) // 1. THÊM THAM SỐ FILTERS
         {
             var payload = new Dictionary<string, object>
-    {
-        { "vector", vector },
-        { "topK", topK },
-        { "includeMetadata", true }
-    };
+            {
+                { "vector", vector },
+                { "topK", topK },
+                { "includeMetadata", true }
+            };
 
             // Chỉ thêm mục 'filter' vào payload nếu nó được cung cấp và không rỗng
             if (filters != null && filters.Count > 0)
@@ -213,5 +213,35 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
             return list;
         }
+
+        public async Task DeleteAsync(List<string>? ids = null, IDictionary<string, object>? filter = null)
+        {
+            var payload = new Dictionary<string, object>();
+
+            if (ids != null && ids.Count > 0)
+                payload["ids"] = ids;
+
+            if (filter != null && filter.Count > 0)
+                payload["filter"] = filter;
+
+            var jsonBody = JsonSerializer.Serialize(payload);
+            Console.WriteLine("Pinecone Delete payload: " + jsonBody);
+
+            using var req = new HttpRequestMessage(HttpMethod.Post, $"{_indexUrl}/vectors/delete")
+            {
+                Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
+            };
+
+            req.Headers.Add("Api-Key", _apiKey);
+
+            var resp = await _http.SendAsync(req);
+            var respBody = await resp.Content.ReadAsStringAsync();
+
+            Console.WriteLine($"Pinecone delete status: {(int)resp.StatusCode}");
+            Console.WriteLine("Pinecone delete response: " + respBody);
+
+            resp.EnsureSuccessStatusCode();
+        }
+
     }
 }
