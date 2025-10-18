@@ -14,7 +14,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
 {
     public interface IOrderService
     {
-        public Task<MessageModelWithData<List<ResponseOrderForStaff>>> GetAllOrderForStaff(PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease);
+        public Task<MessageModelWithData<Pagination<ResponseOrderForStaff>>> GetAllOrderForStaff(PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease);
         public Task<MessageModelWithData<ResponseOrderDetailForStaff>> GetOrderDetailForStaff(int orderID);
         public Task<MessageModelWithData<string>> UpdateOrderStatusForStaff(int orderID);
         public Task<Order> CreateOrderAsync(RequestCreateOrder requestCreateOrder);

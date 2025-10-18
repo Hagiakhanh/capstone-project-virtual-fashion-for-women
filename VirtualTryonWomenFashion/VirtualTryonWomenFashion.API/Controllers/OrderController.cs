@@ -28,8 +28,15 @@ namespace VirtualTryonWomenFashion.API.Controllers
         {
             try
             {
-                MessageModelWithData<List<ResponseOrderForStaff>> result =
+                MessageModelWithData<Pagination<ResponseOrderForStaff>> result =
                     await _orderService.GetAllOrderForStaff(page, orderStatusEnum, isDateDecrease);
+                var metadata = new
+                {
+                    result.Data.TotalCount,
+                    result.Data.PageSize,
+                    result.Data.CurrentPage
+                };
+                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)

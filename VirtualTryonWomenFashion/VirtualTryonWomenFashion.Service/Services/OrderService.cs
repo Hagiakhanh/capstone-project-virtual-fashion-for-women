@@ -311,8 +311,11 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _unitOfWork.SaveChanges();
         }
 
-        public async Task<MessageModelWithData<List<ResponseOrderForStaff>>> GetAllOrderForStaff(PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease)
+        public async Task<MessageModelWithData<Pagination<ResponseOrderForStaff>>> GetAllOrderForStaff(PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease)
         {
+            Expression<Func<Order, bool>> filterExpression = x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString();
+            int totalCount = await _orderRepository.CountAsync(filterExpression);
+
             List<Order> listOrder = new();
             if (isDateDecrease)
             {
@@ -320,6 +323,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 listOrder = await _orderRepository.GetAll(
                     pagination: page,
                     filter: x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString(),
+                    includes: x => x.Customer,
                     orderBy: x => x.OrderByDescending(x => x.CreatedAt)
                 );
             }
@@ -329,6 +333,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 listOrder = await _orderRepository.GetAll(
                     pagination: page,
                     filter: x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString(),
+                    includes: x => x.Customer,
                     orderBy: x => x.OrderBy(x => x.CreatedAt)
                 );
             }
@@ -340,22 +345,30 @@ namespace VirtualTryonWomenFashion.Service.Services
                         ReceiverPhone = x.ReceiverPhone,
                         CreatedAt = x.CreatedAt,
                         Status = ((OrderStatusEnum)Enum.Parse(typeof(OrderStatusEnum), x.Status)).ToString(),
+                        Amount = x.Amount.Value,
+                        Email = x.Customer.Email
                     }
                 ).ToList();
 
             if (responseOrderForStaff.Any())
             {
-                return new MessageModelWithData<List<ResponseOrderForStaff>>()
+                return new MessageModelWithData<Pagination<ResponseOrderForStaff>>()
                 {
                     Message = "Lấy dữ liệu đơn hàng thành công",
                     StatusCode = StatusCodes.Status200OK,
-                    Data = responseOrderForStaff
+                    Data = new Pagination<ResponseOrderForStaff>(responseOrderForStaff, totalCount, page.PageIndex, page.PageSize)
                 };
             }
-            return new MessageModelWithData<List<ResponseOrderForStaff>>
+            return new MessageModelWithData<Pagination<ResponseOrderForStaff>>
             {
-                Message = "Lấy dữ liệu đơn hàng thất bại",
-                StatusCode = StatusCodes.Status400BadRequest,
+                Message = "Không tìm thấy đơn hàng nào thỏa mãn điều kiện",
+                StatusCode = StatusCodes.Status200OK,
+                Data = new Pagination<ResponseOrderForStaff>(
+                new List<ResponseOrderForStaff>(),
+                0,
+                page.PageIndex,
+                page.PageSize
+            )
             };
         }
 

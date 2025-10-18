@@ -32,6 +32,7 @@ namespace VirtualTryonWomenFashion.Data.GenericRepository
         void DeleteRange(IEnumerable<TEntity> entities);
 
         int Count(Expression<Func<TEntity, bool>>? filter = null);
+        Task<int> CountAsync(Expression<Func<TEntity, bool>>? filter = null);
         void AddRange(IEnumerable<TEntity> entities);
         Task AddRangeAsync(IEnumerable<TEntity> entities);
         void UpdateRange(IEnumerable<TEntity> entities);
