@@ -19,5 +19,6 @@ namespace VirtualTryonWomenFashion.Service.DTO.Product
         public int? CategoryId { get; set; }
 
         public List<UpdateProductColorDto>? ProductColor { get; set; } = new List<UpdateProductColorDto> { };
+        public List<TagDto> Tags { get; set; } = new List<TagDto> { };
     }
 }

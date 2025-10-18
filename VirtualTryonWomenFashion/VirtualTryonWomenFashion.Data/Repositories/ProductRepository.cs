@@ -56,6 +56,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
             return await _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Tags)
                 .Include(p => p.ProductColors)
                     .ThenInclude(pc => pc.Color)
                 .Include(p => p.ProductColors)
@@ -71,6 +72,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
             return await _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Tags)
                 .Include(p => p.ProductColors)
                     .ThenInclude(pc => pc.Color)
                 .Include(p => p.ProductColors)
@@ -86,6 +88,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
             return await _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Tags)
                 .Include(p => p.ProductColors)
                     .ThenInclude(pc => pc.Color)
                 .Include(p => p.ProductColors)
@@ -110,6 +113,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(p => p.Wishlists)
                 .Include(p => p.ProductInSaleCampaigns)
                 .Include(p => p.Category)
+                .Include(p => p.Tags)
                 .Where(p => p.IsDeleted != true)
                 .AsQueryable();
 

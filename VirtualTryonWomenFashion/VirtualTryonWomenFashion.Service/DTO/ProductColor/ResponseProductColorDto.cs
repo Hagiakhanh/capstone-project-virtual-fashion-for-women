@@ -15,6 +15,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductColor
         public string LensId { get; set; }
         public string NoBgImgUrl { get; set; }
         public ResponseColorDto Color { get; set; }
+        public List<ResponseProductImageDto> ProductImagesDto { get; set; } = new List<ResponseProductImageDto>();
         public List<ResponseProductVariantDto> ProductVariants { get; set; } = new List<ResponseProductVariantDto>();
     }
 
@@ -25,6 +26,6 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductColor
         public string LensId { get; set; }
         public List<ResponseSizeDto> SizeDto { get; set; }
         public List<ResponseProductImageDto> ProductImagesDto { get; set; } = new List<ResponseProductImageDto>();
-        public List<ResponseProductVariantNoListImageDto> ProductVariants { get; set; } = new List<ResponseProductVariantNoListImageDto>();
+        public List<ResponseProductVariantDto> ProductVariants { get; set; } = new List<ResponseProductVariantDto>();
     }
 }

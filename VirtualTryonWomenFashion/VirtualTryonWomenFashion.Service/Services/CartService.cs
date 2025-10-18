@@ -243,8 +243,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                         new ResponseSizeDto(),
                     ColorDto = responseProductDto.ProductColors
                         .Where(pc => pc.ProductVariants.Any(pv=>pv.ProductVariantId == existingCartItem.ProductVariantId))
-                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto(),
-                    ProductImagesDto = new List<ResponseProductImageDto>()
+                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto()
                 };
                 return existingCartItem.MapToResponseCartItem(productVariantDto);
             }
@@ -287,8 +286,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                         new ResponseSizeDto(),
                     ColorDto = responseProductDto.ProductColors
                         .Where(pc => pc.ProductVariants.Any(pv=>pv.ProductVariantId == cartItem.ProductVariantId))
-                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto(),
-                    ProductImagesDto = new List<ResponseProductImageDto>()
+                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto()
                 };
 
                 responseCartItems.Add(cartItem.MapToResponseCartItem(productVariantDto));
@@ -337,8 +335,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                         new ResponseSizeDto(),
                     ColorDto = responseProductDto.ProductColors
                         .Where(pc => pc.ProductVariants.Any(pv=>pv.ProductVariantId == cartItem.ProductVariantId))
-                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto(),
-                    ProductImagesDto = new List<ResponseProductImageDto>()
+                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto()
                 };
 
                 responseCartItems.Add(cartItem.MapToResponseCartItem(productVariantDto));
