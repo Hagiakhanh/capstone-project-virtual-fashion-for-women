@@ -8,16 +8,6 @@ import Image from "next/image";
 import NewColorModal from "./NewColorModal";
 
 interface ColorSectionProps {
-    // color: {
-    //     colorId: number;
-    //     colorName: string;
-    //     colorPrefix: string;
-    //     hexCode: string;
-    //     lensId: string;
-    //     noBgImgUrl: File | null;
-    //     productVariantImages: File[];
-    //     variants: any[];
-    // };
     color: ProductColorRequest; // <-- Dùng type cụ thể
     colorIndex: number;
     colors: Color[];
@@ -52,10 +42,6 @@ export default function ColorSection({
     onFileChange,
     onMultipleImages,
     }: ColorSectionProps) {
-    // const handleNoBgFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     const file = e.target.files?.[0];
-    //     if (file) onFileChange(file, "noBg");
-    // };
     const [isColorModalOpen, setIsColorModalOpen] = useState(false);
     const [multiPreviews, setMultiPreviews] = useState<string[]>([]);
 
@@ -91,16 +77,6 @@ export default function ColorSection({
         e.preventDefault();
         e.stopPropagation();
     };
-
-    // const handleHexChange = (value: string) => {
-    //     let formatted = value.startsWith("#") ? value : `#${value}`;
-    //     if (formatted.length > 7) formatted = formatted.slice(0, 7);
-
-    //     const regex = /^#([A-Fa-f0-9]{0,6})$/;
-    //     if (regex.test(formatted)) {
-    //     onUpdate("hexCode", formatted.toUpperCase());
-    //     }
-    // };
 
     // Thêm useEffect để tạo/hủy URLs cho preview nhiều ảnh
     useEffect(() => {
@@ -143,94 +119,45 @@ export default function ColorSection({
             </div>
 
             <div className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Chọn màu *
-                    </label>
-                    <select
-                        value={color.colorId}
-                        // onChange={(e) => onColorSelect(parseInt(e.target.value))}
-                        // Sử dụng hàm xử lý mới
-                        onChange={(e) => handleColorSelectChange(parseInt(e.target.value))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value={0}>-- Tạo màu mới --</option>
-                        {colors.map((c) => (
-                            <option key={c.colorId} value={c.colorId}>
-                                {c.colorName} ({c.colorPrefix})
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* {color.colorId === 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Tên màu *
-                            </label>
-                            <input
-                                type="text"
-                                value={color.colorName}
-                                onChange={(e) => onUpdate("colorName", e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Mã màu (Prefix) *
-                            </label>
-                            <input
-                                type="text"
-                                value={color.colorPrefix}
-                                onChange={(e) => onUpdate("colorPrefix", e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Hex Code *
-                            </label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="color"
-                                    value={color.hexCode}
-                                    onChange={(e) => onUpdate("hexCode", e.target.value)}
-                                    className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
-                                />
-                                <input
-                                    type="text"
-                                    value={color.hexCode}
-                                    onChange={(e) => handleHexChange(e.target.value)}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                )} */}
-                {/* THÊM KHỐI MỚI NÀY */}
-                {color.colorId === 0 && (
-                    <div className="mt-2 p-3 border border-dashed border-blue-400 rounded-md bg-blue-50">
-                        <p className="text-sm text-gray-700 mb-2">
-                            Bạn đang tạo một màu mới.
-                            {/* Hiển thị thông tin đã nhập (nếu có) */}
-                            {color.colorName && (
-                                <span className="block text-xs font-medium text-blue-700">
-                                Tên: {color.colorName}, Mã: {color.colorPrefix}, Hex: {color.hexCode}
-                                </span>
-                            )}
-                        </p>
-                        <button
-                            type="button"
-                            onClick={() => setIsColorModalOpen(true)}
-                            className="w-full px-4 py-2 bg-white border border-blue-500 text-blue-600 font-medium text-sm rounded-lg hover:bg-blue-100"
+                <div className="flex items-start gap-4">
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Chọn màu *
+                        </label>
+                        <select
+                            value={color.colorId}
+                            onChange={(e) => handleColorSelectChange(parseInt(e.target.value))}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
-                            Chỉnh sửa thông tin màu mới
-                        </button>
+                            <option value={0}>-- Tạo màu mới --</option>
+                            {colors.map((c) => (
+                                <option key={c.colorId} value={c.colorId}>
+                                {c.colorName} ({c.colorPrefix})
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                )}
+
+                    {color.colorId === 0 && (
+                        <div className="flex-1 p-3 border border-dashed border-blue-400 rounded-md bg-blue-50">
+                            <p className="text-sm text-gray-700 mb-2">
+                                Bạn đang tạo một màu mới.
+                                {color.colorName && (
+                                    <span className="block text-xs font-medium text-blue-700">
+                                        Tên: {color.colorName}, Mã: {color.colorPrefix}, Hex: {color.hexCode}
+                                    </span>
+                                )}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => setIsColorModalOpen(true)}
+                                className="w-full px-4 py-2 bg-white border border-blue-500 text-blue-600 font-medium text-sm rounded-lg hover:bg-blue-100"
+                            >
+                                Chỉnh sửa thông tin màu mới
+                            </button>
+                        </div>
+                    )}
+                </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
