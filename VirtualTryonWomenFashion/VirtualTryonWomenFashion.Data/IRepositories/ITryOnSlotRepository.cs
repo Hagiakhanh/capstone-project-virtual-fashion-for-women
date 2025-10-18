@@ -10,5 +10,7 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface ITryOnSlotRepository : IGenericRepository<TryOnSlot>
     {
+        Task<TryOnSlot?> GetExistingTryOnSlotAsync(int userId,string userModelImageHash, string? topProductColorId, string? bottomProductColorId);
+        Task<bool> HasImageModelHash(int userId, string userModelImageHash);
     }
 }
