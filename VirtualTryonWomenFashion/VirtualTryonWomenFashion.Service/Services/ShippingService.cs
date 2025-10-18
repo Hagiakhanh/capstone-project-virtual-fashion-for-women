@@ -218,7 +218,7 @@ public class ShippingService : IShippingService
             );
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception("Failed to retrieve free services from GHN API.");
+                throw new Exception("Giao hàng nhanh không hỗ trợ giao hàng địa chỉ này");
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();

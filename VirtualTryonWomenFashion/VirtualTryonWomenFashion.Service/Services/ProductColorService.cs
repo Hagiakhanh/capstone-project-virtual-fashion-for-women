@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -25,17 +26,21 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IProductVariantService _productVariantService;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IMapper _mapper;
 
-        public ProductColorService(IProductColorRepository productColorRepository, IColorService colorService,
+        public ProductColorService(IProductColorRepository productColorRepository, 
+            IColorService colorService,
             IUnitOfWork unitOfWork,
             IProductVariantService productVariantService,
-            ICloudinaryService cloudinaryService)
+            ICloudinaryService cloudinaryService,
+            IMapper mapper)
         {
             _productColorRepository = productColorRepository;
             _colorService = colorService;
             _unitOfWork = unitOfWork;
             _productVariantService = productVariantService;
             _cloudinaryService = cloudinaryService;
+            _mapper = mapper;
         }
 
         public async Task<MessageModelWithData<ProductColor>> CreateAsync(string productId, CreateProductColorRequest request)
@@ -147,32 +152,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             if (productColor == null)
                 return null;
-
-            return new ProductColor
-            {
-                ProductId = productColor.ProductId,
-                ProductColorId = productColor.ProductColorId,
-                LensId = productColor.LensId,
-                NoBgImgUrl = productColor.NoBgImgUrl,
-                ColorId = productColor.ColorId,
-                Product = productColor.Product != null ? new Product
-                {
-                    ProductId = productColor.Product.ProductId,
-                    ProductName = productColor.Product.ProductName,
-                    ProductSlug = productColor.Product.ProductSlug,
-                    Price = productColor.Product.Price,
-                    Description = productColor.Product.Description,
-                    MainImageUrl = productColor.Product.MainImageUrl,
-                    CreatedAt = productColor.Product.CreatedAt,
-                } : null,
-                Color = productColor.Color != null ? new Color
-                {
-                    ColorId = productColor.Color.ColorId,
-                    ColorName = productColor.Color.ColorName,
-                    ColorPrefix = productColor.Color.ColorPrefix,
-                    HexCode = productColor.Color.HexCode,
-                } : null
-            };
+            return productColor;
         }
 
         public async Task<MessageModelWithData<ProductColor>> UpdateAsync(string productColorId, UpdateProductColorDto request)
@@ -417,6 +397,5 @@ namespace VirtualTryonWomenFashion.Service.Services
                 };
             }
         }
-
     }
 }

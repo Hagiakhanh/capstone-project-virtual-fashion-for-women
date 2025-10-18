@@ -43,6 +43,10 @@ builder.Services.AddHttpClient<IOrderService, OrderService>((serviceProvider, cl
     client.DefaultRequestHeaders.Add("Token", settings.Token);
     client.DefaultRequestHeaders.Add("ShopId", settings.ShopId.ToString());
 });
+builder.Services.AddHttpClient<IFitRoomService, FitRoomService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(120);
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>

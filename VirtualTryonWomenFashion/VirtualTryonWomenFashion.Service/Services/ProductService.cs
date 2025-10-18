@@ -21,6 +21,7 @@ using VirtualTryonWomenFashion.Service.Extensions;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Mappers;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace VirtualTryonWomenFashion.Service.Services
@@ -1162,6 +1163,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             return false;
         }
 
-
+        public async Task<ResponseProductDto> GetProductByProductColorIdAsyncForTryOn(string productColorId)
+        {
+            var product = await _productRepository.GetProductByProductColorIdAsync(productColorId);
+            if (product == null)
+                return null;
+            
+            return await this.MapToResponseProductDto(product);
+        }
     }
 }
