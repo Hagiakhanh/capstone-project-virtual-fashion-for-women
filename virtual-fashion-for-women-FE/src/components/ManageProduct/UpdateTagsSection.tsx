@@ -28,7 +28,6 @@ export default function UpdateTagsSection({
                 { tagId: tag.tagId, tagName: tag.tagName }
             ]);
         }
-        setShowTagDropdown(false);
     };
 
     const handleAddNewTag = () => {
@@ -112,24 +111,37 @@ export default function UpdateTagsSection({
                         Chọn tag có sẵn
                     </button>
                     
-                    {showTagDropdown && unselectedTags.length > 0 && (
-                        <div className="absolute z-10 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                            {unselectedTags.map((tag) => (
-                                <button
-                                    key={tag.tagId}
-                                    type="button"
-                                    onClick={() => handleAddExistingTag(tag)}
-                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
-                                >
-                                    {tag.tagName}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                    
-                    {showTagDropdown && unselectedTags.length === 0 && (
-                        <div className="absolute z-10 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
-                            <p className="text-sm text-gray-500">Không còn tag nào để chọn</p>
+                    {showTagDropdown && (
+                        <div className="absolute z-10 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg">
+                            {unselectedTags.length > 0 ? (
+                                <>
+                                    <div className="max-h-60 overflow-y-auto">
+                                        {unselectedTags.map((tag) => (
+                                            <button
+                                                key={tag.tagId}
+                                                type="button"
+                                                onClick={() => handleAddExistingTag(tag)}
+                                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                                            >
+                                                {tag.tagName}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="border-t p-2 bg-gray-50">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowTagDropdown(false)}
+                                            className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
+                                        >
+                                            Xong
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="p-4">
+                                    <p className="text-sm text-gray-500">Không còn tag nào để chọn</p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
