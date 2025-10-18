@@ -25,6 +25,7 @@ public static class OrderMapper
             ShippingMoney = model.ShippingMoney,
             InsuranceFee = model.InsuranceFee,
             ShippingCode = model.ShippingCode,
+            PaymentUrl = model.PaymentUrl,
             EstimatedDelivery = model.EstimatedDelivery,
             UserInformation = model.Customer.MapToUserInformation(),
             TransactionInformation = model.Transactions.Select(t => t.MapToTransactionInformation()).FirstOrDefault(),

@@ -8,9 +8,8 @@ public class RequestCreateOrder
     public List<int> cartIds { get; set; }
     [Required]
     public string RecieverName { get; set; }
-    [Phone]
-    [StringLength(10, MinimumLength = 9)]
     [Required]
+    [RegularExpression(@"^\d{10}$", ErrorMessage = "Số điện thoại phải có đúng 10 chữ số.")]
     public string RecieverPhone { get; set; }
     [Required]
     public string FullAddress { get; set; }

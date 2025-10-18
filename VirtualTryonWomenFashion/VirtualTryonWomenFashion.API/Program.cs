@@ -17,7 +17,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 200 * 1024 * 1024; // 200 MB
+});
 // Add services to the container.
 builder.Services.AddDbContext<VirtualTryonWomenFashionContext>(options =>
 {
@@ -34,7 +37,6 @@ builder.Services.Configure<RouteOptions>(options =>
 });
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
 builder.Services.Configure<GHNSettings>(builder.Configuration.GetSection("GHNSetttings"));
-builder.Services.AddHttpClient<IShippingService, ShippingService>();
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddHttpClient<IVectorDbService, PineconeService>();
 builder.Services.AddHttpClient<IOrderService, OrderService>((serviceProvider, client) =>

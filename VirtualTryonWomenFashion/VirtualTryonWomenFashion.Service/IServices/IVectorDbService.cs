@@ -6,9 +6,10 @@
         Task<IReadOnlyList<(string Id, IDictionary<string, string> Metadata, float Score)>> QueryAsync(float[] vector, int topK);
         Task<VectorDatabaseRecord> GetByIdAsync(string id);
         public Task<IReadOnlyList<(string id, IDictionary<string, string> metadata, float score)>> QueryAsync(
-    float[] vector,
-    int topK,
-    IDictionary<string, object>? filters = null);
-    }
+            float[] vector,
+            int topK,
+            IDictionary<string, object>? filters = null);
+        Task DeleteAsync(List<string>? ids = null, IDictionary<string, object>? filter = null);
+        }
     public record VectorDatabaseRecord(string Id, IDictionary<string, string> Metadata);
 }

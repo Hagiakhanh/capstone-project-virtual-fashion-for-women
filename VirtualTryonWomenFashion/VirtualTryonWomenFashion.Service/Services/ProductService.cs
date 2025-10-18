@@ -378,192 +378,353 @@ namespace VirtualTryonWomenFashion.Service.Services
             );
         }
 
-
         public async Task<MessageModelWithData<Product>> CreateProductAsync(CreateProductRequest request)
         {
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                // 1. Tạo Product
-                var product = new Product
+                // 1️⃣ Tạo sản phẩm chính
+                var product = await CreateProductEntityAsync(request);
+                await _unitOfWork.SaveChanges(); // ⚠️ Save ngay để có ProductId
+
+                // 2️⃣ Xử lý tags (tồn tại hoặc mới)
+                await HandleProductTagsAsync(product, request);
+
+                // 3️⃣ Xử lý màu sắc, hình ảnh, biến thể
+                await HandleProductColorsAndVariantsAsync(product, request);
+
+                // 4️⃣ Lưu tất cả thay đổi vào DB
+                await _unitOfWork.SaveChanges();
+
+                // 5️⃣ Tạo embedding & upsert vào Vector Database (song song)
+                //await CreateEmbeddingsForProductAsync(product);
+
+                await _unitOfWork.CommitTransactionAsync();
+
+                return new MessageModelWithData<Product>
                 {
-                    ProductId = GenerateFixedLengthString(16),
-                    ProductName = request.ProductName,
-                    ProductSlug = await GenerateProductSlug(request.ProductName),
-                    Description = request.Description,
-                    MainImageUrl = await _cloudinaryService.UploadImageAsync(request.MainImageUrl),
-                    CreatedAt = DateTime.UtcNow.AddHours(7),
-                    CategoryId = request.CategoryId,
-                    Price = request.Price,
+                    Message = "Tạo sản phẩm thành công",
+                    StatusCode = StatusCodes.Status201Created,
+                    Data = product
                 };
-                await _productRepository.InsertAsync(product);
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
 
-                // Xử lý Tag (chọn hoặc tạo mới)
-                // Thêm tag cũ
-                if (request.ExistingTagIds != null && request.ExistingTagIds.Any())
+                // Log chi tiết lỗi để debug
+                Console.WriteLine($"Error: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                if (ex.InnerException != null)
                 {
-                    foreach (var tagId in request.ExistingTagIds)
-                    {
-                        var existingTag = await _tagRepository.GetByIdAsync(tagId);
-                        if (existingTag != null)
-                        {
-                            product.Tags.Add(existingTag);
-                        }
-                    }
+                    Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
                 }
 
-                // Thêm tag mới
-                if (request.NewTags != null && request.NewTags.Any())
+                return new MessageModelWithData<Product>
                 {
-                    foreach (var tagName in request.NewTags)
-                    {
-                        var normalizedTagName = tagName.Trim().ToLower();
+                    Message = $"Tạo thất bại: {ex.Message}",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+            }
+        }
 
-                        // Kiểm tra tag đã tồn tại chưa
-                        var existingTag = await _tagRepository.GetFirstOrDefaultAsync(
-                            t => t.TagName.ToLower() == normalizedTagName
-                        );
+        private async Task<Product> CreateProductEntityAsync(CreateProductRequest request)
+        {
+            var product = new Product
+            {
+                ProductId = GenerateFixedLengthString(16),
+                ProductName = request.ProductName,
+                ProductSlug = await GenerateProductSlug(request.ProductName),
+                Description = request.Description,
+                MainImageUrl = await _cloudinaryService.UploadImageAsync(request.MainImageUrl),
+                CreatedAt = DateTime.UtcNow.AddHours(7),
+                CategoryId = request.CategoryId,
+                Price = request.Price,
+            };
 
-                        Tag tagToUse;
-                        if (existingTag != null)
-                        {
-                            tagToUse = existingTag;
-                        }
-                        else
-                        {
-                            tagToUse = new Tag { TagName = tagName.Trim() };
-                            await _tagRepository.InsertAsync(tagToUse);
-                            await _unitOfWork.SaveChanges(); // cần Save để có TagId
-                        }
+            await _productRepository.InsertAsync(product);
+            return product;
+        }
 
-                        // Thêm vào bảng trung gian ProductTag
-                        product.Tags.Add(tagToUse);
-                    }
-                }
+        private async Task HandleProductTagsAsync(Product product, CreateProductRequest request)
+        {
+            var tagsToAdd = new List<Tag>();
 
-                // 2. Tạo ProductColors + Images + Variants
-                foreach (var productColorRequest in request.ProductColor)
+            // Tag cũ - Load tất cả một lần
+            if (request.ExistingTagIds != null && request.ExistingTagIds.Any())
+            {
+                var existingTags = await _tagRepository.GetAllThenInclude(
+                    filter: t => request.ExistingTagIds.Contains(t.TagId)
+                );
+                tagsToAdd.AddRange(existingTags);
+            }
+
+            // Tag mới - Batch query
+            if (request.NewTags != null && request.NewTags.Any())
+            {
+                var normalizedNewTags = request.NewTags
+                    .Select(t => t.Trim())
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                var normalizedLowerTags = normalizedNewTags
+                    .Select(t => t.ToLower())
+                    .ToList();
+
+                // Query tất cả tags có thể tồn tại một lần
+                var existingTagsInDb = await _tagRepository.GetAllThenInclude(
+                    filter: t => normalizedLowerTags.Contains(t.TagName.ToLower())
+                );
+
+                var existingTagsDict = existingTagsInDb
+                    .ToDictionary(t => t.TagName.ToLower(), t => t);
+
+                var newTagsToInsert = new List<Tag>();
+
+                foreach (var tagName in normalizedNewTags)
                 {
-                    // 2.1. Xử lý Color
-                    string colorPrefix = null;
-                    int colorId;
-                    if (productColorRequest.ColorId > 0)
+                    var normalizedLower = tagName.ToLower();
+
+                    if (existingTagsDict.TryGetValue(normalizedLower, out var existingTag))
                     {
-                        // Dùng màu có sẵn
-                        colorId = productColorRequest.ColorId;
-                        colorPrefix = _colorRepository.GetById(productColorRequest.ColorId).ColorPrefix;
+                        tagsToAdd.Add(existingTag);
                     }
                     else
                     {
-                        // Kiểm tra màu đã tồn tại chưa
-                        var existingColor = await _colorRepository.GetFirstOrDefaultAsync(
-                                                        x => x.ColorPrefix.ToLower() == productColorRequest.ColorPrefix.ToLower());
-
-                        if (existingColor != null)
-                        {
-                            colorId = existingColor.ColorId;
-                            colorPrefix = existingColor.ColorPrefix;
-                        }
-                        else
-                        {
-                            // Tạo màu mới
-                            var newColor = new Color
-                            {
-                                ColorPrefix = productColorRequest.ColorPrefix,
-                                HexCode = productColorRequest.HexCode,
-                                ColorName = productColorRequest.ColorName,
-                            };
-                            await _colorRepository.InsertAsync(newColor);
-                            await _unitOfWork.SaveChanges(); // Save để lấy ColorId
-                            colorId = newColor.ColorId;
-                            colorPrefix = newColor.ColorPrefix;
-                        }
-                    }
-
-                    // 2.2. Tạo ProductColor
-                    string productColorId = $"{product.ProductId}-{colorPrefix}";
-
-                    string noBgImageUrl = await _cloudinaryService.UploadImageAsync(productColorRequest.NoBgImgUrl) ?? string.Empty;
-
-                    var productColor = new ProductColor
-                    {
-                        ProductColorId = productColorId,
-                        ProductId = product.ProductId,
-                        NoBgImgUrl = noBgImageUrl,
-                        LensId = productColorRequest.LensId,
-                        ColorId = colorId
-                    };
-
-                    // 2.3. Tạo ProductImages
-                    if (productColorRequest.ProductVariantImages != null && productColorRequest.ProductVariantImages.Count > 0)
-                    {
-                        var imageUrls = await _cloudinaryService.UploadMultipleImagesAsync(productColorRequest.ProductVariantImages);
-                        foreach (var imageUrl in imageUrls)
-                        {
-                            productColor.ProductImages.Add(new ProductImage
-                            {
-                                ProductColorId = productColorId,
-                                ImageUrl = imageUrl
-                            });
-                        }
-                    }
-
-                    await _productColorRepository.InsertAsync(productColor);
-
-                    // 2.4. Tạo ProductVariants
-                    if (productColorRequest.Variants != null && productColorRequest.Variants.Count > 0)
-                    {
-                        foreach (var variantRequest in productColorRequest.Variants)
-                        {
-                            // Xử lý Size
-                            int sizeId = variantRequest.SizeId;
-                            string sizeCode = _sizeRepository.GetById(variantRequest.SizeId).SizeCode;
-
-                            // Tạo ProductVariant
-                            string productVariantId = $"{productColorId}-{sizeCode}";
-                            var imageUrl = await _cloudinaryService.UploadImageAsync(variantRequest.ImageUrl) ?? string.Empty;
-
-                            var variant = new ProductVariant
-                            {
-                                ProductVariantId = productVariantId,
-                                ProductColorId = productColorId,
-                                SizeId = sizeId,
-                                VariantName = variantRequest.VariantName,
-                                Quantity = variantRequest.Quantity,
-                                ImageUrl = imageUrl,
-                                Status = "Active",
-                                ProductWeight = variantRequest.ProductWeight,
-                                ProductLength = variantRequest.ProductLength,
-                                ProductWidth = variantRequest.ProductWidth,
-                                ProductHeight = variantRequest.ProductHeight
-                            };
-
-                            await _productVariantRepository.InsertAsync(variant);
-                        }
+                        var newTag = new Tag { TagName = tagName };
+                        newTagsToInsert.Add(newTag);
+                        tagsToAdd.Add(newTag);
                     }
                 }
 
-                // 3. Save tất cả changes
-                var result = await _unitOfWork.SaveChanges();
-
-                var productWithRelations = await _productRepository.GetProductByIdAsync(product.ProductId);
-
-                // Lấy danh sách tags của product
-                var productTags = await _tagRepository.GetTagsByProductIdAsync(product.ProductId);
-
-                string tagsText = productTags != null && productTags.Any()
-                    ? string.Join(", ", productTags.Select(t => t.TagName))
-                    : "Không có thẻ gắn";
-
-                // Sau khi SaveChanges xong, ta đã có đầy đủ ID cho product, productColor, variant
-                foreach (var productColor in productWithRelations.ProductColors)
+                // Insert tất cả tags mới cùng lúc
+                if (newTagsToInsert.Any())
                 {
-                    foreach (var variant in productColor.ProductVariants)
-                    {
-                        // Lấy category và bodyPart
-                        var category = await _categoryRepository.GetByIdAsync(product.CategoryId.Value);
+                    await _tagRepository.AddRangeAsync(newTagsToInsert);
+                    await _unitOfWork.SaveChanges(); // Để có TagId
+                }
+            }
 
-                        // Ghép text cho embedding
+            // Add tất cả tags vào product
+            foreach (var tag in tagsToAdd)
+            {
+                product.Tags.Add(tag);
+            }
+        }
+
+        private async Task HandleProductColorsAndVariantsAsync(Product product, CreateProductRequest request)
+        {
+            // ===== 1️⃣ Chuẩn bị dữ liệu đầu vào =====
+            var existingColorIds = request.ProductColor
+                .Where(pc => pc.ColorId > 0)
+                .Select(pc => pc.ColorId)
+                .Distinct()
+                .ToList();
+
+            var colorPrefixes = request.ProductColor
+                .Where(pc => pc.ColorId <= 0 && !string.IsNullOrEmpty(pc.ColorPrefix))
+                .Select(pc => pc.ColorPrefix.ToLower())
+                .Distinct()
+                .ToList();
+
+            var sizeIds = request.ProductColor
+                .SelectMany(pc => pc.Variants ?? Enumerable.Empty<CreateProductVariantRequest>())
+                .Where(v => v.SizeId > 0)
+                .Select(v => v.SizeId)
+                .Distinct()
+                .ToList();
+
+            // ===== 2️⃣ Load dữ liệu từ DB (tuần tự để tránh lỗi DbContext) =====
+            var existingColors = existingColorIds.Count > 0
+                ? await _colorRepository.GetAllThenInclude(filter: c => existingColorIds.Contains(c.ColorId))
+                : new List<Color>();
+
+            var colorsByPrefix = colorPrefixes.Count > 0
+                ? await _colorRepository.GetAllThenInclude(filter: c => colorPrefixes.Contains(c.ColorPrefix.ToLower()))
+                : new List<Color>();
+
+            var sizes = sizeIds.Count > 0
+                ? await _sizeRepository.GetAllThenInclude(filter: s => sizeIds.Contains(s.SizeId))
+                : new List<Size>();
+
+            // ===== 3️⃣ Chuẩn bị các dictionary tra nhanh =====
+            var colorsDict = existingColors.ToDictionary(c => c.ColorId, c => c);
+            var colorsByPrefixDict = colorsByPrefix.ToDictionary(c => c.ColorPrefix.ToLower(), c => c);
+            var sizesDict = sizes.ToDictionary(s => s.SizeId, s => s);
+
+            // Các list tạm để batch insert
+            var newColorsToInsert = new List<Color>();
+            var productColorsToInsert = new List<ProductColor>();
+            var productImagesToInsert = new List<ProductImage>();
+            var productVariantsToInsert = new List<ProductVariant>();
+
+            // ===== 4️⃣ Duyệt qua từng màu của sản phẩm =====
+            foreach (var colorRequest in request.ProductColor)
+            {
+                var (colorId, colorPrefix) = GetOrCreateColor(colorRequest, colorsDict, colorsByPrefixDict, newColorsToInsert);
+                var productColorId = $"{product.ProductId}-{colorPrefix}";
+
+                // ✅ Upload ảnh song song, không liên quan DbContext
+                var uploadTasks = new List<Task>();
+
+                var noBgUploadTask = _cloudinaryService.UploadImageAsync(colorRequest.NoBgImgUrl);
+                uploadTasks.Add(noBgUploadTask);
+
+                Task<List<string>>? variantImagesTask = null;
+                if (colorRequest.ProductVariantImages?.Count > 0)
+                {
+                    variantImagesTask = _cloudinaryService.UploadMultipleImagesAsync(colorRequest.ProductVariantImages);
+                    uploadTasks.Add(variantImagesTask);
+                }
+
+                await Task.WhenAll(uploadTasks);
+
+                // Tạo ProductColor entity
+                var productColor = new ProductColor
+                {
+                    ProductColorId = productColorId,
+                    ProductId = product.ProductId,
+                    NoBgImgUrl = noBgUploadTask.Result ?? string.Empty,
+                    LensId = colorRequest.LensId,
+                    ColorId = colorId == 0 ? null : colorId
+                };
+                productColorsToInsert.Add(productColor);
+
+                // Thêm ảnh biến thể nếu có
+                if (variantImagesTask?.Result?.Count > 0)
+                {
+                    productImagesToInsert.AddRange(
+                        variantImagesTask.Result.Select(url => new ProductImage
+                        {
+                            ProductColorId = productColorId,
+                            ImageUrl = url
+                        })
+                    );
+                }
+
+                // ===== 5️⃣ Tạo ProductVariant =====
+                if (colorRequest.Variants?.Count > 0)
+                {
+                    // Upload ảnh variant song song (vì không dính DbContext)
+                    var uploadedVariantUrls = await Task.WhenAll(
+                        colorRequest.Variants.Select(v => _cloudinaryService.UploadImageAsync(v.ImageUrl))
+                    );
+
+                    for (int i = 0; i < colorRequest.Variants.Count; i++)
+                    {
+                        var v = colorRequest.Variants[i];
+                        if (!sizesDict.TryGetValue(v.SizeId, out var size))
+                            continue;
+
+                        productVariantsToInsert.Add(new ProductVariant
+                        {
+                            ProductVariantId = $"{productColorId}-{size.SizeCode}",
+                            ProductColorId = productColorId,
+                            SizeId = v.SizeId,
+                            VariantName = v.VariantName,
+                            Quantity = v.Quantity,
+                            ImageUrl = uploadedVariantUrls[i] ?? string.Empty,
+                            Status = "Active",
+                            ProductWeight = v.ProductWeight,
+                            ProductLength = v.ProductLength,
+                            ProductWidth = v.ProductWidth,
+                            ProductHeight = v.ProductHeight
+                        });
+                    }
+                }
+            }
+
+            // ===== 6️⃣ Batch insert tất cả một lần =====
+            // ⚡ Lợi ích: chỉ 1 lần SaveChangesAsync cuối cùng
+
+            if (newColorsToInsert.Count > 0)
+            {
+                await _colorRepository.AddRangeAsync(newColorsToInsert);
+                await _unitOfWork.SaveChanges();
+
+                // Gán lại ColorId cho các productColor mới
+                var newColorsDict = newColorsToInsert.ToDictionary(c => c.ColorPrefix.ToLower(), c => c);
+                foreach (var pc in productColorsToInsert.Where(pc => pc.ColorId == null))
+                {
+                    var prefix = pc.ProductColorId.Split('-').Last().ToLower();
+                    if (newColorsDict.TryGetValue(prefix, out var color))
+                        pc.ColorId = color.ColorId;
+                }
+            }
+
+            // Gộp tất cả insert còn lại
+            if (productColorsToInsert.Count > 0)
+                await _productColorRepository.AddRangeAsync(productColorsToInsert);
+
+            if (productImagesToInsert.Count > 0)
+                await _productImageRepository.AddRangeAsync(productImagesToInsert);
+
+            if (productVariantsToInsert.Count > 0)
+                await _productVariantRepository.AddRangeAsync(productVariantsToInsert);
+
+            // ✅ Gọi SaveChanges một lần duy nhất cuối cùng
+            await _unitOfWork.SaveChanges();
+        }
+
+        private (int ColorId, string ColorPrefix) GetOrCreateColor(
+            CreateProductColorRequest colorRequest,
+            Dictionary<int, Color> colorsDict,
+            Dictionary<string, Color> colorsByPrefixDict,
+            List<Color> newColorsToInsert)
+        {
+            if (colorRequest.ColorId > 0)
+            {
+                if (colorsDict.TryGetValue(colorRequest.ColorId, out var existingColor))
+                    return (existingColor.ColorId, existingColor.ColorPrefix);
+            }
+
+            var prefixLower = colorRequest.ColorPrefix.ToLower();
+
+            if (colorsByPrefixDict.TryGetValue(prefixLower, out var colorByPrefix))
+                return (colorByPrefix.ColorId, colorByPrefix.ColorPrefix);
+
+            // Check in new colors being inserted
+            var existingNewColor = newColorsToInsert
+                .FirstOrDefault(c => c.ColorPrefix.ToLower() == prefixLower);
+
+            if (existingNewColor != null)
+                return (0, existingNewColor.ColorPrefix);
+
+            var newColor = new Color
+            {
+                ColorPrefix = colorRequest.ColorPrefix,
+                HexCode = colorRequest.HexCode,
+                ColorName = colorRequest.ColorName,
+            };
+
+            newColorsToInsert.Add(newColor);
+            return (0, newColor.ColorPrefix);
+        }
+
+        private async Task CreateEmbeddingsForProductAsync(Product product)
+        {
+            var productWithRelations = await _productRepository.GetProductByIdAsync(product.ProductId);
+            var productTags = await _tagRepository.GetTagsByProductIdAsync(product.ProductId);
+            var category = await _categoryRepository.GetByIdAsync(product.CategoryId.Value);
+
+            string tagsText = productTags != null && productTags.Any()
+                ? string.Join(", ", productTags.Select(t => t.TagName))
+                : "Không có thẻ gắn";
+
+            // Tạo tất cả embeddings và upsert song song
+            var embeddingTasks = new List<Task>();
+
+            foreach (var productColor in productWithRelations.ProductColors)
+            {
+                foreach (var variant in productColor.ProductVariants)
+                {
+                    // Capture variables để tránh closure issue
+                    var colorCopy = productColor;
+                    var variantCopy = variant;
+
+                    embeddingTasks.Add(Task.Run(async () =>
+                    {
                         var textParts = new List<string>
                         {
                             $"Tên sản phẩm: {product.ProductName}",
@@ -571,16 +732,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                             $"Danh mục: {category.CategoryName}",
                             $"Có thể mặc: {category.BodyPart}",
                             $"Tag: {tagsText}",
-                            $"Màu sắc: {productColor.Color?.ColorName ?? "Không rõ"}",
-                            $"Mã màu: {productColor.Color?.ColorPrefix ?? ""} ({productColor.Color?.HexCode ?? ""})",
-                            $"Size: {variant.Size?.SizeCode ?? "Free size"}",
+                            $"Màu sắc: {colorCopy.Color?.ColorName ?? "Không rõ"}",
+                            $"Mã màu: {colorCopy.Color?.ColorPrefix ?? ""} ({colorCopy.Color?.HexCode ?? ""})",
+                            $"Size: {variantCopy.Size?.SizeCode ?? "Free size"}",
                             $"Giá: {product.Price} VND"
                         };
 
                         string textToEmbed = string.Join(". ", textParts);
                         float[] vector = await _geminiService.GetEmbeddingAsync(textToEmbed);
 
-                        // Metadata cho Vector DB
                         var metadata = new Dictionary<string, string>
                         {
                             { "productId", product.ProductId },
@@ -590,54 +750,28 @@ namespace VirtualTryonWomenFashion.Service.Services
                             { "categoryName", category.CategoryName },
                             { "itemType", category.CategoryName },
                             { "bodyPart", category.BodyPart },
-                            { "tags", tagsText ?? ""},
-                            { "productColorId", productColor.ProductColorId },
-                            { "colorId", productColor.ColorId?.ToString() ?? "" },
-                            { "colorName", productColor.Color?.ColorName ?? "" },
-                            { "colorPrefix", productColor.Color?.ColorPrefix ?? "" },
-                            { "hexCode", productColor.Color?.HexCode ?? "" },
-                            { "productVariantId", variant.ProductVariantId },
-                            { "variantName", variant.VariantName },
-                            { "sizeId", variant.SizeId?.ToString() ?? "" },
-                            { "sizeCode", variant.Size?.SizeCode ?? "" },
+                            { "tags", tagsText ?? "" },
+                            { "productColorId", colorCopy.ProductColorId },
+                            { "colorId", colorCopy.ColorId?.ToString() ?? "" },
+                            { "colorName", colorCopy.Color?.ColorName ?? "" },
+                            { "colorPrefix", colorCopy.Color?.ColorPrefix ?? "" },
+                            { "hexCode", colorCopy.Color?.HexCode ?? "" },
+                            { "productVariantId", variantCopy.ProductVariantId },
+                            { "variantName", variantCopy.VariantName },
+                            { "sizeId", variantCopy.SizeId?.ToString() ?? "" },
+                            { "sizeCode", variantCopy.Size?.SizeCode ?? "" },
                             { "price", product.Price?.ToString() ?? "" },
-                            { "imageUrl", variant.ImageUrl ?? ""},
-                            { "noBgImageUrl", productColor.NoBgImgUrl ?? "" },
+                            { "imageUrl", variantCopy.ImageUrl ?? "" },
+                            { "noBgImageUrl", colorCopy.NoBgImgUrl ?? "" },
                             { "createdAt", product.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss") }
                         };
 
-                        // Upsert vào Vector DB (dùng productVariantId làm ID)
-                        await _vectorDbService.UpsertAsync(variant.ProductVariantId, vector, metadata);
-                    }
+                        await _vectorDbService.UpsertAsync(variantCopy.ProductVariantId, vector, metadata);
+                    }));
                 }
-
-                await _unitOfWork.CommitTransactionAsync();
-
-                if (result > 0)
-                {
-                    return new MessageModelWithData<Product>
-                    {
-                        Message = "Tạo sản phẩm thành công",
-                        StatusCode = StatusCodes.Status201Created,
-                        Data = product
-                    };
-                }
-
-                return new MessageModelWithData<Product>
-                {
-                    Message = "Tạo thất bại",
-                    StatusCode = StatusCodes.Status400BadRequest
-                };
             }
-            catch (Exception ex)
-            {
-                await _unitOfWork.RollbackTransactionAsync();
-                return new MessageModelWithData<Product>
-                {
-                    Message = $"Tạo thất bại: {ex.Message}",
-                    StatusCode = StatusCodes.Status500InternalServerError
-                };
-            }
+
+            await Task.WhenAll(embeddingTasks);
         }
 
         // Helper method để validate dữ liệu trước khi tạo
@@ -729,6 +863,12 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 int result = await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
+
+                // Sau khi cập nhật DB thành công
+                var updatedProduct = await _productRepository.GetProductByIdAsync(productId);
+
+                // Gọi hàm cập nhật embedding
+                await UpdateProductEmbeddingsAsync(updatedProduct);
 
                 return new MessageModelWithData<Product>
                 {
@@ -1038,6 +1178,67 @@ namespace VirtualTryonWomenFashion.Service.Services
             return size;
         }
 
+        private async Task UpdateProductEmbeddingsAsync(Product product)
+        {
+            var category = await _categoryRepository.GetByIdAsync(product.CategoryId.Value);
+            var productTags = await _tagRepository.GetTagsByProductIdAsync(product.ProductId);
+
+            string tagsText = productTags != null && productTags.Any()
+                ? string.Join(", ", productTags.Select(t => t.TagName))
+                : "Không có thẻ gắn";
+
+            foreach (var productColor in product.ProductColors)
+            {
+                foreach (var variant in productColor.ProductVariants)
+                {
+                    var textParts = new List<string>
+                    {
+                        $"Tên sản phẩm: {product.ProductName}",
+                        $"Mô tả: {product.Description}",
+                        $"Danh mục: {category.CategoryName}",
+                        $"Có thể mặc: {category.BodyPart}",
+                        $"Tag: {tagsText}",
+                        $"Màu sắc: {productColor.Color?.ColorName ?? "Không rõ"}",
+                        $"Mã màu: {productColor.Color?.ColorPrefix ?? ""} ({productColor.Color?.HexCode ?? ""})",
+                        $"Size: {variant.Size?.SizeCode ?? "Free size"}",
+                        $"Giá: {product.Price} VND"
+                    };
+
+                    string textToEmbed = string.Join(". ", textParts);
+                    float[] vector = await _geminiService.GetEmbeddingAsync(textToEmbed);
+
+                    var metadata = new Dictionary<string, string>
+                    {
+                        { "productId", product.ProductId },
+                        { "productName", product.ProductName },
+                        { "productSlug", product.ProductSlug },
+                        { "categoryId", category.CategoryId.ToString() },
+                        { "categoryName", category.CategoryName },
+                        { "itemType", category.CategoryName },
+                        { "bodyPart", category.BodyPart },
+                        { "tags", tagsText ?? "" },
+                        { "productColorId", productColor.ProductColorId },
+                        { "colorId", productColor.ColorId?.ToString() ?? "" },
+                        { "colorName", productColor.Color?.ColorName ?? "" },
+                        { "colorPrefix", productColor.Color?.ColorPrefix ?? "" },
+                        { "hexCode", productColor.Color?.HexCode ?? "" },
+                        { "productVariantId", variant.ProductVariantId },
+                        { "variantName", variant.VariantName },
+                        { "sizeId", variant.SizeId?.ToString() ?? "" },
+                        { "sizeCode", variant.Size?.SizeCode ?? "" },
+                        { "price", product.Price?.ToString() ?? "" },
+                        { "imageUrl", variant.ImageUrl ?? "" },
+                        { "noBgImageUrl", productColor.NoBgImgUrl ?? "" },
+                        { "createdAt", product.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss") }
+                    };
+
+                    // Upsert vector (cập nhật nếu đã có, thêm nếu chưa)
+                    await _vectorDbService.UpsertAsync(variant.ProductVariantId, vector, metadata);
+                }
+            }
+        }
+
+
         public async Task<MessageModel> DeleteProductAsync(string productId, bool hardDelete = false)
         {
             await _unitOfWork.BeginTransactionAsync();
@@ -1121,6 +1322,21 @@ namespace VirtualTryonWomenFashion.Service.Services
                             x => x.ProductVariants,
                             x => x.ProductImages
                         });
+
+            // Lấy tất cả ID variant để xóa khỏi Pinecone
+            var variantIds = productColors
+                .SelectMany(c => c.ProductVariants ?? new List<ProductVariant>())
+                .Select(v => v.ProductVariantId)
+                .ToList();
+
+            // Nếu có variant → xóa vector trong Pinecone
+            if (variantIds.Any())
+            {
+                await _vectorDbService.DeleteAsync(filter: new Dictionary<string, object>
+                {
+                    { "productId", product.ProductId }
+                });
+            }
 
             foreach (var productColor in productColors)
             {
