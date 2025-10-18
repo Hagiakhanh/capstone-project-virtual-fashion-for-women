@@ -2,6 +2,7 @@ import { ColorDTO } from "./ColorDTO";
 import { SizeDTO } from "./SizeDto";
 
 export interface ProductVariantDTO {
+    productVariantId: string;
     sizeId?: number;
     variantName: string;
     currentPrice: number;

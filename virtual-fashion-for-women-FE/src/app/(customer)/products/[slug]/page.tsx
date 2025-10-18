@@ -34,6 +34,7 @@ function ProductDetailsPage() {
       productVariant: null,
       quantity: 1,
    });
+   const [selectedColorVariant, setSelectedColorVariant] = useState(null);
    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
    const fetchProductDetails = async () => {
@@ -48,6 +49,10 @@ function ProductDetailsPage() {
             setProductColor(response.data?.color || []);
             setProductSize(response.data?.sizeDto || []);
             setChooseProduct({ ...chooseProduct, colorId: response.data?.color[0]?.colorId || null });
+            const selectedColorVariant = response.data.productColors.find(
+               (productColor) => productColor.colorId === response.data?.color[0]?.colorId
+            );
+            setSelectedColorVariant(selectedColorVariant || null);
          }
 
       } catch (error) {
@@ -69,6 +74,10 @@ function ProductDetailsPage() {
       setMainImage(imageUrl);
    };
    const handleChooseColor = (colorId: number) => {
+      const selectedColorVariant = productDetail.productColors.find(
+         (productColor) => productColor.colorId === colorId
+      );
+      setSelectedColorVariant(selectedColorVariant || null);
       setChooseProduct(prev => {
          // Nếu chọn lại màu đang chọn, không làm gì cả (hoặc có thể bỏ chọn nếu muốn)
          if (prev.colorId === colorId) {
@@ -109,8 +118,8 @@ function ProductDetailsPage() {
          (size) => size.sizeCode === sizeCode
       );
       const variant = selectedColorVariant.productVariants.find(
-        (v) => v.sizeDto.sizeCode === sizeCode
-    );
+         (v) => v.sizeDto.sizeCode === sizeCode
+      );
       if (sizeIsAvailable) {
          return {
             isSupported: true,
@@ -379,7 +388,7 @@ function ProductDetailsPage() {
                         onClick={() => {
                            router.push('/try-on')
                            // console.log('productDetail', productDetail);
-                           sessionStorage.setItem("product_id", productDetail?.productId);
+                           sessionStorage.setItem("productColor", JSON.stringify(selectedColorVariant?.productColorId));
                         }}
                         className="w-full !h-12 px-3 py-2 !rounded-xl !text-base !font-medium
                      !bg-gradient-to-r !from-teal-400 !to-blue-500
