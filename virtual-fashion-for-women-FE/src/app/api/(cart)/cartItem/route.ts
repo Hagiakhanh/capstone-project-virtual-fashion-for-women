@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         }
     } catch (error: any) {
         return NextResponse.json({
-            message: "Lỗi thêm vào giỏ hàng thất bại: " + error.response.data.message,
+            message: error.response.data.message,
         }, { status: 400 });
     }
 }

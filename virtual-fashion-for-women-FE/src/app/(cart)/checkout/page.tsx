@@ -152,9 +152,9 @@ export default function CheckoutForm() {
         try {
             const response = await api.post('/checkout', payload);
             if (response.status === 200) setCheckoutDTO(response.data);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Fetch checkout data error:", error);
-            messageToast.error("Chưa có sản phẩm trong giỏ hàng hoặc sản phẩm không hợp lệ!");
+            messageToast.error(error.response?.data);
             router.push('/cart');
         }
     };

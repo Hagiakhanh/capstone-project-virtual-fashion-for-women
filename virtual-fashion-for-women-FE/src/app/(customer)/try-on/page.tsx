@@ -1,10 +1,17 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Plus, Upload } from 'lucide-react';
+import { AlertCircle, CheckCircle, Plus, Upload } from 'lucide-react';
 import { Category } from '@/models/RequestCreateProduct';
 import { api } from '@/api/instance';
 import SelectItemTryOn from '@/components/TryOn/SelectItemTryOn';
+import { mapTryOnCode } from '@/helpers/errorCodeMapper';
+import { messageToast } from '@/helpers/toastHelper';
+import TryOnResultModal from '@/components/TryOn/TryOnModelResult';
+import { TryOnDTO } from '@/models/TryOnDTO';
+import { set } from 'lodash';
+import { tr } from 'framer-motion/client';
+
 
 export default function VirtualTryOnPage() {
     const [category, setCategory] = useState<Category[]>([]);
@@ -14,36 +21,264 @@ export default function VirtualTryOnPage() {
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState<'top' | 'bottom' | null>(null);
     const [isDress, setIsDress] = useState(false);
+    const [imageValidation, setImageValidation] = useState<{
+        isChecking: boolean;
+        isValid: boolean | null;
+        errorMessage: string;
+        supportedTypes: string[];
+    }>({
+        isChecking: false,
+        isValid: null,
+        errorMessage: '',
+        supportedTypes: []
+    });
+    const [showResultModal, setShowResultModal] = useState(false);
+    const [resultImage, setResultImage] = useState<string | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [tryOnData, setTryOnData] = useState<TryOnDTO | null>(null);
+    const [progress, setProgress] = useState(0);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+    const [isCreatingTask, setIsCreatingTask] = useState(false);
 
-    const handleFileChange = (
+    const handleFileChange = async (
         event: React.ChangeEvent<HTMLInputElement>,
         setter: React.Dispatch<React.SetStateAction<File | null>>
     ) => {
         const file = event.target.files?.[0];
-        if (file) setter(file);
+        if (file) {
+            setter(file);
+            console.log('Selected user image file:', file);
+
+            resetOutputImage();
+            await checkImageValidity(file);
+        }
     };
+
+    const checkImageValidity = async (file: File) => {
+        setImageValidation({
+            isChecking: true,
+            isValid: null,
+            errorMessage: '',
+            supportedTypes: []
+        });
+
+        try {
+            const formData = new FormData();
+            formData.append('imageModelFile', file);
+
+            const response = await api.post('check-image', formData);
+
+            if (response.status === 200) {
+                const result = response.data;
+                console.log('Image validation result:', result);
+                if (result.error_code) {
+                    const errorMessage = mapTryOnCode(result.error_code) + " Vui lòng thử lại với ảnh khác.";
+                    setImageValidation({
+                        isChecking: false,
+                        isValid: false,
+                        errorMessage: errorMessage,
+                        supportedTypes: []
+                    });
+                } else {
+                    setImageValidation({
+                        isChecking: false,
+                        isValid: true,
+                        errorMessage: '',
+                        supportedTypes: result.goodClothesTypes || []
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error checking image validity:', error);
+            setImageValidation({
+                isChecking: false,
+                isValid: false,
+                errorMessage: 'Không thể kiểm tra ảnh. Vui lòng thử lại.',
+                supportedTypes: []
+            });
+        }
+    };
+
+    const handleTryOn = async () => {
+        if (!userImage) {
+            alert('Vui lòng tải lên ảnh của bạn!');
+            return;
+        }
+
+        if (!imageValidation.isValid) {
+            alert('Ảnh của bạn không hợp lệ. Vui lòng tải lên ảnh khác.');
+            return;
+        }
+
+        if (!selectedTop) {
+            alert('Vui lòng chọn áo!');
+            return;
+        }
+
+        // Mở modal và bắt đầu loading
+        setShowResultModal(true);
+        setProgress(0);
+        resetOutputImage();
+
+
+        setIsCreatingTask(true);
+
+        try {
+            console.log("UserImage:", userImage);
+            // Gọi API try-on của bạn ở đây
+            const formData = new FormData();
+            formData.append('UserModelImage', userImage);
+            if (selectedTop) {
+                console.log("Selected top color :", selectedTop.productColors[0].productColorId);
+                formData.append('topProductColorId', selectedTop.productColors[0].productColorId);
+            }
+            if (selectedBottom) {
+                console.log("Selected bottom color :", selectedBottom.productColors[0].productColorId);
+                formData.append('bottomProductColorId', selectedBottom.productColors[0].productColorId);
+            }
+
+            console.log(formData.get('userImage'));
+            const response = await api.post('try-on', formData);
+
+            if (response.status === 200) {
+                const data = response.data;
+                setTryOnData(data);
+                setIsCreatingTask(false);
+                const taskId = data.outputTaskId;
+                if (data.outputImageUrl) {
+                    setIsProcessing(false);
+                    setErrorMessage(undefined);
+                    setResultImage(data.outputImageUrl);
+                } else if (taskId && !data.outputImageUrl) {
+                    setIsProcessing(true);
+                    pollTaskStatus(taskId, data.tryOnSlotId);
+
+                } else {
+                    // Nếu không có taskId thì coi như lỗi
+                    setIsProcessing(false);
+                    messageToast.error('Không tìm thấy Task ID');
+                }
+            }
+        } catch (error: any) {
+            console.error('Error during try-on:', error);
+            setIsProcessing(false);
+            messageToast.error(error.response?.data?.message);
+        }
+    };
+
+    const pollTaskStatus = (taskId: string, tryOnId: number) => {
+        const interval = setInterval(async () => {
+            let isPolling = true; // Flag để kiểm soát
+            try {
+                const res = await api.get(`/fit-room/${taskId}`);
+                if (res.status === 200) {
+                    const responseData = res.data;
+                    console.log('Task status:', responseData);
+                    setProgress(responseData.progress ?? 0);
+                    if (responseData.status === 'COMPLETED') {
+                        isPolling = false;
+                        clearInterval(interval);
+                        setIsProcessing(false);
+                        setTryOnData({
+                            ...tryOnData!,
+                            outputImageUrl: responseData.downloadSignedUrl
+                        });
+                        updateOutputImage(tryOnId, responseData.downloadSignedUrl);
+                        setErrorMessage(undefined);
+
+                        setResultImage(responseData.downloadSignedUrl); // đường dẫn ảnh thành phẩm
+                    } else if (responseData.status === 'FAILED') {
+                        isPolling = false;
+                        clearInterval(interval);
+                        setIsProcessing(false);
+                        setResultImage(tryOnData?.uploadImageUrl || null);
+                        setErrorMessage(responseData.error ?? 'Đã xảy ra lỗi khi xử lý ảnh');
+                    }
+                    // Nếu là PROCESSING thì không làm gì -> tiếp tục chờ
+                } else {
+                    console.warn('Unexpected response', res);
+                }
+            } catch (error) {
+                console.error('Error fetching task status:', error);
+                // Nếu gọi API lỗi nhiều lần có thể clearInterval sau N lần tuỳ ý
+            }
+        }, 5000); // gọi mỗi 5s
+    };
+
+    const updateOutputImage = async (tryOnSlotId: number, outputImageUrl: string) => {
+        try {
+            console.log("update image: ", outputImageUrl)
+            const payload = {
+                tryOnSlotId: tryOnSlotId,
+                outputImageUrl: outputImageUrl
+            }
+            await api.put(`/try-on`, payload);
+        } catch (error: any) {
+            console.error('Error updating output image:', error);
+            messageToast.error(error.response?.data?.message);
+        }
+    }
+
+    const resetOutputImage = () => {
+        setResultImage(null);
+        setErrorMessage(undefined);
+        setTryOnData(null);
+    };
+
+    const fetchProductColor = async (productColorId: string, categories: Category[]) => {
+        try {
+            const response = await api.get('product-color/' + productColorId);
+            if (response.status === 200) {
+                const product = response.data;
+                console.log("Preselected product for try-on:", product);
+                const categoryProductColor = categories.find((cat: Category) => cat.categoryId === product.categoryId);
+                console.log("Category of preselected product:", categoryProductColor);
+                if (categoryProductColor?.bodyPart === 'Toàn thân' || categoryProductColor?.bodyPart === 'Thân trên') {
+                    setSelectedTop(() => ({
+                        ...product,
+                        productColorName: product.productName + " - " + product.productColors[0].color.colorName
+                    }));
+                    if (categoryProductColor?.bodyPart === 'Toàn thân') {
+                        setIsDress(true);
+                        setSelectedBottom(null);
+                    }
+                } else {
+                    setSelectedBottom(() => ({
+                        ...product,
+                        productColorName: product.productName + " - " + product.productColors[0].color.colorName
+                    }));
+                }
+            }
+        } catch (error: any) {
+            messageToast.error(error.response?.data?.message);
+        }
+    }
+
 
     useEffect(() => {
         const fetchCategories = async () => {
-            const response = await api.get('/category');
-            if (response.status === 200) {
-                console.log('Fetched categories:', response.data);
-                setCategory(response.data);
+            const category = await api.get('/category');
+            if (category.status === 200) {
+                setCategory(category.data);
+                const productColorId = sessionStorage.getItem("productColor");
+                if (productColorId) {
+                    const cleanId = JSON.parse(productColorId);
+                    fetchProductColor(cleanId, category.data);
+                }
             }
         };
         fetchCategories();
-        const productId = sessionStorage.getItem("product_id");
-        if (productId) {
-            console.log("Product ID nhận được:", productId);
-        }
     }, []);
 
     const topCategories = category.filter(
-        (c) => c.bodyPart === 'Upper body' || c.bodyPart === 'Full body'
+        (c) => c.bodyPart === 'Thân trên' || c.bodyPart === 'Toàn thân'
     );
     const bottomCategories = category.filter(
-        (c) => c.bodyPart === 'Lower body'
+        (c) => c.bodyPart === 'Thân dưới'
     );
+    const canTryOn = userImage && imageValidation.isValid === true && selectedTop;
+    console.log('Selected Top:', selectedTop);
+    console.log('Selected Bottom:', selectedBottom);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#FAE3B6] via-[#FAE3B6] via-60% to-white flex items-center justify-center p-4 font-poppins">
@@ -55,16 +290,29 @@ export default function VirtualTryOnPage() {
 
                 <div className="flex flex-col lg:flex-row bg-gray-700 rounded-3xl overflow-hidden shadow-2xl">
                     {/* Left panel */}
-                    <div className="lg:w-[60%] p-8 lg:p-12 flex flex-col justify-center">
+                    <div className="lg:w-[60%] p-4 lg:p-12 flex flex-col justify-center">
                         <div className="text-4xl sm:text-4xl font-semibold text-white text-center mb-10">
                             Quần áo được chọn
                         </div>
+                        {selectedBottom &&
+                            !selectedTop &&
+                            bottomCategories.some(
+                                (cat) =>
+                                    cat.categoryId === selectedBottom.categoryId &&
+                                    cat.categoryName.toLowerCase() === 'váy'
+                            ) && (
+                                <div className="mt-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 rounded-lg text-sm leading-relaxed">
+                                    ⚠️ <strong>Lưu ý:</strong> Nếu bạn chỉ chọn váy nhưng ảnh bạn đang mặc đầm sẵn, kết quả có thể không chính xác.
+                                    Hãy đổi ảnh sang trang phục khác hoặc thêm áo để thử đồ được chính xác hơn.
+                                </div>
+                            )
+                        }
                         <div className={`grid grid-cols-1 sm:grid-cols-2 gap-8`}>
                             {/* Khung chọn áo */}
                             <div
                                 className={`bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all
-                                ${isDress ? 'col-span-2 h-[300px]' : 'h-[250px]'}
-                                `}
+        ${isDress ? 'col-span-2 h-[300px]' : 'h-[250px]'}
+        `}
                                 onClick={() => {
                                     setShowModal(true);
                                     setModalType('top');
@@ -72,12 +320,13 @@ export default function VirtualTryOnPage() {
                             >
                                 <label htmlFor="top-upload" className="cursor-pointer block h-full">
                                     <div className="flex flex-col h-full">
-                                        <div className={`flex-1 flex items-center justify-center bg-gray-100 p-8 ${isDress ? 'h-[320px]' : 'h-[220px]'}`}>
+                                        <div className={`flex items-center justify-center bg-gray-100 p-2 ${isDress ? 'h-[240px]' : 'h-[190px]'}`}>
                                             {selectedTop ? (
+
                                                 <img
-                                                    src={selectedTop.noBgImgUrl}
-                                                    alt={selectedTop.productName}
-                                                    className={`${isDress ? 'max-h-80' : 'max-h-44'} object-contain rounded-lg`}
+                                                    src={selectedTop?.productColors[0].noBgImgUrl}
+                                                    alt={selectedTop?.productColorName}
+                                                    className={`${isDress ? 'max-h-[230px]' : 'max-h-[180px]'} w-auto object-contain rounded-lg`}
                                                 />
                                             ) : (
                                                 <div className="bg-orange-400 rounded-full p-4 shadow-lg">
@@ -86,8 +335,8 @@ export default function VirtualTryOnPage() {
                                             )}
                                         </div>
 
-                                        <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px]">
-                                            {selectedTop ? selectedTop.productName : 'Chọn một loại áo để phối'}
+                                        <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px] flex items-center justify-center">
+                                            {selectedTop ? selectedTop?.productColorName : 'Chọn một loại áo để phối'}
                                         </div>
                                     </div>
                                 </label>
@@ -104,12 +353,12 @@ export default function VirtualTryOnPage() {
                                 >
                                     <label htmlFor="bottom-upload" className="cursor-pointer block h-full">
                                         <div className="flex flex-col h-full">
-                                            <div className="flex-1 flex items-center justify-center bg-gray-100 p-8">
+                                            <div className="flex items-center justify-center bg-gray-100 p-2 h-[190px]">
                                                 {selectedBottom ? (
                                                     <img
-                                                        src={selectedBottom.noBgImgUrl}
-                                                        alt={selectedBottom.productName}
-                                                        className="max-h-44 object-contain rounded-lg"
+                                                        src={selectedBottom?.productColors[0].noBgImgUrl}
+                                                        alt={selectedBottom?.productColorName}
+                                                        className="max-h-[180px] w-auto object-contain rounded-lg"
                                                     />
                                                 ) : (
                                                     <div className="bg-orange-400 rounded-full p-4 shadow-lg">
@@ -117,9 +366,9 @@ export default function VirtualTryOnPage() {
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px]">
+                                            <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px] flex items-center justify-center">
                                                 {selectedBottom
-                                                    ? selectedBottom.productName
+                                                    ? selectedBottom?.productColorName
                                                     : 'Chọn một loại quần hoặc váy để phối'}
                                             </div>
                                         </div>
@@ -174,13 +423,47 @@ export default function VirtualTryOnPage() {
                                 accept="image/*"
                                 onChange={(e) => handleFileChange(e, setUserImage)}
                                 className="hidden"
-                            />
+                            />'
+                            {imageValidation.isChecking && (
+                                <div className="mt-3 flex items-center justify-center text-blue-600 text-sm">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                                    Đang kiểm tra ảnh...
+                                </div>
+                            )}
+
+                            {/* Error message */}
+                            {imageValidation.isValid === false && (
+                                <div className="mt-3 flex items-start p-3 bg-red-100 border border-red-300 rounded-lg">
+                                    <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+                                    <p className="text-red-700 text-sm font-medium">
+                                        {imageValidation.errorMessage}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Success message */}
+                            {imageValidation.isValid === true && (
+                                <div className="mt-3 flex items-start p-3 bg-green-100 border border-green-300 rounded-lg">
+                                    <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-green-700 text-sm font-medium">
+                                            Ảnh hợp lệ! Bạn có thể tiếp tục thử đồ.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <button
-                            className="mt-6 w-full bg-gradient-to-r from-amber-200 to-orange-200 hover:from-amber-300 hover:to-orange-300 text-gray-800 font-semibold py-3 rounded-xl transition-all hover:shadow-lg text-base"
+                            onClick={handleTryOn}
+                            disabled={!canTryOn}
+                            className={`mt-6 w-full font-semibold py-3 rounded-xl transition-all text-base
+                                ${canTryOn
+                                    ? 'bg-gradient-to-r from-amber-200 to-orange-200 hover:from-amber-300 hover:to-orange-300 text-gray-800 hover:shadow-lg cursor-pointer'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
                         >
-                            Mặc thử ngay
+                            {imageValidation.isChecking ? 'Đang kiểm tra...' : 'Mặc thử ngay'}
                         </button>
                     </div>
                 </div>
@@ -191,24 +474,18 @@ export default function VirtualTryOnPage() {
                     onClose={() => setShowModal(false)}
                     onSelect={(item) => {
                         const fullBodyCategoryIds = category
-                            .filter((c) => c.bodyPart === 'Full body')
+                            .filter((c) => c.bodyPart === 'Toàn thân')
                             .map((c) => c.categoryId);
 
-                        console.log('Item categoryId:', item.categoryId);
-                        console.log('Category with full body:', fullBodyCategoryIds);
 
                         const isDressItem = fullBodyCategoryIds.includes(item.categoryId);
                         if (isDressItem) {
                             setSelectedBottom(null);
                         }
                         setIsDress(isDressItem);
-                        console.log('Selected item:', item);
-                        if (modalType === 'top') {
-                            setSelectedTop(item);
-                        } else {
-                            setSelectedBottom(item);
-                        }
+                        fetchProductColor(item.productColorId, category);
                         setShowModal(false);
+                        sessionStorage.removeItem("productColor");
                     }}
                     onReset={() => {
                         if (modalType === 'top') {
@@ -220,6 +497,39 @@ export default function VirtualTryOnPage() {
                     }}
                 />
             )}
+            <TryOnResultModal
+                isOpen={showResultModal}
+                onClose={() => setShowResultModal(false)}
+                resultImageUrl={resultImage || undefined}
+                isCreatingLoading={isCreatingTask}
+                isLoading={isProcessing}
+                progress={progress}
+                errorMessage={errorMessage}
+                onRetry={handleTryOn}
+                tryOnProducts={[
+                    ...(selectedTop ? [selectedTop] : []),
+                    ...(selectedBottom ? [selectedBottom] : []),
+                ]}
+                onAddToCart={async (productVariantId: string, quantity: number) => {
+                    // Xử lý thêm vào giỏ hàng
+                    try {
+                        const payload = {
+                            productVariantId: productVariantId,
+                            quantity: quantity,
+                            tryOnSlotId: tryOnData?.tryOnSlotId || null
+                        };
+                        const response = await api.post('/cartItem', payload);
+                        if (response.status === 201) {
+                            messageToast.success('Thêm vào giỏ hàng thành công');
+                            window.dispatchEvent(new Event("cart-updated"));
+                        }
+                    } catch (error: any) {
+                        console.error('Error adding to cart trong try on:', error.response?.data?.message);
+                        messageToast.error(error.response?.data?.message);
+                    }
+                }}
+            />
+
         </div>
     );
 };
