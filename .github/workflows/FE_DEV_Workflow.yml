@@ -1,67 +1,41 @@
-name: Deploy Next.js to Azure
+name: FE Build & Deploy CI/CD
 
 on:
   push:
     branches:
-      - FE
+      - FE   # 👈 Nhánh FE bạn muốn deploy
+
+env:
+  APP_NAME: "womenfashionstore"     # 👈 Tên App Service trên Azure
+  WORKING_DIR: ./virtual-fashion-for-women-FE  # 👈 Thư mục FE của bạn
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # 🔹 Di chuyển vào đúng thư mục FE
-      - name: Move to FE directory
-        run: cd virtual-fashion-for-women-FE
-        shell: bash
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       - name: Install dependencies
-        working-directory: ./virtual-fashion-for-women-FE
-        run: npm ci --include=optional
-
-      # ✅ FIX SHARP cho Linux
-      - name: Fix Sharp for Linux
-        working-directory: ./virtual-fashion-for-women-FE
-        run: |
-          npm uninstall sharp || true
-          npm install --include=optional sharp
-          npm rebuild sharp --platform=linux --arch=x64 --force
-
-      # ✅ FIX LightningCSS nếu Next.js > 15
-      - name: Fix LightningCSS for Linux
-        working-directory: ./virtual-fashion-for-women-FE
-        run: |
-          npm rebuild lightningcss --platform=linux --arch=x64 --force || true
+        working-directory: ${{ env.WORKING_DIR }}
+        run: npm ci
 
       - name: Build Next.js app
-        working-directory: ./virtual-fashion-for-women-FE
+        working-directory: ${{ env.WORKING_DIR }}
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: npm run build
 
-      - name: Zip production build
-        working-directory: ./virtual-fashion-for-women-FE
-        run: zip -r ../nextjs.zip .next public package.json next.config.js node_modules
-
-      - name: Deploy to Azure Web App
+      - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'womenfashionstore'
+          app-name: ${{ env.APP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: nextjs.zip
+          package: ${{ env.WORKING_DIR }}
