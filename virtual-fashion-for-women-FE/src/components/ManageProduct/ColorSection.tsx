@@ -5,7 +5,7 @@ import VariantItem from "./VariantItem";
 import { useEffect, useState } from "react";
 import ImageUploader from "./ImageUploader";
 import Image from "next/image";
-import NewColorModal from "./NewColorModal";
+//import NewColorModal from "./NewColorModal";
 import ColorModal from "./ColorModal";
 import { on } from "events";
 

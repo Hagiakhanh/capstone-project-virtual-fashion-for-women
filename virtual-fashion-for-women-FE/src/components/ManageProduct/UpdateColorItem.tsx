@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'; // Thêm useState
 import { Trash2, Upload, Plus } from 'lucide-react';
 import { Color, Size, UpdateProductColorFormData } from '@/models/RequestUpdateProduct';
 import UpdateVariantItem from './UpdateVariantItem';
-import CreateColorModal from './CreateColorModal'; // Import modal mới
+//import CreateColorModal from './CreateColorModal'; // Import modal mới
 import ColorModal from './ColorModal';
 
 interface UpdateColorItemProps {
@@ -107,35 +107,6 @@ export default function UpdateColorItem({
 
             <div className="space-y-4">
                 {/* Color selection */}
-                {/* <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Chọn màu *</label>
-                    <select
-                        value={productColor.colorId || ''}
-                        onChange={handleColorSelectChange} // Cập nhật handler
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"
-                    >
-                    <option value="">-- Tạo màu mới --</option>
-                        {colors.map(color => (
-                        <option key={color.colorId} value={color.colorId}>
-                     	    {color.colorName} ({color.colorPrefix})
-                        </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Hiển thị thông báo nếu đang tạo màu mới */}
-                {/*{(!productColor.colorId && productColor.colorName) && (
-                    <div className="p-3 bg-blue-100 border border-blue-300 rounded-lg text-sm text-blue-800 space-y-2">
-                        <p>Bạn đang tạo một màu mới: <strong>{productColor.colorName} ({productColor.colorPrefix})</strong></p>
-                        <button
-                            type="button"
-                            onClick={() => setIsColorModalOpen(true)}
-                            className="font-semibold text-blue-600 hover:underline px-3 py-1 border border-blue-400 rounded-md bg-white"
-                        >
-                            Chỉnh sửa thông tin màu mới
-                        </button>
-                    </div>
-                )} */}
                 <div className="flex items-start gap-4">
                     <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -213,32 +184,32 @@ export default function UpdateColorItem({
                     </label>
                 </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ảnh biến thể (nhiều ảnh)</label>
-                {productColor.productVariantImagePreviews && productColor.productVariantImagePreviews.length > 0 && (
-                    <div className="flex gap-2 mb-2 flex-wrap p-2 rounded-lg bg-white">
-                        {productColor.productVariantImagePreviews.map((url: string, idx: number) => (
-                            <img 
-                                key={idx} 
-                                src={url} 
-                                alt={`Preview ${idx}`} 
-                                className="w-20 h-20 object-cover rounded border" 
-                            />
-                        ))}
-                    </div>
-                )}
-                <label className="flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-lg cursor-pointer hover:bg-gray-100 border border-blue-500 w-fit">
-                    <Upload size={18} />
-                        Chọn nhiều ảnh
-                    <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleVariantImagesChange}
-                        className="hidden"
-                    />
-                </label>
-            </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Ảnh biến thể (nhiều ảnh)</label>
+                    {productColor.productVariantImagePreviews && productColor.productVariantImagePreviews.length > 0 && (
+                        <div className="flex gap-2 mb-2 flex-wrap p-2 rounded-lg bg-white">
+                            {productColor.productVariantImagePreviews.map((url: string, idx: number) => (
+                                <img 
+                                    key={idx} 
+                                    src={url} 
+                                    alt={`Preview ${idx}`} 
+                                    className="w-20 h-20 object-cover rounded border" 
+                                />
+                            ))}
+                        </div>
+                    )}
+                    <label className="flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-lg cursor-pointer hover:bg-gray-100 border border-blue-500 w-fit">
+                        <Upload size={18} />
+                            Chọn nhiều ảnh
+                        <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleVariantImagesChange}
+                            className="hidden"
+                        />
+                    </label>
+                </div>
 
                 {/* Variants */}
                 <div className="border-t pt-4 mt-4">

@@ -223,6 +223,17 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
         setProductColors(updated);
     };
 
+    const formatNumber = (value: number | '') => {
+        if (value === '') return '';
+        return value.toLocaleString("vi-VN"); // => 123.123 hoặc 123.456.789
+    };
+
+    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value.replace(/\./g, '').replace(/,/g, '');
+        const numericValue = raw === '' ? '' : parseFloat(raw);
+        setPrice(numericValue);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -371,12 +382,12 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
                         <div className="bg-white p-6 rounded-lg shadow">
                             <h2 className="text-xl font-semibold mb-4 text-gray-700">Giá Sản Phẩm *</h2>
                             <input
-                                type="number"
-                                min="0"
-                                step="1000"
-                                value={price}
-                                onChange={(e) => updateBasicField("price", e.target.value ? parseFloat(e.target.value) : '')}
+                                type="text"
+                                inputMode="numeric"
+                                value={formatNumber(price)}
+                                onChange={handlePriceChange}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Nhập giá sản phẩm..."
                             />
                         </div>
                     </div>
