@@ -1,4 +1,4 @@
-import { OrderDetailDTO } from "./OrderDetailDTO";
+import { OrderDetailDTO, OrderDetailStaffResponseDTO } from "./OrderDetailDTO";
 import { TransactionInformation } from "./TransactionInformation";
 import { UserInformation } from "./UserInformation";
 
@@ -19,4 +19,26 @@ export interface OrderDTO {
     transactionInformation: TransactionInformation;
     userInformation: UserInformation;
     responseOrderDetails: OrderDetailDTO[];
+}
+
+export interface OrderStaffResponseDTO {
+    orderId: number;
+    createdAt: string;
+    status: string;
+    customerName: string;
+    customerPhone: string | null;
+    customerEmail: string;
+    receiverName: string;
+    receiverPhone: string;
+    receiverAddress: string;
+    paymentMethod: string;
+    paymentDate: string | null;
+    paymentStatus: 'Pending' | 'Success' | 'Failed';
+    totalWithShippingMoney: number;
+    shippingMoney: number;
+    shippingCode: string | null;
+    estimatedDelivery: string | null;
+    amount: number; // TỔNG TIỀN HÀNG (Subtotal)
+    totalQuantity: number;
+    orderDetails: OrderDetailStaffResponseDTO[];
 }
