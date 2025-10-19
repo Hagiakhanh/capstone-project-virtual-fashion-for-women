@@ -230,7 +230,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             int userId = _currentUserService.GetUserId();
             List<Order> rawOrders = await _orderRepository.GetAll(
-                filter: o=>o.CustomerId == userId && (o.Status == orderStatus|| string.IsNullOrEmpty(orderStatus)),
+                filter: o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)),
                 pagination: page,
                 orderBy: o => o.OrderByDescending(x => x.CreatedAt),
                 includes:
@@ -311,8 +311,11 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _unitOfWork.SaveChanges();
         }
 
-        public async Task<MessageModelWithData<List<ResponseOrderForStaff>>> GetAllOrderForStaff(PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease)
+        public async Task<MessageModelWithData<Pagination<ResponseOrderForStaff>>> GetAllOrderForStaff(PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease)
         {
+            Expression<Func<Order, bool>> filterExpression = x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString();
+            int totalCount = await _orderRepository.CountAsync(filterExpression);
+
             List<Order> listOrder = new();
             if (isDateDecrease)
             {
@@ -320,6 +323,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 listOrder = await _orderRepository.GetAll(
                     pagination: page,
                     filter: x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString(),
+                    includes: x => x.Customer,
                     orderBy: x => x.OrderByDescending(x => x.CreatedAt)
                 );
             }
@@ -329,6 +333,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 listOrder = await _orderRepository.GetAll(
                     pagination: page,
                     filter: x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString(),
+                    includes: x => x.Customer,
                     orderBy: x => x.OrderBy(x => x.CreatedAt)
                 );
             }
@@ -340,22 +345,30 @@ namespace VirtualTryonWomenFashion.Service.Services
                         ReceiverPhone = x.ReceiverPhone,
                         CreatedAt = x.CreatedAt,
                         Status = ((OrderStatusEnum)Enum.Parse(typeof(OrderStatusEnum), x.Status)).ToString(),
+                        Amount = x.Amount.Value,
+                        Email = x.Customer.Email
                     }
                 ).ToList();
 
             if (responseOrderForStaff.Any())
             {
-                return new MessageModelWithData<List<ResponseOrderForStaff>>()
+                return new MessageModelWithData<Pagination<ResponseOrderForStaff>>()
                 {
                     Message = "Lấy dữ liệu đơn hàng thành công",
                     StatusCode = StatusCodes.Status200OK,
-                    Data = responseOrderForStaff
+                    Data = new Pagination<ResponseOrderForStaff>(responseOrderForStaff, totalCount, page.PageIndex, page.PageSize)
                 };
             }
-            return new MessageModelWithData<List<ResponseOrderForStaff>>
+            return new MessageModelWithData<Pagination<ResponseOrderForStaff>>
             {
-                Message = "Lấy dữ liệu đơn hàng thất bại",
-                StatusCode = StatusCodes.Status400BadRequest,
+                Message = "Không tìm thấy đơn hàng nào thỏa mãn điều kiện",
+                StatusCode = StatusCodes.Status200OK,
+                Data = new Pagination<ResponseOrderForStaff>(
+                new List<ResponseOrderForStaff>(),
+                0,
+                page.PageIndex,
+                page.PageSize
+            )
             };
         }
 
@@ -375,7 +388,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 ReceiverAddress = order.ReceiverAddress,
                 CreatedAt = order.CreatedAt,
                 Status = ((OrderStatusEnum)Enum.Parse(typeof(OrderStatusEnum), order.Status)).ToString(),
-                Amount = order.Amount,
+                Amount = order.Amount - order.ShippingMoney ?? 0,
                 Note = order.Note,
                 PackageWeight = order.PackageWeight,
                 PackageHeight = order.PackageHeight,
@@ -388,9 +401,21 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     OrderDetailID = x.OrderDetailId,
                     Quantity = x.Quantity,
-                    VariantName = x.ProductVariant.VariantName,
-                    ImageUrl = x.ProductVariant.ImageUrl,
+                    ProductName = x.ProductVariant.ProductColor.Product.ProductName,
+                    ImageUrl = x.ProductVariant.ProductColor.Product.MainImageUrl,
+                    Size = x.ProductVariant.Size.SizeCode,
+                    ColorName = x.ProductVariant.ProductColor.Color.ColorName,
+                    Price = x.PriceAtTime,
+                    Amount = x.PriceAtTime * x.Quantity
                 }).ToList(),
+                CustomerName = order.Customer.FullName,
+                CustomerPhone = order.Customer.PhoneNumber,
+                CustomerEmail = order.Customer.Email,
+                PaymentMethod = order.Transactions.FirstOrDefault().Method,
+                PaymentDate = order.Transactions.FirstOrDefault().UpdatedAt,
+                PaymentStatus = order.Transactions.FirstOrDefault().Status,
+                TotalWithShippingMoney = order.Amount,
+                TotalQuantity = order.OrderDetails.Sum(x => x.Quantity),
             };
 
             return new MessageModelWithData<ResponseOrderDetailForStaff>
@@ -514,7 +539,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<MessageModel> UpdateOrderStatusInGHNByCode(int orderId)
+        public async Task<MessageModelWithData<GhnOrderSyncResponse>> UpdateOrderStatusInGHNByCode(int orderId)
         {
             Order order = await _orderRepository.GetOrderByOrderID(orderId);
             if (order == null)
@@ -569,10 +594,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                         if (oldStatus == order.Status)
                         {
                             await _unitOfWork.CommitTransactionAsync();
-                            return new MessageModel
+                            return new MessageModelWithData<GhnOrderSyncResponse>
                             {
                                 Message = $"Trạng thái đơn hàng vẫn là {order.Status}. Không có thay đổi nào được thực hiện.",
                                 StatusCode = StatusCodes.Status200OK,
+                                Data = new GhnOrderSyncResponse
+                                {
+                                    OldStatus = oldStatus,
+                                    NewStatus = order.Status,
+                                }
                             };
                         }
                         await _orderRepository.UpdateAsync(order);
@@ -580,17 +610,22 @@ namespace VirtualTryonWomenFashion.Service.Services
                         await _unitOfWork.CommitTransactionAsync();
                         if (result > 0)
                         {
-                            return new MessageModel
+                            return new MessageModelWithData<GhnOrderSyncResponse>
                             {
                                 Message = $"Cập nhật trạng thái đơn từ {oldStatus} thành {order.Status}",
                                 StatusCode = StatusCodes.Status200OK,
+                                Data = new GhnOrderSyncResponse
+                                {
+                                    OldStatus = oldStatus,
+                                    NewStatus = order.Status,
+                                }
                             };
                         }
                     }
                 }
                 //}
 
-                return new MessageModel
+                return new MessageModelWithData<GhnOrderSyncResponse>
                 {
                     Message = "Cập nhật trạng thái thất bại",
                     StatusCode = StatusCodes.Status400BadRequest

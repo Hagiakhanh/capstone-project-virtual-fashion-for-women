@@ -32,7 +32,16 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(x => x.Customer)
                 .Include(x => x.Transactions)
                 .Include(x => x.OrderDetails)
-                .ThenInclude(x => x.ProductVariant)
+                    .ThenInclude(x => x.ProductVariant)
+                    .ThenInclude(x => x.Size)
+                .Include(x => x.OrderDetails)
+                    .ThenInclude(x => x.ProductVariant)
+                    .ThenInclude(x => x.ProductColor)
+                    .ThenInclude(x => x.Color)
+                .Include(x => x.OrderDetails)
+                    .ThenInclude(x => x.ProductVariant)
+                    .ThenInclude(x => x.ProductColor)
+                    .ThenInclude(x => x.Product)
                 .SingleOrDefaultAsync(x => x.OrderId == orderID);
         }
 
