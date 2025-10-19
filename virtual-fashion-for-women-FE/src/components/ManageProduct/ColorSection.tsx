@@ -5,7 +5,9 @@ import VariantItem from "./VariantItem";
 import { useEffect, useState } from "react";
 import ImageUploader from "./ImageUploader";
 import Image from "next/image";
-import NewColorModal from "./NewColorModal";
+//import NewColorModal from "./NewColorModal";
+import ColorModal from "./ColorModal";
+import { on } from "events";
 
 interface ColorSectionProps {
     color: ProductColorRequest; // <-- Dùng type cụ thể
@@ -270,12 +272,20 @@ export default function ColorSection({
                 </div>
             </div>
             {/* Render Modal (chỉ mở khi isColorModalOpen=true VÀ colorId=0) */}
-            <NewColorModal
+            {/* <NewColorModal
                 isOpen={isColorModalOpen && color.colorId === 0}
                 onClose={() => setIsColorModalOpen(false)}
                 colorData={color}
                 onUpdate={onUpdate}
+            /> */}
+            <ColorModal
+                isOpen={isColorModalOpen}
+                onClose={() => setIsColorModalOpen(false)}
+                mode="create"
+                colorData={color}
+                onUpdate={onUpdate}
             />
+
         </div>
     );
 }
