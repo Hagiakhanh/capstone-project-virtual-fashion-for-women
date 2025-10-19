@@ -8,8 +8,15 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true, // ✅ Bỏ qua lỗi TypeScript khi build
   },
-  experimental: {
-    optimizeCss: false, // 🚫 Tắt LightningCSS, dùng PostCSS thường
+   experimental: {
+    optimizeCss: false, // tắt LightningCSS chính Next.js gọi
+  },
+  webpack: (config) => {
+    // ⚠️ Chặn hoàn toàn LightningCSS nếu package nào cố import nó
+    config.externals.push({
+      lightningcss: 'commonjs lightningcss',
+    });
+    return config;
   },
 };
 
