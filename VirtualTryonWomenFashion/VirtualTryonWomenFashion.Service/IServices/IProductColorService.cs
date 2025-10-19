@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.Helpers;
 

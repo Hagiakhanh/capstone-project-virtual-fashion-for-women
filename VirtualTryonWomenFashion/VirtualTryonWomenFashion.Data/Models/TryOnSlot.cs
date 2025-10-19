@@ -15,13 +15,11 @@ public partial class TryOnSlot
 
     public string UploadImageUrl { get; set; }
 
-    public byte[] UploadImageBinary { get; set; }
+    public string UploadImageBinary { get; set; }
 
     public string OutputImageUrl { get; set; }
 
-    public byte[] OutputImageBinary { get; set; }
-
-    public int? OutputTaskId { get; set; }
+    public string OutputTaskId { get; set; }
 
     public bool IsDeleted { get; set; }
 
@@ -30,6 +28,8 @@ public partial class TryOnSlot
     public DateTime CreatedAt { get; set; }
 
     public DateTime? DeletedAt { get; set; }
+
+    public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
     public virtual User Customer { get; set; }
 

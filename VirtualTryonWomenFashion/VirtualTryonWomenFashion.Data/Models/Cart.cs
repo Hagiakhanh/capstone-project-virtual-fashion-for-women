@@ -19,7 +19,11 @@ public partial class Cart
 
     public string ProductVariantId { get; set; }
 
+    public int? TryOnSlotId { get; set; }
+
     public virtual ProductVariant ProductVariant { get; set; }
+
+    public virtual TryOnSlot TryOnSlot { get; set; }
 
     public virtual User User { get; set; }
 }

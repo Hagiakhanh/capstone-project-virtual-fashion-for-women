@@ -169,5 +169,30 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             return await query.CountAsync();
         }
 
+        public async Task<Product> GetProductByProductColorIdAsync(string productColorId)
+        {
+            var product = await _context.Products
+               .Include(p => p.Category)
+               .Include(p => p.Tags)
+               .Include(p => p.ProductColors)
+                   .ThenInclude(pc => pc.Color)
+               .Include(p => p.ProductColors)
+                   .ThenInclude(pc => pc.ProductImages)
+               .Include(p => p.ProductColors)
+                   .ThenInclude(pc => pc.ProductVariants)
+                       .ThenInclude(pv => pv.Size)
+               .Where(p => p.ProductColors.Any(pc => pc.ProductColorId == productColorId)
+                        && p.IsDeleted != true)
+               .FirstOrDefaultAsync();
+
+            if (product != null)
+            {
+                product.ProductColors = product.ProductColors
+                    .Where(pc => pc.ProductColorId == productColorId)
+                    .ToList();
+            }
+
+            return product;
+        }
     }
 }
