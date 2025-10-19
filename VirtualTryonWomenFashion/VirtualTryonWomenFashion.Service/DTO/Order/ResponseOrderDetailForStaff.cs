@@ -37,9 +37,17 @@ namespace VirtualTryonWomenFashion.Service.DTO.Order
 
         public decimal? ShippingMoney { get; set; }
 
-        public string ShippingCode { get; set; }
+        public string? ShippingCode { get; set; }
 
         public DateTime? EstimatedDelivery { get; set; }
+        public string? CustomerName { get; set; }
+        public string? CustomerPhone { get; set; }
+        public string? CustomerEmail { get; set; }
+        public string PaymentMethod { get; set; }
+        public DateTime? PaymentDate { get; set; }
+        public string PaymentStatus { get; set; }
+        public decimal? TotalWithShippingMoney { get; set; }
+        public int TotalQuantity { get; set; }
 
         public List<OrderDetailInformation> OrderDetails { get; set; }
     }
@@ -48,8 +56,12 @@ namespace VirtualTryonWomenFashion.Service.DTO.Order
     {
         public int OrderDetailID { get; set; }
         public int Quantity { get; set; }
-        public string VariantName { get; set; }
+        public string ProductName { get; set; }
         public string ImageUrl { get; set; }
+        public string? Size { get; set; }
+        public string? ColorName { get; set; }
+        public decimal Price { get; set; }
+        public decimal Amount { get; set; }
 
     }
 }

@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Enum;
+using VirtualTryonWomenFashion.Service.DTO.GHN;
 using VirtualTryonWomenFashion.Service.DTO.Order;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -135,12 +136,12 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         }
 
-        [HttpPut("staff/{orderID}/sync-ghn-status")]
+        [HttpPut("staff/sync-ghn-status/{orderID}")]
         public async Task<IActionResult> UpdateOrderStatusInGHNByCode(int orderID)
         {
             try
             {
-                MessageModel result = await _orderService.UpdateOrderStatusInGHNByCode(orderID);
+                MessageModelWithData<GhnOrderSyncResponse> result = await _orderService.UpdateOrderStatusInGHNByCode(orderID);
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
