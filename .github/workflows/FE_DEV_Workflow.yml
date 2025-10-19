@@ -1,0 +1,41 @@
+name: Deploy Next.js to Azure
+
+on:
+  push:
+    branches:
+      - FE
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: ./virtual-fashion-for-women-FE
+        run: npm ci
+
+      - name: Build Next.js app
+        working-directory: ./virtual-fashion-for-women-FE
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+        run: npm run build
+
+      - name: Zip production build
+        working-directory: ./virtual-fashion-for-women-FE
+        run: zip -r ../nextjs.zip .next public package.json next.config.js node_modules
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'womenfashionstore'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
+          package: nextjs.zip
