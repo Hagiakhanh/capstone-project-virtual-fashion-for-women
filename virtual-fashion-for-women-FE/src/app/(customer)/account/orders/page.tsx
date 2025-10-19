@@ -7,6 +7,7 @@ import { CheckCircle, Clock, Package, Truck, Home, XCircle, ClipboardCheck } fro
 import { messageToast } from '@/helpers/toastHelper';
 import { api } from '@/api/instance';
 import { PaginationDTO } from '@/models/PaginationDTO';
+import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 
 const statusTabs = [
     { key: '', label: 'Tất cả', icon: null },
@@ -30,10 +31,12 @@ export default function OrderManagement() {
         TotalCount: 0,
         TotalPages: 0,
     });
+    const [loading, setLoading] = useState(false);
 
 
     const fetchOrders = async () => {
         try {
+            setLoading(true);
             const payloadPagination = {
                 pageSize: pagination.PageSize,
                 pageNumber: pagination.CurrentPage,
@@ -49,6 +52,8 @@ export default function OrderManagement() {
             }
         } catch (error: any) {
             messageToast.error(error);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -84,7 +89,7 @@ export default function OrderManagement() {
     }, [pagination.CurrentPage, pagination.PageSize, statusFilter]);
 
     return (
-        <div className="bg-gradient-to-br ">
+        <div className="bg-gradient-to-br">
             <div className="max-w-7xl mx-auto flex-1 flex flex-col">
                 {/* Header */}
                 <h1 className="text-3xl font-semibold text-gray-800 mb-6">Đơn hàng của bạn</h1>
@@ -116,12 +121,18 @@ export default function OrderManagement() {
                 {/* Orders List - Fixed height container */}
                 <div className="flex-1 mb-6">
                     <div className="space-y-4">
-                        {orders.length === 0 ? (
-                            <div className="text-center p-12 bg-white rounded-2xl shadow text-gray-500">
-                                Không có đơn hàng
+                        {loading ? (
+                            <div className="py-20">
+                                <LoadingSpinner size={50} />
                             </div>
                         ) : (
-                            orders.map((order) => <OrderItem key={order.orderId} order={order} />)
+                            orders.length === 0 ? (
+                                <div className="text-center p-12 bg-white rounded-2xl shadow text-gray-500">
+                                    Không có đơn hàng
+                                </div>
+                            ) : (
+                                orders.map((order) => <OrderItem key={order.orderId} order={order} />)
+                            )
                         )}
                     </div>
                 </div>

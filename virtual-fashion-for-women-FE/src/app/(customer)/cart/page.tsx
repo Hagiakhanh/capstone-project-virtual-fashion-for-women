@@ -2,11 +2,12 @@
 
 import { api } from "@/api/instance";
 import CartItems from "@/components/CartItem/CartItem";
+import LoadingOverlay from "@/components/Loading/LoadingOverlay";
 import { messageToast } from "@/helpers/toastHelper";
 import { CartItemDTO } from "@/models/CartItemDTO";
 import formatPrice from "@/utils/formatPrice";
 import { message } from "antd";
-import { debounce } from "lodash";
+import { debounce, set } from "lodash";
 import { ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -15,9 +16,11 @@ export default function CartContainer() {
     const router = useRouter();
     const [cartItems, setCartItems] = useState<CartItemDTO[]>([]);
     const [selectAll, setSelectAll] = useState(true);
+    const [loading, setLoading] = useState(false);
 
-    const fetchCartItem = useCallback(async () => {
+    const fetchCartItem = async () => {
         try {
+            setLoading(true);
             const res = await api.get('/cartItem');
             if (res.status == 200) {
                 sessionStorage.setItem("checkoutCartIds", JSON.stringify([]));
@@ -27,8 +30,12 @@ export default function CartContainer() {
                 setCartItems(mappedData);
                 window.dispatchEvent(new Event("cart-updated"));
             }
-        } catch (error) { console.error("Fetch error:", error); }
-    }, []);
+        } catch (error: any) {
+            console.error(error?.response?.data?.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         fetchCartItem();
@@ -115,9 +122,11 @@ export default function CartContainer() {
     };
 
     const handleCheckout = () => {
+        setLoading(true);
         const ids = cartItems.filter(i => i.selected).map(i => i.cartId);
         if (ids.length === 0) return;
         sessionStorage.setItem("checkoutCartIds", JSON.stringify(ids));
+        setLoading(false);
         router.push("/checkout");
     };
 
@@ -127,6 +136,7 @@ export default function CartContainer() {
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 py-8">
+            {loading && <LoadingOverlay size={60} />}
             {/* Left - Cart Items */}
             <div className="lg:col-span-2 bg-white rounded-2xl shadow-md border border-gray-100">
                 <div className="flex items-center justify-between p-6 border-b">
