@@ -107,7 +107,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 pagination: paginationParameter,
                 orderBy: t => isDescending?  t.OrderByDescending(x => x.UpdatedAt): t.OrderBy(x=>x.UpdatedAt)
                 );
-            int totalRecords = _transactionRepository.Count(t => t.UserId == userId && (t.Status == transactionStatus || string.IsNullOrEmpty(transactionStatus)));
+            int totalRecords = await _transactionRepository.CountAsync(t => t.UserId == userId && (t.Status == transactionStatus || string.IsNullOrEmpty(transactionStatus)));
             List<TransactionInformation> responseTransactions = new List<TransactionInformation>();
             foreach (Transaction transaction in rawTransactions)
             {

@@ -240,7 +240,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     o => o.Transaction
                 }
                 );
-            int totalRecords = _orderRepository.Count(o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)));
+            int totalRecords = await _orderRepository.CountAsync(o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)));
             List<ResponseOrder> responseOrders = new List<ResponseOrder>();
             foreach (Order order in rawOrders)
             {
