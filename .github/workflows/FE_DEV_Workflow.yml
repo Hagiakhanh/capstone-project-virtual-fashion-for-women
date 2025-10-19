@@ -18,22 +18,41 @@ jobs:
         with:
           node-version: 20
 
+      # 🔹 Di chuyển vào đúng thư mục FE
+      - name: Move to FE directory
+        run: cd virtual-fashion-for-women-FE
+        shell: bash
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
         working-directory: ./virtual-fashion-for-women-FE
-        run: npm ci
+        run: npm ci --include=optional
 
-      # ✅ FIX Sharp + LightningCSS for Linux
-      - name: Rebuild native modules for Linux
+      # ✅ FIX SHARP cho Linux
+      - name: Fix Sharp for Linux
         working-directory: ./virtual-fashion-for-women-FE
         run: |
+          npm uninstall sharp || true
+          npm install --include=optional sharp
           npm rebuild sharp --platform=linux --arch=x64 --force
-          npm rebuild lightningcss --platform=linux --arch=x64 --force
+
+      # ✅ FIX LightningCSS nếu Next.js > 15
+      - name: Fix LightningCSS for Linux
+        working-directory: ./virtual-fashion-for-women-FE
+        run: |
+          npm rebuild lightningcss --platform=linux --arch=x64 --force || true
 
       - name: Build Next.js app
         working-directory: ./virtual-fashion-for-women-FE
         env:
           NODE_ENV: production
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: npm run build
 
       - name: Zip production build
