@@ -17,9 +17,10 @@ import {
 import { api } from '@/api/instance';
 import { convertUpdateToFormData } from '@/utils/productHelpers';
 import LoadingSpinner from '@/components/ManageProduct/LoadingSpinner';
-import UpdateBasicInfoSection from '@/components/ManageProduct/UpdateBasicInfoSection';
+// import UpdateBasicInfoSection from '@/components/ManageProduct/UpdateBasicInfoSection'; // Bỏ import này
 import UpdateColorSection from '@/components/ManageProduct/UpdateColorSection';
 import UpdateTagsSection from '@/components/ManageProduct/UpdateTagsSection';
+import { Upload } from 'lucide-react'; // Thêm import icon
 
 interface UpdateProductPageProps {
     params: { productId: string };
@@ -54,8 +55,6 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
     const fetchData = async () => {
         try {
             setLoading(true);
-
-            // Fetch product details
             const productRes = await api.get(`/product/id/${params.productId}`);
             const productData = productRes.data;
 
@@ -68,7 +67,6 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
                 setCategoryId(prod.categoryId || '');
                 setMainImagePreview(prod.mainImageUrl || '');
 
-                // Map existing tags
                 if (prod.tags && prod.tags.length > 0) {
                     const mappedTags = prod.tags.map((tag: Tag) => ({
                         tagId: tag.tagId,
@@ -77,7 +75,6 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
                     setSelectedTags(mappedTags);
                 }
 
-                // Map existing product colors
                 if (prod.productColors && prod.productColors.length > 0) {
                     const mappedColors = prod.productColors.map((pc: ProductColor) => {
                         const allVariantImages: string[] = pc.productImagesDto?.map(img => img.imageUrl) || [];
@@ -103,16 +100,15 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
                                 productWidth: pv.productWidth,
                                 productHeight: pv.productHeight,
                             })) || [],
-                            colorName: '',
-                            colorPrefix: '',
-                            hexCode: '',
+                            // Lấy thông tin màu từ pc.color (nếu có)
+                            colorName: pc.color?.colorName || '',
+                            colorPrefix: pc.color?.colorPrefix || '',
+                            hexCode: pc.color?.hexCode || '',
                         };
                     });
                     setProductColors(mappedColors);
                 }
             }
-
-            // Fetch categories, colors, sizes, tags
             const [catRes, colRes, sizeRes, tagsRes] = await Promise.all([
                 api.get('/category'),
                 api.get('/color'),
@@ -159,6 +155,7 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
         setSelectedTags(tags);
     };
 
+    // ... (Các hàm add/remove/update color/variant giữ nguyên) ...
     const addProductColor = () => {
         setProductColors([
             ...productColors,
@@ -228,10 +225,8 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         try {
             setSubmitting(true);
-
             const formData = convertUpdateToFormData(
                 product,
                 productName,
@@ -240,7 +235,7 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
                 categoryId,
                 mainImageFile,
                 productColors,
-                selectedTags // Truyền tags vào
+                selectedTags
             );
 
             const response = await api.put(`/product/${params.productId}`, formData, {
@@ -266,50 +261,139 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
     }
 
     return (
-        <div className="p-8 max-w-6xl mx-auto">
+        <div className="p-8 max-w-7xl mx-auto"> {/* Tăng max-w- */}
             <h1 className="text-3xl font-bold mb-6">Cập nhật sản phẩm</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                <UpdateBasicInfoSection
-                    productName={productName}
-                    description={description}
-                    price={price}
-                    categoryId={categoryId}
-                    mainImagePreview={mainImagePreview}
-                    categories={categories}
-                    onUpdate={updateBasicField}
-                />
+                {/* Bắt đầu layout 2 cột */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Cột trái */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Card: Thông Tin Chung */}
+                        <div className="bg-white p-6 rounded-lg shadow">
+                            <h2 className="text-xl font-semibold mb-4 text-gray-700">Thông Tin Chung</h2>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Tên sản phẩm *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={productName}
+                                        onChange={(e) => updateBasicField("productName", e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Mô tả *
+                                    </label>
+                                    <textarea
+                                        value={description}
+                                        onChange={(e) => updateBasicField("description", e.target.value)}
+                                        rows={5} // Tăng độ cao
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
-                <UpdateTagsSection
-                    availableTags={availableTags}
-                    selectedTags={selectedTags}
-                    onUpdateTags={handleUpdateTags}
-                />
+                        {/* Card: Tags */}
+                        <UpdateTagsSection
+                            availableTags={availableTags}
+                            selectedTags={selectedTags}
+                            onUpdateTags={handleUpdateTags}
+                        />
 
-                <UpdateColorSection
-                    productColors={productColors}
-                    colors={colors}
-                    sizes={sizes}
-                    onAddColor={addProductColor}
-                    onRemoveColor={removeProductColor}
-                    onUpdateColor={updateProductColor}
-                    onAddVariant={addVariant}
-                    onRemoveVariant={removeVariant}
-                    onUpdateVariant={updateVariant}
-                />
+                        {/* Section Màu Sắc & Biến Thể (Full width) */}
+                        <UpdateColorSection
+                            productColors={productColors}
+                            colors={colors}
+                            sizes={sizes}
+                            onAddColor={addProductColor}
+                            onRemoveColor={removeProductColor}
+                            onUpdateColor={updateProductColor}
+                            onAddVariant={addVariant}
+                            onRemoveVariant={removeVariant}
+                            onUpdateVariant={updateVariant}
+                        />
+                    </div>
 
-                <div className="flex gap-4">
+                    {/* Cột phải */}
+                    <div className="lg:col-span-1 space-y-6">
+                        {/* Card: Ảnh Sản Phẩm Chính */}
+                        <div className="bg-white p-6 rounded-lg shadow">
+                            <h2 className="text-xl font-semibold mb-4 text-gray-700">Ảnh Sản Phẩm Chính *</h2>
+                            <div>
+                                {mainImagePreview ? (
+                                    <div className="mb-3 w-full aspect-square border rounded-lg overflow-hidden">
+                                        <img 
+                                            src={mainImagePreview} 
+                                            alt="Main product" 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="w-full aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-3">
+                                        <span className="text-gray-400">Chưa có ảnh</span>
+                                    </div>
+                                )}
+                                <label className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer hover:bg-blue-600">
+                                    <Upload size={20} />
+                                    {mainImagePreview ? 'Đổi ảnh' : 'Tải ảnh lên'}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => updateBasicField("mainImageUrl", e.target.files?.[0])}
+                                        className="hidden"
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                        {/* Card: Danh Mục */}
+                        <div className="bg-white p-6 rounded-lg shadow">
+                            <h2 className="text-xl font-semibold mb-4 text-gray-700">Danh Mục *</h2>
+                            <select
+                                value={categoryId}
+                                onChange={(e) => updateBasicField("categoryId", e.target.value ? parseInt(e.target.value) : '')}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="">-- Chọn danh mục --</option>
+                                {categories.map((category) => (
+                                    <option key={category.categoryId} value={category.categoryId}>
+                                        {category.categoryName}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                         {/* Card: Giá Sản Phẩm */}
+                        <div className="bg-white p-6 rounded-lg shadow">
+                            <h2 className="text-xl font-semibold mb-4 text-gray-700">Giá Sản Phẩm *</h2>
+                            <input
+                                type="number"
+                                min="0"
+                                step="1000"
+                                value={price}
+                                onChange={(e) => updateBasicField("price", e.target.value ? parseFloat(e.target.value) : '')}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex gap-4 pt-4 border-t">
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-semibold"
                     >
                         {submitting ? 'Đang cập nhật...' : 'Cập nhật sản phẩm'}
                     </button>
                     <button
                         type="button"
                         onClick={() => router.back()}
-                        className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600"
+                        className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 font-semibold"
                     >
                         Hủy
                     </button>
