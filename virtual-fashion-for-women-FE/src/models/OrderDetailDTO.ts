@@ -7,3 +7,14 @@ export interface OrderDetailDTO {
     priceAtTime: number;
     responseProductVariantDto: ProductVariantDTO;
 }
+
+export interface OrderDetailStaffResponseDTO {
+    orderDetailID: number;
+    quantity: number;
+    productName: string;
+    imageUrl: string | undefined;
+    size: string;
+    colorName: string;
+    price: number;
+    amount: number; // Tổng tiền của dòng sản phẩm này (quantity * price)
+}

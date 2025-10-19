@@ -20,13 +20,10 @@ import {
     createEmptyProductColor,
 } from "@/utils/productHelpers";
 import { messageToast } from "@/helpers/toastHelper";
-
 // Import các component Card
 import BasicInfoSection from "@/components/ManageProduct/BasicInfoSection";
 import UploadImgCard from "@/components/ManageProduct/UploadImgCard";
 import CategoryCard from "@/components/ManageProduct/CategoryCard";
-// KHÔNG import AddCategoryModal nữa
-
 import ColorSection from "@/components/ManageProduct/ColorSection";
 import TagsSection from "@/components/ManageProduct/TagsSection";
 import ErrorDisplay from "@/components/ManageProduct/ErrorDisplay";
@@ -47,14 +44,11 @@ export default function CreateProductPage() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [errors, setErrors] = useState<string[]>([]);
-
     const [categories, setCategories] = useState<Category[]>([]);
     const [colors, setColors] = useState<Color[]>([]);
     const [sizes, setSizes] = useState<Size[]>([]);
     const [tags, setTags] = useState<Tag[]>([]);
     const [loadingMasterData, setLoadingMasterData] = useState(true);
-
-    // KHÔNG CẦN state cho modal nữa
 
     useEffect(() => {
         const fetchMasterData = async () => {
@@ -83,7 +77,6 @@ export default function CreateProductPage() {
     }, []);
 
     // ... (Tất cả logic handlers của bạn (updateBasicInfo, tags, colors, variants)
-    // ... VẪN GIỮ NGUYÊN NHƯ CŨ ...)
     const updateBasicInfo = (field: string, value: any) => {
         setFormData({ ...formData, [field]: value });
     };
@@ -249,8 +242,6 @@ export default function CreateProductPage() {
         updateColor(colorIndex, "productVariantImages", files);
     };
     // Kết thúc handlers
-
-    // KHÔNG CẦN handler cho modal
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -423,7 +414,6 @@ export default function CreateProductPage() {
                             categoryId={formData.categoryId}
                             categories={categories}
                             onUpdate={updateBasicInfo}
-                        // KHÔNG CẦN onAddCategoryClick
                         />
 
                         {/* Card Giá */}
@@ -436,23 +426,20 @@ export default function CreateProductPage() {
                                     Giá cơ bản *
                                 </label>
                                 <input
-                                    type="number"
+                                    type="text"
                                     required
-                                    min="0"
-                                    step="1000"
-                                    value={formData.price}
-                                    onChange={(e) =>
-                                        updateBasicInfo("price", parseFloat(e.target.value))
-                                    }
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    value={formData.price.toLocaleString("vi-VN")}
+                                    onChange={(e) => {
+                                        const rawValue = e.target.value.replace(/\D/g, ""); // bỏ ký tự không phải số
+                                        updateBasicInfo("price", Number(rawValue));
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
             </form>
-
-        {/* KHÔNG CẦN AddCategoryModal */}
         </div>
     );
 }
