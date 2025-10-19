@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true, // ✅ Bỏ qua lỗi TypeScript khi build
   },
+  experimental: {
+    optimizeCss: false, // 🚫 Tắt LightningCSS, dùng PostCSS thường
+  },
 };
 
 export default nextConfig;
