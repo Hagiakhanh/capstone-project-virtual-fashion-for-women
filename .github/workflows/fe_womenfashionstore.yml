@@ -26,19 +26,23 @@ jobs:
           cache: 'npm'
           cache-dependency-path: '${{ env.WORKING_DIR }}/package-lock.json'
 
-      - name: 📦 Install dependencies & build
+      - name: 📦 Clean & Install dependencies
         working-directory: ${{ env.WORKING_DIR }}
         run: |
           echo "📁 Current directory: $(pwd)"
-          if [ -f package-lock.json ]; then
-            echo "✅ Found package-lock.json → using npm ci"
-            npm ci
-          else
-            echo "⚠️ No package-lock.json found → fallback to npm install"
-            npm install
-          fi
-          npm rebuild lightningcss || true
-          npm rebuild sharp || true
+          rm -rf node_modules
+          npm ci || npm install
+          echo "🧹 Rebuilding native modules for Linux..."
+          npm rebuild sharp
+          npm rebuild lightningcss
+          echo "✅ Node modules rebuilt successfully"
+
+      - name: 🏗️ Build Next.js app
+        working-directory: ${{ env.WORKING_DIR }}
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+        run: |
+          echo "🚀 Starting Next.js build..."
           npm run build
 
       - name: 📤 Upload build artifact
