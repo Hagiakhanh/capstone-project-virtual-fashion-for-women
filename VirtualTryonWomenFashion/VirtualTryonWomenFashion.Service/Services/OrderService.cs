@@ -237,10 +237,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                 new Expression<Func<Order, object>>[]
                 {
                     o => o.Customer,
-                    o => o.Transactions
+                    o => o.Transaction
                 }
                 );
-            int totalRecords = _orderRepository.Count(o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)));
+            int totalRecords = await _orderRepository.CountAsync(o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)));
             List<ResponseOrder> responseOrders = new List<ResponseOrder>();
             foreach (Order order in rawOrders)
             {
@@ -411,9 +411,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                 CustomerName = order.Customer.FullName,
                 CustomerPhone = order.Customer.PhoneNumber,
                 CustomerEmail = order.Customer.Email,
-                PaymentMethod = order.Transactions.FirstOrDefault().Method,
-                PaymentDate = order.Transactions.FirstOrDefault().UpdatedAt,
-                PaymentStatus = order.Transactions.FirstOrDefault().Status,
+                PaymentMethod = order.Transaction.Method,
+                PaymentDate = order.Transaction.UpdatedAt,
+                PaymentStatus = order.Transaction.Status,
                 TotalWithShippingMoney = order.Amount,
                 TotalQuantity = order.OrderDetails.Sum(x => x.Quantity),
             };

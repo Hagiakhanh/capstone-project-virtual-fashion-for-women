@@ -55,5 +55,5 @@ public partial class Order
 
     public virtual ICollection<StatusLog> StatusLogs { get; set; } = new List<StatusLog>();
 
-    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+    public virtual Transaction Transaction { get; set; }
 }

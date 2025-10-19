@@ -28,7 +28,7 @@ public static class OrderMapper
             PaymentUrl = model.PaymentUrl,
             EstimatedDelivery = model.EstimatedDelivery,
             UserInformation = model.Customer.MapToUserInformation(),
-            TransactionInformation = model.Transactions.Select(t => t.MapToTransactionInformation()).FirstOrDefault(),
+            TransactionInformation = model.Transaction.MapToTransactionInformation(),
             ResponseOrderDetails = responseOrderDetails
         };
     }
