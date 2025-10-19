@@ -16,24 +16,32 @@ jobs:
       contents: read
 
     steps:
-      - name: ⬇️ Checkout code
+      - name: ⬇️ Checkout repository
         uses: actions/checkout@v4
 
-      - name: ⚙️ Setup Node.js
+      - name: ⚙️ Setup Node.js 20.x
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-          cache: npm
+          cache: 'npm'
+          cache-dependency-path: '${{ env.WORKING_DIR }}/package-lock.json'
 
-      - name: 📦 Install dependencies and build
+      - name: 📦 Install dependencies & build
         working-directory: ${{ env.WORKING_DIR }}
         run: |
-          npm ci
+          echo "📁 Current directory: $(pwd)"
+          if [ -f package-lock.json ]; then
+            echo "✅ Found package-lock.json → using npm ci"
+            npm ci
+          else
+            echo "⚠️ No package-lock.json found → fallback to npm install"
+            npm install
+          fi
           npm rebuild lightningcss || true
           npm rebuild sharp || true
-          npm run build --if-present
+          npm run build
 
-      - name: 📤 Upload artifact for deployment
+      - name: 📤 Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
@@ -47,12 +55,13 @@ jobs:
       contents: read
 
     steps:
-      - name: ⬇️ Download artifact
+      - name: ⬇️ Download build artifact
         uses: actions/download-artifact@v4
         with:
           name: node-app
+          path: .
 
-      - name: 🔐 Login to Azure
+      - name: 🔐 Azure login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0C76E3B405EF491A9C60A50DD2DB30F0 }}
@@ -60,7 +69,6 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_617DD377E7054D98880841A179A1B893 }}
 
       - name: 🚀 Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'womenfashionstore'
