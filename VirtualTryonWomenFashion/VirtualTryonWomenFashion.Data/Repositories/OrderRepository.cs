@@ -30,7 +30,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
             return await _context.Orders
                 .Include(x => x.Customer)
-                .Include(x => x.Transactions)
+                .Include(x => x.Transaction)
                 .Include(x => x.OrderDetails)
                 .ThenInclude(x => x.ProductVariant)
                 .SingleOrDefaultAsync(x => x.OrderId == orderID);

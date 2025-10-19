@@ -237,7 +237,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 new Expression<Func<Order, object>>[]
                 {
                     o => o.Customer,
-                    o => o.Transactions
+                    o => o.Transaction
                 }
                 );
             int totalRecords = _orderRepository.Count(o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)));

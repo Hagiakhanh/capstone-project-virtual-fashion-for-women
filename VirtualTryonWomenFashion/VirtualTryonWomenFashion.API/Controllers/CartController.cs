@@ -83,7 +83,31 @@ public class CartController : ControllerBase
             });
         }
     }
-    
+
+    [HttpPost("selected-items")]
+    public async Task<IActionResult> GetSelectedCartItemsAsync([FromBody] List<int> cartIds)
+    {
+        try
+        {
+            var selectedCartItems = await _cartService.GetSelectedCartItemsAsync(cartIds);
+            return Ok(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Get selected item in cart successfully",
+                Data = selectedCartItems
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = ex.Message,
+                Data = null
+            });
+        }
+    }
+
     [HttpPut("update-quantity")]
     public async Task<IActionResult> UpdateProductQuantityAsync([FromBody] RequestAddProductToCart requestUpdateProductQuantity)
     {

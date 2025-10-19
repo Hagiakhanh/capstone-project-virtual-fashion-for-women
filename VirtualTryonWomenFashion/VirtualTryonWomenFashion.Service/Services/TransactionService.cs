@@ -1,13 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Order;
+using VirtualTryonWomenFashion.Service.DTO.OrderDetail;
+using VirtualTryonWomenFashion.Service.DTO.Transaction;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.Mappers;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -15,14 +22,17 @@ namespace VirtualTryonWomenFashion.Service.Services
     {
         private readonly ITransactionRepository _transactionRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICurrentUserService _currentUserService;
 
         public TransactionService(
             ITransactionRepository transactionRepository,
-            IUnitOfWork unitOfWork
+            IUnitOfWork unitOfWork,
+            ICurrentUserService currentUserService
         )
         {
             _transactionRepository = transactionRepository;
             _unitOfWork = unitOfWork;
+            _currentUserService = currentUserService;
         }
 
         public async Task<int> CreateTransactionAsync(Transaction transaction)
@@ -89,5 +99,21 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
+        public async Task<Pagination<TransactionInformation>> GetTransactionHistory(PaginationParameter paginationParameter, string transactionStatus, bool isDescending)
+        {
+            int userId = _currentUserService.GetUserId();
+            List<Transaction> rawTransactions = await _transactionRepository.GetAll(
+                filter: t => t.UserId == userId && ( t.Status == transactionStatus || string.IsNullOrEmpty(transactionStatus)),
+                pagination: paginationParameter,
+                orderBy: t => isDescending?  t.OrderByDescending(x => x.UpdatedAt): t.OrderBy(x=>x.UpdatedAt)
+                );
+            int totalRecords = _transactionRepository.Count(t => t.UserId == userId && (t.Status == transactionStatus || string.IsNullOrEmpty(transactionStatus)));
+            List<TransactionInformation> responseTransactions = new List<TransactionInformation>();
+            foreach (Transaction transaction in rawTransactions)
+            {
+                responseTransactions.Add(transaction.MapToTransactionInformation());
+            }
+            return new Pagination<TransactionInformation>(responseTransactions, totalRecords, paginationParameter.PageIndex, paginationParameter.PageSize);
+        }
     }
 }
