@@ -12,13 +12,18 @@ import {
     Color,
     Size,
     Tag,
+    ProductColorRequest,
 } from "@/models/RequestCreateProduct";
 import {
     convertToFormData,
     validateProductForm,
     createEmptyProductColor,
 } from "@/utils/productHelpers";
+import { messageToast } from "@/helpers/toastHelper";
+// Import các component Card
 import BasicInfoSection from "@/components/ManageProduct/BasicInfoSection";
+import UploadImgCard from "@/components/ManageProduct/UploadImgCard";
+import CategoryCard from "@/components/ManageProduct/CategoryCard";
 import ColorSection from "@/components/ManageProduct/ColorSection";
 import TagsSection from "@/components/ManageProduct/TagsSection";
 import ErrorDisplay from "@/components/ManageProduct/ErrorDisplay";
@@ -39,7 +44,6 @@ export default function CreateProductPage() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [errors, setErrors] = useState<string[]>([]);
-
     const [categories, setCategories] = useState<Category[]>([]);
     const [colors, setColors] = useState<Color[]>([]);
     const [sizes, setSizes] = useState<Size[]>([]);
@@ -50,21 +54,18 @@ export default function CreateProductPage() {
         const fetchMasterData = async () => {
             try {
                 const [categoriesRes, colorsRes, sizesRes, tagsRes] = await Promise.all([
-                    api.get("/category"),
-                    api.get("/color"),
-                    api.get("/size"),
-                    api.get("/tag"),
+                api.get("/category"),
+                api.get("/color"),
+                api.get("/size"),
+                api.get("/tag"),
                 ]);
 
-                setCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
+                setCategories(
+                    Array.isArray(categoriesRes.data) ? categoriesRes.data : []
+                );
                 setColors(Array.isArray(colorsRes.data) ? colorsRes.data : []);
                 setSizes(Array.isArray(sizesRes.data) ? sizesRes.data : []);
                 setTags(Array.isArray(tagsRes.data) ? tagsRes.data : []);
-
-                console.log("Categories:", categoriesRes.data);
-                console.log("Colors:", colorsRes.data);
-                console.log("Sizes:", sizesRes.data);
-                console.log("Tags:", tagsRes.data);
             } catch (error) {
                 console.error("Error fetching master data:", error);
             } finally {
@@ -75,6 +76,7 @@ export default function CreateProductPage() {
         fetchMasterData();
     }, []);
 
+    // ... (Tất cả logic handlers của bạn (updateBasicInfo, tags, colors, variants)
     const updateBasicInfo = (field: string, value: any) => {
         setFormData({ ...formData, [field]: value });
     };
@@ -115,7 +117,7 @@ export default function CreateProductPage() {
     const addColor = () => {
         setFormData({
             ...formData,
-            productColor: [...formData.productColor, createEmptyProductColor()],
+            productColor: [...formData.productColor, createEmptyProductColor() as ProductColorRequest],
         });
     };
 
@@ -149,11 +151,11 @@ export default function CreateProductPage() {
             const selectedColor = colors.find((c) => c.colorId === colorId);
             if (selectedColor) {
                 updatedColors[colorIndex] = {
-                    ...updatedColors[colorIndex],
-                    colorId: selectedColor.colorId,
-                    colorName: selectedColor.colorName,
-                    colorPrefix: selectedColor.colorPrefix,
-                    hexCode: selectedColor.hexCode,
+                ...updatedColors[colorIndex],
+                colorId: selectedColor.colorId,
+                colorName: selectedColor.colorName,
+                colorPrefix: selectedColor.colorPrefix,
+                hexCode: selectedColor.hexCode,
                 };
             }
         }
@@ -198,7 +200,11 @@ export default function CreateProductPage() {
         setFormData({ ...formData, productColor: updatedColors });
     };
 
-    const handleSizeSelect = (colorIndex: number, variantIndex: number, sizeId: number) => {
+    const handleSizeSelect = (
+        colorIndex: number,
+        variantIndex: number,
+        sizeId: number
+    ) => {
         const updatedColors = [...formData.productColor];
         if (sizeId === 0) {
             updatedColors[colorIndex].variants[variantIndex] = {
@@ -210,9 +216,9 @@ export default function CreateProductPage() {
             const selectedSize = sizes.find((s) => s.sizeId === sizeId);
             if (selectedSize) {
                 updatedColors[colorIndex].variants[variantIndex] = {
-                    ...updatedColors[colorIndex].variants[variantIndex],
-                    sizeId: selectedSize.sizeId,
-                    sizeCode: selectedSize.sizeCode,
+                ...updatedColors[colorIndex].variants[variantIndex],
+                sizeId: selectedSize.sizeId,
+                sizeCode: selectedSize.sizeCode,
                 };
             }
         }
@@ -235,6 +241,7 @@ export default function CreateProductPage() {
     const handleMultipleImages = (colorIndex: number, files: File[]) => {
         updateColor(colorIndex, "productVariantImages", files);
     };
+    // Kết thúc handlers
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -246,6 +253,7 @@ export default function CreateProductPage() {
         if (!validation.isValid) {
             setErrors(validation.errors);
             setLoading(false);
+            window.scrollTo(0, 0); // Cuộn lên đầu để thấy lỗi
             return;
         }
 
@@ -256,12 +264,13 @@ export default function CreateProductPage() {
                 "/product",
                 formDataToSend,
                 {
-                    headers: { "Content-Type": "multipart/form-data" },
+                headers: { "Content-Type": "multipart/form-data" },
                 }
             );
 
             if (response.status === 200 || response.status === 201) {
                 setMessage("Tạo sản phẩm thành công!");
+                setErrors([]);
                 setFormData({
                     productName: "",
                     description: "",
@@ -273,7 +282,9 @@ export default function CreateProductPage() {
                     newTags: [],
                 });
             } else {
-                setMessage(`Lỗi: ${response.data.message || "Không thể tạo sản phẩm"}`);
+                setMessage(
+                    `Lỗi: ${response.data.message || "Không thể tạo sản phẩm"}`
+                );
             }
         } catch (error: any) {
             console.error("Error creating product:", error);
@@ -288,97 +299,147 @@ export default function CreateProductPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4">
-            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
-                <h1 className="text-3xl font-bold text-gray-800 mb-6">Tạo Sản Phẩm Mới</h1>
-
-                <ErrorDisplay errors={errors} />
-
-                <div className="space-y-6">
-                    <BasicInfoSection
-                        formData={{
-                            productName: formData.productName,
-                            description: formData.description,
-                            price: formData.price,
-                            categoryId: formData.categoryId,
-                            mainImageUrl: formData.mainImageUrl,
-                        }}
-                        categories={categories}
-                        onUpdate={updateBasicInfo}
-                        onFileChange={(file) => updateBasicInfo("mainImageUrl", file)}
-                    />
-
-                    <TagsSection
-                        availableTags={tags}
-                        selectedTagIds={formData.existingTagIds}
-                        newTags={formData.newTags}
-                        onSelectTag={handleSelectTag}
-                        onRemoveTag={handleRemoveTag}
-                        onAddNewTag={handleAddNewTag}
-                        onRemoveNewTag={handleRemoveNewTag}
-                    />
-
-                    <div>
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-700">Màu Sắc & Biến Thể</h2>
-                            <button
-                                type="button"
-                                onClick={addColor}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                            >
-                                <Plus size={20} />
-                                Thêm màu
-                            </button>
-                        </div>
-
-                        {formData.productColor.map((color, colorIndex) => (
-                            <ColorSection
-                                key={colorIndex}
-                                color={color}
-                                colorIndex={colorIndex}
-                                colors={colors}
-                                sizes={sizes}
-                                onUpdate={(field, value) => updateColor(colorIndex, field, value)}
-                                onRemove={() => removeColor(colorIndex)}
-                                onColorSelect={(colorId) => handleColorSelect(colorIndex, colorId)}
-                                onAddVariant={() => addVariant(colorIndex)}
-                                onRemoveVariant={(variantIndex) => removeVariant(colorIndex, variantIndex)}
-                                onUpdateVariant={(variantIndex, field, value) =>
-                                    updateVariant(colorIndex, variantIndex, field, value)
-                                }
-                                onSizeSelect={(variantIndex, sizeId) =>
-                                    handleSizeSelect(colorIndex, variantIndex, sizeId)
-                                }
-                                onFileChange={(file, type, variantIndex) =>
-                                    handleColorFileChange(colorIndex, file, type, variantIndex)
-                                }
-                                onMultipleImages={(files) => handleMultipleImages(colorIndex, files)}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="flex items-center gap-4 pt-6 border-t">
+        <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+            <form onSubmit={handleSubmit} className="max-w-7xl mx-auto">
+                {/* Header với các nút bấm */}
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                        Thêm Sản Phẩm Mới
+                    </h1>
+                    <div className="flex gap-2 md:gap-3">
                         <button
-                            type="button"
-                            onClick={handleSubmit}
+                            type="submit"
                             disabled={loading}
-                            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                            className="px-3 py-2 text-sm md:px-4 md:py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-400"
                         >
-                            {loading ? "Đang tạo..." : "Tạo sản phẩm"}
+                            {loading ? "Đang tạo..." : "Thêm Sản Phẩm"}
                         </button>
-
-                        {message && (
-                            <div
-                                className={`text-sm font-medium ${
-                                    message.includes("thành công") ? "text-green-600" : "text-red-600"
-                                }`}
-                            >
-                                {message}
-                            </div>
-                        )}
                     </div>
                 </div>
-            </div>
+
+                {/* Hiển thị lỗi và thông báo */}
+                <ErrorDisplay errors={errors} />
+                {message && (
+                    <div
+                        className={`text-sm font-medium mb-4 p-3 rounded-lg ${
+                        message.includes("thành công")
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                    >
+                        {message}
+                    </div>
+                )}
+
+                {/* Layout 2 cột */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Cột trái */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <BasicInfoSection
+                            formData={{
+                                productName: formData.productName,
+                                description: formData.description,
+                            }}
+                            onUpdate={updateBasicInfo}
+                        />
+
+                        <TagsSection
+                            availableTags={tags}
+                            selectedTagIds={formData.existingTagIds}
+                            newTags={formData.newTags}
+                            onSelectTag={handleSelectTag}
+                            onRemoveTag={handleRemoveTag}
+                            onAddNewTag={handleAddNewTag}
+                            onRemoveNewTag={handleRemoveNewTag}
+                        />
+
+                        {/* Card Màu Sắc & Biến Thể */}
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-semibold text-gray-700">
+                                    Màu Sắc & Biến Thể
+                                </h2>
+                                <button
+                                    type="button"
+                                    onClick={addColor}
+                                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                                >
+                                <Plus size={20} />
+                                    Thêm màu
+                                </button>
+                            </div>
+
+                            {formData.productColor.map((color, colorIndex) => (
+                                <ColorSection
+                                    key={colorIndex}
+                                    color={color}
+                                    colorIndex={colorIndex}
+                                    colors={colors}
+                                    sizes={sizes}
+                                    onUpdate={(field, value) =>
+                                        updateColor(colorIndex, field, value)
+                                    }
+                                    onRemove={() => removeColor(colorIndex)}
+                                    onColorSelect={(colorId) =>
+                                        handleColorSelect(colorIndex, colorId)
+                                    }
+                                    onAddVariant={() => addVariant(colorIndex)}
+                                    onRemoveVariant={(variantIndex) =>
+                                        removeVariant(colorIndex, variantIndex)
+                                    }
+                                    onUpdateVariant={(variantIndex, field, value) =>
+                                        updateVariant(colorIndex, variantIndex, field, value)
+                                    }
+                                    onSizeSelect={(variantIndex, sizeId) =>
+                                        handleSizeSelect(colorIndex, variantIndex, sizeId)
+                                    }
+                                    onFileChange={(file, type, variantIndex) =>
+                                        handleColorFileChange(colorIndex, file, type, variantIndex)
+                                    }
+                                    onMultipleImages={(files) =>
+                                        handleMultipleImages(colorIndex, files)
+                                    }
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Cột phải */}
+                    <div className="lg:col-span-1 space-y-6">
+                        <UploadImgCard
+                            mainImageUrl={formData.mainImageUrl}
+                            onFileChange={(file) => updateBasicInfo("mainImageUrl", file)}
+                        />
+                        <CategoryCard
+                            categoryId={formData.categoryId}
+                            categories={categories}
+                            onUpdate={updateBasicInfo}
+                        />
+
+                        {/* Card Giá */}
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            <h2 className="text-xl font-semibold mb-4 text-gray-700">
+                                Giá Sản Phẩm
+                            </h2>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Giá cơ bản *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.price.toLocaleString("vi-VN")}
+                                    onChange={(e) => {
+                                        const rawValue = e.target.value.replace(/\D/g, ""); // bỏ ký tự không phải số
+                                        updateBasicInfo("price", Number(rawValue));
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
     );
 }
