@@ -190,6 +190,18 @@ namespace VirtualTryonWomenFashion.Data.GenericRepository
             }
             return query.Count();
         }
+
+        public async Task<int> CountAsync(Expression<Func<TEntity, bool>>? filter = null)
+        {
+            IQueryable<TEntity> query = dbSet;
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            // SỬ DỤNG COUNTASYNC VÀ AWAIT
+            return await query.CountAsync();
+        }
         public virtual async Task AddRangeAsync(IEnumerable<TEntity> entities)
         {
             if (entities == null || !entities.Any())
