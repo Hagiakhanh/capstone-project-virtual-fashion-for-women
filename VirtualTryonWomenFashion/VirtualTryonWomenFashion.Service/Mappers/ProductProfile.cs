@@ -43,6 +43,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                                .Where(pv => pv.Size != null)
                                .Select(pv => pv.Size)
                                .Distinct()
+                               .OrderBy(s => s.MinHeight)
                                .ToList()))
                 // ProductColors map sang ResponProductColorWithListSize
                 .ForMember(dest => dest.ProductColors,
@@ -55,7 +56,12 @@ namespace VirtualTryonWomenFashion.Service.Mappers
             // ProductColor -> ResponseProductColorDto
             CreateMap<ProductColor, ResponseProductColorDto>()
                 .ForMember(dest => dest.ProductImagesDto,
-                           opt => opt.MapFrom(src => src.ProductImages));
+                           opt => opt.MapFrom(src => src.ProductImages))
+                .ForMember(dest => dest.ProductVariants,
+                           opt => opt.MapFrom(src =>
+                               src.ProductVariants
+                                  .OrderBy(pv => pv.Size.MinHeight) // ✅ Sort tại đây
+                                  .ToList()));
 
             // ProductColor -> ResponProductColorWithListSize
             CreateMap<ProductColor, ResponeProductColorWithListSize>()
@@ -65,6 +71,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                                .Where(pv => pv.Size != null)
                                .Select(pv => pv.Size)
                                .Distinct()
+                               .OrderBy(s => s.MinHeight)
                                .ToList()))
                 .ForMember(dest => dest.ProductImagesDto,
                            opt => opt.MapFrom(src => src.ProductImages))
