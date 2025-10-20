@@ -12,6 +12,7 @@ namespace VirtualTryonWomenFashion.Data.Enum
         ZA,              // Sắp xếp theo ProductName từ Z đến A
         Newest,          // Sắp xếp theo CreatedDate giảm dần (Mới nhất)
         BestSelling,     // Sắp xếp theo tổng số lượng bán (Bán chạy)
+        InSaleCampaign,  // Đang giảm giá
         PriceAscending,  // Sắp xếp theo giá tăng
         PriceDescending  // Sắp xếp theo giá giảm
     }
