@@ -6,6 +6,11 @@ on:
       - FE
   workflow_dispatch:
 
+# 👇 Thêm permissions ở đây
+permissions:
+  id-token: write
+  contents: read
+
 env:
   WORKING_DIR: ./virtual-fashion-for-women-FE
 
@@ -52,6 +57,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
 
+    # 👇 Hoặc thêm permissions riêng cho job deploy (tùy chọn)
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: ⬇️ Download build artifact
         uses: actions/download-artifact@v4
@@ -78,4 +88,3 @@ jobs:
           app-name: 'womenfashionstore'
           slot-name: 'Production'
           package: .
-
