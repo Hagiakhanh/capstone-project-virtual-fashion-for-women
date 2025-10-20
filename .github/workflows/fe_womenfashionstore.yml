@@ -12,6 +12,7 @@ permissions:
 
 env:
   WORKING_DIR: ./virtual-fashion-for-women-FE
+  APP_NAME: womenfashionstore
 
 jobs:
   build:
@@ -31,10 +32,12 @@ jobs:
       - name: 🧹 Clean & install dependencies AND BUILD
         working-directory: ${{ env.WORKING_DIR }}
         run: |
+          echo "🧹 Cleaning old installs..."
           rm -rf node_modules package-lock.json
           npm install
           npm rebuild sharp lightningcss || true
           npm run build
+          echo "✅ Build completed successfully!"
 
       - name: 📤 Upload build artifact
         uses: actions/upload-artifact@v4
@@ -45,6 +48,7 @@ jobs:
             ${{ env.WORKING_DIR }}/public
             ${{ env.WORKING_DIR }}/package.json
             ${{ env.WORKING_DIR }}/next.config.js
+            ${{ env.WORKING_DIR }}/package-lock.json
 
   deploy:
     runs-on: ubuntu-latest
@@ -67,15 +71,19 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B4355095083644928C3A602367C2FCBC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_617DD377E7054D98880841A179A1B893 }}
 
-      - name: 🧱 Install production dependencies on Azure
+      # 🧱 Cài lại dependencies trực tiếp tại Azure trước khi chạy
+      - name: 🧱 Install and rebuild dependencies for production
         working-directory: ./app
         run: |
-          npm ci --only=production
+          echo "📦 Installing production dependencies..."
+          npm install --omit=dev
           npm rebuild sharp lightningcss || true
+          echo "✅ Dependencies rebuilt for Azure Linux environment"
 
+      # 🚀 Deploy sau khi đảm bảo node_modules hợp lệ
       - name: 🚀 Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'womenfashionstore'
+          app-name: ${{ env.APP_NAME }}
           slot-name: 'Production'
           package: ./app
