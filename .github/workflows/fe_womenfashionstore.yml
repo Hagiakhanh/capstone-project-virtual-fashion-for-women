@@ -23,16 +23,17 @@ jobs:
           node-version: '20.x'
           cache: 'npm'
           cache-dependency-path: '${{ env.WORKING_DIR }}/package-lock.json'
-
-      - name: 📦 Install dependencies & build Next.js app
+          
+      - name: 🧹 Clean & install dependencies (Linux-safe) AND BUILD
         working-directory: ${{ env.WORKING_DIR }}
-        env:
-          NEXT_TELEMETRY_DISABLED: 1
         run: |
           echo "📁 Current directory: $(pwd)"
+          rm -rf node_modules package-lock.json
+          echo "🧱 Fresh install..."
+          npm install --cpu=x64 --os=linux sharp
           npm ci || npm install
           npm run build
-          echo "✅ Build completed successfully"
+          echo "✅ Dependencies installed successfully"
 
       - name: 📤 Upload build artifact (only needed files)
         uses: actions/upload-artifact@v4
@@ -77,3 +78,4 @@ jobs:
           app-name: 'womenfashionstore'
           slot-name: 'Production'
           package: .
+
