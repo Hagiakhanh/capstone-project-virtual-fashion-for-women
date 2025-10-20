@@ -202,15 +202,6 @@ namespace VirtualTryonWomenFashion.Service.Services
             return dto;
         }
 
-        /*public async Task<ResponseProductDto> GetProductBySlugAsync(string slug)
-        {
-            var product = await _productRepository.GetProductBySlugAsync(slug);
-            if (product == null)
-                return null;
-
-            return await MapToResponseProductDto(product);
-        }*/
-
         public async Task<ResponseProductWithListColorAndSizeDto> GetProductBySlugAsync(string slug)
         {
             int? userId = null;
@@ -381,6 +372,23 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public async Task<MessageModelWithData<Product>> CreateProductAsync(CreateProductRequest request)
         {
+            // 🔹 Kiểm tra trùng prefix trong danh sách màu gửi lên
+            var duplicatePrefixes = request.ProductColor
+                .GroupBy(c => c.ColorPrefix.ToLower()) // Gom theo prefix (không phân biệt hoa/thường)
+                .Where(g => g.Count() > 1)             // Chỉ lấy nhóm có >1 phần tử
+                .Select(g => g.Key)                    // Lấy prefix bị trùng
+                .ToList();
+
+            if (duplicatePrefixes.Any())
+            {
+                var duplicatesStr = string.Join(", ", duplicatePrefixes);
+                return new MessageModelWithData<Product>
+                {
+                    Message = $"Các màu có prefix bị trùng: {duplicatesStr}. Vui lòng kiểm tra lại.",
+                    StatusCode = StatusCodes.Status400BadRequest
+                };
+            }
+
             await _unitOfWork.BeginTransactionAsync();
             try
             {
@@ -407,6 +415,16 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Message = "Tạo sản phẩm thành công",
                     StatusCode = StatusCodes.Status201Created,
                     Data = product
+                };
+            }
+            catch (InvalidOperationException ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+
+                return new MessageModelWithData<Product>
+                {
+                    Message = ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest
                 };
             }
             catch (Exception ex)
@@ -563,6 +581,24 @@ namespace VirtualTryonWomenFashion.Service.Services
             // ===== 4️⃣ Duyệt qua từng màu của sản phẩm =====
             foreach (var colorRequest in request.ProductColor)
             {
+                // 🔹 Kiểm tra trùng size trong cùng 1 màu (ProductColor)
+                if (colorRequest.Variants != null && colorRequest.Variants.Count > 0)
+                {
+                    var duplicateSizeIds = colorRequest.Variants
+                        .GroupBy(v => v.SizeId)
+                        .Where(g => g.Count() > 1)
+                        .Select(g => g.Key)
+                        .ToList();
+
+                    if (duplicateSizeIds.Any())
+                    {
+                        var duplicateStr = string.Join(", ", duplicateSizeIds);
+                        throw new InvalidOperationException(
+                            $"Trong màu '{colorRequest.ColorPrefix}', có các SizeId bị trùng: {duplicateStr}. Vui lòng kiểm tra lại."
+                        );
+                    }
+                }
+
                 var (colorId, colorPrefix) = GetOrCreateColor(colorRequest, colorsDict, colorsByPrefixDict, newColorsToInsert);
                 var productColorId = $"{product.ProductId}-{colorPrefix}";
 
@@ -1267,17 +1303,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                     };
                 }
 
-                // Kiểm tra sản phẩm có trong đơn hàng nào không (nếu có bảng Order/OrderItem)
-                // var hasOrders = await CheckProductInOrders(productId);
-                // if (hasOrders && !hardDelete)
-                // {
-                //     return new MessageModel
-                //     {
-                //         Message = "Không thể xóa sản phẩm vì đã có đơn hàng. Sử dụng soft delete thay thế.",
-                //         StatusCode = StatusCodes.Status400BadRequest
-                //     };
-                // }
-
                 // SOFT DELETE - Product chỉ update IsDeleted = true, nhưng ProductColor và ProductVariant xóa hoàn toàn
                 await SoftDeleteProduct(existingProduct);
 
@@ -1368,24 +1393,14 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        // Hàm kiểm tra sản phẩm có trong đơn hàng không (tùy chọn)
-        private async Task<bool> CheckProductInOrders(string productId)
-        {
-            // Kiểm tra trong bảng OrderItems hoặc tương tự
-            // var hasOrders = await _orderItemRepository.AnyAsync(x => x.ProductId == productId);
-            // return hasOrders;
-
-            // Tạm thời return false
-            return false;
-        }
-
         public async Task<ResponseProductDto> GetProductByProductColorIdAsyncForTryOn(string productColorId)
         {
             var product = await _productRepository.GetProductByProductColorIdAsync(productColorId);
             if (product == null)
                 return null;
-            
+
             return await this.MapToResponseProductDto(product);
         }
+
     }
 }
