@@ -38,8 +38,9 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: |
           echo "🧹 Cleaning old installs..."
-          rm -rf node_modules
-          npm ci
+          rm -rf node_modules package-lock.json
+          npm install
+          npm rebuild sharp lightningcss || true
           npm run build
           echo "✅ Build completed successfully!"
 
@@ -74,8 +75,9 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: |
           echo "🧹 Cleaning old installs..."
-          rm -rf node_modules
-          npm ci
+          rm -rf node_modules package-lock.json
+          npm install
+          npm rebuild sharp lightningcss || true
           npm run build
           echo "✅ Build completed successfully!"
 
@@ -91,3 +93,4 @@ jobs:
           app-name: ${{ secrets.AZURE_WEBAPP_FE_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
           package: ${{ env.WORKING_DIR }}/release.zip
+
