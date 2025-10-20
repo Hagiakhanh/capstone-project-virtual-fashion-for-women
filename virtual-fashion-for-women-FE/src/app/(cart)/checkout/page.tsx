@@ -10,6 +10,7 @@ import MomoPng from '../../../assets/payment/momo.png';
 import VnpayPng from '../../../assets/payment/vnpay.png';
 import { useRouter } from 'next/navigation';
 import { messageToast } from '@/helpers/toastHelper';
+import LoadingOverlay from '@/components/Loading/LoadingOverlay';
 
 export default function CheckoutForm() {
     const router = useRouter();
@@ -57,6 +58,13 @@ export default function CheckoutForm() {
             ...formData,
             [e.target.name]: e.target.value
         });
+        if (formData.address !== '' && e.target.name === 'address') {
+            setAddressInformation({
+                provinceName: '',
+                districtName: '',
+                wardName: ''
+            });
+        }
     };
 
     const handlePayment = async () => {
@@ -151,14 +159,34 @@ export default function CheckoutForm() {
     const fetchCheckoutData = async (payload: RequestCheckout) => {
         try {
             const response = await api.post('/checkout', payload);
-            if (response.status === 200) setCheckoutDTO(response.data);
+            if (response.status === 200) setCheckoutDTO((prev) => ({
+                ...prev,
+                insuranceFee: response.data.insuranceFee,
+                serviceFee: response.data.serviceFee,
+                totalPrice: response.data.totalPrice,
+                totalProductPrice: response.data.totalProductPrice
+            }));
         } catch (error: any) {
             console.error("Fetch checkout data error:", error);
-            messageToast.error(error.response?.data);
-            router.push('/cart');
+            messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực này. Vui lòng chọn địa chỉ khác.");
         }
     };
 
+    const fetchSelectedItems = async (payload: number[]) => {
+        try {
+            const response = await api.post('/selected-item', payload);
+            if (response.status === 200) {
+                setCheckoutDTO((prev) => ({
+                    ...prev,
+                    items: response.data
+                }));
+            }
+        } catch (error: any) {
+            messageToast.error(error.response?.data.message);
+            router.push('/cart');
+            return [];
+        }
+    }
     const fetchProvinceData = async () => {
         try {
             const response = await api.get('/location/provinces');
@@ -217,6 +245,7 @@ export default function CheckoutForm() {
 
     const fetchAddressDetails = async (placeId: string, placeName: string) => {
         try {
+            console.log("Fetching address details:", placeName);
             const parts = placeName.split(',').map(part => part.trim());
 
             const lastThree = parts.slice(-4, -1);
@@ -226,10 +255,19 @@ export default function CheckoutForm() {
                 districtName: lastThree[1],
                 wardName: lastThree[0]
             }
-            console.log(data);
+            console.log("Extracted address parts:", data);
+            if (!provinces || !districts || !wards) {
+                messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực này. Vui lòng chọn địa chỉ khác.");
+                return;
+            }
+            if (data.provinceName === "TP Hồ Chí Minh" || data.provinceName === "Thành phố Hồ Chí Minh") {
+                data.provinceName = "Hồ Chí Minh";
+            }
             const matchedProvinceEntry = Object.entries(provinces).find(
                 ([, name]) => name.toLowerCase().includes(data.provinceName.toLowerCase())
             );
+            console.log("Matched province entry:", matchedProvinceEntry);
+            console.log("Provinces data:", provinces);
             if (matchedProvinceEntry) {
                 const [provinceId, provinceName] = matchedProvinceEntry;
                 const districtsData = await fetchDistrictData(provinceId);
@@ -246,8 +284,15 @@ export default function CheckoutForm() {
                     if (matchedWardEntry) {
                         const [, wardName] = matchedWardEntry;
                         setAddressInformation({ provinceName, districtName, wardName });
+
+                    } else {
+                        messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực này. Vui lòng chọn địa chỉ khác.");
                     }
+                } else {
+                    messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực này. Vui lòng chọn địa chỉ khác.");
                 }
+            } else {
+                messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực này. Vui lòng chọn địa chỉ khác.");
             }
         } catch (error) {
             console.error(error);
@@ -266,24 +311,55 @@ export default function CheckoutForm() {
         return () => clearTimeout(handler);
     }, [formData.address]);
 
-    useEffect(() => { fetchProvinceData(); }, []);
     useEffect(() => {
         const idsStr = sessionStorage.getItem("checkoutCartIds");
         if (idsStr) {
             const ids: number[] = JSON.parse(idsStr);
+            if (ids.length > 0) {
+                fetchSelectedItems(ids);
+                const payload = {
+                    cartIds: ids,
+                    provinceName: addressInformation.provinceName,
+                    districtName: addressInformation.districtName,
+                    wardName: addressInformation.wardName
+                };
+                fetchCheckoutData(payload);
+            } else {
+                messageToast.error("Không có sản phẩm để thanh toán. Vui lòng chọn sản phẩm trong giỏ hàng.");
+                router.push('/cart');
+                return;
+            }
+        } else {
+            messageToast.error("Không có sản phẩm để thanh toán. Vui lòng chọn sản phẩm trong giỏ hàng.");
+            router.push('/cart');
+            return;
+        }
+        fetchProvinceData();
+    }, []);
+
+    useEffect(() => {
+        if (addressInformation.provinceName && addressInformation.districtName && addressInformation.wardName) {
             const payload = {
-                cartIds: ids,
+                cartIds: checkoutDTO.items.map(item => item.cartId),
                 provinceName: addressInformation.provinceName,
                 districtName: addressInformation.districtName,
                 wardName: addressInformation.wardName
             };
+            setCheckoutDTO((prev) => ({
+                ...prev,
+                serviceFee: 0,
+                insuranceFee: 0,
+                totalPrice: prev.totalProductPrice
+            }));
             fetchCheckoutData(payload);
+
         }
     }, [addressInformation]);
 
     // ================= UI ==================
     return (
         <div className="max-w-7xl mx-auto p-6 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
+            {isProcessing && <LoadingOverlay size={60} />}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column */}
                 <div className="lg:col-span-2 space-y-6">
@@ -328,19 +404,14 @@ export default function CheckoutForm() {
                             {/* Dropdown */}
                             <div className="relative">
                                 <div
-                                    onClick={() => setShowAddressDropdown(!showAddressDropdown)}
                                     className="w-full p-3 border border-gray-300 rounded-lg cursor-pointer bg-white flex justify-between items-center hover:border-gray-400 transition-all"
                                 >
                                     <span className={addressInformation.provinceName ? 'text-gray-800' : 'text-gray-500'}>
                                         {getAddressDisplayValue()}
                                     </span>
-                                    <ChevronRight
-                                        className={`w-5 h-5 text-gray-500 transition-transform ${showAddressDropdown ? 'rotate-90' : ''
-                                            }`}
-                                    />
                                 </div>
 
-                                {showAddressDropdown && (
+                                {false && showAddressDropdown && (
                                     <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                                         {/* Tabs */}
                                         <div className="flex border-b">

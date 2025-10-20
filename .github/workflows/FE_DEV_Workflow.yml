@@ -26,6 +26,13 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: npm ci
 
+      - name: 🔧 Rebuild native dependencies (lightningcss)
+        run: |
+          npm rebuild lightningcss
+          npm rebuild sharp || true
+
+      - name: 🏗️ Build Next.js for production
+        run: npm run build
       - name: Build Next.js app
         working-directory: ${{ env.WORKING_DIR }}
         env:
