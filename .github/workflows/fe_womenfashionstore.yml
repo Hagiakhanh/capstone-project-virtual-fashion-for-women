@@ -12,8 +12,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
       - name: ⬇️ Checkout repository
@@ -26,37 +24,32 @@ jobs:
           cache: 'npm'
           cache-dependency-path: '${{ env.WORKING_DIR }}/package-lock.json'
 
-      - name: 📦 Clean & Install dependencies
-        working-directory: ${{ env.WORKING_DIR }}
-        run: |
-          echo "📁 Current directory: $(pwd)"
-          rm -rf node_modules
-          npm ci || npm install
-          echo "🧹 Rebuilding native modules for Linux..."
-          npm rebuild sharp
-          npm rebuild lightningcss
-          echo "✅ Node modules rebuilt successfully"
-
-      - name: 🏗️ Build Next.js app
+      - name: 📦 Install dependencies & build Next.js app
         working-directory: ${{ env.WORKING_DIR }}
         env:
           NEXT_TELEMETRY_DISABLED: 1
         run: |
-          echo "🚀 Starting Next.js build..."
+          echo "📁 Current directory: $(pwd)"
+          npm ci || npm install
           npm run build
+          echo "✅ Build completed successfully"
 
-      - name: 📤 Upload build artifact
+      - name: 📤 Upload build artifact (only needed files)
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ${{ env.WORKING_DIR }}
+          path: |
+            ${{ env.WORKING_DIR }}/.next
+            ${{ env.WORKING_DIR }}/public
+            ${{ env.WORKING_DIR }}/package.json
+            ${{ env.WORKING_DIR }}/next.config.js
+            ${{ env.WORKING_DIR }}/node_modules
+            !${{ env.WORKING_DIR }}/node_modules/**/lightningcss*
+            !${{ env.WORKING_DIR }}/node_modules/**/sharp*
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      id-token: write
-      contents: read
 
     steps:
       - name: ⬇️ Download build artifact
@@ -71,6 +64,12 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0C76E3B405EF491A9C60A50DD2DB30F0 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B4355095083644928C3A602367C2FCBC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_617DD377E7054D98880841A179A1B893 }}
+
+      - name: 🧱 Reinstall native dependencies for Azure
+        run: |
+          cd virtual-fashion-for-women-FE
+          npm install --platform=linux --arch=x64 sharp lightningcss
+          echo "✅ Reinstalled native modules for Linux"
 
       - name: 🚀 Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
