@@ -87,6 +87,20 @@ namespace VirtualTryonWomenFashion.API.Controllers
             return Ok(product);
         }
 
+        [HttpGet("by-product-color/{productColorId}")]
+        public async Task<IActionResult> GetProductByProductColorIdAsync(string productColorId)
+        {
+            if (string.IsNullOrWhiteSpace(productColorId))
+                return BadRequest("Product variant id is required");
+
+            var product = await _productService.GetProductByProductColorIdAsyncForTryOn(productColorId);
+
+            if (product == null)
+                return NotFound($"Product with variant id '{productColorId}' not found");
+
+            return Ok(product);
+        }
+
         [HttpPut("{productId}")]
         public async Task<IActionResult> UpdateAsync(string productId, [FromForm] UpdateProductRequest request)
         {

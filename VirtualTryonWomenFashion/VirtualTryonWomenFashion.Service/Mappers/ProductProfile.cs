@@ -58,7 +58,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                            opt => opt.MapFrom(src => src.ProductImages));
 
             // ProductColor -> ResponProductColorWithListSize
-            CreateMap<ProductColor, ResponProductColorWithListSize>()
+            CreateMap<ProductColor, ResponeProductColorWithListSize>()
                 // Lấy SizeDto từ tất cả ProductVariants
                 .ForMember(dest => dest.SizeDto,
                            opt => opt.MapFrom(src => src.ProductVariants
@@ -69,8 +69,13 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 .ForMember(dest => dest.ProductImagesDto,
                            opt => opt.MapFrom(src => src.ProductImages))
                 .ForMember(dest => dest.ProductVariants,
-                           opt => opt.MapFrom(src => src.ProductVariants));
-
+                           opt => opt.MapFrom(src => src.ProductVariants))
+                .ForMember(dest => dest.ProductColorName,
+                           opt => opt.MapFrom(src =>
+                                (src.Product != null ? src.Product.ProductName : string.Empty)
+                                + " - "
+                                + (src.Color != null ? src.Color.ColorName : string.Empty)
+                            ));
             // Color -> ResponseColorDto
             CreateMap<Color, ResponseColorDto>();
 

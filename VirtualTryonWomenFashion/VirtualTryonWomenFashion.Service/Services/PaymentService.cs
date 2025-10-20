@@ -533,12 +533,14 @@ public class PaymentService : IPaymentService
                         {
                             case 0:
                                 transaction.Status = TransactionStatusEnum.Success.ToString();
+                                transaction.UpdatedAt = DateTime.UtcNow.AddHours(7);
                                 pendingTransactions.Add(transaction);
                                 successfulOrders.Add(item);
                                 break;
                             case 1006:
                             case 1005:
                                 transaction.Status = TransactionStatusEnum.Failed.ToString();
+                                transaction.UpdatedAt = DateTime.UtcNow.AddHours(7);
                                 pendingTransactions.Add(transaction);
                                 failedOrders.Add(item);
                                 break;

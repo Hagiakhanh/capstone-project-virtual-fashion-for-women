@@ -76,7 +76,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                         new RequestAddProductToCart()
                         {
                             ProductVariantId = requestAddProductToCart.ProductVariantId,
-                            Quantity = requestAddProductToCart.Quantity + existingCartItem.Quantity
+                            Quantity = requestAddProductToCart.Quantity + existingCartItem.Quantity,
+                            TryOnSlotId = requestAddProductToCart.TryOnSlotId
                         });
                     return responseCartItem;
                 }
@@ -92,6 +93,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                         IsDelete = false,
                     };
 
+                    if (requestAddProductToCart.TryOnSlotId != null) newCartItem.TryOnSlotId = requestAddProductToCart.TryOnSlotId;
                     await _cartRepository.InsertAsync(newCartItem);
                     await _unitOfWork.SaveChanges();
                     await _unitOfWork.CommitTransactionAsync();
@@ -218,6 +220,10 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 await _unitOfWork.BeginTransactionAsync();
                 existingCartItem.Quantity = requestAddProductToCart.Quantity;
+                if(requestAddProductToCart.TryOnSlotId != null)
+                {
+                    existingCartItem.TryOnSlotId = requestAddProductToCart.TryOnSlotId;
+                }
                 await _cartRepository.UpdateAsync(existingCartItem);
                 await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();

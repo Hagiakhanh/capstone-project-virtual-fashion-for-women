@@ -17,7 +17,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 200 * 1024 * 1024; // 200 MB
+});
 // Add services to the container.
 builder.Services.AddDbContext<VirtualTryonWomenFashionContext>(options =>
 {
@@ -42,6 +45,10 @@ builder.Services.AddHttpClient<IOrderService, OrderService>((serviceProvider, cl
     client.BaseAddress = new Uri(settings.GHNBaseUrl);
     client.DefaultRequestHeaders.Add("Token", settings.Token);
     client.DefaultRequestHeaders.Add("ShopId", settings.ShopId.ToString());
+});
+builder.Services.AddHttpClient<IFitRoomService, FitRoomService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(120);
 });
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()

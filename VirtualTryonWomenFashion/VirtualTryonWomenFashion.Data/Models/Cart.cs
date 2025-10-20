@@ -9,6 +9,8 @@ public partial class Cart
 {
     public int CartId { get; set; }
 
+    public int? TryOnSlotId { get; set; }
+
     public int UserId { get; set; }
 
     public DateTime CreateDate { get; set; }
@@ -20,6 +22,8 @@ public partial class Cart
     public string ProductVariantId { get; set; }
 
     public virtual ProductVariant ProductVariant { get; set; }
+
+    public virtual TryOnSlot TryOnSlot { get; set; }
 
     public virtual User User { get; set; }
 }

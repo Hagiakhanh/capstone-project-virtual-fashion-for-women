@@ -13,5 +13,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.Order
         public string ReceiverPhone { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Status { get; set; }
+        public decimal Amount { get; set; }
+        public string Email { get; set; }
     }
 }

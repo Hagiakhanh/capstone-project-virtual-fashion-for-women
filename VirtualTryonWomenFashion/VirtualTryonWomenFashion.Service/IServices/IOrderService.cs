@@ -9,12 +9,13 @@ using VirtualTryonWomenFashion.Service.DTO.Order;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.Order;
+using VirtualTryonWomenFashion.Service.DTO.GHN;
 
 namespace VirtualTryonWomenFashion.Service.IServices
 {
     public interface IOrderService
     {
-        public Task<MessageModelWithData<List<ResponseOrderForStaff>>> GetAllOrderForStaff(PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease);
+        public Task<MessageModelWithData<Pagination<ResponseOrderForStaff>>> GetAllOrderForStaff(PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease);
         public Task<MessageModelWithData<ResponseOrderDetailForStaff>> GetOrderDetailForStaff(int orderID);
         public Task<MessageModelWithData<string>> UpdateOrderStatusForStaff(int orderID);
         public Task<Order> CreateOrderAsync(RequestCreateOrder requestCreateOrder);
@@ -25,7 +26,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<Pagination<ResponseOrder>> GetAllOrdersForCustomer(PaginationParameter page, string orderStatus);
         Task HandleFailedOrders(List<Order> failedOrders);
         Task HandleSuccessfulOrders(List<Order> successfulOrders);
-        public Task<MessageModel> UpdateOrderStatusInGHNByCode(int orderId);
+        public Task<MessageModelWithData<GhnOrderSyncResponse>> UpdateOrderStatusInGHNByCode(int orderId);
         public Task<MessageModel> UpdateAllOrderStatusInGHN();
     }
 }
