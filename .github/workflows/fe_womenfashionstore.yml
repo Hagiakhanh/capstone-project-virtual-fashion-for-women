@@ -6,7 +6,6 @@ on:
       - FE
   workflow_dispatch:
 
-# 👇 Thêm permissions ở đây
 permissions:
   id-token: write
   contents: read
@@ -28,19 +27,16 @@ jobs:
           node-version: '20.x'
           cache: 'npm'
           cache-dependency-path: '${{ env.WORKING_DIR }}/package-lock.json'
-          
-      - name: 🧹 Clean & install dependencies (Linux-safe) AND BUILD
+
+      - name: 🧹 Clean & install dependencies AND BUILD
         working-directory: ${{ env.WORKING_DIR }}
         run: |
-          echo "📁 Current directory: $(pwd)"
           rm -rf node_modules package-lock.json
-          echo "🧱 Fresh install..."
-          npm install --cpu=x64 --os=linux sharp
-          npm ci || npm install
+          npm install
+          npm rebuild sharp lightningcss || true
           npm run build
-          echo "✅ Dependencies installed successfully"
 
-      - name: 📤 Upload build artifact (only needed files)
+      - name: 📤 Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
@@ -49,9 +45,6 @@ jobs:
             ${{ env.WORKING_DIR }}/public
             ${{ env.WORKING_DIR }}/package.json
             ${{ env.WORKING_DIR }}/next.config.js
-            ${{ env.WORKING_DIR }}/node_modules
-            !${{ env.WORKING_DIR }}/node_modules/**/lightningcss*
-            !${{ env.WORKING_DIR }}/node_modules/**/sharp*
 
   deploy:
     runs-on: ubuntu-latest
@@ -74,11 +67,11 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_B4355095083644928C3A602367C2FCBC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_617DD377E7054D98880841A179A1B893 }}
 
-      - name: 🧱 Reinstall native dependencies for Azure
+      - name: 🧱 Install production dependencies on Azure
         working-directory: ./app
         run: |
-          npm install --platform=linux --arch=x64 sharp lightningcss
-          echo "✅ Reinstalled native modules for Linux"
+          npm ci --only=production
+          npm rebuild sharp lightningcss || true
 
       - name: 🚀 Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -86,4 +79,3 @@ jobs:
           app-name: 'womenfashionstore'
           slot-name: 'Production'
           package: ./app
-
