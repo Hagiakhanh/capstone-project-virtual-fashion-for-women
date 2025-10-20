@@ -54,7 +54,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
 
         public async Task<Product> GetProductBySlugAsync(string slug)
         {
-            return await _context.Products
+            var product = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Tags)
                 .Include(p => p.ProductColors)
@@ -66,6 +66,19 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                         .ThenInclude(pv => pv.Size)
                 .Where(p => p.ProductSlug == slug && p.IsDeleted != true)
                 .FirstOrDefaultAsync();
+
+            if (product != null)
+            {
+                // Sắp xếp ProductVariants theo SizeId
+                foreach (var color in product.ProductColors)
+                {
+                    color.ProductVariants = color.ProductVariants
+                        .OrderBy(v => v.Size.MinHeight)
+                        .ToList();
+                }
+            }
+
+            return product;
         }
 
         public async Task<Product> GetProductByIdAsync(string productId)

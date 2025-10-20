@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http;
 
 namespace VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig
 {
@@ -6,5 +7,7 @@ namespace VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig
     {
         Task<string> UploadImageAsync(IFormFile file);
         Task<List<string>> UploadMultipleImagesAsync(List<IFormFile> files);
+        Task<DeletionResult> DeleteImageAsync(string imageUrl);
+        Task<Dictionary<string, string>> DeleteMultipleImagesAsync(List<string> imageUrls);
     }
 }
