@@ -365,4 +365,3 @@ FodyWeavers.xsd
 # JetBrains Rider / IntelliJ / ReSharper settings
 .idea/
 *.DotSettings.user
-/VirtualTryonWomenFashion/VirtualTryonWomenFashion.Data/Repositories/ProductRepository.cs
