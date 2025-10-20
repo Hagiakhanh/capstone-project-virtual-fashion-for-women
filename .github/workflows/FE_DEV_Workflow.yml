@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - "FE" # 👈 Branch FE của bạn
-  pull_request:
-    branches:
-      - "FE"
 
 env:
   NODE_VERSION: 20.x
@@ -19,8 +16,6 @@ jobs:
   build:
     name: 🧱 Build & Test Next.js
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
     steps:
       - name: 📦 Checkout source
         uses: actions/checkout@v4
@@ -50,8 +45,6 @@ jobs:
   deploy:
     name: 🚀 Deploy Next.js SSR to Azure
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-
     steps:
       - name: 📦 Checkout source
         uses: actions/checkout@v4
@@ -89,3 +82,4 @@ jobs:
           app-name: ${{ secrets.AZURE_WEBAPP_FE_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
           package: ${{ env.WORKING_DIR }}/release.zip
+
