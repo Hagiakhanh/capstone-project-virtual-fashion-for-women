@@ -67,7 +67,7 @@ export default function TransactionTable({ transactions, loading }: Props) {
                                     return (
                                         <tr key={transaction.transactionCode} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4 base text-gray-900">{transaction.transactionCode}</td>
-                                            <td className="px-6 py-4 base text-gray-900">{transaction.orderId}</td>
+                                            <td className="px-6 py-4 base text-gray-900">ORD-{transaction.orderId}</td>
                                             <td className="px-6 py-4 base font-medium text-gray-900">
                                                 {formatPrice(transaction.money)} ₫
                                             </td>

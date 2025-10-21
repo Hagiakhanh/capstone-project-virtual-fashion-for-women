@@ -1,8 +1,6 @@
 'use client';
 import { SearchOutlined, UserOutlined, ShoppingCartOutlined, DownOutlined } from '@ant-design/icons';
-import { Input, Dropdown } from 'antd';
-import { Button } from "antd";
-
+import { Input, Dropdown, Button } from 'antd';
 import logo from '../../assets/home/Logo.png';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +26,7 @@ function HeaderComponent() {
          console.error("Lỗi khi lấy tổng giỏ hàng:", error);
       }
    };
+
    const fetchCategories = async () => {
       try {
          const response = await api.get('/category');
@@ -43,12 +42,10 @@ function HeaderComponent() {
       } catch (error) {
          console.error("Lỗi khi lấy danh mục:", error);
       }
-   }
+   };
 
    useEffect(() => {
-      if (user?.role === 'customer') {
-         fetchCartTotal();
-      }
+      if (user?.role === 'customer') fetchCartTotal();
       fetchCategories();
    }, [user]);
 
@@ -61,81 +58,87 @@ function HeaderComponent() {
    }, [user]);
 
    return (
-      <header className='bg-[#FAE3B6] border-b-1'>
-         <div className="flex px-15 w-full justify-between">
-            <div className='flex-[1.5]'>
-               <img onClick={() => {
-                  router.push("/")
-               }} src={logo.src} alt="Logo"
-                  className='w-20 object-cover'
-               />
+      <header className="bg-[#FAE3B6] border-b border-[#e5c28b]">
+         <div className="flex items-center justify-between px-10 w-full">
+            {/* Logo */}
+            <div className="flex items-center cursor-pointer" onClick={() => router.push('/')}>
+               <img src={logo.src} alt="Logo" className="w-20 object-contain" />
             </div>
-            <ul className='flex flex-2 justify-around text-2xl font-normal cursor-pointer'>
-               <Link href="/" className='flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100'>
-                  Trang chủ
-               </Link>
-               <li className='flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100'>
-                  Phối đồ thông minh
-               </li>
-               <li className='flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100'>
-                  <Dropdown menu={{ items: menuItems }} placement="bottomLeft">
-                     <span className='flex items-center h-full'>
+
+            {/* Menu trung tâm */}
+            <ul className="flex gap-10 text-xl font-normal cursor-pointer">
+               <Link href="/" className="hover:underline underline-offset-4">Trang chủ</Link>
+               <Link href="/try-on" className="hover:underline underline-offset-4">Phòng thử đồ</Link>
+               <li className="hover:underline underline-offset-4">Phối đồ thông minh</li>
+               <li>
+                  <Dropdown menu={{ items: menuItems }} placement="bottom">
+                     <span className="flex items-center hover:underline underline-offset-4">
                         Danh mục sản phẩm
-                        <DownOutlined style={{ fontSize: '0.875rem', marginLeft: '0.5rem' }} />
+                        <DownOutlined className="ml-1 text-sm" />
                      </span>
                   </Dropdown>
                </li>
             </ul>
-            <div className='flex flex-[1.5] justify-end items-center gap-5'>
-               <div className='relative max-w-md'>
-                  <div className='absolute z-30 left-4 top-1/2 -translate-y-1/2 flex items-center'>
-                     <SearchOutlined className='text-xl !text-[#FFAF37]' />
+
+            {/* Tìm kiếm và icon */}
+            <div className="flex items-center gap-6">
+               <div className="relative w-64">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFAF37]">
+                     <SearchOutlined className="text-lg" />
                   </div>
-                  <Input placeholder="Tìm kiếm sản phẩm"
-                     className='text-2xl'
-                     size="middle"
+                  <Input
+                     placeholder="Tìm kiếm sản phẩm"
+                     className="rounded-full text-base"
                      style={{
-                        paddingLeft: '3rem',
-                        borderRadius: '9999px',
-                        fontSize: '1.25rem',
+                        paddingLeft: '2.5rem',
+                        fontSize: '1rem',
+                        height: '40px'
                      }}
                   />
                </div>
-               {user?.role == 'customer' ? (
-                  <>
-                     <UserOutlined className='text-2xl cursor-pointer' onClick={() => router.push('/account')} />
 
-                     <div className="relative cursor-pointer" onClick={() => router.push('/cart')}>
+               {user?.role === 'customer' ? (
+                  <div className="flex items-center gap-4">
+                     <UserOutlined
+                        className="text-2xl cursor-pointer"
+                        onClick={() => router.push('/account')}
+                     />
+
+                     <div
+                        className="relative cursor-pointer"
+                        onClick={() => router.push('/cart')}
+                     >
                         <ShoppingCartOutlined className="text-3xl" />
-
                         {cartCount > 0 && (
-                           <span
-                              className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold 
-                 rounded-full min-w-[20px] h-[20px] flex items-center justify-center 
-                 shadow-md border-2 border-white"
-                           >
+                           <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-white">
                               {cartCount > 99 ? '99+' : cartCount}
                            </span>
                         )}
-
                      </div>
-                  </>
-
+                  </div>
                ) : (
-                  <div className='flex items-center gap-3'>
+                  <div className="flex items-center gap-3">
                      <Link href="/login">
-                        <Button style={{ border: '2px solid #000' }} className="w-full !py-2 !px-4 !text-black !hover:text-black !rounded-full !text-xl !bg-transparent" size="large">Đăng nhập</Button>
+                        <Button
+                           className="!py-1 !px-4 !rounded-full !text-base !border-black !text-black hover:!text-black"
+                           style={{ borderWidth: '2px' }}
+                        >
+                           Đăng nhập
+                        </Button>
                      </Link>
                      <Link href="/register">
-                        <Button style={{ border: 'none' }} className="w-full !py-2 !px-4 !text-black !hover:text-black !rounded-full !text-xl !bg-[#FFAF37]" size="large">Đăng ký</Button>
+                        <Button
+                           className="!py-1 !px-4 !rounded-full !text-base !bg-[#FFAF37] !border-none !text-black hover:!text-black"
+                        >
+                           Đăng ký
+                        </Button>
                      </Link>
                   </div>
                )}
-
             </div>
          </div>
       </header>
-   )
+   );
 }
 
 export default HeaderComponent;
