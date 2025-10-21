@@ -67,15 +67,17 @@ jobs:
         run: |
           ssh ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << EOF
             APP_DIR="${{ env.APP_DIR }}"
-            echo '${{ secrets.APPSETTINGS_PRODUCTION_VPS_JSON }}' > $APP_DIR/appsettings.json
+            mkdir -p \$APP_DIR
+            echo '${{ secrets.APPSETTINGS_PRODUCTION_VPS_JSON }}' > \$APP_DIR/appsettings.json
 
             docker pull ${{ env.IMAGE_NAME }}:${{ env.TAG }}
             docker stop virtualfashionforwomen || true
             docker rm virtualfashionforwomen || true
+
             docker run -d \
               --name virtualfashionforwomen \
-              -p 5000:8080  \
+              -p 5000:8080 \
               --restart=always \
-              -v \$APP_DIR/appsettings.json:/app/appsettings.json \
+              -v \$APP_DIR/appsettings.json:/app/publish/appsettings.json \
               ${{ env.IMAGE_NAME }}:${{ env.TAG }}
           EOF
