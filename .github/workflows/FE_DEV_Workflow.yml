@@ -1,9 +1,6 @@
 name: FE Build & Deploy Next.js SSR to Azure App Service Publish Profile
 
 on:
-  push:
-    branches:
-      - "FE"
   pull_request:
     branches:
       - "FE"
@@ -49,3 +46,4 @@ jobs:
       - name: ✅ Run tests (optional)
         working-directory: ${{ env.WORKING_DIR }}
         run: npm test --if-present
+
