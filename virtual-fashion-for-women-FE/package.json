@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npm rebuild lightningcss && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -15,7 +15,6 @@
     "framer-motion": "^12.23.24",
     "jose": "^6.1.0",
     "jwt-decode": "^4.0.0",
-    "lightningcss": "^1.30.2",
     "lodash": "^4.17.21",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.544.0",
@@ -23,7 +22,6 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-toastify": "^11.0.5",
-    "sharp": "^0.34.4",
     "swiper": "^12.0.2"
   },
   "devDependencies": {
