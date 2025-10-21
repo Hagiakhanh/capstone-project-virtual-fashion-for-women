@@ -1,4 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using VirtualTryonWomenFashion.Data.Commons;
+using VirtualTryonWomenFashion.Service.DTO.Order;
 using VirtualTryonWomenFashion.Service.DTO.TryOnSlotModel;
 using VirtualTryonWomenFashion.Service.DTO.UploadImageModel;
 using VirtualTryonWomenFashion.Service.Helpers;
@@ -124,6 +127,66 @@ public class TryOnSlotController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
+
+    [HttpGet("history-try-on-slot")]
+    public async Task<IActionResult> GetHistoryTryOnSlot([FromQuery] PaginationParameter paginationParameter, [FromQuery] bool isNewest = true)
+    {
+        try
+        {
+            Pagination<TryOnResponse> result = await _tryOnSlotService.GetHistoryTryOn(paginationParameter, isNewest);
+            var metadata = new
+            {
+                result.TotalCount,
+                result.PageSize,
+                result.CurrentPage,
+                result.TotalPages,
+                result.HasNext,
+                result.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+            return Ok(new MessageModelWithData<object>()
+            {
+                Message = "Lấy danh lịch sử thử đồ thành công",
+                StatusCode = StatusCodes.Status200OK,
+                Data = result
+            });
+        }
+        catch (Exception ex)
+        {
+            return Ok(new MessageModelWithData<object>()
+            {
+                Message = "Lấy danh lịch sử thử đồ thất bại: "+ ex.Message,
+                StatusCode = StatusCodes.Status400BadRequest,
+                Data = null
+            });
+        }
+    }
+
+    [HttpGet("try-on-slot/{tryOnSlotId}")]
+    public async Task<IActionResult> GetHistoryTryOnSlot([FromRoute]int tryOnSlotId )
+    {
+        try
+        {
+            TryOnResponse result = await _tryOnSlotService.GetDetailTryOnSlot(tryOnSlotId);
+
+            return Ok(new MessageModelWithData<object>()
+            {
+                Message = "Lấy chi tiết lịch sử thử đồ thành công",
+                StatusCode = StatusCodes.Status200OK,
+                Data = result
+            });
+        }
+        catch (Exception ex)
+        {
+            return Ok(new MessageModelWithData<object>()
+            {
+                Message = "Lấy chi tiết lịch sử thử đồ thất bại: " + ex.Message,
+                StatusCode = StatusCodes.Status400BadRequest,
+                Data = null
+            });
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.TryOnSlotModel;
 using VirtualTryonWomenFashion.Service.DTO.UploadImageModel;
@@ -17,5 +18,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<bool> UpdateOutputImageUrl(UpdateTryOnRequest updateTryOnRequest);
         Task<TryOnResponse?> GetTryOnSlotByIdAsync(int tryOnSlotId);
         Task<string> CheckImageModelIsValid(ImageModel imageModel);
+        Task<Pagination<TryOnResponse>> GetHistoryTryOn(PaginationParameter paginationParameter, bool isNewest);
+        Task<TryOnResponse> GetDetailTryOnSlot(int tryOnSlotId);
     }
 }

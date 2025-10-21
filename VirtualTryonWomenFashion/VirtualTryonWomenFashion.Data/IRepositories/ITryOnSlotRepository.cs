@@ -12,5 +12,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     {
         Task<TryOnSlot?> GetExistingTryOnSlotAsync(int userId,string userModelImageHash, string? topProductColorId, string? bottomProductColorId);
         Task<bool> HasImageModelHash(int userId, string userModelImageHash);
+        Task<TryOnSlot?> GetTryOnSlotById(int tryOnSlotId);
     }
 }
