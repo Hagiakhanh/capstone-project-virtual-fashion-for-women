@@ -6,7 +6,7 @@ WORKDIR /src
 COPY ./VirtualTryonWomenFashion.sln ./
 COPY ./VirtualTryonWomenFashion.API/VirtualTryonWomenFashion.API.csproj ./VirtualTryonWomenFashion.API/
 COPY ./VirtualTryonWomenFashion.Data/VirtualTryonWomenFashion.Data.csproj ./VirtualTryonWomenFashion.Data/
-COPY ./VirtualTryonWomenFashion.Services/VirtualTryonWomenFashion.Service.csproj ./VirtualTryonWomenFashion.Service/
+COPY ./VirtualTryonWomenFashion.Service/VirtualTryonWomenFashion.Service.csproj ./VirtualTryonWomenFashion.Service/
 
 # Restore dependencies
 RUN dotnet restore "VirtualTryonWomenFashion.sln"
