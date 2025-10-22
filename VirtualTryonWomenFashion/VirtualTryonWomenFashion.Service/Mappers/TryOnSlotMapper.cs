@@ -18,7 +18,8 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 OutputImageUrl = tryOnSlot.OutputImageUrl,
                 OutputTaskId = tryOnSlot.OutputTaskId,
                 TryOnSlotId = tryOnSlot.TryOnSlotId,
-                UploadImageUrl = tryOnSlot.UploadImageUrl
+                UploadImageUrl = tryOnSlot.UploadImageUrl,
+                UpdatedAt = tryOnSlot.UpdatedAt,
             };
         }
     }

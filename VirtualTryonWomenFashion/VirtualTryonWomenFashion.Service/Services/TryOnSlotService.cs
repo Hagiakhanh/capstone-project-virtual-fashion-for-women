@@ -5,9 +5,11 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.TryOnSlotModel;
 using VirtualTryonWomenFashion.Service.DTO.UploadImageModel;
 using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
@@ -24,13 +26,16 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFitRoomService _fitRoomService;
+        private readonly IProductService _productService;
+
         public TryOnSlotService(
             ITryOnSlotRepository tryOnSlotRepository,
             IProductColorService productColorService,
             ICloudinaryService cloudinaryService,
             IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService,
-            IFitRoomService fitRoomService)
+            IFitRoomService fitRoomService,
+            IProductService productService)
         {
             _tryOnSlotRepository = tryOnSlotRepository;
             _productColorService = productColorService;
@@ -38,6 +43,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
             _fitRoomService = fitRoomService;
+            _productService = productService;
         }
         public async Task<TryOnResponse> CreateTryOnSlot(CreateTryOnRequest createTryOnRequest)
         {
@@ -112,7 +118,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                tryOnSlot.OutputImageUrl = updateTryOnRequest.OutputImageUrl;
+                tryOnSlot.OutputImageUrl = await _cloudinaryService.UploadImageFromUrlAsync(updateTryOnRequest.OutputImageUrl);
+                tryOnSlot.UpdatedAt = DateTime.UtcNow.AddHours(7);
                 await _tryOnSlotRepository.UpdateAsync(tryOnSlot);
                 await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
@@ -160,6 +167,43 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 return await _fitRoomService.CheckImageModelIsValid(imageModel);
             }
+        }
+
+        public async Task<Pagination<TryOnResponse>> GetHistoryTryOn(PaginationParameter paginationParameter, bool isNewest)
+        {
+            int userId = _currentUserService.GetUserId();
+            var rawTryOnSlot = await _tryOnSlotRepository.GetAll(
+                    filter: to => to.CustomerId == userId,
+                    pagination: paginationParameter,
+                    orderBy: to => isNewest? to.OrderByDescending(x=>x.UpdatedAt) : to.OrderBy(x=>x.UpdatedAt),
+                    includes: to => to.ProductColors
+                );
+
+            int totalCount = await _tryOnSlotRepository.CountAsync(to =>to.CustomerId == userId);
+            List<TryOnResponse> tryOnResponses = rawTryOnSlot.Select(to=>to.ToMapTryOnResponse()).ToList();
+            return new Pagination<TryOnResponse>(tryOnResponses, totalCount, paginationParameter.PageIndex, paginationParameter.PageSize);
+        }
+
+        public async Task<TryOnResponse> GetDetailTryOnSlot(int tryOnSlotId)
+        {
+            int userId = _currentUserService.GetUserId();
+            var detailTryOnSlot = await _tryOnSlotRepository.GetTryOnSlotById(tryOnSlotId);
+            if (detailTryOnSlot == null)
+                throw new Exception("Không tìm thấy lịch sử thử đồ này");
+
+            if (userId != detailTryOnSlot.CustomerId)
+                throw new Exception("Bạn không có quyền truy cập vào đây");
+            List<ResponseProductDto> productResponseMapping = new List<ResponseProductDto>();
+
+            foreach (var productColor in detailTryOnSlot.ProductColors)
+            {
+                var productDTO = await _productService.GetProductByProductColorIdAsyncForTryOn(productColor.ProductColorId);
+                if(productDTO != null) productResponseMapping.Add(productDTO);
+            }
+
+            var tryOnResponse = detailTryOnSlot.ToMapTryOnResponse();
+            tryOnResponse.TryOnProductVariant = productResponseMapping;
+            return tryOnResponse;
         }
     }
 }
