@@ -24,7 +24,7 @@ function LoginPage() {
         if (response.data.user.role === 'admin') {
           router.replace("/admin");
         } else if (response.data.user.role === 'staff') {
-          router.replace("/");
+          router.replace("/staff");
         } else if (response.data.user.role === 'customer') {
           router.replace("/");
         }

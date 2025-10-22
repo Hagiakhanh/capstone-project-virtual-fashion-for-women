@@ -9,11 +9,6 @@ import 'swiper/css/pagination';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/api/instance';
 
-import hinh1 from "@/assets/temImage/pic1.jpg";
-import hinh2 from "@/assets/temImage/pic2.jpg";
-import hinh3 from "@/assets/temImage/pic3.jpg";
-import hinh4 from "@/assets/temImage/pic4.jpg";
-import hinh5 from "@/assets/temImage/pic5.jpg";
 import PolicyInProductDetail from '@/components/Product/PolicyInProductDetail';
 import formatPrice from '@/utils/formatPrice';
 import { typeProductColor, typeProductSize } from '@/types/product';
@@ -36,6 +31,8 @@ function ProductDetailsPage() {
    });
    const [selectedColorVariant, setSelectedColorVariant] = useState(null);
    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+   const [colorImages, setColorImages] = useState([]);
+   const [mainImage, setMainImage] = useState(null);
 
    const fetchProductDetails = async () => {
       try {
@@ -53,22 +50,14 @@ function ProductDetailsPage() {
                (productColor) => productColor.colorId === response.data?.color[0]?.colorId
             );
             setSelectedColorVariant(selectedColorVariant || null);
+            setColorImages(selectedColorVariant?.productImagesDto || [])
+            setMainImage(selectedColorVariant?.productImagesDto[0]?.imageUrl || null);
          }
 
       } catch (error) {
          console.error('Lỗi khi lấy thông tin chi tiết sản phẩm:', error);
       }
    }
-
-   const productImages = [
-      { id: 1, url: hinh1.src },
-      { id: 2, url: hinh2.src },
-      { id: 3, url: hinh3.src },
-      { id: 4, url: hinh4.src },
-      { id: 5, url: hinh5.src },
-   ];
-
-   const [mainImage, setMainImage] = useState(productImages[0].url);
 
    const handleImageClick = (imageUrl) => {
       setMainImage(imageUrl);
@@ -78,6 +67,8 @@ function ProductDetailsPage() {
          (productColor) => productColor.colorId === colorId
       );
       setSelectedColorVariant(selectedColorVariant || null);
+      setColorImages(selectedColorVariant?.productImagesDto || [])
+      setMainImage(selectedColorVariant?.productImagesDto[0]?.imageUrl || null);
       setChooseProduct(prev => {
          // Nếu chọn lại màu đang chọn, không làm gì cả (hoặc có thể bỏ chọn nếu muốn)
          if (prev.colorId === colorId) {
@@ -250,12 +241,12 @@ function ProductDetailsPage() {
                         className="h-full"
                      >
                         {
-                           productImages.map((image) => {
+                           colorImages?.map((image) => {
                               return (
                                  <SwiperSlide key={image.id}>
-                                    <div className="mb-5 w-[88px] h-[120px] cursor-pointer" onClick={() => handleImageClick(image.url)}>
-                                       <img src={image.url} alt="Ảnh sản phẩm"
-                                          className={`${image.url == mainImage ? 'border-2' : ''} hover:border-2 w-[88px] h-[120px] object-cover rounded-xl`} style={{ aspectRatio: '88 / 120' }} />
+                                    <div className="mb-5 w-[88px] h-[120px] cursor-pointer" onClick={() => handleImageClick(image.imageUrl)}>
+                                       <img src={image.imageUrl} alt="Ảnh sản phẩm"
+                                          className={`${image.imageUrl == mainImage ? 'border-2' : ''} hover:border-2 w-[88px] h-[120px] object-cover rounded-xl`} style={{ aspectRatio: '88 / 120' }} />
                                     </div>
                                  </SwiperSlide>
                               )
@@ -271,7 +262,7 @@ function ProductDetailsPage() {
                      {productDetail?.productName}
                   </h1>
                   <p className="line-clamp-2 text-lg font-normal mt-3 text-gray-600">
-                     MSP: 68250622403DF1261PI
+                     MSP: {chooseProduct.productVariant ? chooseProduct.productVariant?.productVariantId : selectedColorVariant?.productColorId}
                   </p>
                   <p className="text-2xl font-bold mt-3">
                      {formatPrice(Number(productDetail?.price))}đ

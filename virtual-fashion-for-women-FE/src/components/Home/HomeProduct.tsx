@@ -6,10 +6,12 @@ import Link from "next/link";
 import ProductItemHome from "../Product/ProductItemHome";
 import { useEffect, useState } from "react";
 import { api } from "@/api/instance";
+import LoadingOverlay from "../Loading/LoadingOverlay";
 
 function HomeProductSection() {
    const [activeTab, setActiveTab] = useState<number>(2);
    const [products, setProducts] = useState<any[]>([]);
+   const [loadingAddToCart, setLoadingAddToCart] = useState<boolean>(false);
 
    const fetchProducts = async () => {
       try {
@@ -40,6 +42,7 @@ function HomeProductSection() {
 
    return (
       <div className="w-[80%] mx-auto py-20">
+         {loadingAddToCart && <LoadingOverlay size={60} />}
          <div className="bg-white p-10 rounded-2xl" style={{ boxShadow: '0px 0px 24px rgba(0, 0, 0, 0.1)' }}>
             <div className="flex uppercase justify-center gap-20 text-2xl font-normal text-gray-600 mb-5">
                <h1 onClick={() => setActiveTab(2)} className={`relative group cursor-pointer ${activeTab === 2 ? 'font-bold text-black' : ''}`}>
@@ -59,7 +62,7 @@ function HomeProductSection() {
                {/* Product List Here */}
                {
                   products.map((product) => (
-                     <ProductItemHome onWishlistSuccess={handleProductChange} product={product} key={product.productId} />
+                     <ProductItemHome onWishlistSuccess={handleProductChange} product={product} key={product.productId} setLoading={setLoadingAddToCart} />
                   ))
                }
             </div>
