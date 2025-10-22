@@ -11,5 +11,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     public interface IUserRepository : IGenericRepository<User>
     {
         public Task<User> GetUserByEmail(string email);
+        public Task<User> GetUserById(int userId);
     }
 }

@@ -11,7 +11,7 @@ public partial class TicketChat
 
     public int CustomerId { get; set; }
 
-    public int StaffId { get; set; }
+    public int? StaffId { get; set; }
 
     public string Slug { get; set; }
 
@@ -20,6 +20,8 @@ public partial class TicketChat
     public DateTime? ClosedAt { get; set; }
 
     public string Status { get; set; }
+
+    public string Title { get; set; }
 
     public virtual User Customer { get; set; }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,11 @@ namespace VirtualTryonWomenFashion.Data.Repositories
     {
         public TicketChatRepository(VirtualTryonWomenFashionContext context) : base(context)
         {
+        }
+
+        public async Task<TicketChat> GetTicketChatBySlug(string slug)
+        {
+            return await _context.TicketChats.FirstOrDefaultAsync(x => x.Slug == slug);
         }
     }
 }
