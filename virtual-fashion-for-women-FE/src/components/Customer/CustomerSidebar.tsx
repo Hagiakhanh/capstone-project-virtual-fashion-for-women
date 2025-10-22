@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, Package, MessageCircle, CreditCard } from 'lucide-react';
+import { User, Package, MessageCircle, CreditCard, Shirt } from 'lucide-react';
 
 const navItems = [
     { name: 'Thông tin tài khoản', href: '/account', icon: User },
     { name: 'Đơn hàng của bạn', href: '/account/orders', icon: Package },
     { name: 'Lịch sử đơn hàng', href: '/account/transactions', icon: CreditCard }, // ✅ Thêm tab mới
     { name: 'Lịch sử trò chuyện', href: '/account/chats', icon: MessageCircle },
+    { name: 'Lịch sử thử đồ', href: '/account/try-on-history', icon: Shirt },
 ];
 
 export default function CustomerSidebar() {
