@@ -28,6 +28,16 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             return tryOnSlot ??= null;
         }
 
+        public async Task<TryOnSlot?> GetTryOnSlotById(int tryOnSlotId)
+        {
+            var tryonSlotDetail = await _context.TryOnSlots
+                .AsNoTracking()
+                .Where(to=>to.TryOnSlotId == tryOnSlotId)
+                .Include(to=>to.ProductColors)
+                .FirstOrDefaultAsync();
+            return tryonSlotDetail ??= null;
+        }
+
         public async Task<bool> HasImageModelHash(int userId, string userModelImageHash)
         {
             var tryOnSlot = await _context.TryOnSlots
