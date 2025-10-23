@@ -45,6 +45,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IWishlistRepository _wishlistRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ITagRepository _tagRepository;
+        private readonly IColorRecommendationSerivce _colorRecommendationSerivce;
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             ICloudinaryService cloudinaryService,
@@ -61,7 +62,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             ICurrentUserService currentUserService,
             IWishlistRepository wishlistRepository,
             IHttpContextAccessor httpContextAccessor,
-            ITagRepository tagRepository)
+            ITagRepository tagRepository,
+            IColorRecommendationSerivce colorRecommendationSerivce)
         {
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
@@ -80,6 +82,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _wishlistRepository = wishlistRepository;
             _httpContextAccessor = httpContextAccessor;
             _tagRepository = tagRepository;
+            _colorRecommendationSerivce = colorRecommendationSerivce;
         }
 
         public static string GenerateFixedLengthString(int length)
@@ -149,12 +152,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
         }
 
-        public async Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParameter pagination)
+        public async Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParameter pagination, string? searchTerm,
+            string? status)
         {
-            var products = await _productRepository.GetAllProductsWithIncludes(pagination);
+            var products = await _productRepository.GetAllProductsWithIncludes(pagination, searchTerm, status);
 
             // Get total count for pagination info
-            var totalRecords = _productRepository.Count(p => p.IsDeleted != true);
+            var totalRecords = await _productRepository.CountProductsAsync(searchTerm, status);
             var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.PageSize);
 
             // Map to DTOs (await từng product)
@@ -166,6 +170,72 @@ namespace VirtualTryonWomenFashion.Service.Services
                 totalRecords: totalRecords,
                 totalPages: totalPages
             );
+        }
+
+        public async Task<MessageModelWithData<Pagination<ResponseProductDto>>> GetAllProducts(
+            PaginationParameter pagination,
+            string? searchTerm,
+            string? status)
+        {
+            // ===== 1️⃣ Tạo bộ lọc =====
+            Expression<Func<Product, bool>> filterExpression = p =>
+                (string.IsNullOrEmpty(status) || status.ToLower() == "all" ||
+                (status.ToLower() == "active" && p.IsDeleted == false) ||
+                (status.ToLower() == "deleted" && p.IsDeleted == true))
+                &&
+                (string.IsNullOrEmpty(searchTerm) ||
+                 p.ProductId.ToString().Contains(searchTerm.Trim()) ||
+                 p.ProductName.ToLower().Contains(searchTerm.Trim().ToLower()) ||
+                 (p.Description != null && p.Description.ToLower().Contains(searchTerm.Trim().ToLower())));
+
+            // ===== 2️⃣ Tổng số bản ghi =====
+            int totalCount = await _productRepository.CountAsync(filterExpression);
+
+            // ===== 3️⃣ Truy vấn danh sách có includes =====
+            var products = await _productRepository.GetAll(
+                pagination: pagination,
+                filter: filterExpression,
+                includes: new Expression<Func<Product, object>>[]
+                {
+                    p => p.Category,
+                    p => p.ProductColors,
+                    p => p.ProductColors.Select(pc => pc.Color),
+                    p => p.ProductColors.Select(pc => pc.ProductImages),
+                    p => p.ProductColors.Select(pc => pc.ProductVariants)
+                },
+                orderBy: q => q.OrderByDescending(p => p.CreatedAt)
+            );
+
+            // ===== 4️⃣ Map sang DTO =====
+            var responseDtos = await Task.WhenAll(products.Select(p => MapToResponseProductDto(p)));
+
+            // ===== 5️⃣ Trả về dữ liệu =====
+            if (responseDtos.Any())
+            {
+                return new MessageModelWithData<Pagination<ResponseProductDto>>()
+                {
+                    Message = "Lấy danh sách sản phẩm thành công",
+                    StatusCode = StatusCodes.Status200OK,
+                    Data = new Pagination<ResponseProductDto>(
+                        responseDtos.ToList(),
+                        totalCount,
+                        pagination.PageIndex,
+                        pagination.PageSize
+                    )
+                };
+            }
+
+            return new MessageModelWithData<Pagination<ResponseProductDto>>()
+            {
+                Message = "Không tìm thấy sản phẩm nào thỏa mãn điều kiện",
+                StatusCode = StatusCodes.Status200OK,
+                Data = new Pagination<ResponseProductDto>(
+                    new List<ResponseProductDto>(),
+                    0,
+                    pagination.PageIndex,
+                    pagination.PageSize
+                )
+            };
         }
 
         private async Task<ResponseProductDto> MapToResponseProductDto(Product product)
@@ -379,7 +449,19 @@ namespace VirtualTryonWomenFashion.Service.Services
                 .Select(g => g.Key)                    // Lấy prefix bị trùng
                 .ToList();
 
-            if (duplicatePrefixes.Any())
+            var duplicateNames = request.ProductColor
+                .GroupBy(c => c.ColorName.ToLower()) 
+                .Where(g => g.Count() > 1) 
+                .Select(g => g.Key)                    
+                .ToList();
+
+            var duplicateHexCode = request.ProductColor
+                .GroupBy(c => c.HexCode.ToLower()) 
+                .Where(g => g.Count() > 1) 
+                .Select(g => g.Key)        
+                .ToList();
+
+            if (duplicatePrefixes.Any() || duplicateNames.Any() || duplicateHexCode.Any())
             {
                 var duplicatesStr = string.Join(", ", duplicatePrefixes);
                 return new MessageModelWithData<Product>
@@ -389,24 +471,27 @@ namespace VirtualTryonWomenFashion.Service.Services
                 };
             }
 
+            // 🔹 Danh sách để lưu URL ảnh đã upload (phục vụ rollback nếu lỗi)
+            var uploadedImageUrls = new List<string>();
+
             await _unitOfWork.BeginTransactionAsync();
             try
             {
                 // 1️⃣ Tạo sản phẩm chính
-                var product = await CreateProductEntityAsync(request);
+                var product = await CreateProductEntityAsync(request, uploadedImageUrls);
                 await _unitOfWork.SaveChanges(); // ⚠️ Save ngay để có ProductId
 
                 // 2️⃣ Xử lý tags (tồn tại hoặc mới)
                 await HandleProductTagsAsync(product, request);
 
                 // 3️⃣ Xử lý màu sắc, hình ảnh, biến thể
-                await HandleProductColorsAndVariantsAsync(product, request);
+                await HandleProductColorsAndVariantsAsync(product, request, uploadedImageUrls);
 
                 // 4️⃣ Lưu tất cả thay đổi vào DB
                 await _unitOfWork.SaveChanges();
 
                 // 5️⃣ Tạo embedding & upsert vào Vector Database (song song)
-                //await CreateEmbeddingsForProductAsync(product);
+                await CreateEmbeddingsForProductAsync(product);
 
                 await _unitOfWork.CommitTransactionAsync();
 
@@ -421,6 +506,19 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 await _unitOfWork.RollbackTransactionAsync();
 
+                if (uploadedImageUrls.Any())
+                {
+                    try
+                    {
+                        await _cloudinaryService.DeleteMultipleImagesAsync(uploadedImageUrls);
+                        Console.WriteLine($"Đã rollback {uploadedImageUrls.Count} ảnh trên Cloudinary.");
+                    }
+                    catch (Exception deleteEx)
+                    {
+                        Console.WriteLine($"Lỗi khi rollback ảnh: {deleteEx.Message}");
+                    }
+                }
+
                 return new MessageModelWithData<Product>
                 {
                     Message = ex.Message,
@@ -430,6 +528,19 @@ namespace VirtualTryonWomenFashion.Service.Services
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
+
+                if (uploadedImageUrls.Any())
+                {
+                    try
+                    {
+                        await _cloudinaryService.DeleteMultipleImagesAsync(uploadedImageUrls);
+                        Console.WriteLine($"Đã rollback {uploadedImageUrls.Count} ảnh trên Cloudinary.");
+                    }
+                    catch (Exception deleteEx)
+                    {
+                        Console.WriteLine($"Lỗi khi rollback ảnh: {deleteEx.Message}");
+                    }
+                }
 
                 // Log chi tiết lỗi để debug
                 Console.WriteLine($"Error: {ex.Message}");
@@ -447,15 +558,17 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        private async Task<Product> CreateProductEntityAsync(CreateProductRequest request)
+        private async Task<Product> CreateProductEntityAsync(CreateProductRequest request, List<string> uploadedUrls)
         {
+            var productImg = await _cloudinaryService.UploadImageAsync(request.MainImageUrl);
+            uploadedUrls.Add( productImg );
             var product = new Product
             {
                 ProductId = GenerateFixedLengthString(16),
                 ProductName = request.ProductName,
                 ProductSlug = await GenerateProductSlug(request.ProductName),
                 Description = request.Description,
-                MainImageUrl = await _cloudinaryService.UploadImageAsync(request.MainImageUrl),
+                MainImageUrl = productImg,
                 CreatedAt = DateTime.UtcNow.AddHours(7),
                 CategoryId = request.CategoryId,
                 Price = request.Price,
@@ -532,18 +645,31 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        private async Task HandleProductColorsAndVariantsAsync(Product product, CreateProductRequest request)
+        private async Task HandleProductColorsAndVariantsAsync(Product product, CreateProductRequest request, List<string> uploadedUrls)
         {
-            // ===== 1️⃣ Chuẩn bị dữ liệu đầu vào =====
+            // ===== 1️⃣ Chuẩn bị dữ liệu (GIỮ NGUYÊN) =====
+            // (Lấy IDs, prefixes, sizeIds... giống hệt mã gốc của bạn)
             var existingColorIds = request.ProductColor
                 .Where(pc => pc.ColorId > 0)
                 .Select(pc => pc.ColorId)
                 .Distinct()
                 .ToList();
 
-            var colorPrefixes = request.ProductColor
+            var prefixes = request.ProductColor
                 .Where(pc => pc.ColorId <= 0 && !string.IsNullOrEmpty(pc.ColorPrefix))
                 .Select(pc => pc.ColorPrefix.ToLower())
+                .Distinct()
+                .ToList();
+
+            var names = request.ProductColor
+                .Where(pc => pc.ColorId <= 0 && !string.IsNullOrEmpty(pc.ColorName))
+                .Select(pc => pc.ColorName.ToLower())
+                .Distinct()
+                .ToList();
+
+            var hexCodes = request.ProductColor
+                .Where(pc => pc.ColorId <= 0 && !string.IsNullOrEmpty(pc.HexCode))
+                .Select(pc => pc.HexCode.ToLower())
                 .Distinct()
                 .ToList();
 
@@ -554,34 +680,74 @@ namespace VirtualTryonWomenFashion.Service.Services
                 .Distinct()
                 .ToList();
 
-            // ===== 2️⃣ Load dữ liệu từ DB (tuần tự để tránh lỗi DbContext) =====
+            // ===== 2️⃣ Load dữ liệu từ DB (GIỮ NGUYÊN) =====
+            // (Load tuần tự để tránh lỗi DbContext, đây là cách an toàn)
             var existingColors = existingColorIds.Count > 0
                 ? await _colorRepository.GetAllThenInclude(filter: c => existingColorIds.Contains(c.ColorId))
                 : new List<Color>();
 
-            var colorsByPrefix = colorPrefixes.Count > 0
-                ? await _colorRepository.GetAllThenInclude(filter: c => colorPrefixes.Contains(c.ColorPrefix.ToLower()))
+            var potentialDuplicateColors = (prefixes.Count > 0 || names.Count > 0 || hexCodes.Count > 0)
+                ? await _colorRepository.GetAllThenInclude(filter: c =>
+                    prefixes.Contains(c.ColorPrefix.ToLower()) ||
+                    names.Contains(c.ColorName.ToLower()) ||
+                    hexCodes.Contains(c.HexCode.ToLower()))
                 : new List<Color>();
 
             var sizes = sizeIds.Count > 0
                 ? await _sizeRepository.GetAllThenInclude(filter: s => sizeIds.Contains(s.SizeId))
                 : new List<Size>();
 
-            // ===== 3️⃣ Chuẩn bị các dictionary tra nhanh =====
-            var colorsDict = existingColors.ToDictionary(c => c.ColorId, c => c);
-            var colorsByPrefixDict = colorsByPrefix.ToDictionary(c => c.ColorPrefix.ToLower(), c => c);
+            // ===== 3️⃣ Chuẩn bị Dictionaries (GIỮ NGUYÊN) =====
+            var dbColorsById = existingColors.ToDictionary(c => c.ColorId, c => c);
             var sizesDict = sizes.ToDictionary(s => s.SizeId, s => s);
 
+            // Dùng TryAdd để tránh lỗi nếu có 2 màu trùng prefix (dữ liệu rác)
+            var dbColorsByPrefix = new Dictionary<string, Color>();
+            var dbColorsByName = new Dictionary<string, Color>();
+            var dbColorsByHex = new Dictionary<string, Color>();
+            foreach (var color in potentialDuplicateColors)
+            {
+                dbColorsByPrefix.TryAdd(color.ColorPrefix.ToLower(), color);
+                dbColorsByName.TryAdd(color.ColorName.ToLower(), color);
+                dbColorsByHex.TryAdd(color.HexCode.ToLower(), color);
+            }
+
+            // TẠO 3 DICTIONARIES ĐỂ THEO DÕI CÁC MÀU MỚI (trong request này)
+            var newColorsByPrefix = new Dictionary<string, Color>();
+            var newColorsByName = new Dictionary<string, Color>();
+            var newColorsByHex = new Dictionary<string, Color>();
+
             // Các list tạm để batch insert
-            var newColorsToInsert = new List<Color>();
             var productColorsToInsert = new List<ProductColor>();
             var productImagesToInsert = new List<ProductImage>();
             var productVariantsToInsert = new List<ProductVariant>();
 
-            // ===== 4️⃣ Duyệt qua từng màu của sản phẩm =====
-            foreach (var colorRequest in request.ProductColor)
+            // ===== 4️⃣ TỐI ƯU 1: Giai đoạn UPLOAD (Tạo Task) =====
+            // Tạo tất cả các "job" upload
+            var uploadJobs = request.ProductColor
+                .Select(colorRequest => new ColorUploadJob(colorRequest, _cloudinaryService))
+                .ToList();
+
+            // Lấy TẤT CẢ các task từ tất cả các job
+            var allUploadTasks = uploadJobs.SelectMany(job => job.GetAllTasks()).ToList();
+
+            // Chạy TẤT CẢ các tác vụ upload song song VÀ CHỈ AWAIT MỘT LẦN
+            await Task.WhenAll(allUploadTasks);
+
+            // Thu thập kết quả (đã hoàn thành, không cần await nữa)
+            // Dùng vòng lặp for thay vì ForEach async để an toàn
+            foreach (var job in uploadJobs)
             {
-                // 🔹 Kiểm tra trùng size trong cùng 1 màu (ProductColor)
+                await job.MaterializeResultsAsync(uploadedUrls);
+            }
+
+            // ===== 5️⃣ TỐI ƯU 2: Giai đoạn XỬ LÝ (CPU-bound, không await) =====
+            // Bây giờ vòng lặp này chạy cực nhanh vì không còn I/O
+            foreach (var job in uploadJobs)
+            {
+                var colorRequest = job.Request;
+
+                // 🔹 Kiểm tra trùng size (GIỮ NGUYÊN LOGIC)
                 if (colorRequest.Variants != null && colorRequest.Variants.Count > 0)
                 {
                     var duplicateSizeIds = colorRequest.Variants
@@ -599,40 +765,38 @@ namespace VirtualTryonWomenFashion.Service.Services
                     }
                 }
 
-                var (colorId, colorPrefix) = GetOrCreateColor(colorRequest, colorsDict, colorsByPrefixDict, newColorsToInsert);
+                // 🔹 THAY ĐỔI: Dùng helper mới, trả về Color Entity
+                Color colorEntity = GetOrCreateColor(
+                                        colorRequest,
+                                        dbColorsById,
+                                        dbColorsByPrefix,
+                                        dbColorsByName,
+                                        dbColorsByHex,
+                                        newColorsByPrefix,
+                                        newColorsByName,
+                                        newColorsByHex
+                                    );
+                string colorPrefix = colorEntity.ColorPrefix; // Lấy prefix từ entity
                 var productColorId = $"{product.ProductId}-{colorPrefix}";
-
-                // ✅ Upload ảnh song song, không liên quan DbContext
-                var uploadTasks = new List<Task>();
-
-                var noBgUploadTask = _cloudinaryService.UploadImageAsync(colorRequest.NoBgImgUrl);
-                uploadTasks.Add(noBgUploadTask);
-
-                Task<List<string>>? variantImagesTask = null;
-                if (colorRequest.ProductVariantImages?.Count > 0)
-                {
-                    variantImagesTask = _cloudinaryService.UploadMultipleImagesAsync(colorRequest.ProductVariantImages);
-                    uploadTasks.Add(variantImagesTask);
-                }
-
-                await Task.WhenAll(uploadTasks);
 
                 // Tạo ProductColor entity
                 var productColor = new ProductColor
                 {
                     ProductColorId = productColorId,
                     ProductId = product.ProductId,
-                    NoBgImgUrl = noBgUploadTask.Result ?? string.Empty,
+                    NoBgImgUrl = job.NoBgUrl, // Lấy kết quả đã có
                     LensId = colorRequest.LensId,
-                    ColorId = colorId == 0 ? null : colorId
+
+                    // TỐI ƯU 2: Gán thẳng Entity, không gán Id
+                    Color = colorEntity
                 };
                 productColorsToInsert.Add(productColor);
 
                 // Thêm ảnh biến thể nếu có
-                if (variantImagesTask?.Result?.Count > 0)
+                if (job.VariantImageUrls.Count > 0)
                 {
                     productImagesToInsert.AddRange(
-                        variantImagesTask.Result.Select(url => new ProductImage
+                        job.VariantImageUrls.Select(url => new ProductImage
                         {
                             ProductColorId = productColorId,
                             ImageUrl = url
@@ -640,17 +804,11 @@ namespace VirtualTryonWomenFashion.Service.Services
                     );
                 }
 
-                // ===== 5️⃣ Tạo ProductVariant =====
+                // ===== Tạo ProductVariant (không còn await bên trong) =====
                 if (colorRequest.Variants?.Count > 0)
                 {
-                    // Upload ảnh variant song song (vì không dính DbContext)
-                    var uploadedVariantUrls = await Task.WhenAll(
-                        colorRequest.Variants.Select(v => _cloudinaryService.UploadImageAsync(v.ImageUrl))
-                    );
-
-                    for (int i = 0; i < colorRequest.Variants.Count; i++)
+                    foreach (var v in colorRequest.Variants)
                     {
-                        var v = colorRequest.Variants[i];
                         if (!sizesDict.TryGetValue(v.SizeId, out var size))
                             continue;
 
@@ -661,7 +819,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             SizeId = v.SizeId,
                             VariantName = v.VariantName,
                             Quantity = v.Quantity,
-                            ImageUrl = uploadedVariantUrls[i] ?? string.Empty,
+                            ImageUrl = job.VariantImageUrlsDict[v], // Lấy kết quả đã có
                             Status = "Active",
                             ProductWeight = v.ProductWeight,
                             ProductLength = v.ProductLength,
@@ -672,25 +830,13 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
             }
 
-            // ===== 6️⃣ Batch insert tất cả một lần =====
-            // ⚡ Lợi ích: chỉ 1 lần SaveChangesAsync cuối cùng
+            // ===== 6️⃣ TỐI ƯU 2: Giai đoạn LƯU (1 lần SaveChanges) =====
+            // ⚡ KHÔNG CẦN BATCH INSERT COLOR RIÊNG NỮA
+            // if (newColorsToInsert.Count > 0) { ... } // <-- ĐÃ BỊ XÓA
 
-            if (newColorsToInsert.Count > 0)
-            {
-                await _colorRepository.AddRangeAsync(newColorsToInsert);
-                await _unitOfWork.SaveChanges();
-
-                // Gán lại ColorId cho các productColor mới
-                var newColorsDict = newColorsToInsert.ToDictionary(c => c.ColorPrefix.ToLower(), c => c);
-                foreach (var pc in productColorsToInsert.Where(pc => pc.ColorId == null))
-                {
-                    var prefix = pc.ProductColorId.Split('-').Last().ToLower();
-                    if (newColorsDict.TryGetValue(prefix, out var color))
-                        pc.ColorId = color.ColorId;
-                }
-            }
-
-            // Gộp tất cả insert còn lại
+            // Gộp tất cả insert
+            // Khi thêm productColorsToInsert, EF sẽ tự động theo dõi các
+            // thực thể Color mới được tham chiếu trong 'productColor.Color'
             if (productColorsToInsert.Count > 0)
                 await _productColorRepository.AddRangeAsync(productColorsToInsert);
 
@@ -701,42 +847,88 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _productVariantRepository.AddRangeAsync(productVariantsToInsert);
 
             // ✅ Gọi SaveChanges một lần duy nhất cuối cùng
+            // EF sẽ tự động:
+            // 1. Bắt đầu Transaction
+            // 2. INSERT vào [Colors] (các màu mới)
+            // 3. INSERT vào [ProductColors] (với các ColorId mới/cũ chính xác)
+            // 4. INSERT vào [ProductImages]
+            // 5. INSERT vào [ProductVariants]
+            // 6. Commit Transaction
             await _unitOfWork.SaveChanges();
         }
 
-        private (int ColorId, string ColorPrefix) GetOrCreateColor(
-            CreateProductColorRequest colorRequest,
-            Dictionary<int, Color> colorsDict,
-            Dictionary<string, Color> colorsByPrefixDict,
-            List<Color> newColorsToInsert)
+        /// <summary>
+        /// Helper tối ưu: Trả về một thực thể Color (có sẵn hoặc mới)
+        /// Kiểm tra trùng lặp trên cả 3 trường: Prefix, Name, HexCode.
+        /// Sử dụng Dictionaries (O(1)) để tra cứu hiệu năng cao.
+        /// </summary>
+        private Color GetOrCreateColor(
+            CreateProductColorRequest request,
+            // Dictionaries cho màu từ DB
+            Dictionary<int, Color> dbColorsById,
+            Dictionary<string, Color> dbColorsByPrefix,
+            Dictionary<string, Color> dbColorsByName,
+            Dictionary<string, Color> dbColorsByHex,
+            // Dictionaries cho màu MỚI (trong request này)
+            Dictionary<string, Color> newColorsByPrefix,
+            Dictionary<string, Color> newColorsByName,
+            Dictionary<string, Color> newColorsByHex)
         {
-            if (colorRequest.ColorId > 0)
+            // 1. Kiểm tra bằng ID (Ưu tiên cao nhất)
+            if (request.ColorId > 0 && dbColorsById.TryGetValue(request.ColorId, out var existingColor))
             {
-                if (colorsDict.TryGetValue(colorRequest.ColorId, out var existingColor))
-                    return (existingColor.ColorId, existingColor.ColorPrefix);
+                return existingColor;
             }
 
-            var prefixLower = colorRequest.ColorPrefix.ToLower();
+            // Chuẩn bị các keys (viết thường)
+            var prefixLower = request.ColorPrefix.ToLower();
+            var nameLower = request.ColorName.ToLower();
+            var hexLower = request.HexCode.ToLower();
 
-            if (colorsByPrefixDict.TryGetValue(prefixLower, out var colorByPrefix))
-                return (colorByPrefix.ColorId, colorByPrefix.ColorPrefix);
+            // 2. Kiểm tra trùng lặp trong DB (đã load trước)
+            if (dbColorsByPrefix.TryGetValue(prefixLower, out var colorByPrefix))
+            {
+                return colorByPrefix; // Trùng Prefix
+            }
+            if (dbColorsByName.TryGetValue(nameLower, out var colorByName))
+            {
+                return colorByName; // Trùng Tên
+            }
+            if (dbColorsByHex.TryGetValue(hexLower, out var colorByHex))
+            {
+                return colorByHex; // Trùng HexCode
+            }
 
-            // Check in new colors being inserted
-            var existingNewColor = newColorsToInsert
-                .FirstOrDefault(c => c.ColorPrefix.ToLower() == prefixLower);
+            // 3. Kiểm tra trùng lặp trong các màu MỚI VỪA TẠO (trong request này)
+            //    (Đây là bước chống race-condition trong CÙNG 1 request)
+            if (newColorsByPrefix.TryGetValue(prefixLower, out var newColorByPrefix))
+            {
+                return newColorByPrefix;
+            }
+            if (newColorsByName.TryGetValue(nameLower, out var newColorByName))
+            {
+                return newColorByName;
+            }
+            if (newColorsByHex.TryGetValue(hexLower, out var newColorByHex))
+            {
+                return newColorByHex;
+            }
 
-            if (existingNewColor != null)
-                return (0, existingNewColor.ColorPrefix);
-
+            // 4. Không trùng lặp -> Tạo thực thể MỚI (chưa lưu vào DB)
             var newColor = new Color
             {
-                ColorPrefix = colorRequest.ColorPrefix,
-                HexCode = colorRequest.HexCode,
-                ColorName = colorRequest.ColorName,
+                ColorName = request.ColorName,
+                ColorPrefix = request.ColorPrefix.ToUpper(),
+                HexCode = request.HexCode.ToUpper()
+                // Gán các giá trị mặc định nếu cần (ví dụ: Status = "Active")
             };
 
-            newColorsToInsert.Add(newColor);
-            return (0, newColor.ColorPrefix);
+            // Thêm màu mới này vào cả 3 Dictionaries theo dõi
+            newColorsByPrefix[prefixLower] = newColor;
+            newColorsByName[nameLower] = newColor;
+            newColorsByHex[hexLower] = newColor;
+
+            return newColor;
         }
 
         private async Task CreateEmbeddingsForProductAsync(Product product)
@@ -1275,7 +1467,6 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-
         public async Task<MessageModel> DeleteProductAsync(string productId, bool hardDelete = false)
         {
             await _unitOfWork.BeginTransactionAsync();
@@ -1360,15 +1551,38 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 await _vectorDbService.DeleteAsync(filter: new Dictionary<string, object>
                 {
-                    { "productId", product.ProductId }
+                    { "productVariantId", product.ProductId }
                 });
             }
 
+            var imageUrlsToDelete = new List<string>();
+
             foreach (var productColor in productColors)
             {
+                // Gom ảnh từ ProductImages
+                if (productColor.ProductImages?.Any() == true)
+                {
+                    imageUrlsToDelete.AddRange(productColor.ProductImages
+                        .Where(img => !string.IsNullOrEmpty(img.ImageUrl))
+                        .Select(img => img.ImageUrl));
+                }
+
+                // Gom ảnh NoBg
+                if (!string.IsNullOrEmpty(productColor.NoBgImgUrl))
+                {
+                    imageUrlsToDelete.Add(productColor.NoBgImgUrl);
+                }
+
                 // Xóa ProductVariants khỏi database
                 if (productColor.ProductVariants?.Any() == true)
                 {
+                    var variantImageUrls = productColor.ProductVariants
+                        .Where(v => !string.IsNullOrEmpty(v.ImageUrl))
+                        .Select(v => v.ImageUrl)
+                        .ToList();
+
+                    if (variantImageUrls.Any())
+                        imageUrlsToDelete.AddRange(variantImageUrls);
                     _productVariantRepository.DeleteRange(productColor.ProductVariants);
                 }
 
@@ -1378,11 +1592,19 @@ namespace VirtualTryonWomenFashion.Service.Services
                     _productImageRepository.DeleteRange(productColor.ProductImages);
 
                 }
+            }
 
-                // Xóa ảnh NoBg trên Cloudinary nếu cần
-                if (!string.IsNullOrEmpty(productColor.NoBgImgUrl))
+            // ==== ☁️ Xóa ảnh trên Cloudinary (song song) ====
+            if (imageUrlsToDelete.Any())
+            {
+                try
                 {
-                    // await _cloudinaryService.DeleteImageAsync(productColor.NoBgImgUrl);
+                    await _cloudinaryService.DeleteMultipleImagesAsync(imageUrlsToDelete);
+                }
+                catch (Exception ex)
+                {
+                    // Ghi log nhưng không rollback transaction (vì ảnh là ngoại vi)
+                    Console.WriteLine($"[Cloudinary] Lỗi khi xóa ảnh: {ex.Message}");
                 }
             }
 
@@ -1402,5 +1624,19 @@ namespace VirtualTryonWomenFashion.Service.Services
             return await this.MapToResponseProductDto(product);
         }
 
+        public async Task<Pagination<ResponseProductDto>> GetProductWithColorRecommentAsync(PaginationParameter pagination, string hexcode, string catergory)
+        {
+            List<int> matchedColors = await _colorRecommendationSerivce.GetListHexcodeRecommend(hexcode);
+            
+            List<Product> recommendedProduct = await _productRepository.GetProductWithColorRecommend(matchedColors, catergory, pagination);
+
+            List<ResponseProductDto> responseProduct = new List<ResponseProductDto>();
+            foreach (Product item in recommendedProduct)
+            {
+                responseProduct.Add(await this.MapToResponseProductDto(item));
+            }
+            int countTotal = await _productRepository.CountProductWithColorRecommend(matchedColors,catergory);
+            return new Pagination<ResponseProductDto>(responseProduct, countTotal, pagination.PageIndex, pagination.PageSize);
+        }
     }
 }
