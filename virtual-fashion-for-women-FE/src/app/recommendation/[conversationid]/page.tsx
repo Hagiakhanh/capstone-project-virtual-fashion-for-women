@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { ChatMessageStage } from "../_componentChat/ChatMessageStage";
 import AIStateStepComponent from "../_componentChat/AIStateStepComponent";
+import { useParams } from "next/navigation";
 
 interface AIConversationDetailPageProps {
   params: { conversationid: string };
@@ -12,8 +13,8 @@ interface AIConversationDetailPageProps {
 export default function AIConversationDetailPage({
   params,
 }: AIConversationDetailPageProps) {
-  const resolvedParams = params;
-  const conversationIdNumber = Number(resolvedParams.conversationid);
+  const { conversationid } = useParams();
+  const conversationIdNumber = Number(conversationid);
   // nếu muốn kiểm tra invalid id
   if (isNaN(conversationIdNumber)) {
     console.error("Invalid conversation id:", params.conversationid);
@@ -38,7 +39,6 @@ export default function AIConversationDetailPage({
         setToNextState={setCurrentStep}
         isOnFlow={false}
       />
-
     </div>
   );
 }

@@ -66,7 +66,8 @@ export default function CreateProductPage() {
                 setColors(Array.isArray(colorsRes.data) ? colorsRes.data : []);
                 setSizes(Array.isArray(sizesRes.data) ? sizesRes.data : []);
                 setTags(Array.isArray(tagsRes.data) ? tagsRes.data : []);
-            } catch (error) {
+            } catch (error: any) {
+                messageToast.error(error);
                 console.error("Error fetching master data:", error);
             } finally {
                 setLoadingMasterData(false);
@@ -145,7 +146,7 @@ export default function CreateProductPage() {
                 colorId: 0,
                 colorName: "",
                 colorPrefix: "",
-                hexCode: "#ffffff",
+                hexCode: "#RGBRGB",
             };
         } else {
             const selectedColor = colors.find((c) => c.colorId === colorId);
@@ -269,7 +270,8 @@ export default function CreateProductPage() {
             );
 
             if (response.status === 200 || response.status === 201) {
-                setMessage("Tạo sản phẩm thành công!");
+                messageToast.success("Tạo sản phẩm thành công!");
+                //setMessage("Tạo sản phẩm thành công!");
                 setErrors([]);
                 setFormData({
                     productName: "",
@@ -282,13 +284,15 @@ export default function CreateProductPage() {
                     newTags: [],
                 });
             } else {
-                setMessage(
-                    `Lỗi: ${response.data.message || "Không thể tạo sản phẩm"}`
-                );
+                messageToast.error(`Lỗi: ${response.data.message || "Không thể tạo sản phẩm"}`);
+                //setMessage(
+                //    `Lỗi: ${response.data.message || "Không thể tạo sản phẩm"}`
+                //);
             }
         } catch (error: any) {
             console.error("Error creating product:", error);
-            setMessage(`Lỗi: ${error.response?.data?.message || error.message}`);
+            //setMessage(`Lỗi: ${error.response?.data?.message || error.message}`);
+            messageToast.error(`Lỗi: ${error.response?.data?.message || error.message}`);
         } finally {
             setLoading(false);
         }
@@ -369,38 +373,77 @@ export default function CreateProductPage() {
                                 </button>
                             </div>
 
-                            {formData.productColor.map((color, colorIndex) => (
-                                <ColorSection
-                                    key={colorIndex}
-                                    color={color}
-                                    colorIndex={colorIndex}
-                                    colors={colors}
-                                    sizes={sizes}
-                                    onUpdate={(field, value) =>
-                                        updateColor(colorIndex, field, value)
-                                    }
-                                    onRemove={() => removeColor(colorIndex)}
-                                    onColorSelect={(colorId) =>
-                                        handleColorSelect(colorIndex, colorId)
-                                    }
-                                    onAddVariant={() => addVariant(colorIndex)}
-                                    onRemoveVariant={(variantIndex) =>
-                                        removeVariant(colorIndex, variantIndex)
-                                    }
-                                    onUpdateVariant={(variantIndex, field, value) =>
-                                        updateVariant(colorIndex, variantIndex, field, value)
-                                    }
-                                    onSizeSelect={(variantIndex, sizeId) =>
-                                        handleSizeSelect(colorIndex, variantIndex, sizeId)
-                                    }
-                                    onFileChange={(file, type, variantIndex) =>
-                                        handleColorFileChange(colorIndex, file, type, variantIndex)
-                                    }
-                                    onMultipleImages={(files) =>
-                                        handleMultipleImages(colorIndex, files)
-                                    }
-                                />
-                            ))}
+                            {/* * TÍNH TOÁN DANH SÁCH TRÙNG LẶP
+                                * Chúng ta cần tính toán các danh sách này ở đây
+                                * để truyền xuống cho ColorSection
+                            */}
+                            {(() => {
+                                // 1. Danh sách màu MỚI (từ form)
+                                const usedNewNames = formData.productColor
+                                    .filter(c => c.colorId === 0 && c.colorName)
+                                    .map(c => c.colorName.toLowerCase());
+
+                                const usedNewPrefixes = formData.productColor
+                                    .filter(c => c.colorId === 0 && c.colorPrefix)
+                                    .map(c => c.colorPrefix.toLowerCase());
+ 
+                                const usedNewHexCodes = formData.productColor
+                                    .filter(c => c.colorId === 0 && c.hexCode && c.hexCode.length === 7)
+                                    .map(c => c.hexCode.toLowerCase());
+
+                                // 2. Danh sách màu ĐÃ TỒN TẠI (từ API)
+                                const existingNames = colors.map(c => c.colorName.toLowerCase());
+                                const existingPrefixes = colors.map(c => c.colorPrefix.toLowerCase());
+                                const existingHexCodes = colors.map(c => c.hexCode.toLowerCase());
+
+                                // 3. Danh sách ID màu ĐÃ DÙNG (từ form, để disable dropdown)
+                                const usedColorIds = formData.productColor
+                                    .map(c => c.colorId)
+                                    .filter(id => id !== 0);
+
+                                return formData.productColor.map((color, colorIndex) => (
+                                    <ColorSection
+                                        key={colorIndex}
+                                        color={color}
+                                        colorIndex={colorIndex}
+                                        colors={colors}
+                                        sizes={sizes}
+                                        onUpdate={(field, value) =>
+                                            updateColor(colorIndex, field, value)
+                                        }
+                                        onRemove={() => removeColor(colorIndex)}
+                                        onColorSelect={(colorId) =>
+                                            handleColorSelect(colorIndex, colorId)
+                                        }
+                                        onAddVariant={() => addVariant(colorIndex)}
+                                        onRemoveVariant={(variantIndex) =>
+                                            removeVariant(colorIndex, variantIndex)
+                                        }
+                                        onUpdateVariant={(variantIndex, field, value) =>
+                                            updateVariant(colorIndex, variantIndex, field, value)
+                                        }
+                                        onSizeSelect={(variantIndex, sizeId) =>
+                                            handleSizeSelect(colorIndex, variantIndex, sizeId)
+                                        }
+                                        onFileChange={(file, type, variantIndex) =>
+                                            handleColorFileChange(colorIndex, file, type, variantIndex)
+                                        }
+                                        onMultipleImages={(files) =>
+                                            handleMultipleImages(colorIndex, files)
+                                        }
+                                        // TRUYỀN TẤT CẢ DANH SÁCH XUỐNG
+                                        usedColorIds={usedColorIds}
+                                        // Danh sách MỚI (chứa TẤT CẢ màu mới, kể cả màu hiện tại)
+                                        usedNewNames={usedNewNames}
+                                        usedNewPrefixes={usedNewPrefixes}
+                                        usedNewHexCodes={usedNewHexCodes}
+                                        // Danh sách ĐÃ TỒN TẠI (từ DB)
+                                        existingNames={existingNames}
+                                        existingPrefixes={existingPrefixes}
+                                        existingHexCodes={existingHexCodes}
+                                     />
+                                ));
+                            })()}
                         </div>
                     </div>
 

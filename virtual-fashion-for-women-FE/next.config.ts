@@ -8,8 +8,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true, // ✅ Bỏ qua lỗi TypeScript khi build
   },
-  experimental: {
-    optimizeCss: false, // 🚫 Tắt LightningCSS, dùng PostCSS thường
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        // Bạn có thể thêm port hoặc pathname nếu cần
+      },
+    ],
   },
 };
 

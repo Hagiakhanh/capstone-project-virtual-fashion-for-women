@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createApiInstance } from "@/api/instance";
 import { typeRequestListProduct } from "@/types/product";
+import { Search } from "lucide-react";
 
 export async function POST(request: NextRequest) {
     try {
@@ -11,8 +12,6 @@ export async function POST(request: NextRequest) {
         const api = createApiInstance(request);
         const responseBE = await api.post("/product", formData, {
             headers: {
-                // Đừng set Content-Type ở đây,
-                // axios sẽ tự set khi body là FormData
             },
         });
 
@@ -36,12 +35,35 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
     try {
         const api = createApiInstance(request);
-        const response = await api.get('/product');
-        return NextResponse.json(response.data);
+
+        const { searchParams } = new URL(request.url);
+        const pageIndex = searchParams.get("pageIndex") || "1";
+        const pageSize = searchParams.get("pageSize") || "10";
+        const searchTerm = searchParams.get("searchTerm") || "";
+        const status = searchParams.get("status") || "all";
+
+        const response = await api.get("/product", {
+          params: { pageIndex, pageSize, searchTerm, status },
+        });
+        if (response.status === 200) {
+            const paginationHeader = response?.headers?.get('X-Pagination');
+            if (paginationHeader) {
+                const paginationMetadata = JSON.parse(paginationHeader);
+                return NextResponse.json({
+                data: response.data?.data,
+                pagination: paginationMetadata
+                }, { status: 200 });
+            };
+            return NextResponse.json({ data: response.data?.data }, { status: 200 });
+        }
+
+    //return NextResponse.json(response.data);
     } catch (error: any) {
+        console.error("❌ Lỗi khi gọi API backend:", error);
+
         return NextResponse.json(
-          { message: error.response?.data?.message || 'Failed to fetch products' },
-          { status: error.response?.status || 500 }
+            { message: error.response?.data?.message || "Failed to fetch products" },
+            { status: error.response?.status || 500 }
         );
     }
 }
