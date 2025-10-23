@@ -5,11 +5,12 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "export":"next export",
+    "export": "next export",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@microsoft/signalr": "^9.0.6",
     "antd": "^5.26.7",
     "axios": "^1.11.0",
     "env": "^0.0.2",
