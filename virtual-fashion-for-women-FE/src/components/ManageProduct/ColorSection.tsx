@@ -2,7 +2,7 @@
 import { Trash2, Upload, Plus } from "lucide-react";
 import { Color, Size, ProductColorRequest } from "@/models/RequestCreateProduct";
 import VariantItem from "./VariantItem";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ImageUploader from "./ImageUploader";
 import Image from "next/image";
 //import NewColorModal from "./NewColorModal";
@@ -27,7 +27,26 @@ interface ColorSectionProps {
         variantIndex?: number
     ) => void;
     onMultipleImages: (files: File[]) => void;
+    usedColorIds: number[]; // <-- THÊM PROP MỚI
+    usedNewNames: string[];
+    usedNewPrefixes: string[];
+    usedNewHexCodes: string[];
+
+    existingNames: string[];
+    existingPrefixes: string[];
+    existingHexCodes: string[];
 }
+
+// HÀM HELPER: Xóa 1 phần tử đầu tiên khỏi mảng
+const removeFirst = (arr: string[], item: string): string[] => {
+    if (!item) return arr; // Nếu item rỗng, trả về mảng gốc
+    const index = arr.indexOf(item);
+    if (index > -1) {
+        // Tạo mảng mới không chứa phần tử tại vị trí 'index'
+        return [...arr.slice(0, index), ...arr.slice(index + 1)];
+    }
+    return arr; // Không tìm thấy, trả về mảng gốc
+};
 
 export default function ColorSection({
     color,
@@ -43,20 +62,16 @@ export default function ColorSection({
     onSizeSelect,
     onFileChange,
     onMultipleImages,
+    usedColorIds,
+    usedNewNames,
+    usedNewPrefixes,
+    usedNewHexCodes,
+    existingNames,
+    existingPrefixes,
+    existingHexCodes,
     }: ColorSectionProps) {
     const [isColorModalOpen, setIsColorModalOpen] = useState(false);
     const [multiPreviews, setMultiPreviews] = useState<string[]>([]);
-
-    // Cập nhật hàm xử lý chọn màu
-    const handleColorSelectChange = (colorId: number) => {
-        onColorSelect(colorId); // Gọi hàm gốc từ page.tsx để cập nhật state
-
-        if (colorId === 0) {
-            setIsColorModalOpen(true); // Tự động mở modal khi chọn "Tạo màu mới"
-        } else {
-            setIsColorModalOpen(false); // Đóng modal nếu đang mở
-        }
-    };
 
     const handleMultipleImagesSelect = (
         e: React.ChangeEvent<HTMLInputElement>
@@ -105,6 +120,77 @@ export default function ColorSection({
         };
     }, [color.productVariantImages]); // Chạy lại khi mảng file thay đổi
 
+    // <-- THAY ĐỔI 1: Tính toán các sizeId đã được sử dụng BÊN TRONG MÀU NÀY
+    const usedSizeIds = color.variants
+        .map(v => v.sizeId)
+        .filter(id => id !== 0); // Lọc bỏ giá trị 0 (chưa chọn)
+
+    // 1. Lọc ra danh sách "các màu mới khác"
+    const currentPrefixLower = (color.colorPrefix || "").toLowerCase();
+    const currentHexLower = (color.hexCode || "").toLowerCase();
+    const otherNewNames = removeFirst(usedNewNames, (color.colorName || "").toLowerCase());
+    const otherNewPrefixes = removeFirst(usedNewPrefixes, currentPrefixLower);
+    const otherNewHexCodes = removeFirst(usedNewHexCodes, currentHexLower);
+
+    // 2. Tạo các hàm validation ổn định
+    const getNameError = useCallback((name: string): string => {
+        const nameLower = (name || "").toLowerCase();
+        if (!nameLower) return "";
+        if (otherNewNames.includes(nameLower)) return "Tên màu này đã được dùng cho một màu mới khác.";
+        if (existingNames.includes(nameLower)) return "Tên màu này đã tồn tại trong hệ thống.";
+        return "";
+    }, [otherNewNames, existingNames]);
+
+    const getPrefixError = useCallback((prefix: string): string => {
+        const prefixLower = (prefix || "").toLowerCase();
+        if (!prefixLower) return "";
+        if (otherNewPrefixes.includes(prefixLower)) return "Mã prefix này đã được dùng cho một màu mới khác.";
+        if (existingPrefixes.includes(prefixLower)) return "Mã prefix này đã tồn tại trong hệ thống.";
+        return "";
+    }, [otherNewPrefixes, existingPrefixes]);
+
+    const getHexError = useCallback((hex: string): string => {
+        const hexLower = (hex || "").toLowerCase();
+        if (!hexLower || hexLower.length < 7) return "";
+        if (otherNewHexCodes.includes(hexLower)) return "Mã hex này đã được dùng cho một màu mới khác.";
+        if (existingHexCodes.includes(hexLower)) return "Mã hex này đã tồn tại trong hệ thống.";
+        return "";
+    }, [otherNewHexCodes, existingHexCodes]);
+
+    // 3. Tính toán trạng thái lỗi và hợp lệ của modal
+    const nameError = getNameError(color.colorName || "");
+    const prefixError = getPrefixError(color.colorPrefix || "");
+    const hexError = getHexError(color.hexCode || "");
+    const isModalFormValid =
+        !!color.colorName &&
+        !!color.colorPrefix &&
+        color.hexCode?.length === 7 &&
+        !nameError &&
+        !prefixError &&
+        !hexError;
+
+    // 4. Tạo các hàm handler để truyền xuống modal
+    const handleModalNameChange = (value: string) => onUpdate("colorName", value);
+    const handleModalPrefixChange = (value: string) => onUpdate("colorPrefix", value.toUpperCase());
+    const handleModalHexChange = (value: string) => onUpdate("hexCode", value.toUpperCase());
+
+    const handleModalConfirm = () => {
+        if (!isModalFormValid) {
+            alert("Vui lòng điền đầy đủ thông tin và sửa các lỗi (nếu có).");
+            return;
+        }
+        setIsColorModalOpen(false);
+    };
+    
+    const handleColorSelectChange = (colorId: number) => {
+        onColorSelect(colorId);
+        if (colorId === 0) {
+            setIsColorModalOpen(true);
+        } else {
+            setIsColorModalOpen(false);
+        }
+    };
+
     return (
         <div className="border rounded-lg p-4 mb-4 bg-gray-50">
             <div className="flex justify-between items-center mb-4">
@@ -132,11 +218,22 @@ export default function ColorSection({
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
                             <option value={0}>-- Tạo màu mới --</option>
-                            {colors.map((c) => (
-                                <option key={c.colorId} value={c.colorId}>
-                                {c.colorName} ({c.colorPrefix})
-                                </option>
-                            ))}
+                            {colors.map((c) => {
+                                // <-- LOGIC VÔ HIỆU HÓA ĐƯỢC THÊM TẠI ĐÂY
+                                const isUsedByAnother = 
+                                    usedColorIds.includes(c.colorId) && c.colorId !== color.colorId;
+                                
+                                return (
+                                    <option 
+                                        key={c.colorId} 
+                                        value={c.colorId}
+                                        disabled={isUsedByAnother}
+                                        className={isUsedByAnother ? "text-gray-300 bg-gray-200" : ""}
+                                    >
+                                        {c.colorName} ({c.colorPrefix})
+                                    </option>
+                                );
+                            })}
                         </select>
                     </div>
 
@@ -264,26 +361,26 @@ export default function ColorSection({
                             }
                             onRemove={() => onRemoveVariant(variantIndex)}
                             onSizeSelect={(sizeId) => onSizeSelect(variantIndex, sizeId)}
-                            onFileChange={(file) =>
-                                onFileChange(file, "variant", variantIndex)
-                            }
+                            usedSizeIds={usedSizeIds}
                         />
                     ))}
                 </div>
             </div>
             {/* Render Modal (chỉ mở khi isColorModalOpen=true VÀ colorId=0) */}
-            {/* <NewColorModal
-                isOpen={isColorModalOpen && color.colorId === 0}
-                onClose={() => setIsColorModalOpen(false)}
-                colorData={color}
-                onUpdate={onUpdate}
-            /> */}
             <ColorModal
                 isOpen={isColorModalOpen}
                 onClose={() => setIsColorModalOpen(false)}
                 mode="create"
                 colorData={color}
-                onUpdate={onUpdate}
+                onNameChange={handleModalNameChange}
+                onPrefixChange={handleModalPrefixChange}
+                onHexChange={handleModalHexChange}
+                onConfirm={handleModalConfirm}
+                // Truyền lỗi và trạng thái hợp lệ
+                nameError={nameError}
+                prefixError={prefixError}
+                hexError={hexError}
+                isFormValid={isModalFormValid}
             />
 
         </div>

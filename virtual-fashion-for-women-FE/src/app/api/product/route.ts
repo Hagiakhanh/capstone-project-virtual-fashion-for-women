@@ -11,8 +11,6 @@ export async function POST(request: NextRequest) {
         const api = createApiInstance(request);
         const responseBE = await api.post("/product", formData, {
             headers: {
-                // Đừng set Content-Type ở đây,
-                // axios sẽ tự set khi body là FormData
             },
         });
 

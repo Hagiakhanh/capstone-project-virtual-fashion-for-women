@@ -8,6 +8,7 @@ interface UpdateVariantItemProps {
     sizes: Size[];
     onUpdate: (field: string, value: any) => void;
     onRemove: () => void;
+    usedSizeIds: number[];
 }
 
 export default function UpdateVariantItem({
@@ -16,6 +17,7 @@ export default function UpdateVariantItem({
     sizes,
     onUpdate,
     onRemove,
+    usedSizeIds,
 }: UpdateVariantItemProps) {
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -82,11 +84,21 @@ export default function UpdateVariantItem({
              			className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
              		>
              			<option value="">-- Chọn size --</option>
-             			{sizes.map(size => (
-             				<option key={size.sizeId} value={size.sizeId}>
-           					{size.sizeCode}
-             				</option>
-             			))}
+                        {sizes.map(size => {
+                            // <-- THÊM LOGIC VÔ HIỆU HÓA SIZE
+                            const isUsedByAnother = 
+                                usedSizeIds.includes(size.sizeId) && size.sizeId !== variant.sizeId;
+                            return (
+                                <option 
+                                    key={size.sizeId} 
+                                    value={size.sizeId}
+                                    disabled={isUsedByAnother}
+                                    className={isUsedByAnother ? "text-gray-300 bg-gray-200" : ""}
+                                >
+                                    {size.sizeCode}
+                                </option>
+                            );
+                        })}
              		</select>
          	    </div>
 

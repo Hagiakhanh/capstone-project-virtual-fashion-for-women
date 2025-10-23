@@ -20,7 +20,8 @@ interface VariantItemProps {
     onUpdate: (field: string, value: any) => void;
     onRemove: () => void;
     onSizeSelect: (sizeId: number) => void;
-    onFileChange: (file: File) => void;
+    //onFileChange: (file: File) => void;
+    usedSizeIds: number[];
 }
 
 export default function VariantItem({
@@ -30,12 +31,9 @@ export default function VariantItem({
     onUpdate,
     onRemove,
     onSizeSelect,
+    usedSizeIds,
     //onFileChange,
 }: VariantItemProps) {
-    // const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     const file = e.target.files?.[0];
-    //     if (file) onFileChange(file);
-    // };
 
     return (
         <div className="border border-gray-200 rounded-md p-3 mb-3 bg-white">
@@ -75,11 +73,22 @@ export default function VariantItem({
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                         <option value={0}>-- Chọn size --</option>
-                        {sizes.map((s) => (
-                        <option key={s.sizeId} value={s.sizeId}>
-                            {s.sizeCode}
-                        </option>
-                        ))}
+                        {sizes.map((s) => {
+                            // <-- LOGIC VÔ HIỆU HÓA ĐƯỢC THÊM TẠI ĐÂY
+                            const isUsedByAnother = 
+                                usedSizeIds.includes(s.sizeId) && s.sizeId !== variant.sizeId;
+
+                            return (
+                                <option 
+                                    key={s.sizeId} 
+                                    value={s.sizeId}
+                                    disabled={isUsedByAnother}
+                                    className={isUsedByAnother ? "text-gray-300 bg-gray-200" : ""}
+                                >
+                                    {s.sizeCode}
+                                </option>
+                            );
+                        })}
                     </select>
                 </div>
 
