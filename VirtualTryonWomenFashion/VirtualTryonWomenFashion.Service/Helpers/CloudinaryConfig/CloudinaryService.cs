@@ -10,6 +10,9 @@ namespace VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig
     {
         private readonly IOptions<CloudinarySettings> _config;
         private readonly Cloudinary _cloudinary;
+        private static readonly string[] _allowedContentTypes = { "image/jpeg", "image/png", "image/webp", "image/gif" };
+
+        private const long _maxFileSize = 1 * 1024 * 1024;
 
         public CloudinaryService(IOptions<CloudinarySettings> config)
         {
@@ -25,6 +28,14 @@ namespace VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig
         public async Task<string> UploadImageAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
+                return null;
+
+            // 2️⃣ Kiểm tra loại file (MIME type)
+            if (!_allowedContentTypes.Contains(file.ContentType.ToLower()))
+                return null;
+
+            // 3️⃣ Kiểm tra kích thước file
+            if (file.Length > _maxFileSize)
                 return null;
 
             // Tạo stream từ file
@@ -45,17 +56,6 @@ namespace VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig
             return result.Error != null ? null : result.SecureUrl.ToString();
         }
 
-        /*public async Task<List<string>> UploadMultipleImagesAsync(List<IFormFile> files)
-        {
-            if (files == null || !files.Any())
-                return new List<string>();
-
-            var uploadTasks = files.Select(UploadImageAsync);
-            var urls = await Task.WhenAll(uploadTasks);
-
-            return urls.Where(url => url != null).ToList();
-        }*/
-
         public async Task<List<string>> UploadMultipleImagesAsync(List<IFormFile> files)
         {
             if (files == null || !files.Any())
@@ -68,6 +68,12 @@ namespace VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig
 
             foreach (var file in files)
             {
+                // Bỏ qua file không hợp lệ sớm
+                if (file == null ||
+                    file.Length == 0 ||
+                    !_allowedContentTypes.Contains(file.ContentType.ToLower()) ||
+                    file.Length > _maxFileSize)
+                    continue;
                 // Chờ để có được một "suất" chạy
                 await semaphore.WaitAsync();
 

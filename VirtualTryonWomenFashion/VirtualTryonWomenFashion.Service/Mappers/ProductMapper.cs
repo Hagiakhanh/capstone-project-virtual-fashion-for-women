@@ -22,6 +22,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 ProductSlug = product.ProductSlug,
                 Description = product.Description,
                 MainImageUrl = product.MainImageUrl,
+                IsDeleted = product.IsDeleted,
                 CreatedAt = product.CreatedAt,
                 CategoryId = product.Category.CategoryId,
                 ProductColors = product.ProductColors?.Select(pc => new ResponseProductColorDto
