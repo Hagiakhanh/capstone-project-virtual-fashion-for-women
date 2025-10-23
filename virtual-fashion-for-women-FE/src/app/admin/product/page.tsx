@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/models/RequestUpdateProduct';
 import { api } from '@/api/instance';
+import { messageToast } from '@/helpers/toastHelper';
 
 export default function ProductListPage() {
     const router = useRouter();
@@ -19,9 +20,10 @@ export default function ProductListPage() {
             setLoading(true);
             const response = await api.get('/product'); // ✅ gọi trực tiếp backend
             setProducts(response.data.data || []);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching products:', error);
-            alert('Không thể tải danh sách sản phẩm');
+            //alert('Không thể tải danh sách sản phẩm');
+            messageToast.error('Không thể tải danh sách sản phẩm', error);
         } finally {
             setLoading(false);
         }
@@ -33,14 +35,17 @@ export default function ProductListPage() {
         try {
             const response = await api.delete(`/product/${productId}`); // ✅ gọi trực tiếp backend
             if (response.status === 200) {
-                alert('Xóa sản phẩm thành công!');
+                //alert('Xóa sản phẩm thành công!');
+                messageToast.success('Xóa sản phẩm thành công!');
                 fetchProducts();
             } else {
-                alert(response.data.message || 'Xóa sản phẩm thất bại');
+                //alert(response.data.message || 'Xóa sản phẩm thất bại');
+                messageToast.error(response.data.message || 'Xóa sản phẩm thất bại');
             }
         } catch (error) {
             console.error('Error deleting product:', error);
-            alert('Có lỗi xảy ra khi xóa sản phẩm');
+            //alert('Có lỗi xảy ra khi xóa sản phẩm');
+            messageToast.error('Có lỗi xảy ra khi xóa sản phẩm');
         }
     };
 

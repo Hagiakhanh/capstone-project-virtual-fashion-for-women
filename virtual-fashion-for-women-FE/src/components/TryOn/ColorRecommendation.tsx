@@ -1,36 +1,36 @@
 'use client';
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { X, Search } from "lucide-react";
 import { Category } from "@/models/RequestCreateProduct";
 import { api } from "@/api/instance";
 import LoadingSpinner from "../Loading/LoadingSpinner";
 
-export default function SelectItemTryOn({
+export default function ColorRecommendation({
     category = [],
+    selectedHexcode,
     onClose,
     onSelect,
-    onReset,
 }: {
     category?: Category[];
+    selectedHexcode?: string;
     onClose: () => void;
     onSelect: (item: { image: string; name: string; price: string }) => void;
-    onReset: () => void;
 }) {
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(
         category[0] || null
     );
-    const [searchText, setSearchText] = useState("");
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-
-    const handFetchProducts = async () => {
+    const hasFetched = useRef(false);
+    // console.log("selectedHexcode", selectedHexcode);
+    const fetchColorRecommendationProduct = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/product/search', {
+            const response = await api.get('/color-recommendation', {
                 params: {
                     PageIndex: 1,
                     PageSize: 100,
-                    ProductName: searchText,
+                    Hexcode: selectedHexcode,
                     CategoryName: selectedCategory?.categoryName || ''
                 }
             });
@@ -57,8 +57,10 @@ export default function SelectItemTryOn({
     }
 
     useEffect(() => {
-        handFetchProducts();
-    }, [selectedCategory, searchText]);
+        if (hasFetched.current) return;
+        hasFetched.current = true;
+        fetchColorRecommendationProduct();
+    }, [selectedCategory, selectedHexcode]);
 
     return (
         <div
@@ -78,7 +80,7 @@ export default function SelectItemTryOn({
                 </button>
 
                 <h2 className="text-2xl font-semibold mb-4 text-gray-800 text-center">
-                    Chọn một loại quần áo
+                    Các sản phẩm gợi ý phù hợp với màu bạn chọn
                 </h2>
 
                 {/* Category buttons */}
@@ -98,18 +100,6 @@ export default function SelectItemTryOn({
                         ))}
                     </div>
                 )}
-
-                {/* Ô search */}
-                <div className="relative mb-4">
-                    <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm sản phẩm..."
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
-                    />
-                </div>
                 {loading ? (<LoadingSpinner size={50} />) : (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto pr-2">
                     {products.length > 0 ? (
                         products.map((item, index) => (
@@ -140,15 +130,6 @@ export default function SelectItemTryOn({
 
                 {/* Footer buttons */}
                 <div className="flex justify-end mt-6 gap-3">
-                    <button
-                        onClick={() => {
-                            onReset();
-                            onClose();
-                        }}
-                        className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-100 hover:border-gray-400 transition-colors"
-                    >
-                        Reset
-                    </button>
                     <button
                         onClick={onClose}
                         className="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-gray-300 transition-colors"
