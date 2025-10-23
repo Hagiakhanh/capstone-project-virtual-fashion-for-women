@@ -1,7 +1,9 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.Extensions.Options;
+using System.Net.Mime;
 using System.Text.RegularExpressions;
 
 namespace VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig
@@ -184,6 +186,24 @@ namespace VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig
                 // Nếu URL không hợp lệ
                 return null;
             }
+        }
+
+        public async Task<string> UploadImageFromUrlAsync(string imageUrl)  // upload từ URL
+        {
+            using var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync(imageUrl);
+            response.EnsureSuccessStatusCode();
+
+            var stream = await response.Content.ReadAsStreamAsync();
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription("image.jpg", stream),
+                Transformation = new Transformation().Quality("auto").FetchFormat("auto"),
+                UploadPreset = _config.Value.UploadPreset
+            };
+
+            var result = await _cloudinary.UploadAsync(uploadParams);
+            return result.Error != null ? null : result.SecureUrl.ToString();
         }
     }
 }

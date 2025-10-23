@@ -10,6 +10,7 @@ using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.GenericRepository;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace VirtualTryonWomenFashion.Data.Repositories
 {
@@ -241,6 +242,55 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             }
 
             return product;
+        }
+
+        public async Task<List<Product>> GetProductWithColorRecommend(List<int> recommendedColors, string categoryName, PaginationParameter pagination)
+        {
+            var products = await _context.Products
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductVariants).ThenInclude(pv => pv.Size)
+                .Include(p => p.ProductColors.Where(pc => pc.ColorId.HasValue && recommendedColors.Contains(pc.ColorId.Value)))
+                    .ThenInclude(pc => pc.Color)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductImages)
+                .Include(p => p.Wishlists)
+                .Include(p => p.ProductInSaleCampaigns)
+                .Include(p => p.Category)
+                .Include(p => p.Tags)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.Color)
+
+                .Where(p => p.ProductColors.Any(pc => recommendedColors.Contains(pc.ColorId.Value)) 
+                    && p.IsDeleted!= true && (p.Category.CategoryName.Contains(categoryName)|| string.IsNullOrEmpty(categoryName)))
+                .Distinct()
+                .Skip((pagination.PageIndex - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+            return products;
+        }
+
+        public async Task<int> CountProductWithColorRecommend(List<int> recommendedColors, string categoryName)
+        {
+            var products = await _context.Products
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductVariants).ThenInclude(pv => pv.Size)
+                .Include(p => p.ProductColors.Where(pc => pc.ColorId.HasValue && recommendedColors.Contains(pc.ColorId.Value)))
+                    .ThenInclude(pc => pc.Color)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.ProductImages)
+                .Include(p => p.Wishlists)
+                .Include(p => p.ProductInSaleCampaigns)
+                .Include(p => p.Category)
+                .Include(p => p.Tags)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.Color)
+
+                .Where(p => p.ProductColors.Any(pc => recommendedColors.Contains(pc.ColorId.Value))
+                    && p.IsDeleted != true && (p.Category.CategoryName.Contains(categoryName) || string.IsNullOrEmpty(categoryName)))
+                .Distinct()
+                .CountAsync();
+
+            return products;
         }
     }
 }

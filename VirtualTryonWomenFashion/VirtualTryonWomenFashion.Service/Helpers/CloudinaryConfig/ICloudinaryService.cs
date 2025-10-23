@@ -9,5 +9,6 @@ namespace VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig
         Task<List<string>> UploadMultipleImagesAsync(List<IFormFile> files);
         Task<DeletionResult> DeleteImageAsync(string imageUrl);
         Task<Dictionary<string, string>> DeleteMultipleImagesAsync(List<string> imageUrls);
+        Task<string> UploadImageFromUrlAsync(string imageUrl);
     }
 }

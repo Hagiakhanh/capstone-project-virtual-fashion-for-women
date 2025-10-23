@@ -21,5 +21,7 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
         Task<List<Product>> SearchProductsWithIncludes(string productName, string categoryName, string productSort, PaginationParameter pagination);
         Task<int> CountProductsAsync(string? searchTerm = null, string? status = "all");
         Task<int> CountSearchProductsAsync(string productName, string categoryName);
+        Task<List<Product>> GetProductWithColorRecommend(List<int> recommendedColors, string categoryName, PaginationParameter pagination);
+        Task<int> CountProductWithColorRecommend(List<int> recommendedColors, string categoryName);
     }
 }

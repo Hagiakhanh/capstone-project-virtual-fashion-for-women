@@ -30,5 +30,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
             ProductSearchRequest request,
             PaginationParameter pagination);
         Task<MessageModel> DeleteProductAsync(string productId, bool hardDelete = false);
+
+        Task<Pagination<ResponseProductDto>> GetProductWithColorRecommentAsync(PaginationParameter pagination, string hexcode, string catergory);
     }
 }
