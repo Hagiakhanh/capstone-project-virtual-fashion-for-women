@@ -19,7 +19,8 @@ namespace VirtualTryonWomenFashion.Data.Repositories
 
         public async Task<TicketChat> GetTicketChatBySlug(string slug)
         {
-            return await _context.TicketChats.FirstOrDefaultAsync(x => x.Slug == slug);
+            return await _context.TicketChats.Include(x => x.Messages)
+                .FirstOrDefaultAsync(x => x.Slug == slug);
         }
     }
 }

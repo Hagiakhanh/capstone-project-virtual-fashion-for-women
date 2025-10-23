@@ -35,6 +35,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
                     Message = "Dữ liệu đầu vào không hợp lệ"
                 });
             }
+
             try
             {
                 MessageModel result = await _messageService.SendMessageToTicketChat(requestSendMessageTicket);
@@ -58,9 +59,11 @@ namespace VirtualTryonWomenFashion.API.Controllers
                     Message = "Dữ liệu đầu vào không hợp lệ"
                 });
             }
+
             try
             {
-                MessageModelWithData<ResponseCreateTicketChat> result = await _ticketChatService.CreateTicketChatForCustomer(requestCreateTicketChat);
+                MessageModelWithData<ResponseCreateTicketChat> result =
+                    await _ticketChatService.CreateTicketChatForCustomer(requestCreateTicketChat);
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
@@ -81,9 +84,11 @@ namespace VirtualTryonWomenFashion.API.Controllers
                     Message = "Dữ liệu đầu vào không hợp lệ"
                 });
             }
+
             try
             {
-                MessageModelWithData<ResponseAssignTicketChat> result = await _ticketChatService.AssignStaffToTicketChat(requestAssignTicketChat);
+                MessageModelWithData<ResponseAssignTicketChat> result =
+                    await _ticketChatService.AssignStaffToTicketChat(requestAssignTicketChat);
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
@@ -114,7 +119,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
         {
             try
             {
-                MessageModelWithData<ResponseGetAllTicketChat> result = await _ticketChatService.GetTicketChatForStaff(page, ticketChatStatusEnum, isDateDecrease);
+                MessageModelWithData<ResponseGetAllTicketChat> result =
+                    await _ticketChatService.GetTicketChatForStaff(page, ticketChatStatusEnum, isDateDecrease);
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
@@ -123,5 +129,52 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
+        [HttpGet("staff/open-tickets")]
+        [Authorize(Roles = "Staff")]
+        public async Task<IActionResult> GetOpenTicketAssignForStaff()
+        {
+            try
+            {
+                MessageModelWithData<List<TicketInformation>> result =
+                    await _ticketChatService.GetOpenTicketAssignForStaff();
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("customer/open-tickets")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> GetOpenTicketForCustomer()
+        {
+            try
+            {
+                MessageModelWithData<Pagination<ResponseCustomerTicketChat>> result =
+                    await _ticketChatService.GetOpenTicketForCustomer(new PaginationParameter());
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("{slug}/messages")]
+        [Authorize(Roles = "Customer, Staff")]
+        public async Task<IActionResult> GetTicketChatMessages(string slug)
+        {
+            try
+            {
+                MessageModelWithData<ResponseTicketMessage> result =
+                    await _ticketChatService.GetTicketChatMessageBySlug(slug);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }

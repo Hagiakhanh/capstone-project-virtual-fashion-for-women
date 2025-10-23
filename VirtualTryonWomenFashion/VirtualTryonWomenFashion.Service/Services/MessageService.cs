@@ -316,11 +316,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             int result = await _unitOfWork.SaveChanges();
             if (result > 0)
             {
-                ResponseSendMessageTicket responseSendMessageTicket = new ResponseSendMessageTicket
+                TicketMessageDetail responseSendMessageTicket = new TicketMessageDetail
                 {
+                    MessageId = newMessage.MessageId,
                     SenderId = newMessage.SenderId.Value,
                     Content = newMessage.Content,
-                    CreateAt = newMessage.CreatedAt
+                    CreatedAt = newMessage.CreatedAt,
+                    OwnerRole = senderUser.Role.RoleId
                 };
                 // Broadcast dữ liệu
                 await _ticketChatHub.Clients.Group(requestSendMessageTicket.TicketSlug)

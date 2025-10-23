@@ -150,13 +150,13 @@ app.UseHttpsRedirection();
 
 app.Use(async (context, next) =>
 {
-    // Ch? ·p d?ng logic n‡y cho c·c request ??n Hub c?a b?n
+    // Ch? √°p d?ng logic n√†y cho c√°c request ??n Hub c?a b?n
     if (context.Request.Path.StartsWithSegments("/chathub"))
     {
         if (context.Request.Cookies.TryGetValue("token", out var token))
         {
-            // ThÍm token v‡o Header Authorization. Vi?c n‡y cho phÈp JWT Middleware 
-            // x·c th?c k?t n?i SignalR ? b??c ti?p theo (app.UseAuthentication).
+            // Th√™m token v√†o Header Authorization. Vi?c n√†y cho ph√©p JWT Middleware 
+            // x√°c th?c k?t n?i SignalR ? b??c ti?p theo (app.UseAuthentication).
             context.Request.Headers.Add("Authorization", $"Bearer {token}");
         }
     }
