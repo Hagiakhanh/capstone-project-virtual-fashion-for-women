@@ -10,5 +10,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface ITicketChatRepository : IGenericRepository<TicketChat>
     {
+        public Task<TicketChat> GetTicketChatBySlug(string slug);
     }
 }

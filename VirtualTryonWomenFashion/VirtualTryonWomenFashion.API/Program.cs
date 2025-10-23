@@ -15,6 +15,7 @@ using VirtualTryonWomenFashion.Service.Workers;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using VirtualTryonWomenFashion.Service.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options =>
@@ -51,6 +52,7 @@ builder.Services.AddHttpClient<IFitRoomService, FitRoomService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(120);
 });
+builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
@@ -147,9 +149,26 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
+app.Use(async (context, next) =>
+{
+    // Ch? áp d?ng logic này cho các request ??n Hub c?a b?n
+    if (context.Request.Path.StartsWithSegments("/chathub"))
+    {
+        if (context.Request.Cookies.TryGetValue("token", out var token))
+        {
+            // Thêm token vào Header Authorization. Vi?c này cho phép JWT Middleware 
+            // xác th?c k?t n?i SignalR ? b??c ti?p theo (app.UseAuthentication).
+            context.Request.Headers.Add("Authorization", $"Bearer {token}");
+        }
+    }
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("AllowAll");
+
+app.MapHub<TicketChatHub>("/chathub");
 
 app.MapControllers();
 
