@@ -56,7 +56,7 @@ const ProductDetailPage: React.FC = () => {
         <Col xs={24} md={12}>
           <Card
             bordered={false}
-            cover={
+            cover={ 
               <img
                 alt="product"
                 src="/product.jpg" // thay bằng link ảnh thực tế

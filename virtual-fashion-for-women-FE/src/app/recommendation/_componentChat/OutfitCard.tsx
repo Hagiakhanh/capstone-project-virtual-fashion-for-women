@@ -3,11 +3,17 @@ import { Card } from "antd";
 interface OutfitCardProps {
   name: string;
   imageUrl: string;
+  onSelect?: () => void;
 }
 
-export const OutfitCard: React.FC<OutfitCardProps> = ({ name, imageUrl }) => (
+export const OutfitCard: React.FC<OutfitCardProps> = ({
+  name,
+  imageUrl,
+  onSelect,
+}) => (
   <Card
-    className="w-[280px] rounded-xl overflow-hidden bg-[#F9F6F0] shadow-lg hover:shadow-xl transition-shadow"
+    onClick={onSelect}
+    className="cursor-pointer rounded-xl overflow-hidden bg-[#F9F6F0] shadow-lg hover:shadow-xl transition-shadow"
     cover={
       <img
         alt={name}

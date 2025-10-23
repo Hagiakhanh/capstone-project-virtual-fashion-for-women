@@ -39,6 +39,8 @@ export type ComponentSuggested = {
   id: string;
   name: string;
   ImageUrl: string;
+  ProductSlug: string;
+  ProductColorId: string;
   reason: string;
   productId: string;
 };

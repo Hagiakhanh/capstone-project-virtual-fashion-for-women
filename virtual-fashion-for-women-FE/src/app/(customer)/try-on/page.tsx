@@ -257,18 +257,32 @@ export default function VirtualTryOnPage() {
 
     useEffect(() => {
         const fetchCategories = async () => {
-            const category = await api.get('/category');
-            if (category.status === 200) {
-                setCategory(category.data);
-                const productColorId = sessionStorage.getItem("productColor");
-                if (productColorId) {
-                    const cleanId = JSON.parse(productColorId);
-                    fetchProductColor(cleanId, category.data);
-                }
+          const categoryRes = await api.get('/category');
+          if (categoryRes.status === 200) {
+            setCategory(categoryRes.data);
+      
+            // Đọc danh sách productColorID (mảng chuỗi)
+            const storedItems = sessionStorage.getItem("productColor");
+            if (storedItems) {
+              try {
+                const parsedItems = JSON.parse(storedItems);
+                const productColorIds = Array.isArray(parsedItems) ? parsedItems : [parsedItems];
+      
+                await Promise.all(
+                  productColorIds.map(id => fetchProductColor(id, categoryRes.data))
+                );
+      
+              } catch (e) {
+                console.error("❌ Lỗi parse sessionStorage productColor:", e);
+              } finally {
+              }
             }
+          }
         };
+      
         fetchCategories();
-    }, []);
+      }, []);
+      
 
     const topCategories = category.filter(
         (c) => c.bodyPart === 'Thân trên' || c.bodyPart === 'Toàn thân'
