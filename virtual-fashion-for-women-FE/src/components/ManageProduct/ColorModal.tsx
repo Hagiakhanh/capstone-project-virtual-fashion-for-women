@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { messageToast } from "@/helpers/toastHelper";
 
 // Định nghĩa lại các props để component này trở nên "ngu ngốc" (Dumb Component)
 // Nó chỉ nhận dữ liệu và hàm xử lý từ component cha.
@@ -42,7 +43,8 @@ export default function ColorModal({
     const handleAttemptClose = () => {
         // Vẫn giữ lại alert để trải nghiệm người dùng tốt hơn
         if (nameError || prefixError || hexError) {
-            alert("Tên màu, mã màu hoặc Hex code đang bị trùng. Vui lòng sửa lại trước khi đóng.");
+            //alert("Tên màu, mã màu hoặc Hex code đang bị trùng. Vui lòng sửa lại trước khi đóng.");
+            messageToast.error("Tên màu, mã màu hoặc Hex code đang bị trùng. Vui lòng sửa lại trước khi đóng.");
             return;
         }
         onClose();
