@@ -40,6 +40,7 @@ builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailS
 builder.Services.Configure<GHNSettings>(builder.Configuration.GetSection("GHNSetttings"));
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddHttpClient<IVectorDbService, PineconeService>();
+builder.Services.AddHttpClient<IColorRecommendationSerivce, ColorRecommendationService>();
 builder.Services.AddHttpClient<IOrderService, OrderService>((serviceProvider, client) =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<GHNSettings>>().Value;
@@ -150,13 +151,13 @@ app.UseHttpsRedirection();
 
 app.Use(async (context, next) =>
 {
-    // Ch? áp d?ng logic này cho các request ??n Hub c?a b?n
+    // Ch? ï¿½p d?ng logic nï¿½y cho cï¿½c request ??n Hub c?a b?n
     if (context.Request.Path.StartsWithSegments("/chathub"))
     {
         if (context.Request.Cookies.TryGetValue("token", out var token))
         {
-            // Thêm token vào Header Authorization. Vi?c này cho phép JWT Middleware 
-            // xác th?c k?t n?i SignalR ? b??c ti?p theo (app.UseAuthentication).
+            // Thï¿½m token vï¿½o Header Authorization. Vi?c nï¿½y cho phï¿½p JWT Middleware 
+            // xï¿½c th?c k?t n?i SignalR ? b??c ti?p theo (app.UseAuthentication).
             context.Request.Headers.Add("Authorization", $"Bearer {token}");
         }
     }
