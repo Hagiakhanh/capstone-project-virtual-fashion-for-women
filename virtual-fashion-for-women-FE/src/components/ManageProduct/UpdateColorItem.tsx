@@ -4,6 +4,7 @@ import { Color, Size, UpdateProductColorFormData } from '@/models/RequestUpdateP
 import UpdateVariantItem from './UpdateVariantItem';
 import ColorModal from './ColorModal'; // Sử dụng chung ColorModal
 import Image from 'next/image'; // Import Image for preview
+import { messageToast } from '@/helpers/toastHelper';
 
 interface UpdateColorItemProps {
     productColor: UpdateProductColorFormData;
@@ -198,7 +199,8 @@ export default function UpdateColorItem({
 
     const handleModalConfirm = () => {
         if (!isModalFormValid) {
-            alert("Vui lòng điền đầy đủ thông tin và sửa các lỗi (nếu có).");
+            //alert("Vui lòng điền đầy đủ thông tin và sửa các lỗi (nếu có).");
+            messageToast.error("Vui lòng điền đầy đủ thông tin và sửa các lỗi (nếu có).");
             return;
         }
         setIsColorModalOpen(false);

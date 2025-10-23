@@ -8,6 +8,7 @@ import Image from "next/image";
 //import NewColorModal from "./NewColorModal";
 import ColorModal from "./ColorModal";
 import { on } from "events";
+import { messageToast } from "@/helpers/toastHelper";
 
 interface ColorSectionProps {
     color: ProductColorRequest; // <-- Dùng type cụ thể
@@ -176,7 +177,8 @@ export default function ColorSection({
 
     const handleModalConfirm = () => {
         if (!isModalFormValid) {
-            alert("Vui lòng điền đầy đủ thông tin và sửa các lỗi (nếu có).");
+            //alert("Vui lòng điền đầy đủ thông tin và sửa các lỗi (nếu có).");
+            messageToast.error("Vui lòng điền đầy đủ thông tin và sửa các lỗi (nếu có).");
             return;
         }
         setIsColorModalOpen(false);
