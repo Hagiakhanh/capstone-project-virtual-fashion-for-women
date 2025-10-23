@@ -39,6 +39,7 @@ builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailS
 builder.Services.Configure<GHNSettings>(builder.Configuration.GetSection("GHNSetttings"));
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddHttpClient<IVectorDbService, PineconeService>();
+builder.Services.AddHttpClient<IColormindSerivce, ColormindService>();
 builder.Services.AddHttpClient<IOrderService, OrderService>((serviceProvider, client) =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<GHNSettings>>().Value;

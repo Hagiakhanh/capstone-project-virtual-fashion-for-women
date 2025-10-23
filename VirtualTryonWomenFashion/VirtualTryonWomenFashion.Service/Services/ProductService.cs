@@ -45,6 +45,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IWishlistRepository _wishlistRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ITagRepository _tagRepository;
+        private readonly IColormindSerivce _colormindSerivce;
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             ICloudinaryService cloudinaryService,
@@ -61,7 +62,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             ICurrentUserService currentUserService,
             IWishlistRepository wishlistRepository,
             IHttpContextAccessor httpContextAccessor,
-            ITagRepository tagRepository)
+            ITagRepository tagRepository,
+            IColormindSerivce colormindSerivce)
         {
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
@@ -80,6 +82,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _wishlistRepository = wishlistRepository;
             _httpContextAccessor = httpContextAccessor;
             _tagRepository = tagRepository;
+            _colormindSerivce = colormindSerivce;
         }
 
         public static string GenerateFixedLengthString(int length)
@@ -1402,5 +1405,19 @@ namespace VirtualTryonWomenFashion.Service.Services
             return await this.MapToResponseProductDto(product);
         }
 
+        public async Task<Pagination<ResponseProductDto>> GetProductWithColorRecommentAsync(PaginationParameter pagination, string hexcode, string catergory)
+        {
+            List<int> matchedColors = await _colormindSerivce.GetListHexcodeRecommend(hexcode);
+            
+            List<Product> recommendedProduct = await _productRepository.GetProductWithColorRecommend(matchedColors, catergory, pagination);
+
+            List<ResponseProductDto> responseProduct = new List<ResponseProductDto>();
+            foreach (Product item in recommendedProduct)
+            {
+                responseProduct.Add(await this.MapToResponseProductDto(item));
+            }
+            int countTotal = await _productRepository.CountProductWithColorRecommend(matchedColors,catergory);
+            return new Pagination<ResponseProductDto>(responseProduct, countTotal, pagination.PageIndex, pagination.PageSize);
+        }
     }
 }

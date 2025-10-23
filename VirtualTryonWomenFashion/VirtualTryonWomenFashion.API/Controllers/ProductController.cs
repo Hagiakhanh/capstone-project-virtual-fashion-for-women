@@ -129,6 +129,28 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
         }
+
+        [HttpGet("recommended-color/{hexcode}")]
+        public async Task<IActionResult> GetProductWithColorRecommentAsync([FromRoute]string hexcode, [FromQuery] string? categoryName, [FromQuery]PaginationParameter pagination)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(hexcode))
+                    return BadRequest("Hexcode id is required");
+
+                var product = await _productService.GetProductWithColorRecommentAsync(pagination, hexcode, categoryName);
+
+                if (product == null)
+                    return NotFound($"Product with hexcode recommend '{hexcode}' not found");
+
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            
+        }
     }
 }
 
