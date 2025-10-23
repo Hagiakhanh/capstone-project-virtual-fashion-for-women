@@ -126,7 +126,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                         {
                             var varianceIds = vectorResult.Select(x => x.metadata["productVariantId"]).ToList();
                             var productVariants = await _productVariantRepository.GetAllThenInclude(null, x => varianceIds.Contains(x.ProductVariantId), null,
-                                includes: [x => x.Size, x => x.ProductColor.Color]);
+                                includes: [x => x.Size, x => x.ProductColor.Color, x => x.ProductColor.Product]);
 
                             // Gom theo ItemType (nếu bạn muốn gom theo Category thì đổi key)
                             string key = vectorResult.FirstOrDefault().metadata["bodyPart"] ?? "unknown";
