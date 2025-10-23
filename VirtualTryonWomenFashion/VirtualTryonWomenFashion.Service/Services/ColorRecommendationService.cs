@@ -12,7 +12,7 @@ using VirtualTryonWomenFashion.Service.IServices;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
-    public class ColormindService : IColormindSerivce
+    public class ColorRecommendationService : IColorRecommendationSerivce
     {
         private readonly string _baseUrl;
         private readonly HttpClient _httpClient;
@@ -28,7 +28,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             "triad",
             "quad"
         };
-        public ColormindService(HttpClient httpClient, 
+        public ColorRecommendationService(HttpClient httpClient, 
             IConfiguration configuration,
             IColorRepository colorRepository)
         {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace VirtualTryonWomenFashion.Service.IServices
 {
-    public interface IColormindSerivce
+    public interface IColorRecommendationSerivce
     {
         Task<List<int>> GetListHexcodeRecommend(string hexcode);
     }
