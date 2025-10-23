@@ -9,9 +9,9 @@ import { mapTryOnCode } from '@/helpers/errorCodeMapper';
 import { messageToast } from '@/helpers/toastHelper';
 import TryOnResultModal from '@/components/TryOn/TryOnModelResult';
 import { TryOnDTO } from '@/models/TryOnDTO';
+import ColorRecommendPanel from '@/components/TryOn/ColorRecommendation';
+import ColorRecommendation from '@/components/TryOn/ColorRecommendation';
 import { set } from 'lodash';
-import { tr } from 'framer-motion/client';
-
 
 export default function VirtualTryOnPage() {
     const [category, setCategory] = useState<Category[]>([]);
@@ -39,6 +39,7 @@ export default function VirtualTryOnPage() {
     const [progress, setProgress] = useState(0);
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [isCreatingTask, setIsCreatingTask] = useState(false);
+    const [showRecommendation, setShowRecommendation] = useState(false);
 
     const handleFileChange = async (
         event: React.ChangeEvent<HTMLInputElement>,
@@ -98,6 +99,7 @@ export default function VirtualTryOnPage() {
             });
         }
     };
+
 
     const handleTryOn = async () => {
         if (!userImage) {
@@ -255,6 +257,8 @@ export default function VirtualTryOnPage() {
     }
 
 
+
+
     useEffect(() => {
         const fetchCategories = async () => {
             const category = await api.get('/category');
@@ -290,10 +294,11 @@ export default function VirtualTryOnPage() {
 
                 <div className="flex flex-col lg:flex-row bg-gray-700 rounded-3xl overflow-hidden shadow-2xl">
                     {/* Left panel */}
-                    <div className="lg:w-[60%] p-4 lg:p-12 flex flex-col justify-center">
+                    <div className="lg:w-[60%] p-4 lg:p-10 flex flex-col justify-center relative">
                         <div className="text-4xl sm:text-4xl font-semibold text-white text-center mb-10">
                             Quần áo được chọn
                         </div>
+
                         {selectedBottom &&
                             !selectedTop &&
                             bottomCategories.some(
@@ -305,14 +310,13 @@ export default function VirtualTryOnPage() {
                                     ⚠️ <strong>Lưu ý:</strong> Nếu bạn chỉ chọn váy nhưng ảnh bạn đang mặc đầm sẵn, kết quả có thể không chính xác.
                                     Hãy đổi ảnh sang trang phục khác hoặc thêm áo để thử đồ được chính xác hơn.
                                 </div>
-                            )
-                        }
-                        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-8`}>
+                            )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                             {/* Khung chọn áo */}
                             <div
                                 className={`bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all
-        ${isDress ? 'col-span-2 h-[300px]' : 'h-[250px]'}
-        `}
+            ${isDress ? 'col-span-2 h-[300px]' : 'h-[250px]'}`}
                                 onClick={() => {
                                     setShowModal(true);
                                     setModalType('top');
@@ -322,7 +326,6 @@ export default function VirtualTryOnPage() {
                                     <div className="flex flex-col h-full">
                                         <div className={`flex items-center justify-center bg-gray-100 p-2 ${isDress ? 'h-[240px]' : 'h-[190px]'}`}>
                                             {selectedTop ? (
-
                                                 <img
                                                     src={selectedTop?.productColors[0].noBgImgUrl}
                                                     alt={selectedTop?.productColorName}
@@ -334,7 +337,6 @@ export default function VirtualTryOnPage() {
                                                 </div>
                                             )}
                                         </div>
-
                                         <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px] flex items-center justify-center">
                                             {selectedTop ? selectedTop?.productColorName : 'Chọn một loại áo để phối'}
                                         </div>
@@ -376,8 +378,22 @@ export default function VirtualTryOnPage() {
                                 </div>
                             )}
                         </div>
+                        {((selectedTop && !selectedBottom) || (!selectedTop && selectedBottom)) && !isDress && (
+                            <div className="flex justify-end mt-5">
+                                <button
+                                    onClick={() => setShowRecommendation(true)}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white text-base 
+                                                bg-gradient-to-r from-orange-400 to-yellow-400 
+                                                shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300"
+                                >
+                                    🌟 <span>Gợi ý phối đồ</span>
+                                </button>
+                            </div>
+                        )}
+
 
                     </div>
+
 
 
                     {/* Right panel */}
@@ -494,6 +510,19 @@ export default function VirtualTryOnPage() {
                         } else {
                             setSelectedBottom(null);
                         }
+                    }}
+                />
+            )}
+            {showRecommendation && (
+                <ColorRecommendation
+                    category={
+                        selectedBottom ? topCategories.filter(c => c.bodyPart === 'Thân trên') : bottomCategories
+                    }
+                    selectedHexcode={selectedTop ? selectedTop.productColors[0].color.hexCode : selectedBottom.productColors[0].color.hexCode}
+                    onClose={() => setShowRecommendation(false)}
+                    onSelect={(item) => {
+                        fetchProductColor(item.productColorId, category);
+                        setShowRecommendation(false);
                     }}
                 />
             )}
