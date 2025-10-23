@@ -213,7 +213,7 @@ Your JSON output:
                 foreach (var pv in kv.Value)
                 {
                     groupedBuilder.AppendLine(
-                        $"- Id: {pv.ProductVariantId}, Tên: {pv.VariantName}, Màu: {pv.ProductColor.Color.ColorName}, Size: {pv.Size.SizeCode}, ImageUrl: {pv.ImageUrl}, ProductId: {pv.ProductColor.ProductId}"
+                        $"- Id: {pv.ProductVariantId}, Tên: {pv.VariantName}, Màu: {pv.ProductColor.Color.ColorName}, Size: {pv.Size.SizeCode}, ImageUrl: {pv.ImageUrl}, ProductId: {pv.ProductColor.ProductId}, ProductSlug: {pv.ProductColor.Product.ProductSlug}, ProductColor:{pv.ProductColor.ProductColorId}"
                     );
                 }
                 groupedBuilder.AppendLine();
@@ -244,7 +244,7 @@ Nhiệm vụ của bạn: reasoning và chọn **một sản phẩm duy nhất t
 Một JSON duy nhất với các trường:
 {{
   ""selectedProducts"": [
-    {{ ""id"": ..., ""name"": ...,""ImageUrl"":...,""productId"":..., ""reason"": ""{textSuggestion}: giải thích ngắn tại sao phù hợp"" }}
+    {{ ""id"": ..., ""name"": ...,""ImageUrl"":...,""productId"":..., ""productSlug"":..., ""productColorID"":..., ""reason"": ""{textSuggestion}: giải thích ngắn tại sao phù hợp"" }}
   ],
   ""responseText"": ""câu trả lời ngắn gọn, tự nhiên cho user""
 }}
