@@ -1,18 +1,24 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.AIChatModel;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
+using VirtualTryonWomenFashion.Service.DTO.TicketChat;
 using VirtualTryonWomenFashion.Service.Helpers;
+using VirtualTryonWomenFashion.Service.Hubs;
 using VirtualTryonWomenFashion.Service.IServices;
 
 namespace VirtualTryonWomenFashion.Service.Services
@@ -28,10 +34,15 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IVectorDbService _vectorDbService;
         private readonly IProductVariantRepository _productVariantRepository;
         private readonly ISuggestedOutfitRepository _suggestedOutfitRepository;
+        private readonly ITicketChatRepository _ticketChatRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IHubContext<TicketChatHub> _ticketChatHub;
+
         public MessageService(IMessageRepository messageRepository, IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService, IAiconversationRepository aiconversationRepository,
             IGeminiService geminiService, ICategoryRepository categoryRepository, IVectorDbService vectorDbService,
-            IProductVariantRepository productVariantRepository, ISuggestedOutfitRepository suggestedOutfitRepository)
+            IProductVariantRepository productVariantRepository, ISuggestedOutfitRepository suggestedOutfitRepository,
+            ITicketChatRepository ticketChatRepository, IUserRepository userRepository, IHubContext<TicketChatHub> ticketChatHub)
         {
             _messageRepository = messageRepository;
             _unitOfWork = unitOfWork;
@@ -42,6 +53,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             _vectorDbService = vectorDbService;
             _productVariantRepository = productVariantRepository;
             _suggestedOutfitRepository = suggestedOutfitRepository;
+            _ticketChatRepository = ticketChatRepository;
+            _userRepository = userRepository;
+            _ticketChatHub = ticketChatHub;
         }
         public async Task<ResponseAIChatModelWithSuggestion> SendMessageToAIConversation(int conversationChatID, string message)
         {
@@ -244,6 +258,86 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             // Nếu tất cả các thuộc tính đều giống nhau
             return false;
+        }
+
+        public async Task<MessageModel> SendMessageToTicketChat(RequestSendMessageTicket requestSendMessageTicket)
+        {
+            int senderId = _currentUserService.GetUserId();
+            TicketChat ticketChat = await _ticketChatRepository.GetTicketChatBySlug(requestSendMessageTicket.TicketSlug);
+            if (ticketChat == null)
+            {
+                throw new Exception("Không tìm thấy yêu cầu hỗ trợ");
+            }
+            if (ticketChat.Status == TicketChatStatusEnum.Closed.ToString())
+            {
+                throw new Exception($"Trạng thái của yêu cầu hiện tại {ticketChat.Status}, không thể gửi tin nhắn");
+            }
+            int customerId = ticketChat.CustomerId;
+            int? assignedStaffId = ticketChat.StaffId;
+            User senderUser = await _userRepository.GetUserById(senderId);
+            if (senderUser == null || senderUser.Role == null)
+            {
+                throw new Exception("Người gửi không hợp lệ hoặc không có vai trò.");
+            }
+
+            if (senderUser.Role.RoleId == "Customer")
+            {
+                if (customerId != senderId)
+                {
+                    throw new Exception("Bạn không có quyền tham gia cuộc trò chuyện này");
+                }
+
+            }
+            else if (senderUser.Role.RoleId == "Staff")
+            {
+                // Người gửi là staff
+                if (ticketChat.Status == TicketChatStatusEnum.Open.ToString())
+                {
+                    if (senderId != assignedStaffId)
+                    {
+                        throw new UnauthorizedAccessException("Bạn không phải nhân viên phụ trách hỗ trợ này.");
+                    }
+                }
+                else
+                {
+                    throw new UnauthorizedAccessException("Không có quyền gửi tin nhắn trong trạng thái này.");
+                }
+
+            }
+            Message newMessage = new Message
+            {
+                TicketChatId = ticketChat.TicketChatId,
+                SenderId = senderId,
+                IsAiresponse = false,
+                Content = requestSendMessageTicket.Content,
+                CreatedAt = DateTime.UtcNow.AddHours(7)
+            };
+            await _messageRepository.InsertAsync(newMessage);
+            int result = await _unitOfWork.SaveChanges();
+            if (result > 0)
+            {
+                ResponseSendMessageTicket responseSendMessageTicket = new ResponseSendMessageTicket
+                {
+                    SenderId = newMessage.SenderId.Value,
+                    Content = newMessage.Content,
+                    CreateAt = newMessage.CreatedAt
+                };
+                // Broadcast dữ liệu
+                await _ticketChatHub.Clients.Group(requestSendMessageTicket.TicketSlug)
+                .SendAsync("ReceiveMessage", responseSendMessageTicket);
+
+                return new MessageModel
+                {
+                    Message = "Gửi tin nhắn thành công",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+            return new MessageModel
+            {
+                Message = "Gửi tin nhắn thất bại",
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
+
         }
     }
 }

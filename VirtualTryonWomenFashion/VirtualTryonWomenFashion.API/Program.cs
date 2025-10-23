@@ -15,6 +15,7 @@ using VirtualTryonWomenFashion.Service.Workers;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using VirtualTryonWomenFashion.Service.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options =>
@@ -39,6 +40,7 @@ builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailS
 builder.Services.Configure<GHNSettings>(builder.Configuration.GetSection("GHNSetttings"));
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddHttpClient<IVectorDbService, PineconeService>();
+builder.Services.AddHttpClient<IColorRecommendationSerivce, ColorRecommendationService>();
 builder.Services.AddHttpClient<IOrderService, OrderService>((serviceProvider, client) =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<GHNSettings>>().Value;
@@ -50,6 +52,7 @@ builder.Services.AddHttpClient<IFitRoomService, FitRoomService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(120);
 });
+builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
@@ -146,9 +149,26 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
+app.Use(async (context, next) =>
+{
+    // Ch? �p d?ng logic n�y cho c�c request ??n Hub c?a b?n
+    if (context.Request.Path.StartsWithSegments("/chathub"))
+    {
+        if (context.Request.Cookies.TryGetValue("token", out var token))
+        {
+            // Th�m token v�o Header Authorization. Vi?c n�y cho ph�p JWT Middleware 
+            // x�c th?c k?t n?i SignalR ? b??c ti?p theo (app.UseAuthentication).
+            context.Request.Headers.Add("Authorization", $"Bearer {token}");
+        }
+    }
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("AllowAll");
+
+app.MapHub<TicketChatHub>("/chathub");
 
 app.MapControllers();
 
