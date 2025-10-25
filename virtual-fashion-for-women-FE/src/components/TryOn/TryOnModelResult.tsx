@@ -360,7 +360,13 @@ export default function TryOnResultModal({
                     )}
 
                     <button
-                        onClick={onClose}
+                        onClick={() => {
+                            onClose();
+                            setShowCartView(false);
+                            setSelectedProduct(null);
+                            setSelectedProductVariant(null);
+                            setQuantity(1);
+                        }}
                         className="flex items-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-xl transition-all shadow-md hover:shadow-lg"
                     >
                         Đóng

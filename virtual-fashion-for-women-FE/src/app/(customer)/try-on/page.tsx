@@ -261,32 +261,33 @@ export default function VirtualTryOnPage() {
 
     useEffect(() => {
         const fetchCategories = async () => {
-          const categoryRes = await api.get('/category');
-          if (categoryRes.status === 200) {
-            setCategory(categoryRes.data);
-      
-            // Đọc danh sách productColorID (mảng chuỗi)
-            const storedItems = sessionStorage.getItem("productColor");
-            if (storedItems) {
-              try {
-                const parsedItems = JSON.parse(storedItems);
-                const productColorIds = Array.isArray(parsedItems) ? parsedItems : [parsedItems];
-      
-                await Promise.all(
-                  productColorIds.map(id => fetchProductColor(id, categoryRes.data))
-                );
-      
-              } catch (e) {
-                console.error("❌ Lỗi parse sessionStorage productColor:", e);
-              } finally {
-              }
+
+            const categoryRes = await api.get('/category');
+            if (categoryRes.status === 200) {
+                setCategory(categoryRes.data);
+
+                // Đọc danh sách productColorID (mảng chuỗi)
+                const storedItems = sessionStorage.getItem("productColor");
+                if (storedItems) {
+                    try {
+                        const parsedItems = JSON.parse(storedItems);
+                        const productColorIds = Array.isArray(parsedItems) ? parsedItems : [parsedItems];
+
+                        await Promise.all(
+                            productColorIds.map(id => fetchProductColor(id, categoryRes.data))
+                        );
+
+                    } catch (e) {
+                        console.error("❌ Lỗi parse sessionStorage productColor:", e);
+                    } finally {
+                    }
+                }
             }
-          }
         };
-      
+
         fetchCategories();
-      }, []);
-      
+    }, []);
+
 
     const topCategories = category.filter(
         (c) => c.bodyPart === 'Thân trên' || c.bodyPart === 'Toàn thân'
@@ -352,7 +353,7 @@ export default function VirtualTryOnPage() {
                                             )}
                                         </div>
                                         <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px] flex items-center justify-center">
-                                            {selectedTop ? selectedTop?.productColorName : 'Chọn một loại áo để phối'}
+                                            {selectedTop ? selectedTop?.productColorName : 'Chọn một loại áo hoặc đầm để phối'}
                                         </div>
                                     </div>
                                 </label>

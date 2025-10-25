@@ -36,7 +36,11 @@ export default function TryOnHistoryListPage() {
             };
             const response = await api.get(`/history-try-on`, { params: payload });
             if (response.status === 200) {
-                setData(response.data);
+                setData(response.data.data);
+                setPagination((prev) => ({
+                    ...prev,
+                    ...response.data.pagination
+                }));
             }
         } catch (error: any) {
             console.error("Lỗi khi lấy lịch sử thử trang phục:", error);
@@ -119,7 +123,7 @@ export default function TryOnHistoryListPage() {
             )}
 
             {/* Pagination */}
-            {!loading && pagination.TotalPages > 1 && (
+            {!loading && pagination.TotalPages > 0 && (
                 <div className="flex justify-center items-center gap-3 mt-10 text-sm">
                     <button
                         disabled={pagination.CurrentPage === 1}
@@ -135,8 +139,8 @@ export default function TryOnHistoryListPage() {
                             onClick={() => typeof page === "number" && handlePageChange(page)}
                             disabled={page === "..."}
                             className={`px-4 py-2 rounded-lg border transition-all ${pagination.CurrentPage === page
-                                ? "bg-blue-600 text-white border-blue-600"
-                                : "bg-white text-gray-700 hover:bg-gray-100"
+                                ? 'bg-black text-white border-black shadow'
+                                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
                                 } ${page === "..." ? "cursor-default opacity-70" : ""}`}
                         >
                             {page}
