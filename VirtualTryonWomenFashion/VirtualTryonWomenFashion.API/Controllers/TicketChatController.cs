@@ -7,6 +7,7 @@ using VirtualTryonWomenFashion.Service.DTO.TicketChat;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Services;
+using Newtonsoft.Json;
 
 namespace VirtualTryonWomenFashion.API.Controllers
 {
@@ -121,6 +122,13 @@ namespace VirtualTryonWomenFashion.API.Controllers
             {
                 MessageModelWithData<ResponseGetAllTicketChat> result =
                     await _ticketChatService.GetTicketChatForStaff(page, ticketChatStatusEnum, isDateDecrease);
+                var metadata = new
+                {
+                    result.Data.TicketInformation.TotalCount,
+                    result.Data.TicketInformation.PageSize,
+                    result.Data.TicketInformation.CurrentPage
+                };
+                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)

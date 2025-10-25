@@ -11,6 +11,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.TicketChat
     {
         public int PendingTicket { get; set; }
         public int OpenTicket { get; set; }
+        public int MyAssignedTicket { get; set; }
         public Pagination<TicketInformation> TicketInformation { get; set; }
     }
 

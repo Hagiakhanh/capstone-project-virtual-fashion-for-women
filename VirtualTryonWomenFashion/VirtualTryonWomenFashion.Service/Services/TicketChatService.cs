@@ -212,6 +212,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _ticketChatRepository.CountAsync(x => x.Status == TicketChatStatusEnum.Pending.ToString());
             int totalOpenTicketCount =
                 await _ticketChatRepository.CountAsync(x => x.Status == TicketChatStatusEnum.Open.ToString());
+            int totalAssignedTicketCount = await _ticketChatRepository.CountAsync(
+                x => x.Status == TicketChatStatusEnum.Open.ToString() && x.StaffId == _currentUserService.GetUserId());
 
             List<TicketInformation> ticketInfoList = ticketChats.Select(x => new TicketInformation
             {
@@ -226,6 +228,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 PendingTicket = totalPendingTicketCount,
                 OpenTicket = totalOpenTicketCount,
+                MyAssignedTicket = totalAssignedTicketCount,
                 TicketInformation = new Pagination<TicketInformation>(ticketInfoList, totalCount, pagination.PageIndex,
                     pagination.PageSize)
             };
@@ -242,8 +245,9 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             return new MessageModelWithData<ResponseGetAllTicketChat>
             {
-                Message = "Lấy danh sách hỗ trợ thất bại",
-                StatusCode = StatusCodes.Status404NotFound
+                Message = "Danh sách hỗ trợ trống",
+                StatusCode = StatusCodes.Status200OK,
+                Data = responseGetAllTicketChat
             };
         }
 
