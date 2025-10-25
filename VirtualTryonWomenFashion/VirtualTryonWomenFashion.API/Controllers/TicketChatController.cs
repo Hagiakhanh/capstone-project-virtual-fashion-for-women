@@ -143,7 +143,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         {
             try
             {
-                MessageModelWithData<List<TicketInformation>> result =
+                MessageModelWithData<List<ResponseCustomerTicketChat>> result =
                     await _ticketChatService.GetOpenTicketAssignForStaff();
                 return StatusCode(result.StatusCode, result);
             }
