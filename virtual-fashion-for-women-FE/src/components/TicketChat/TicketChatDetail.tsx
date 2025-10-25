@@ -2,9 +2,10 @@
 import { useEffect, useState, useRef } from 'react'
 import { Button, Input } from 'antd'
 import * as signalR from '@microsoft/signalr'
-import { TicketMessageResponseDTO } from '@/models/TicketChatDTO'
+import { TicketMessageDetailDTO, TicketMessageResponseDTO } from '@/models/TicketChatDTO'
 import { api } from '@/api/instance'
 import { useAuth } from '@/contexts/AuthContext'
+import formatDate from '@/utils/formatDate'
 
 export default function TicketChatDetail({
    ticketSlug,
@@ -16,9 +17,9 @@ export default function TicketChatDetail({
    const [messages, setMessages] = useState<TicketMessageResponseDTO>()
    const [input, setInput] = useState('')
    const [loading, setLoading] = useState(true)
-   const chatEndRef = useRef<HTMLDivElement>(null)
    const { user } = useAuth();
    const [connection, setConnection] = useState<signalR.HubConnection | null>(null)
+   const chatBoxRef = useRef<HTMLDivElement>(null)
 
    const fetchMessages = async () => {
       setLoading(true)
@@ -31,12 +32,23 @@ export default function TicketChatDetail({
          console.error('Lỗi khi lấy tin nhắn:', error)
       } finally {
          setLoading(false)
+         setTimeout(scrollToBottom, 200)
       }
 
    }
 
+   const scrollToBottom = () => {
+      if (chatBoxRef.current) {
+         chatBoxRef.current.scrollTo({
+            top: chatBoxRef.current.scrollHeight,
+            behavior: 'smooth',
+         })
+      }
+   }
+
    useEffect(() => {
       fetchMessages()
+      window.scrollTo({ top: 0, behavior: 'auto' });
    }, [ticketSlug])
 
    useEffect(() => {
@@ -62,44 +74,31 @@ export default function TicketChatDetail({
                console.error('SignalR connection failed:', err)
             })
             await connection.invoke('JoinTicketGroup', ticketSlug)
-            console.log('✅ Joined group:', ticketSlug)
+            console.log('Joined group:', ticketSlug)
          } catch (err) {
-            console.error('❌ SignalR connection error:', err)
+            console.error('SignalR connection error:', err)
          }
       }
 
       startConnection()
 
       // Lắng nghe sự kiện tin nhắn mới
-      // connection.on('ReceiveMessage', (senderId: string, content: string) => {
-      //    console.log('📩 Nhận tin nhắn mới:', senderId, content)
-      //    setMessages((prev) => {
-      //       if (!prev) return prev
-      //       return {
-      //          ...prev,
-      //          messages: [
-      //             ...prev.messages,
-      //             {
-      //                messageId: Math.random(),
-      //                content,
-      //                ownerRole:
-      //                   senderId === user?.userId.toString()
-      //                      ? user?.role
-      //                      : user?.role === 'Customer'
-      //                         ? 'Staff'
-      //                         : 'Customer',
-      //                createdAt: new Date().toISOString(),
-      //             },
-      //          ],
-      //       }
-      //    })
-      //    // Cuộn xuống cuối
-      //    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-      // })
+      connection.on('ReceiveMessage', (message: TicketMessageDetailDTO) => {
+         console.log('Nhận tin nhắn mới:', message)
+         setMessages((prev) => {
+            if (!prev) return prev;
+            return {
+               ...prev,
+               messages: [...prev.messages, message],
+            };
+         });
 
-      // connection.onclose(() => {
-      //    console.warn('⚠️ SignalR disconnected, will auto reconnect...')
-      // })
+
+      })
+
+      connection.onclose(() => {
+         console.warn('⚠️ SignalR disconnected, will auto reconnect...')
+      })
 
       return () => {
          connection.off('ReceiveMessage')
@@ -107,9 +106,11 @@ export default function TicketChatDetail({
       }
    }, [connection])
 
-   // useEffect(() => {
-   //    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-   // }, [messages])
+   useEffect(() => {
+      if (!loading) {
+         scrollToBottom()
+      }
+   }, [messages])
 
    const handleSend = async () => {
       if (!input.trim()) return
@@ -143,7 +144,8 @@ export default function TicketChatDetail({
             </div>
 
             {/* Vùng hiển thị tin nhắn */}
-            <div className='h-[400px] overflow-y-auto p-4 bg-gray-50 rounded-md flex flex-col gap-2'>
+            <div ref={chatBoxRef}
+               className='h-[400px] overflow-y-auto p-4 bg-gray-50 rounded-md flex flex-col gap-2'>
                {loading ? (
                   <p>Đang tải tin nhắn...</p>
                ) : (
@@ -159,16 +161,12 @@ export default function TicketChatDetail({
                               >
                                  <p className='text-base whitespace-pre-wrap'>{msg.content}</p>
                                  <p className='text-sm text-gray-300 mt-1 text-right'>
-                                    {new Date(msg.createdAt).toLocaleTimeString('vi-VN', {
-                                       hour: '2-digit',
-                                       minute: '2-digit',
-                                    })}
+                                    {formatDate(msg?.createdAt)}
                                  </p>
                               </div>
                            </div>
                         )
                      })}
-                     <div ref={chatEndRef} />
                   </>
                )}
             </div>
