@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
@@ -13,6 +14,7 @@ using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.TicketChat;
 using VirtualTryonWomenFashion.Service.Helpers;
+using VirtualTryonWomenFashion.Service.Hubs;
 using VirtualTryonWomenFashion.Service.IServices;
 
 namespace VirtualTryonWomenFashion.Service.Services
@@ -23,14 +25,16 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ITicketChatRepository _ticketChatRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMessageRepository _messageRepository;
+        private readonly IHubContext<TicketChatHub> _chatHub;
 
         public TicketChatService(ICurrentUserService currentUserService, ITicketChatRepository ticketChatRepository,
-            IUnitOfWork unitOfWork, IMessageRepository messageRepository)
+            IUnitOfWork unitOfWork, IMessageRepository messageRepository, IHubContext<TicketChatHub> chatHub)
         {
             _currentUserService = currentUserService;
             _ticketChatRepository = ticketChatRepository;
             _unitOfWork = unitOfWork;
             _messageRepository = messageRepository;
+            _chatHub = chatHub;
         }
 
         public async Task<MessageModelWithData<ResponseAssignTicketChat>> AssignStaffToTicketChat(
@@ -148,6 +152,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             int result = await _unitOfWork.SaveChanges();
             if (result > 0)
             {
+                // Gửi thông báo realtime cho khách hàng
+                await _chatHub.Clients.Group(ticketChat.Slug)
+                    .SendAsync("TicketClosed", new
+                    {
+                        ticketChatId = ticketChat.TicketChatId,
+                        message = "Cuộc trò chuyện đã được kết thúc bởi nhân viên hỗ trợ."
+                    });
                 return new MessageModel
                 {
                     Message = "Đã đóng ticket",
@@ -251,7 +262,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             };
         }
 
-        public async Task<MessageModelWithData<List<TicketInformation>>> GetOpenTicketAssignForStaff()
+        public async Task<MessageModelWithData<List<ResponseCustomerTicketChat>>> GetOpenTicketAssignForStaff()
         {
             int staffId = _currentUserService.GetUserId();
             List<TicketChat> ticketChats = await _ticketChatRepository.GetAll(
@@ -259,23 +270,24 @@ namespace VirtualTryonWomenFashion.Service.Services
                 includes: new Expression<Func<TicketChat, object>>[]
                 {
                     x => x.Customer,
-                    x => x.Staff
+                    x => x.Staff,
+                    x => x.Messages
                 }
             );
 
-            List<TicketInformation> ticketInfoList = ticketChats.Select(x => new TicketInformation
+            List<ResponseCustomerTicketChat> ticketInfoList = ticketChats.Select(x => new ResponseCustomerTicketChat
             {
-                CustomerName = x.Customer?.FullName,
                 TicketChatId = x.TicketChatId,
-                CreateAt = x.CreatedAt,
+                TicketChatSlug = x.Slug,
+                CreatedAt = x.CreatedAt,
                 Title = x.Title,
                 Status = x.Status,
-                StaffName = x.Staff?.FullName
+                LastMessage = x.Messages.OrderByDescending(x => x.CreatedAt).FirstOrDefault()?.Content
             }).ToList();
 
             if (ticketChats.Any())
             {
-                return new MessageModelWithData<List<TicketInformation>>
+                return new MessageModelWithData<List<ResponseCustomerTicketChat>>
                 {
                     Message = "Danh sách yêu cầu hỗ trợ đang mở",
                     StatusCode = StatusCodes.Status200OK,
@@ -283,10 +295,11 @@ namespace VirtualTryonWomenFashion.Service.Services
                 };
             }
 
-            return new MessageModelWithData<List<TicketInformation>>()
+            return new MessageModelWithData<List<ResponseCustomerTicketChat>>()
             {
                 Message = "Không có yêu cầu hỗ trợ đang mở",
-                StatusCode = StatusCodes.Status404NotFound
+                StatusCode = StatusCodes.Status200OK,
+                Data = ticketInfoList
             };
         }
 
