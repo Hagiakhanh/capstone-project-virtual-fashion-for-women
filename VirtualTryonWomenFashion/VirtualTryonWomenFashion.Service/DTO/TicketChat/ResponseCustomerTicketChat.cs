@@ -8,4 +8,5 @@ public class ResponseCustomerTicketChat
     public DateTime CreatedAt { get; set; }
     public string Status { get; set; }
     public string? LastMessage { get; set; }
+    public DateTime? ClosedAt { get; set; }
 }

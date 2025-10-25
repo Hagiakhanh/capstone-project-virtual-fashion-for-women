@@ -233,7 +233,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                 CreateAt = x.CreatedAt,
                 Title = x.Title,
                 Status = x.Status,
-                StaffName = x.Staff?.FullName
+                StaffName = x.Staff?.FullName,
+                ClosedAt = x.ClosedAt,
+                TicketChatSlug = x.Slug
             }).ToList();
             ResponseGetAllTicketChat responseGetAllTicketChat = new ResponseGetAllTicketChat
             {
@@ -314,7 +316,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception("Yêu cầu hỗ trợ không tồn tại");
             }
 
-            if (ticketChat.CustomerId != userId && ticketChat.StaffId != userId)
+            if (ticketChat.CustomerId != userId && ticketChat.StaffId != userId &&
+                ticketChat.Status != TicketChatStatusEnum.Closed.ToString())
             {
                 throw new Exception("Bạn không có quyền truy cập vào yêu cầu hỗ trợ này");
             }
@@ -334,7 +337,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 Title = ticketChat.Title,
                 TicketChatId = ticketChat.TicketChatId,
                 TicketChatSlug = ticketChat.Slug,
-                Messages = ticketMessages
+                Messages = ticketMessages,
+                TicketStatus = ticketChat.Status
             };
             if (ticketMessages.Any())
             {
@@ -400,7 +404,60 @@ namespace VirtualTryonWomenFashion.Service.Services
             return new MessageModelWithData<Pagination<ResponseCustomerTicketChat>>
             {
                 Message = "Không có yêu cầu hỗ trợ đang mở",
-                StatusCode = StatusCodes.Status404NotFound
+                StatusCode = StatusCodes.Status200OK,
+                Data = pagedResult
+            };
+        }
+
+        public async Task<MessageModelWithData<Pagination<ResponseCustomerTicketChat>>> GetCloseTicketForCustomer(
+            PaginationParameter page)
+        {
+            int customerId = _currentUserService.GetUserId();
+            // Lấy ticket của người dùng đó ở trạng thái close
+            List<TicketChat> listTickets = await _ticketChatRepository.GetAll(
+                pagination: page,
+                filter: x => x.CustomerId == customerId && x.Status == TicketChatStatusEnum.Closed.ToString(),
+                includes: new Expression<Func<TicketChat, object>>[]
+                {
+                    x => x.Messages
+                },
+                orderBy: x => x.OrderByDescending(x => x.CreatedAt)
+            );
+
+            List<ResponseCustomerTicketChat> responseCustomerTicketChats = listTickets.Select(x =>
+                new ResponseCustomerTicketChat
+                {
+                    TicketChatId = x.TicketChatId,
+                    TicketChatSlug = x.Slug,
+                    Title = x.Title,
+                    CreatedAt = x.CreatedAt,
+                    Status = x.Status,
+                    LastMessage = x.Messages.OrderByDescending(m => m.CreatedAt).FirstOrDefault()?.Content,
+                    ClosedAt = x.ClosedAt
+                }).ToList();
+
+            int totalCount = await _ticketChatRepository.CountAsync(
+                x => x.CustomerId == customerId && x.Status == TicketChatStatusEnum.Closed.ToString());
+
+            Pagination<ResponseCustomerTicketChat> pagedResult =
+                new Pagination<ResponseCustomerTicketChat>(responseCustomerTicketChats, totalCount, page.PageIndex,
+                    page.PageSize);
+
+            if (pagedResult.Any())
+            {
+                return new MessageModelWithData<Pagination<ResponseCustomerTicketChat>>
+                {
+                    Message = "Danh sách yêu cầu hỗ trợ đã đóng",
+                    StatusCode = StatusCodes.Status200OK,
+                    Data = pagedResult
+                };
+            }
+
+            return new MessageModelWithData<Pagination<ResponseCustomerTicketChat>>
+            {
+                Message = "Không có yêu cầu hỗ trợ đã đóng",
+                StatusCode = StatusCodes.Status200OK,
+                Data = pagedResult
             };
         }
     }
