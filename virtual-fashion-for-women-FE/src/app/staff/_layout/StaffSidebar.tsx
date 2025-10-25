@@ -26,7 +26,7 @@ export default function StaffSidebar({
    // 3. Hàm trợ giúp để xác định link có active không
    const isActive = (href: string) => {
       // Trường hợp đặc biệt cho dashboard, chỉ active khi khớp chính xác
-      if (href === "/admin/dashboard") {
+      if (href === "/staff") {
          return pathname === href;
       }
       // Các link khác sẽ active nếu URL hiện tại bắt đầu bằng href của link đó
@@ -67,15 +67,15 @@ export default function StaffSidebar({
                <Link
                   onClick={handleLinkClick}
                   href="/staff"
-                  className={`${baseLinkClasses} ${isActive("/admin/dashboard") ? activeLinkClasses : inactiveLinkClasses}`}
+                  className={`${baseLinkClasses} ${isActive("staff") ? activeLinkClasses : inactiveLinkClasses}`}
                >
                   <ShoppingBasket className="w-5 h-5 mr-3" />
                   Quản lý đơn hàng
                </Link>
                <Link
                   onClick={handleLinkClick}
-                  href="/admin/orders"
-                  className={`${baseLinkClasses} ${isActive("/admin/orders") ? activeLinkClasses : inactiveLinkClasses}`}
+                  href="/staff/ticketchat"
+                  className={`${baseLinkClasses} ${isActive("/staff/ticketchat") ? activeLinkClasses : inactiveLinkClasses}`}
                >
                   <MessagesSquare className="w-5 h-5 mr-3" />
                   Tin nhắn hỗ trợ
