@@ -1,11 +1,14 @@
 export default function formatDate(dateString?: string): string {
     if (!dateString) return '';
 
-    return new Date(dateString).toLocaleString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-    })
+    const normalized = dateString.replace('T', ' ');
+
+    const [datePart, timePartRaw] = normalized.split(' ');
+    if (!datePart || !timePartRaw) return dateString;
+
+    const [year, month, day] = datePart.split('-');
+
+    const [hours, minutes] = timePartRaw.split(':');
+
+    return `${hours}:${minutes} ${day}/${month}/${year}`;
 }
