@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react'
 import { api } from '@/api/instance'
 import TicketChatDetail from '@/components/TicketChat/TicketChatDetail'
 import TicketChatList from '@/components/TicketChat/TicketChatList'
+import { ItemTicketChatInformationDTO } from '@/models/TicketChatDTO'
 
 export default function CustomerChatPage() {
     const [selectedTicket, setSelectedTicket] = useState<string | null>(null)
-    const [ticketData, setTicketData] = useState<any[]>([])
+    const [ticketData, setTicketData] = useState<ItemTicketChatInformationDTO[]>([])
 
     const fetchTicketsChat = async () => {
         try {

@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button, Card, List, Tag, Modal, Input, Form } from 'antd'
 import { MessageOutlined, PlusOutlined } from '@ant-design/icons'
 import { api } from '@/api/instance'
 import { messageToast } from '@/helpers/toastHelper'
+import { ItemTicketChatInformationDTO } from '@/models/TicketChatDTO'
+import formatDate from '@/utils/formatDate'
 
-function TicketChatList({ tickets, onSelect }: { tickets: any[], onSelect: (slug: string) => void }) {
+function TicketChatList({ tickets, onSelect }: { tickets: ItemTicketChatInformationDTO[], onSelect: (slug: string) => void }) {
    const [isModalOpen, setIsModalOpen] = useState(false)
    const [form] = Form.useForm()
 
@@ -55,12 +57,14 @@ function TicketChatList({ tickets, onSelect }: { tickets: any[], onSelect: (slug
                            <MessageOutlined /> <span className='text-lg'>{item?.title}</span>
                         </div>
                         <div className='text-gray-500 text-base'>{item?.lastMessage}</div>
+                        <div className='text-xs text-gray-400'>
+                           Tạo lúc: {formatDate(item?.createdAt)}
+                        </div>
                      </div>
                      <div className='text-right'>
                         <Tag color='green'>
                            {item?.status === 'Open' ? 'Đang mở' : item?.status === 'Pending' ? 'Chờ nhân viên' : ''}
                         </Tag>
-                        <div className='text-xs text-gray-400'>{item.updatedAt}</div>
                      </div>
                   </div>
                </Card>
