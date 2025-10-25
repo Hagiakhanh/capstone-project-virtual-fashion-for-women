@@ -24,7 +24,7 @@ export default function CustomerChatPage() {
 
     useEffect(() => {
         fetchTicketsChat()
-    }, [])
+    }, [selectedTicket])
 
 
 
