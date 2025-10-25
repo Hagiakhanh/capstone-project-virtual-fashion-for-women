@@ -143,7 +143,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         {
             try
             {
-                MessageModelWithData<List<TicketInformation>> result =
+                MessageModelWithData<List<ResponseCustomerTicketChat>> result =
                     await _ticketChatService.GetOpenTicketAssignForStaff();
                 return StatusCode(result.StatusCode, result);
             }
@@ -177,6 +177,22 @@ namespace VirtualTryonWomenFashion.API.Controllers
             {
                 MessageModelWithData<ResponseTicketMessage> result =
                     await _ticketChatService.GetTicketChatMessageBySlug(slug);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("customer/close-tickets")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> GetCloseTicketForCustomer()
+        {
+            try
+            {
+                MessageModelWithData<Pagination<ResponseCustomerTicketChat>> result =
+                    await _ticketChatService.GetCloseTicketForCustomer(new PaginationParameter());
                 return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)

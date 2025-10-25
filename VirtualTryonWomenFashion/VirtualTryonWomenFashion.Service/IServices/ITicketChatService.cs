@@ -16,8 +16,9 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModelWithData<ResponseAssignTicketChat>> AssignStaffToTicketChat(RequestAssignTicketChat requestAssignTicketChat);
         public Task<MessageModel> FinishTicketChatForStaff(int ticketChatId);
         public Task<MessageModelWithData<ResponseGetAllTicketChat>> GetTicketChatForStaff(PaginationParameter pagination, TicketChatStatusEnum? ticketChatStatusEnum, bool isDateDecrease);
-        public Task<MessageModelWithData<List<TicketInformation>>> GetOpenTicketAssignForStaff();
+        public Task<MessageModelWithData<List<ResponseCustomerTicketChat>>> GetOpenTicketAssignForStaff();
         public Task<MessageModelWithData<ResponseTicketMessage>> GetTicketChatMessageBySlug(string ticketChatSlug);
         public Task<MessageModelWithData<Pagination<ResponseCustomerTicketChat>>> GetOpenTicketForCustomer(PaginationParameter page);
+        public Task<MessageModelWithData<Pagination<ResponseCustomerTicketChat>>> GetCloseTicketForCustomer(PaginationParameter page);
     }
 }
