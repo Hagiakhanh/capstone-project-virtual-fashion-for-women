@@ -12,6 +12,11 @@ import { api } from "@/api/instance";
 import { messageToast } from "@/helpers/toastHelper";
 import { Button, Flex, Typography } from "antd";
 import { OutfitCard } from "./OutfitCard";
+import { SelectSizeModal } from "./SelectSizeModal";
+import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
+import { PlusOutlined } from "@ant-design/icons";
+import { useRouter } from "next/navigation";
+
 const { Title, Text } = Typography;
 
 export function ChatMessageStage({
@@ -25,6 +30,7 @@ export function ChatMessageStage({
   conversationID: number | null;
   isOnFlow: boolean;
 }) {
+  const router = useRouter();
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
   const [currentConversation, setCurrentConversation] =
     useState<AIConversationDTO | null>(null);
@@ -35,9 +41,13 @@ export function ChatMessageStage({
   const [suggestedOutfit, setSuggestedOutfit] = useState<ComponentSuggested[]>(
     []
   );
-  const [isSuggestedMode, setIsSuggestedMode] = useState<boolean>(false);
 
-  // 🌀 Auto scroll (vẫn giữ logic cũ)
+  const [isSuggestedMode, setIsSuggestedMode] = useState<boolean>(false);
+  const [isVariantPopupVisible, setIsVariantPopupVisible] = useState(false);
+  const [productGroupColorDetail, setProductGroupColorDetail] = useState<any>();
+  const [selectedOutfits, setSelectedOutfits] = useState<
+    Record<string, { productVariantId: string; quantity: number }>
+  >({});
   useEffect(() => {
     if (isAutoScroll) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -47,9 +57,32 @@ export function ChatMessageStage({
   useEffect(() => {
     if (suggestedOutfit == null || suggestedOutfit.length == 0) {
       setToNextState(1);
+    } else {
+      if (suggestedOutfit && suggestedOutfit.length > 0) {
+        const defaultSelections = suggestedOutfit.reduce((acc, outfit) => {
+          acc[outfit.ProductColorId] = {
+            productVariantId: outfit.id,
+            quantity: 1,
+          };
+          return acc;
+        }, {} as Record<string, { productVariantId: string; quantity: number }>);
+
+        setSelectedOutfits(defaultSelections);
+      }
     }
   }, [suggestedOutfit]);
 
+  const fetchProductColor = async (productColorId: string) => {
+    try {
+      const response = await api.get("product-color/" + productColorId);
+      if (response.status === 200) {
+        const product = response.data;
+        setProductGroupColorDetail(product);
+      }
+    } catch (error: any) {
+      messageToast.error(error.response?.data?.message);
+    }
+  };
   // 📦 Lấy dữ liệu hội thoại ban đầu
   const handleGetAIConversation = async () => {
     if (!conversationID) return;
@@ -136,6 +169,75 @@ export function ChatMessageStage({
     }
   };
 
+  const handleSetSelectedVarianceAndSize = (
+    productVariantId: string,
+    productVariantName: string,
+    quantity: number
+  ) => {
+    const productColorId = productVariantId.slice(
+      0,
+      productVariantId.lastIndexOf("-")
+    );
+
+    setSelectedOutfits((prev) => ({
+      ...prev,
+      [productColorId]: {
+        productVariantId,
+        quantity,
+      },
+    }));
+    setSuggestedOutfit((prev) =>
+      prev.map((item) =>
+        item.ProductColorId === productColorId
+          ? {
+              ...item,
+              id: productVariantId,
+              name: productVariantName,
+            }
+          : item
+      )
+    );
+  };
+  const handleAddToCartAction = async (
+    selectedOutfits: Record<
+      string,
+      { productVariantId: string; quantity: number }
+    >
+  ) => {
+    const items = Object.values(selectedOutfits);
+    if (!items || items.length === 0) {
+      messageToast.warning("Không có sản phẩm nào để thêm vào giỏ hàng");
+      return;
+    }
+
+    try {
+      const responses = await Promise.all(
+        items.map((item) =>
+          api.post("/cartItem", {
+            productVariantId: item.productVariantId,
+            quantity: item.quantity,
+          })
+        )
+      );
+
+      const allSuccess = responses.every((res) => res.status === 201);
+
+      if (allSuccess) {
+        messageToast.success("🎉 Tất cả sản phẩm đã được thêm vào giỏ hàng!");
+        window.dispatchEvent(new Event("cart-updated"));
+      } else {
+        messageToast.warning(
+          "Một số sản phẩm có thể chưa được thêm thành công."
+        );
+      }
+    } catch (error: any) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", error);
+      messageToast.error(
+        error.response?.data?.message || "Thêm vào giỏ hàng thất bại"
+      );
+    }
+  };
+
   return (
     <div
       className={`${
@@ -157,14 +259,58 @@ export function ChatMessageStage({
             <h2 className="text-4xl w-[80%] mx-auto font-semibold text-center leading-relaxed from-[#FFAF37] to-[#996921] bg-gradient-to-r bg-clip-text text-transparent mb-4">
               ✨ Gợi ý trang phục
             </h2>
-            <div className="flex justify-center flex-col gap-4 overflow-y-auto max-h-[650px] pr-2">
+            <div className="flex flex-wrap justify-center gap-6 overflow-y-auto max-h-[650px] pr-2">
               {suggestedOutfit.map((outfit, index) => (
-                <OutfitCard
+                <div
                   key={index}
-                  name={outfit.name}
-                  imageUrl={outfit.ImageUrl}
-                />
+                  className="w-full sm:w-[48%] flex justify-center"
+                >
+                  <OutfitCard
+                    name={outfit.name}
+                    imageUrl={outfit.ImageUrl}
+                    onSelect={async () => {
+                      await fetchProductColor(outfit.ProductColorId);
+                      setIsVariantPopupVisible(true);
+                    }}
+                  />
+                </div>
               ))}
+
+              <SelectSizeModal
+                open={isVariantPopupVisible}
+                onClose={() => setIsVariantPopupVisible(false)}
+                onConfirm={handleSetSelectedVarianceAndSize}
+                product={productGroupColorDetail}
+                selectingProduct={selectedOutfits}
+              />
+            </div>
+            <div className="flex justify-center flex-col">
+              <AntButtonCommon
+                icon={<PlusOutlined />}
+                label="Thêm giỏ hàng"
+                colorType="primary"
+                onClick={() => {
+                  handleAddToCartAction(selectedOutfits);
+                }}
+              />
+              <AntButtonCommon colorType="secondary"
+                onClick={() => {
+                  router.push("/try-on");
+                  // console.log('productDetail', productDetail);
+                  sessionStorage.setItem(
+                    "productColor",
+                    JSON.stringify(
+                      suggestedOutfit?.map((item) => {
+                        return item.ProductColorId;
+                      })
+                    )
+                  );
+                }}
+               
+              >
+                <span className="mr-2">✨</span>
+                Thử đồ ảo ngay
+              </AntButtonCommon>
             </div>
           </motion.div>
         )}
