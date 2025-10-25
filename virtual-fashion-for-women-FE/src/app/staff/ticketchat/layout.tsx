@@ -6,7 +6,7 @@ import { MessageSquare, Inbox, Archive } from 'lucide-react'
 const tabs = [
   { label: 'Nhân viên - Bảng điều khiển', path: '/staff/ticketchat', icon: MessageSquare },
   { label: 'Nhân viên - Chat Hoạt động', path: '/staff/ticketchat/open-chat', icon: Inbox },
-  { label: 'Lưu trữ Chat', path: '/staff/ticketchat/archive', icon: Archive },
+  { label: 'Lưu trữ Chat', path: '/staff/ticketchat/close-chat', icon: Archive },
 ]
 
 export default function TicketChatLayout({ children }: { children: React.ReactNode }) {

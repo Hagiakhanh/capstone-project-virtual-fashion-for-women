@@ -5,7 +5,6 @@ import { messageToast } from '@/helpers/toastHelper';
 import { StaffTicketDashboardDTO } from '@/models/TicketChatDTO';
 import formatDate from '@/utils/formatDate';
 import { List, Card, Tag, Button, Pagination } from 'antd';
-import { span, tr } from 'framer-motion/client';
 import { MessageSquare, Clock, CheckCircle } from 'lucide-react'
 import { useEffect, useState } from 'react';
 function StaffTicketChatDashboard() {

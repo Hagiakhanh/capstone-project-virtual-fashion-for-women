@@ -13,6 +13,7 @@ const routePermissions: Record<string, string[]> = {
   "/payment/return": ["Customer"],
   "/account/chats": ["Customer"],
   "/account/aiConversations": ["Customer"],
+  "/try-on": ["Customer"],
 };
 
 // Routes public (không cần login)

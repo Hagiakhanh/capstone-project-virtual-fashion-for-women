@@ -7,13 +7,15 @@ export async function GET(request: Request) {
       const PageIndex = searchParams.get('PageIndex');
       const PageSize = searchParams.get('PageSize');
       const isDateDecrease = searchParams.get('isDateDecrease');
+      const ticketChatStatusEnum = searchParams.get('ticketChatStatusEnum');
 
       const api = createApiInstance(request);
       const responseBE = await api.get('/ticketchat/staff', {
          params: {
             PageIndex: PageIndex,
             PageSize: PageSize,
-            isDateDecrease: isDateDecrease
+            isDateDecrease: isDateDecrease,
+            ticketChatStatusEnum: ticketChatStatusEnum || undefined
          }
       });
       if (responseBE.status === 200) {
