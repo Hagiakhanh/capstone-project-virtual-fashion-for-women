@@ -5,6 +5,7 @@ public class ResponseTicketMessage
     public string Title { get; set; }
     public int TicketChatId { get; set; }
     public string TicketChatSlug { get; set; }
+    public string TicketStatus { get; set; }
     public List<TicketMessageDetail>? Messages { get; set; }
 }
 
