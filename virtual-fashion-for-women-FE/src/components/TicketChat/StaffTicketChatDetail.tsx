@@ -161,14 +161,21 @@ function StaffTicketChatDetail({ ticketSlug, onBack }: { ticketSlug: string, onB
                   </div>
                </div>
             </div>
-            <Button
-               type="primary"
-               danger
-               className='!text-base !font-normal'
-               onClick={() => setIsModalOpen(true)}
-            >
-               Hoàn tất hỗ trợ
-            </Button>
+            {messages?.ticketStatus?.startsWith('Open') ? (
+               <>
+                  <Button
+                     type="primary"
+                     danger
+                     className='!text-base !font-normal'
+                     onClick={() => setIsModalOpen(true)}
+                  >
+                     Hoàn tất hỗ trợ
+                  </Button>
+               </>
+            ) : (<>
+
+            </>)}
+
          </div>
 
          {/* Modal xác nhận */}
@@ -209,16 +216,23 @@ function StaffTicketChatDetail({ ticketSlug, onBack }: { ticketSlug: string, onB
             </div>
 
             {/* Input chat */}
-            <div className="mt-3 flex items-center gap-2">
-               <Input
-                  placeholder="Nhập tin nhắn..."
-                  style={{ fontSize: '16px' }}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onPressEnter={handleSend}
-               />
-               <Button type="primary" onClick={handleSend}>Gửi</Button>
-            </div>
+            {messages?.ticketStatus?.startsWith('Open') ? (
+               <>
+                  <div className="mt-3 flex items-center gap-2">
+                     <Input
+                        placeholder="Nhập tin nhắn..."
+                        style={{ fontSize: '16px' }}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onPressEnter={handleSend}
+                     />
+                     <Button type="primary" onClick={handleSend}>Gửi</Button>
+                  </div>
+               </>
+            ) : (
+               <></>
+            )}
+
          </>}
 
       </div>

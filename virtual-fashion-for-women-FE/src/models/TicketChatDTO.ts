@@ -3,6 +3,7 @@ export interface TicketMessageResponseDTO {
    ticketChatId: number;
    ticketChatSlug: string;
    messages: TicketMessageDetailDTO[];
+   ticketStatus: string;
 }
 
 export interface TicketMessageDetailDTO {
@@ -27,6 +28,8 @@ export interface StaffTicketInformationDTO {
    title: string;
    status: string;
    staffName: null | string;
+   closedAt: null | string;
+   ticketChatSlug: string;
 }
 
 export interface ItemTicketChatInformationDTO {
@@ -36,4 +39,5 @@ export interface ItemTicketChatInformationDTO {
    createdAt: string;
    status: string;
    lastMessage: string;
+   closedAt?: string | null;
 }
