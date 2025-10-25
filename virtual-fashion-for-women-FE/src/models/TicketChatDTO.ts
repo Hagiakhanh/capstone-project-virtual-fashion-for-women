@@ -28,3 +28,12 @@ export interface StaffTicketInformationDTO {
    status: string;
    staffName: null | string;
 }
+
+export interface ItemTicketChatInformationDTO {
+   ticketChatId: number;
+   ticketChatSlug: string;
+   title: string;
+   createdAt: string;
+   status: string;
+   lastMessage: string;
+}

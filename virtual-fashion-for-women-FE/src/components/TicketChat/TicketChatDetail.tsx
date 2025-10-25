@@ -6,6 +6,8 @@ import { TicketMessageDetailDTO, TicketMessageResponseDTO } from '@/models/Ticke
 import { api } from '@/api/instance'
 import { useAuth } from '@/contexts/AuthContext'
 import formatDate from '@/utils/formatDate'
+import { useRouter } from 'next/navigation'
+import { messageToast } from '@/helpers/toastHelper'
 
 export default function TicketChatDetail({
    ticketSlug,
@@ -20,6 +22,7 @@ export default function TicketChatDetail({
    const { user } = useAuth();
    const [connection, setConnection] = useState<signalR.HubConnection | null>(null)
    const chatBoxRef = useRef<HTMLDivElement>(null)
+   const messagesRef = useRef(messages);
 
    const fetchMessages = async () => {
       setLoading(true)
@@ -53,7 +56,7 @@ export default function TicketChatDetail({
 
    useEffect(() => {
       const newConnection = new signalR.HubConnectionBuilder()
-         .withUrl('https://localhost:44341/chathub', {
+         .withUrl(`${process.env.NEXT_PUBLIC_SIGNALR_URL}/chathub`, {
             withCredentials: true
          })
          .withAutomaticReconnect()
@@ -96,12 +99,22 @@ export default function TicketChatDetail({
 
       })
 
+      connection.on("TicketClosed", (data: any) => {
+         const currentMessages = messagesRef.current;
+
+         if (data?.ticketChatId == currentMessages?.ticketChatId) {
+            onBack(null);
+            messageToast.info("Hỗ trợ đã bị đóng bởi nhân viên.");
+         }
+      });
+
       connection.onclose(() => {
          console.warn('⚠️ SignalR disconnected, will auto reconnect...')
       })
 
       return () => {
          connection.off('ReceiveMessage')
+         connection.off('TicketClosed')
          connection.stop()
       }
    }, [connection])
@@ -110,6 +123,7 @@ export default function TicketChatDetail({
       if (!loading) {
          scrollToBottom()
       }
+      messagesRef.current = messages;
    }, [messages])
 
    const handleSend = async () => {
