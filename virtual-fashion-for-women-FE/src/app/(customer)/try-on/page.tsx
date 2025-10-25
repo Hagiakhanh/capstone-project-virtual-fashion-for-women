@@ -265,6 +265,7 @@ export default function VirtualTryOnPage() {
             if (category.status === 200) {
                 setCategory(category.data);
                 const productColorId = sessionStorage.getItem("productColor");
+                sessionStorage.removeItem("productColor");
                 if (productColorId) {
                     const cleanId = JSON.parse(productColorId);
                     fetchProductColor(cleanId, category.data);
@@ -338,7 +339,7 @@ export default function VirtualTryOnPage() {
                                             )}
                                         </div>
                                         <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px] flex items-center justify-center">
-                                            {selectedTop ? selectedTop?.productColorName : 'Chọn một loại áo để phối'}
+                                            {selectedTop ? selectedTop?.productColorName : 'Chọn một loại áo hoặc đầm để phối'}
                                         </div>
                                     </div>
                                 </label>
