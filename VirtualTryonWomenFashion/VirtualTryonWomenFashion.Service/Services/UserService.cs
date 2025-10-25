@@ -27,14 +27,22 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IMailService _mailService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
+        private readonly ICurrentUserService _currentUserService;
 
-        public UserService(IUserRepository userRepository, IRoleRepository roleRepository, IMailService mailService, IUnitOfWork unitOfWork, IConfiguration configuration)
+        public UserService(
+            IUserRepository userRepository,
+            IRoleRepository roleRepository,
+            IMailService mailService,
+            IUnitOfWork unitOfWork,
+            IConfiguration configuration,
+            ICurrentUserService currentUserService)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _mailService = mailService;
             _unitOfWork = unitOfWork;
             _configuration = configuration;
+            _currentUserService = currentUserService;
         }
 
         public async Task<MessageModel> ConfirmAccount(RequestConfirmAccount requestConfirmAccount)
@@ -174,6 +182,48 @@ namespace VirtualTryonWomenFashion.Service.Services
             };
             var accessToken = GenerateJwtToken.AccessToken(claimList, _configuration);
             return new JwtSecurityTokenHandler().WriteToken(accessToken);
+        }
+
+        public async Task<UserInformation> GetUserInformationAsync()
+        {
+            int userId = _currentUserService.GetUserId();
+            User user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new Exception("User không tồn tại");
+            }
+
+            return user.MapToUserInformation();
+        }
+
+        public async Task<UserInformation> UpdateUserInformationAsync(int userId, RequestUpdateUser requestUpdateUser)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                int currentUserId = _currentUserService.GetUserId();
+                if (userId != currentUserId)
+                {
+                    throw new Exception("Bạn không có quyền thay đổi thông tin user này");
+                }
+
+                User user = await _userRepository.GetByIdAsync(userId);
+                if (user == null)
+                {
+                    throw new Exception("User không tồn tại");
+                }
+
+                user.Address = requestUpdateUser.Address;
+                user.PhoneNumber = requestUpdateUser.PhoneNumber;
+                user.FullName = requestUpdateUser.FullName;
+                await _userRepository.UpdateAsync(user);
+                await _unitOfWork.SaveChanges();
+                await _unitOfWork.CommitTransactionAsync();
+                return user.MapToUserInformation();
+            }catch(Exception ex)
+            {
+                throw ex;
+            }
         }
     }
 }
