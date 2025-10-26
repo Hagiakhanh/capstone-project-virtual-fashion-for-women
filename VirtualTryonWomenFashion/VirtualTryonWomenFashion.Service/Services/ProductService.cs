@@ -9,6 +9,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Commons;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
@@ -17,6 +18,7 @@ using VirtualTryonWomenFashion.Service.DTO.Color;
 using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
+using VirtualTryonWomenFashion.Service.DTO.UserInteraction;
 using VirtualTryonWomenFashion.Service.Extensions;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
@@ -46,6 +48,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ITagRepository _tagRepository;
         private readonly IColorRecommendationSerivce _colorRecommendationSerivce;
+        private readonly IUserInteractionService _userInteractionService;
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             ICloudinaryService cloudinaryService,
@@ -63,7 +66,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             IWishlistRepository wishlistRepository,
             IHttpContextAccessor httpContextAccessor,
             ITagRepository tagRepository,
-            IColorRecommendationSerivce colorRecommendationSerivce)
+            IColorRecommendationSerivce colorRecommendationSerivce,
+            IUserInteractionService userInteractionService)
         {
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
@@ -83,6 +87,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _httpContextAccessor = httpContextAccessor;
             _tagRepository = tagRepository;
             _colorRecommendationSerivce = colorRecommendationSerivce;
+            _userInteractionService = userInteractionService;
         }
 
         public static string GenerateFixedLengthString(int length)
@@ -303,6 +308,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             dto.IsInWishlist = isInWishlist;
+
+            await _userInteractionService.CreateAsync(new CreateUpdateUserInteractionDto()
+            {
+                ProductId = product.ProductId,
+                InteractionType = UserInteractionEnum.View.ToString(),
+                Weight = 1.0m
+            });
 
             return dto;
         }

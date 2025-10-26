@@ -31,6 +31,7 @@ using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Mappers;
 using VirtualTryonWomenFashion.Service.Utils;
 using Newtonsoft.Json.Serialization;
+using VirtualTryonWomenFashion.Service.DTO.UserInteraction;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -45,6 +46,8 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IProductVariantService _productVariantService;
         private readonly GHNSettings _ghnSettings;
         private readonly HttpClient _client;
+        private readonly IUserInteractionService _userInteractionService;
+        private readonly IProductService _productService;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -54,7 +57,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             ICartService cartService,
             IProductVariantService productVariantService,
             IOptions<GHNSettings> ghnSettings,
-            HttpClient client
+            HttpClient client,
+            IUserInteractionService userInteractionService,
+            IProductService productService
             )
         {
             _orderDetailService = orderDetailService;
@@ -65,6 +70,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             _unitOfWork = unitOfWork;
             _ghnSettings = ghnSettings.Value;
             _client = client;
+            _userInteractionService = userInteractionService;
+            _productService = productService;
         }
         public async Task<Order> CreateOrderAsync(RequestCreateOrder requestCreateOrder)
         {
@@ -143,6 +150,19 @@ namespace VirtualTryonWomenFashion.Service.Services
                 int result = await _orderDetailService.CreateOrderDetailAsync(orderDetails);
                 if (result > 0)
                 {
+                    if (productVariantIds.Any())
+                    {
+                        foreach (var productVariantId in productVariantIds)
+                        {
+                            var product = await _productService.GetProductByVariantIdAsync(productVariantId);
+                            await _userInteractionService.CreateAsync(new CreateUpdateUserInteractionDto()
+                            {
+                                ProductId = product.ProductId,
+                                InteractionType = UserInteractionEnum.Purchase.ToString(),
+                                Weight = 5.0m
+                            });
+                        }
+                    }
                     await _cartService.HideCartItemsAsync(productVariantIds);
                     return order;
                 }

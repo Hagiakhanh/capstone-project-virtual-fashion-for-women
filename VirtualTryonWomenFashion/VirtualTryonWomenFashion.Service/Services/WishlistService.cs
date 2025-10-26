@@ -5,10 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Commons;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.UserInteraction;
 using VirtualTryonWomenFashion.Service.DTO.Wishlist;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -21,15 +23,17 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IProductRepository _productRepository;
         private readonly IWishlistRepository _wishlistRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserInteractionService _userInteractionService;
 
         public WishlistService(ICurrentUserService currentUserService, IProductRepository productRepository,
-            IWishlistRepository wishlistRepository, IUnitOfWork unitOfWork
+            IWishlistRepository wishlistRepository, IUnitOfWork unitOfWork, IUserInteractionService userInteractionService
             )
         {
             _currentUserService = currentUserService;
             _productRepository = productRepository;
             _wishlistRepository = wishlistRepository;
             _unitOfWork = unitOfWork;
+            _userInteractionService = userInteractionService;
         }
         public async Task<MessageModel> AddProductToWishlist(RequestAddWishlist requestAddWishlist)
         {
@@ -62,6 +66,12 @@ namespace VirtualTryonWomenFashion.Service.Services
             int result = await _unitOfWork.SaveChanges();
             if (result > 0)
             {
+                await _userInteractionService.CreateAsync(new CreateUpdateUserInteractionDto()
+                {
+                    ProductId = product.ProductId,
+                    InteractionType = UserInteractionEnum.Wishlist.ToString(),
+                    Weight = 2.5m
+                });
                 return new MessageModel
                 {
                     Message = $"Thêm sản phẩm có id {requestAddWishlist.ProductId} vào danh sách mong muốn thành công",
