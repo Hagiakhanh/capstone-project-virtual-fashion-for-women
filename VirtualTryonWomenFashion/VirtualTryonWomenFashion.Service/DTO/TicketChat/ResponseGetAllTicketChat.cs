@@ -11,6 +11,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.TicketChat
     {
         public int PendingTicket { get; set; }
         public int OpenTicket { get; set; }
+        public int MyAssignedTicket { get; set; }
         public Pagination<TicketInformation> TicketInformation { get; set; }
     }
 
@@ -22,5 +23,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.TicketChat
         public string Title { get; set; }
         public string Status { get; set; }
         public string? StaffName { get; set; }
+        public DateTime? ClosedAt { get; set; }
+        public string TicketChatSlug { get; set; }
     }
 }

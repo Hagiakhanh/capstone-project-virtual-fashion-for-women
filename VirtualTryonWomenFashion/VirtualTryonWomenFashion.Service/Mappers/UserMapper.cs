@@ -13,6 +13,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
         public static UserInformation MapToUserInformation(this User user)
         {
             return new UserInformation() {
+                UserId = user.UserId,
                 Address = user.Address,
                 Email = user.Email,
                 FullName = user.FullName,

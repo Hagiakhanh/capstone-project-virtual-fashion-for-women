@@ -25,6 +25,11 @@ namespace VirtualTryonWomenFashion.Service.DTO.AIChatModel
 
         [JsonPropertyName("ImageUrl")]
         public string ImageUrl { get; set; }
+        [JsonPropertyName("ProductSlug")]
+        public string ProductSlug { get; set; }
+
+        [JsonPropertyName("ProductColorId")]
+        public string ProductColorId { get; set; }
 
         [JsonPropertyName("reason")]
         public string Reason { get; set; }

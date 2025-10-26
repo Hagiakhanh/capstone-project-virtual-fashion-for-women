@@ -17,7 +17,7 @@ namespace VirtualTryonWomenFashion.Service.Hubs
 
         public async Task JoinTicketGroup(string ticketSlug)
         {
-            int userId = int.Parse(Context.User?.FindFirst("UserID")?.Value);
+            /*int userId = int.Parse(Context.User?.FindFirst("UserID")?.Value);
             TicketChat ticket = await _ticketChatRepository.GetTicketChatBySlug(ticketSlug);
             if (ticket == null)
             {
@@ -26,7 +26,7 @@ namespace VirtualTryonWomenFashion.Service.Hubs
             if (ticket.CustomerId != userId && ticket.StaffId != userId)
             {
                 throw new HubException("Bạn không có quyền tham gia ticket này.");
-            }
+            }*/
 
             await Groups.AddToGroupAsync(Context.ConnectionId, ticketSlug);
             Console.WriteLine($"{Context.ConnectionId} joined group {ticketSlug}");
