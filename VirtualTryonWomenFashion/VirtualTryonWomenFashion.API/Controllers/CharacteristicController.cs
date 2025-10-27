@@ -23,7 +23,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         public async Task<IActionResult> GetCurrentCharacteristicForUser()
         {
             try
-            {
+           {
                 Characteristic result = await _characteristicService.GetCurrentCharacteristicForUser();
                 return Ok(result);
             }

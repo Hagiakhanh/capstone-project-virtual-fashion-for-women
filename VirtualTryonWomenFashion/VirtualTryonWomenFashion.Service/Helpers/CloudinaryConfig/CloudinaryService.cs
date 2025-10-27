@@ -14,7 +14,7 @@ namespace VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig
         private readonly Cloudinary _cloudinary;
         private static readonly string[] _allowedContentTypes = { "image/jpeg", "image/png", "image/webp", "image/gif" };
 
-        private const long _maxFileSize = 1 * 1024 * 1024;
+        private const long _maxFileSize = 5 * 1024 * 1024;
 
         public CloudinaryService(IOptions<CloudinarySettings> config)
         {

@@ -128,6 +128,13 @@ namespace VirtualTryonWomenFashion.Service.Helpers
     - **QUY TẮC CHUẨN HÓA DỮ LIỆU (BẮT BUỘC):** Khi cập nhật `Height` và `Weight`, bạn PHẢI chuẩn hóa tất cả các giá trị về đơn vị chuẩn:
         - **Chiều cao (`Height`)** phải là số nguyên tính bằng **centimét (cm)**. (Ví dụ: 'một mét rưỡi' -> 150, '1m6' -> 160).
         - **Cân nặng (`Weight`)** phải là số nguyên tính bằng **kilôgam (kg)**. (Ví dụ: 'nửa tạ' -> 50, '55 cân' -> 55).
+- **Số đo 3 vòng (`Bust`, `Waist`, `Hips`)** cũng cần được chuẩn hóa về đơn vị **centimét (cm)**:
+    - **`Bust`**: vòng ngực, giá trị số nguyên (ví dụ: “vòng 1 là 85”, “ngực 90” → `Bust = 85` hoặc `90`).
+    - **`Waist`**: vòng eo, giá trị số nguyên (ví dụ: “eo 60”, “vòng hai 58” → `Waist = 60` hoặc `58`).
+    - **`Hips`**: vòng hông, giá trị số nguyên (ví dụ: “hông 90”, “vòng ba 95” → `Hips = 90` hoặc `95`).
+- Nếu người dùng cung cấp cả ba số đo (“85-60-90”, “vòng một 85, eo 60, hông 90”), bạn PHẢI ghi đầy đủ ba trường `Bust`, `Waist`, `Hips` vào `updatedStyle`.
+- Nếu người dùng chỉ cung cấp một hoặc hai số đo phải yêu cầu người dùng nhập cho đủ thông tin số đo của 3 vòng.
+- Nếu người dùng nói bỏ qua, không xét số đo, hoặc yêu cầu không lưu thông tin cá nhân, bạn PHẢI đặt `Bust`, `Waist`, `Hips` = `null`.
     - **QUY TẮC XÓA THÔNG TIN: Nếu người dùng yêu cầu bỏ qua hoặc không xét đến một thông tin nào đó (ví dụ: 'khỏi cần cân nặng của mình'), bạn PHẢI đặt giá trị của trường tương ứng trong `updatedStyle` thành `null`.**
 
 2.  Dựa vào đối tượng JSON **đã được cập nhật**, quyết định hành động: `ask_question` hoặc `provide_suggestions`.
@@ -169,7 +176,7 @@ User Request: ""Tìm cho mình một chiếc áo đầm cách tân màu đỏ đ
 Your JSON output:
 {{
   ""action"": ""provide_suggestions"",
-  ""updatedStyle"": {{ ""Occasion"": ""đi tiệc"", ""FashionStyle"": ""cách tân"", ""ItemType"": ""Đầm"", ""Color"": ""đỏ"" }},
+  ""updatedStyle"": {{ ""Occasion"": ""đi tiệc"", ""FashionStyle"": ""cách tân"", ""ItemType"": ""Đầm"", ""Color"": ""đỏ""}},
   ""outfitName"": ""Áo đầm tiệc sự kiện màu đỏ cách tân đi tiệc cho dịp đám cưới "",
   ""components"": [ 
     {{ 

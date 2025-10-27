@@ -62,7 +62,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                         WriteIndented = true
                     };
-
+                    aiConversation.Messages.Add(new Message() { Content = "Tôi là người mới mong muốn được gợi ý và có phong cách " + characteristicDescribe, SenderId = currentUserId, IsAiresponse = false, CreatedAt = DateTime.UtcNow.AddHours(7) });
                     aiConversation.CurrentUserStyleJson = JsonSerializer.Serialize(analysis.UpdatedStyle, options);
                     aiConversation.Messages.Add(new Message() { Content = analysis.ResponseText, SenderId = null, ReceiverId = currentUserId, IsAiresponse = true, CreatedAt = DateTime.UtcNow.AddHours(7) });
 

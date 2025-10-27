@@ -26,6 +26,12 @@ namespace VirtualTryonWomenFashion.Service.DTO.AIChatModel
         /// </summary>
         public string? Occasion { get; set; }
 
+        public double? Bust { get; set; }
+
+        public double? Waist { get; set; }
+
+        public double? Hips { get; set; }
+
         /// <summary>
         /// Màu sắc nếu người dùng đề cập.
         /// </summary>
