@@ -105,7 +105,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(p => p.ProductColors)
                     .ThenInclude(pc => pc.ProductImages)
                 .Include(p => p.ProductColors)
-                    .ThenInclude(pc => pc.ProductVariants)
+                    .ThenInclude(pc => pc.ProductVariants.Where(pv => pv.Status == "Active"))
                         .ThenInclude(pv => pv.Size)
                 .Where(p => p.ProductSlug == slug && p.IsDeleted != true)
                 .FirstOrDefaultAsync();
@@ -123,7 +123,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(p => p.ProductColors)
                     .ThenInclude(pc => pc.ProductVariants)
                         .ThenInclude(pv => pv.Size)
-                //.Where(p => p.ProductId == productId && p.IsDeleted != true)
+                .Where(p => p.ProductId == productId/* && p.IsDeleted != true*/)
                 .FirstOrDefaultAsync();
         }
 
@@ -143,6 +143,8 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                          && p.IsDeleted != true)
                 .FirstOrDefaultAsync();
         }
+        
+        
 
         public async Task<List<Product>> SearchProductsWithIncludes(string productName, string categoryName, string productSort, PaginationParameter pagination)
         {

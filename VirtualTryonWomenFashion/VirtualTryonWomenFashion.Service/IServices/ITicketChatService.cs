@@ -19,5 +19,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModelWithData<List<ResponseCustomerTicketChat>>> GetOpenTicketAssignForStaff();
         public Task<MessageModelWithData<ResponseTicketMessage>> GetTicketChatMessageBySlug(string ticketChatSlug);
         public Task<MessageModelWithData<Pagination<ResponseCustomerTicketChat>>> GetOpenTicketForCustomer(PaginationParameter page);
+        public Task<MessageModelWithData<Pagination<ResponseCustomerTicketChat>>> GetCloseTicketForCustomer(PaginationParameter page);
     }
 }

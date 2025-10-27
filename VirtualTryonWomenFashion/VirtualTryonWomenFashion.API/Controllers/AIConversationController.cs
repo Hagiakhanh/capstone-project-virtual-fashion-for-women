@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Reflection.PortableExecutable;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.AIChatModel;
 using VirtualTryonWomenFashion.Service.Helpers;
@@ -14,9 +15,11 @@ namespace VirtualTryonWomenFashion.API.Controllers
     public class AIConversationController : ControllerBase
     {
         private readonly IAiconversationService _aiConversationService;
-        public AIConversationController(IAiconversationService aiConversationService)
+        private readonly ISuggestedOutfitService _suggestedOutfitService;
+        public AIConversationController(IAiconversationService aiConversationService, ISuggestedOutfitService suggestedOutfitService)
         {
             _aiConversationService = aiConversationService;
+            _suggestedOutfitService = suggestedOutfitService;
         }
 
         // GET: api/<AIConversationController>
@@ -46,6 +49,28 @@ namespace VirtualTryonWomenFashion.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Lấy chi tiết của cuộc trò chuyện thất bại lỗi server");
+            }
+        }
+        [HttpGet("{id}/suggested-outfits")]
+        public async Task<IActionResult> GetAllSuggestions(int id, int pageSize, int pageCurrent)
+        {
+            try
+            {
+                PaginationParameter paginationParameter = new PaginationParameter()
+                {
+                    PageIndex = pageCurrent,
+                    PageSize = pageSize
+                };
+                var result = await _suggestedOutfitService.GetSuggestedOutfitsAsync(paginationParameter, id);
+                return StatusCode(200, result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Lấy các lần gợi ý trang phục của cuộc trò chuyện thất bại lỗi server");
             }
         }
 
