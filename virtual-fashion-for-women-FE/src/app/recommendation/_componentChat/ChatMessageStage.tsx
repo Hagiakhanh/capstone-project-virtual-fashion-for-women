@@ -10,7 +10,7 @@ import {
 } from "@/models/AIConversationDTO";
 import { api } from "@/api/instance";
 import { messageToast } from "@/helpers/toastHelper";
-import { Button, Flex, Typography } from "antd";
+import { Flex, Typography } from "antd";
 import { OutfitCard } from "./OutfitCard";
 import { SelectSizeModal } from "./SelectSizeModal";
 import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
@@ -23,12 +23,10 @@ export function ChatMessageStage({
   setToNextState,
   setIsLoading,
   conversationID,
-  isOnFlow,
 }: {
   setToNextState: React.Dispatch<React.SetStateAction<number>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   conversationID: number | null;
-  isOnFlow: boolean;
 }) {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
@@ -62,7 +60,7 @@ export function ChatMessageStage({
         const defaultSelections = suggestedOutfit.reduce((acc, outfit) => {
           acc[outfit.ProductColorId] = {
             productVariantId: outfit.id,
-            quantity: 1,
+            quantity: selectedOutfits[outfit.ProductColorId]?.quantity ?? 1,
           };
           return acc;
         }, {} as Record<string, { productVariantId: string; quantity: number }>);
@@ -178,7 +176,6 @@ export function ChatMessageStage({
       0,
       productVariantId.lastIndexOf("-")
     );
-
     setSelectedOutfits((prev) => ({
       ...prev,
       [productColorId]: {
@@ -293,7 +290,8 @@ export function ChatMessageStage({
                   handleAddToCartAction(selectedOutfits);
                 }}
               />
-              <AntButtonCommon colorType="secondary"
+              <AntButtonCommon
+                colorType="secondary"
                 onClick={() => {
                   router.push("/try-on");
                   // console.log('productDetail', productDetail);
@@ -306,7 +304,6 @@ export function ChatMessageStage({
                     )
                   );
                 }}
-               
               >
                 <span className="mr-2">✨</span>
                 Thử đồ ảo ngay

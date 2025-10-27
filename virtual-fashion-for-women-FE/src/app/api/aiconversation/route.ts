@@ -1,6 +1,21 @@
 import { createApiInstance } from "@/api/instance";
 import { NextResponse } from "next/server";
 
+export async function GET(request: Request) {
+  try {
+    const api = createApiInstance(request);
+    const response = await api.get("/aiconversation");
+
+    return NextResponse.json(response.data, { status: 200 });
+  } catch (error: any) {
+    console.error("Error fetching ai conversation:", error.message);
+    return NextResponse.json(
+      { message: `Lỗi: ${error.message}` },
+      { status: error.response?.status || 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const payload = await request.json();

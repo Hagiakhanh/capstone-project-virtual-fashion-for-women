@@ -31,7 +31,6 @@ function ChatBoxContainer({
           conversationID={conversationId}
           setToNextState={setToNextState}
           setIsLoading={setIsLoading}
-          isOnFlow={true}
         />
       );
     }

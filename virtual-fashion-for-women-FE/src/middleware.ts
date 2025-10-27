@@ -12,6 +12,7 @@ const routePermissions: Record<string, string[]> = {
   "/profile": ["Admin", "Staff", "Customer"],
   "/payment/return": ["Customer"],
   "/account/chats": ["Customer"],
+  "/account/aiConversations": ["Customer"],
   "/try-on": ["Customer"],
 };
 
