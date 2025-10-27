@@ -33,6 +33,7 @@ function ProductDetailsPage() {
    const [errorMessage, setErrorMessage] = useState<string | null>(null);
    const [colorImages, setColorImages] = useState([]);
    const [mainImage, setMainImage] = useState(null);
+   const [linkToArTryOn, setLinkToArTryOn] = useState<string>('');
 
    const fetchProductDetails = async () => {
       try {
@@ -390,6 +391,7 @@ function ProductDetailsPage() {
                         <span className="mr-2">✨</span>
                         Thử đồ ảo ngay
                      </Button>
+                     <p>Hoặc</p>
                   </div>
 
 
