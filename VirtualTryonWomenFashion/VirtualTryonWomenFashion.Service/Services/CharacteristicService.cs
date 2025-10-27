@@ -40,6 +40,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             try
             {
+
                 int currentUserId = _currentUserService.GetUserId();
 
                 // Kiểm tra đã tồn tại đặc điểm người dùng hay chưa
@@ -53,7 +54,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                         StatusCode = StatusCodes.Status400BadRequest
                     };
                 }
-
                 // Tạo đối tượng mới
                 var newCharacteristic = new Characteristic
                 {
@@ -62,6 +62,18 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Height = requestModel.Height,
                     Age = requestModel.Age
                 };
+                if (requestModel.Waist != null && requestModel.Hips != null && requestModel.Bust != null)
+                {
+                    if ((requestModel.Waist <= 30 || requestModel.Hips <= 30 || requestModel.Bust <= 30) ||
+                        (requestModel.Waist > 200 || requestModel.Hips > 200 || requestModel.Bust > 200))
+                    {
+                        throw new ArgumentException("Số đo 3 vòng chọn không hợp lệ");
+                    }
+                    newCharacteristic.Bust = requestModel.Bust;
+                    newCharacteristic.Waist = requestModel.Waist;
+                    newCharacteristic.Hips = requestModel.Hips;
+                }
+               
 
                 // ---- Xử lý StyleType ----
                 if (requestModel.StyleTypeID == 0)
@@ -167,6 +179,14 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (c.Weight.HasValue)
                 parts.Add($"nặng {c.Weight} kg");
 
+            if (c.Bust.HasValue)
+                parts.Add($"vòng một {c.Bust} cm");
+
+            if (c.Waist.HasValue)
+                parts.Add($"vòng eo {c.Waist} cm");
+
+            if (c.Hips.HasValue)
+                parts.Add($"vòng hông {c.Hips} cm");
             // Làn da (SkinTone hoặc SkinToneNote)
             string skinTone = c.SkinTone != null
                 ? c.SkinTone.SkinToneName
@@ -278,10 +298,22 @@ namespace VirtualTryonWomenFashion.Service.Services
                 existingCharacteristic.Weight = requestModel.Weight;
                 existingCharacteristic.Height = requestModel.Height;
                 existingCharacteristic.Age = requestModel.Age;
+                if (requestModel.Waist != null && requestModel.Hips != null && requestModel.Bust != null)
+                {
+                    if ((requestModel.Waist <= 30 || requestModel.Hips <= 30 || requestModel.Bust <= 30) ||
+                        (requestModel.Waist > 200 || requestModel.Hips > 200 || requestModel.Bust > 200))
+                    {
+                        throw new ArgumentException("Số đo 3 vòng chọn không hợp lệ");
+                    }
+                    existingCharacteristic.Bust = requestModel.Bust;
+                    existingCharacteristic.Waist = requestModel.Waist;
+                    existingCharacteristic.Hips = requestModel.Hips;
+                }
 
                 if (requestModel.StyleTypeID == 0)
                 {
                     existingCharacteristic.StyleTypeNote = requestModel.StyleTypeNote.Trim();
+                    existingCharacteristic.StyleTypeId = null;
                 }
                 else
                 {
@@ -298,6 +330,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
                 if (requestModel.OccasionPreferenceID == 0)
                 {
+                    existingCharacteristic.OccasionPreferenceId = null;
                     existingCharacteristic.OccasionNote = requestModel.OccasionPreferenceNote.Trim();
                 }
                 else
@@ -315,6 +348,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
                 if (requestModel.SkinToneID == 0)
                 {
+                    existingCharacteristic.SkinToneId = null;
                     existingCharacteristic.SkinToneNote = requestModel.SkinToneNote.Trim();
                 }
                 else

@@ -36,5 +36,13 @@ namespace VirtualTryonWomenFashion.Service.DTO.Characteristic
 
             [StringLength(200, ErrorMessage = "Ghi chú về tông da không được vượt quá 200 ký tự.")]
             public string? SkinToneNote { get; set; }
-        }
+
+        
+            public double? Bust { get; set; }
+
+            public double? Waist { get; set; }
+
+            public double? Hips { get; set; }
+
     }
+}

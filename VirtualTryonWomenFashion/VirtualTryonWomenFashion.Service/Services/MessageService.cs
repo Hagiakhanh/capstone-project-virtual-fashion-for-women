@@ -37,12 +37,12 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ITicketChatRepository _ticketChatRepository;
         private readonly IUserRepository _userRepository;
         private readonly IHubContext<TicketChatHub> _ticketChatHub;
-
+        private readonly ISizeService _sizeService;
         public MessageService(IMessageRepository messageRepository, IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService, IAiconversationRepository aiconversationRepository,
             IGeminiService geminiService, ICategoryRepository categoryRepository, IVectorDbService vectorDbService,
             IProductVariantRepository productVariantRepository, ISuggestedOutfitRepository suggestedOutfitRepository,
-            ITicketChatRepository ticketChatRepository, IUserRepository userRepository, IHubContext<TicketChatHub> ticketChatHub)
+            ITicketChatRepository ticketChatRepository, IUserRepository userRepository, IHubContext<TicketChatHub> ticketChatHub, ISizeService sizeService)
         {
             _messageRepository = messageRepository;
             _unitOfWork = unitOfWork;
@@ -56,6 +56,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _ticketChatRepository = ticketChatRepository;
             _userRepository = userRepository;
             _ticketChatHub = ticketChatHub;
+            _sizeService = sizeService;
         }
         public async Task<ResponseAIChatModelWithSuggestion> SendMessageToAIConversation(int conversationChatID, string message)
         {
@@ -92,6 +93,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     OutfitName = analysis.OutfitName,
                     ResponseText = analysis.ResponseText
                 };
+
                 if (HasChanges(currentUserStyle, analysis.UpdatedStyle))
                 {
                     var options = new JsonSerializerOptions
@@ -111,12 +113,12 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                     foreach (var componentPlan in analysis.Components)
                     {
-                        //if (currentUserStyle.Weight.HasValue && currentUserStyle.Height.HasValue)
-                        //{
-                        //    var size = SizeHelper.GetFemaleSize(currentUserStyle.Height.Value, currentUserStyle.Weight.Value);
-                        //    componentPlan.Filters["size"] = size;
-                        //}
-
+                        if (currentUserStyle.Hips.HasValue && currentUserStyle.Bust.HasValue && currentUserStyle.Waist.HasValue)
+                        {
+                            var size = await _sizeService.GetByBodySize(currentUserStyle.Bust.Value, currentUserStyle.Waist.Value, currentUserStyle.Hips.Value);
+                            componentPlan.Filters["size"] = size.SizeCode;
+                        }
+                            
                         float[] embeddedQuery = await _geminiService.GetEmbeddingAsync(componentPlan.SearchQuery);
 
                         // Query nhiều sản phẩm cho mỗi loại

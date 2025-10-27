@@ -13,6 +13,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
     {
         public Task<List<Size>> GetAllAsync();
         public Task<MessageModelWithData<Size>> CreateAsync(RequestCreateSizeModel sizeModel);
-        
+        public Task<Size> GetByBodySize(double bust, double waist, double hips);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.SuggestedOutfit;
+using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
 namespace VirtualTryonWomenFashion.Service.Services
@@ -44,7 +46,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<Pagination<ResponseSuggestedOutfitModel>> GetSuggestedOutfitsAsync(PaginationParameter paginationParameter, int? AIConversationID)
+        public async Task<ResponsePaginationModel<List<ResponseSuggestedOutfitModel>>> GetSuggestedOutfitsAsync(PaginationParameter paginationParameter, int? AIConversationID)
         {
             try
             {
@@ -61,13 +63,17 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 int totalRecords = _suggestedOutfitRepository.Count(x => x.IsDeleted == false
                 && (!AIConversationID.HasValue || x.AiconversationId == AIConversationID));
+                int totalPage = (int)Math.Ceiling((decimal)totalRecords / paginationParameter.PageSize);
                 List<SuggestedOutfit> suggestedOutfits = await _suggestedOutfitRepository.GetAll(paginationParameter, x => x.IsDeleted == false
                 && (!AIConversationID.HasValue || x.AiconversationId == AIConversationID),
                     x => x.OrderByDescending(x => x.CreatedAt), x => x.ProductVariants);
 
                 List<ResponseSuggestedOutfitModel> listResponse = _mapper.Map<List<ResponseSuggestedOutfitModel>>(suggestedOutfits);
-
-                return new Pagination<ResponseSuggestedOutfitModel>(listResponse, totalRecords, paginationParameter.PageIndex, paginationParameter.PageSize);
+                if (listResponse == null)
+                {
+                    listResponse = new List<ResponseSuggestedOutfitModel>();
+                }
+                return new ResponsePaginationModel<List<ResponseSuggestedOutfitModel>>(StatusCodes.Status200OK, listResponse, totalRecords, totalPage);
             }
             catch (ArgumentException ex)
             {
@@ -75,7 +81,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
             catch (Exception ex)
             {
-                return new Pagination<ResponseSuggestedOutfitModel>([], 0, paginationParameter.PageIndex, paginationParameter.PageSize);
+                return new ResponsePaginationModel<List<ResponseSuggestedOutfitModel>>(StatusCodes.Status500InternalServerError, [], 0, 0);
             }
         }
     }
