@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
@@ -11,6 +12,7 @@ using VirtualTryonWomenFashion.Service.DTO.Cart;
 using VirtualTryonWomenFashion.Service.DTO.Color;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
 using VirtualTryonWomenFashion.Service.DTO.User;
+using VirtualTryonWomenFashion.Service.DTO.UserInteraction;
 using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Mappers;
 using VirtualTryonWomenFashion.Service.Utils;
@@ -25,6 +27,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IProductVariantService _productVariantService;
         private readonly IShippingService _shippingService;
         private readonly IProductService _productService;
+        private readonly IUserInteractionService _userInteractionService;
 
         public CartService(
             ICartRepository cartRepository,
@@ -32,7 +35,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             ICurrentUserService currentUserService,
             IProductVariantService productVariantService,
             IShippingService shippingService,
-            IProductService productService
+            IProductService productService,
+            IUserInteractionService userInteractionService
         )
         {
             _cartRepository = cartRepository;
@@ -41,6 +45,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _productVariantService = productVariantService;
             _shippingService = shippingService;
             _productService = productService;
+            _userInteractionService = userInteractionService;
         }
 
         public async Task<ResponseCartItem> AddProductToCartAsync(RequestAddProductToCart requestAddProductToCart)
@@ -97,6 +102,14 @@ namespace VirtualTryonWomenFashion.Service.Services
                     await _cartRepository.InsertAsync(newCartItem);
                     await _unitOfWork.SaveChanges();
                     await _unitOfWork.CommitTransactionAsync();
+                    
+                    var product = await _productService.GetProductByVariantIdAsync(requestAddProductToCart.ProductVariantId);
+                    await _userInteractionService.CreateAsync(new CreateUpdateUserInteractionDto()
+                    {
+                        ProductId = product.ProductId,
+                        InteractionType = UserInteractionEnum.AddToCart.ToString(),
+                        Weight = 3.0m
+                    });
                     
                     return newCartItem.MapToResponseCartItem(new ResponseProductVariantDto());
                 }

@@ -5,11 +5,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.Rating;
+using VirtualTryonWomenFashion.Service.DTO.UserInteraction;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -21,15 +23,19 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
         private readonly IMapper _mapper;
+        private readonly IUserInteractionService _userInteractionService;
+        private readonly IOrderDetailRepository _orderDetailRepo;
 
         public RatingService(IRatingRepository ratingRepository, IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService,
-            IMapper mapper) 
+            IMapper mapper, IUserInteractionService userIntertactionService, IOrderDetailRepository orderDatilRepo) 
         { 
             _ratingRepository = ratingRepository;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
             _mapper = mapper;
+            _userInteractionService = userIntertactionService;
+            _orderDetailRepo = orderDatilRepo;
         }
 
         public async Task<ResponseRatingDto?> GetRatingByIdAsync(int ratingId)
@@ -104,6 +110,13 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 if (result > 0)
                 {
+                    var product = await _orderDetailRepo.GetProductByOrderDetailIdAsync((int)request.OrderDetailId);
+                    await _userInteractionService.CreateAsync(new CreateUpdateUserInteractionDto()
+                    {
+                        ProductId = product.ProductId,
+                        InteractionType = UserInteractionEnum.Review.ToString(),
+                        Weight = 4.0m
+                    });
                     return new MessageModelWithData<Rating>
                     {
                         Message = "Tạo thành công rating",
