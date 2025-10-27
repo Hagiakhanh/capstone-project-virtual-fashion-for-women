@@ -42,15 +42,16 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 if (userCharacteristicID.HasValue)
                 {
-                    MessageModelWithData<Characteristic> selectedCharacteristic = await _characteristicService.GetDetailCharacteristicByID(currentUserId);
+                    MessageModelWithData<Characteristic> selectedCharacteristic = await _characteristicService.GetDetailCharacteristicByID(userCharacteristicID.Value);
 
                     if (selectedCharacteristic == null)
                     {
                         throw new ArgumentException(selectedCharacteristic.Message);
                     }
                     string characteristicDescribe = _characteristicService.GetCharacteristicDescription(selectedCharacteristic.Data);
-                    Message messageDescribe = new Message { Content = characteristicDescribe, SenderId = currentUserId, ReceiverId = null, CreatedAt = DateTime.UtcNow.AddHours(7) };
-                    aiConversation.Messages.Add(messageDescribe);
+
+                    aiConversation.Messages.Add(new Message() { Content = characteristicDescribe, SenderId = currentUserId, IsAiresponse = false, CreatedAt = DateTime.UtcNow.AddHours(7) });
+
                     List<Category> categories = await _categoryService.GetAllCategories();
                     string prompt = PromptHelper.BuildConversationalStylistPrompt(null, null, categories, "Tôi là người mới mong muốn được gợi ý và có phong cách " + characteristicDescribe);
                     string geminiJsonResponse = await _geminiService.CallGeminiAsync(prompt);
@@ -62,7 +63,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                         WriteIndented = true
                     };
-                    aiConversation.Messages.Add(new Message() { Content = "Tôi là người mới mong muốn được gợi ý và có phong cách " + characteristicDescribe, SenderId = currentUserId, IsAiresponse = false, CreatedAt = DateTime.UtcNow.AddHours(7) });
                     aiConversation.CurrentUserStyleJson = JsonSerializer.Serialize(analysis.UpdatedStyle, options);
                     aiConversation.Messages.Add(new Message() { Content = analysis.ResponseText, SenderId = null, ReceiverId = currentUserId, IsAiresponse = true, CreatedAt = DateTime.UtcNow.AddHours(7) });
 
