@@ -13,7 +13,9 @@
 		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.15" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+		<PackageReference Include="StackExchange.Redis" Version="2.9.11" />
 	</ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VirtualTryonWomenFashion.Data\VirtualTryonWomenFashion.Data.csproj" />

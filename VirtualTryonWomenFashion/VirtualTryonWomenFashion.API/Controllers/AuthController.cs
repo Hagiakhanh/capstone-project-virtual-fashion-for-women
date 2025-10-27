@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using VirtualTryonWomenFashion.Service.DTO.User;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -53,6 +55,27 @@ namespace VirtualTryonWomenFashion.API.Controllers
             {
                 MessageModelWithData<string> result = await _userService.LoginAccount(requestLoginAccount);
                 return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> LogoutUser()
+        {
+            try
+            {
+                var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(token);
+                var expiryTime = jwtToken.ValidTo - DateTime.UtcNow;
+
+                MessageModel result = await _userService.LogoutUser(token, expiryTime);
+                return StatusCode(result.StatusCode, result.Message);
             }
             catch (Exception ex)
             {
