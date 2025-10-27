@@ -20,13 +20,14 @@ export const ChatMessage: React.FC<ChatParams> = ({ item }: ChatParams) => {
       )}
       <div
         className={`
+          font-[Roboto] 
           rounded-2xl px-4 py-2 max-w-[70%] text-sm shadow-sm
           ${
             item.isBot ? "bg-gray-100 text-gray-800" : "bg-blue-500 text-white"
           }`}
       >
         {item.isTyping ? (
-          <span className="italic text-gray-500">... đang trả lời</span>
+          <span className=" text-gray-500">... đang trả lời</span>
         ) : (
           item.message
         )}

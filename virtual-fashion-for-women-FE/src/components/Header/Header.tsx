@@ -69,7 +69,7 @@ function HeaderComponent() {
             <ul className="flex gap-10 text-xl font-normal cursor-pointer">
                <Link href="/" className="hover:underline underline-offset-4">Trang chủ</Link>
                <Link href="/try-on" className="hover:underline underline-offset-4">Phòng thử đồ</Link>
-               <li className="hover:underline underline-offset-4">Phối đồ thông minh</li>
+               <Link href="/recommendation" className="hover:underline underline-offset-4">Phối đồ thông minh</Link>
                <li>
                   <Dropdown menu={{ items: menuItems }} placement="bottom">
                      <span className="flex items-center hover:underline underline-offset-4">
