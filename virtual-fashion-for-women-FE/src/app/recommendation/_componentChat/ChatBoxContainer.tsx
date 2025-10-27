@@ -1,3 +1,4 @@
+"use client";
 import { ChatMessageStage } from "./ChatMessageStage";
 import { SelectPersonalStyle } from "./SelectPersonalStyleStep";
 type chatBoxCurrentTypeState = {
@@ -18,11 +19,13 @@ function ChatBoxContainer({
   switch (currentState) {
     case 0: {
       return (
-        <SelectPersonalStyle
-          setConversationId={setConversationId}
-          setToNextState={setToNextState}
-          setIsLoading={setIsLoading}
-        />
+        <div>
+          <SelectPersonalStyle
+            setConversationId={setConversationId}
+            setToNextState={setToNextState}
+            setIsLoading={setIsLoading}
+          />
+        </div>
       );
     }
     default: {
