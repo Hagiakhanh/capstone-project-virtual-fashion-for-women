@@ -6,7 +6,6 @@ import { TicketMessageDetailDTO, TicketMessageResponseDTO } from '@/models/Ticke
 import { api } from '@/api/instance'
 import { useAuth } from '@/contexts/AuthContext'
 import formatDate from '@/utils/formatDate'
-import { useRouter } from 'next/navigation'
 import { messageToast } from '@/helpers/toastHelper'
 
 export default function TicketChatDetail({
@@ -186,18 +185,25 @@ export default function TicketChatDetail({
             </div>
 
             {/* Ô nhập và nút gửi */}
-            <div className='mt-4 flex gap-2'>
-               <Input
-                  placeholder='Nhập tin nhắn...'
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onPressEnter={handleSend}
-                  style={{ fontSize: '16px' }}
-               />
-               <Button type='primary' onClick={handleSend} style={{ fontSize: '16px' }}>
-                  Gửi
-               </Button>
-            </div>
+            {
+               messages?.ticketStatus?.startsWith('Open') || messages?.ticketStatus?.startsWith('Pending') ? (
+                  <div className='mt-4 flex gap-2'>
+                     <Input
+                        placeholder='Nhập tin nhắn...'
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onPressEnter={handleSend}
+                        style={{ fontSize: '16px' }}
+                     />
+                     <Button type='primary' onClick={handleSend} style={{ fontSize: '16px' }}>
+                        Gửi
+                     </Button>
+                  </div>
+               ) : (
+                  <></>
+               )
+            }
+
          </div>
 
       </div>
