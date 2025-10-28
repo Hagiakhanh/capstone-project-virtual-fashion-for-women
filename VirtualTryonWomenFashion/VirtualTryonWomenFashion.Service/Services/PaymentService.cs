@@ -246,7 +246,7 @@ public class PaymentService : IPaymentService
                 await _transactionService.UpdateTransactionStatusAsync(new List<Transaction>() { transaction });
 
                 ResponseOrder responseOrder =
-                    await _orderService.GetOrderByIdAsync(transaction.OrderId, transaction.UserId);
+                    await _orderService.GetOrderByIdAsync(transaction.OrderId.Value, transaction.UserId);
                 if (responseOrder == null)
                 {
                     throw new Exception("Đơn hàng không tồn tại.");
@@ -274,7 +274,7 @@ public class PaymentService : IPaymentService
                 await _transactionService.UpdateTransactionStatusAsync(new List<Transaction>() { transaction });
 
                 ResponseOrder responseOrder =
-                    await _orderService.GetOrderByIdAsync(transaction.OrderId, transaction.UserId);
+                    await _orderService.GetOrderByIdAsync(transaction.OrderId.Value, transaction.UserId);
                 if (responseOrder == null)
                 {
                     throw new Exception("Đơn hàng không tồn tại.");
@@ -346,7 +346,7 @@ public class PaymentService : IPaymentService
                 await _transactionService.UpdateTransactionStatusAsync(new List<Transaction>() { transaction });
 
                 ResponseOrder responseOrder =
-                    await _orderService.GetOrderByIdAsync(transaction.OrderId, transaction.UserId);
+                    await _orderService.GetOrderByIdAsync(transaction.OrderId.Value, transaction.UserId);
                 if (responseOrder == null)
                 {
                     throw new Exception("Đơn hàng không tồn tại.");
@@ -374,7 +374,7 @@ public class PaymentService : IPaymentService
                 await _transactionService.UpdateTransactionStatusAsync(new List<Transaction>() { transaction });
 
                 ResponseOrder responseOrder =
-                    await _orderService.GetOrderByIdAsync(transaction.OrderId, transaction.UserId);
+                    await _orderService.GetOrderByIdAsync(transaction.OrderId.Value, transaction.UserId);
                 if (responseOrder == null)
                 {
                     throw new Exception("Đơn hàng không tồn tại.");
