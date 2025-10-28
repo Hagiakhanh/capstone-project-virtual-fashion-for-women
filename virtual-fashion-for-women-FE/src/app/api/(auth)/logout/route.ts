@@ -9,9 +9,15 @@ export async function POST(request: Request) {
       const responseBE = await api.post('/auth/logout');
       if (responseBE.status === 200) {
          console.log("Calling backend logout API 2");
-         const cookieStore = await cookies();
-         cookieStore.delete('token');
-         return NextResponse.json({ message: 'Logout successful' }, { status: 200 });
+         //const cookieStore = await cookies();
+         //cookieStore.delete('token');
+         const res = NextResponse.json({ message: 'Logout successful' }, { status: 200 });
+         res.cookies.delete({
+            name: 'token',
+            path: '/',
+            domain: process.env.NODE_ENV === 'production' ? '.onlinewomanfashion.store' : undefined,
+         });
+         return res;
       }
 
    } catch (error) {
