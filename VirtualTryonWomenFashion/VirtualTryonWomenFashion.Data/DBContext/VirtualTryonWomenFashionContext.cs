@@ -654,13 +654,16 @@ public partial class VirtualTryonWomenFashionContext : DbContext
         {
             entity.HasKey(e => e.TransactionId).HasName("PK__Transact__55433A4B45431902");
 
-            entity.HasIndex(e => e.OrderId, "UQ__Transact__C3905BAE0DA0D775").IsUnique();
+            entity.HasIndex(e => e.OrderId, "UQ_Transactions_OrderID").IsUnique();
+
+            entity.HasIndex(e => e.OrderRefundId, "UQ_Transactions_OrderRefundID").IsUnique();
 
             entity.Property(e => e.TransactionId).HasColumnName("TransactionID");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Method).HasMaxLength(100);
             entity.Property(e => e.Money).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
+            entity.Property(e => e.OrderRefundId).HasColumnName("OrderRefundID");
             entity.Property(e => e.Status).HasMaxLength(50);
             entity.Property(e => e.ThirdPartyCode).HasMaxLength(255);
             entity.Property(e => e.ThirdPartyOrderIdCode).HasMaxLength(255);
@@ -669,7 +672,6 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
             entity.HasOne(d => d.Order).WithOne(p => p.Transaction)
                 .HasForeignKey<Transaction>(d => d.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Transactions_Orders");
 
             entity.HasOne(d => d.User).WithMany(p => p.Transactions)

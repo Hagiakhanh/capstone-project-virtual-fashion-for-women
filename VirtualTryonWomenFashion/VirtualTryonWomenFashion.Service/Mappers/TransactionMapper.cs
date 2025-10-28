@@ -11,7 +11,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
             return new TransactionInformation()
             {
                 TransactionId = transaction.TransactionId,
-                OrderId = transaction.OrderId,
+                OrderId = transaction.OrderId.Value,
                 UserId = transaction.UserId,
                 CreatedAt = transaction.CreatedAt,
                 Method = transaction.Method,
