@@ -53,6 +53,8 @@ public partial class Order
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
+    public virtual ICollection<OrderRefund> OrderRefunds { get; set; } = new List<OrderRefund>();
+
     public virtual ICollection<StatusLog> StatusLogs { get; set; } = new List<StatusLog>();
 
     public virtual Transaction Transaction { get; set; }

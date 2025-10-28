@@ -31,5 +31,7 @@ public partial class Transaction
 
     public virtual Order Order { get; set; }
 
+    public virtual OrderRefund OrderRefund { get; set; }
+
     public virtual User User { get; set; }
 }

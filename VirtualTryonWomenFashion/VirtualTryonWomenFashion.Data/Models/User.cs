@@ -41,6 +41,10 @@ public partial class User
 
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
+    public virtual ICollection<OrderRefund> OrderRefundCustomers { get; set; } = new List<OrderRefund>();
+
+    public virtual ICollection<OrderRefund> OrderRefundStaffs { get; set; } = new List<OrderRefund>();
+
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
