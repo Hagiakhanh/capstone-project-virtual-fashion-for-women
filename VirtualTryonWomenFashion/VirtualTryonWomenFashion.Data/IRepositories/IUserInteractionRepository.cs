@@ -12,5 +12,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     {
         Task<List<UserInteraction>> GetInteractionByUserIdAsync(int userId);
         Task<List<UserInteraction>> GetInteractionByProductIdAsync(string productId);
+        Task<List<UserInteraction>> GetAllInteractionsAsync();
     }
 }

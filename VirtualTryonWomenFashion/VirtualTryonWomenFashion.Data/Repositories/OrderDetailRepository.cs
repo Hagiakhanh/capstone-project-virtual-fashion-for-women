@@ -46,5 +46,24 @@ namespace VirtualTryonWomenFashion.Data.Repositories
     
             return product;
         }
+        
+        public async Task<List<OrderDetail>> GetUserOrderDetailsAsync(int userId)
+        {
+            return await _context.OrderDetails
+                .Include(od => od.ProductVariant)
+                    .ThenInclude(pv => pv.ProductColor)
+                        .ThenInclude(p => p.Product).ThenInclude(p => p.Tags)
+                .Where(od => od.Order.CustomerId == userId)
+                .ToListAsync();
+        }
+        
+        public async Task<List<OrderDetail>> GetAllOrderDetailsAsync()
+        {
+            return await _context.OrderDetails
+                .Include(od => od.ProductVariant)
+                .ThenInclude(pv => pv.ProductColor)
+                .ThenInclude(p => p.Product).ThenInclude(p => p.Tags)
+                .ToListAsync();
+        }
     }
 }

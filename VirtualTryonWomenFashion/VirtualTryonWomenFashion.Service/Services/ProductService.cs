@@ -157,26 +157,6 @@ namespace VirtualTryonWomenFashion.Service.Services
             return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
         }
 
-        public async Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParameter pagination, string? searchTerm,
-            string? status)
-        {
-            var products = await _productRepository.GetAllProductsWithIncludes(pagination, searchTerm, status);
-
-            // Get total count for pagination info
-            var totalRecords = await _productRepository.CountProductsAsync(searchTerm, status);
-            var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.PageSize);
-
-            // Map to DTOs (await từng product)
-            var productDtos = await Task.WhenAll(products.Select(p => MapToResponseProductDto(p)));
-
-            return new ResponsePaginationModel<List<ResponseProductDto>>(
-                statusCode: 200,
-                data: productDtos.ToList(),
-                totalRecords: totalRecords,
-                totalPages: totalPages
-            );
-        }
-
         public async Task<MessageModelWithData<Pagination<ResponseProductDto>>> GetAllProducts(
             PaginationParameter pagination,
             string? searchTerm,
@@ -305,16 +285,16 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 isInWishlist = await _wishlistRepository
                     .IsProductInWishlistAsync(userId.Value, product.ProductId);
+                
+                await _userInteractionService.CreateAsync(new CreateUpdateUserInteractionDto()
+                {
+                    ProductId = product.ProductId,
+                    InteractionType = UserInteractionEnum.View.ToString(),
+                    Weight = 1.0m
+                });
             }
 
             dto.IsInWishlist = isInWishlist;
-
-            await _userInteractionService.CreateAsync(new CreateUpdateUserInteractionDto()
-            {
-                ProductId = product.ProductId,
-                InteractionType = UserInteractionEnum.View.ToString(),
-                Weight = 1.0m
-            });
 
             return dto;
         }

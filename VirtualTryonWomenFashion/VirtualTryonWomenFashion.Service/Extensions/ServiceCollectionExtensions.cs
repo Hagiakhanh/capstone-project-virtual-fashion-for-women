@@ -88,6 +88,8 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<ISkinToneService, SkinToneService>();
             services.AddScoped<IStyleTypeService, StyleTypeService>();
             services.AddScoped<ITagService, TagService>();
+            services.AddScoped<IRecommendationService, RecommendationService>();
+            services.AddScoped<IItemSimilarityMatrixBuilder, IItemSimilarityMatrixBuilder>();
 
             return services;
         }

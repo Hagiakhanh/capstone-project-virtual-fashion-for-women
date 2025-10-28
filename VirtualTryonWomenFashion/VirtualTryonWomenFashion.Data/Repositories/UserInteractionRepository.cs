@@ -21,7 +21,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
             return await _context.UserInteractions
                 .Include(ui => ui.Product)
-                .Include(ui => ui.User)
+                    .ThenInclude(p =>p.Tags)
                 .Where(ui => ui.UserId == userId)
                 .ToListAsync();
         }
@@ -32,6 +32,14 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(ui => ui.Product)
                 .Include(ui => ui.User)
                 .Where(ui => ui.ProductId == productId)
+                .ToListAsync();
+        }
+        
+        public async Task<List<UserInteraction>> GetAllInteractionsAsync()
+        {
+            return await _context.UserInteractions
+                .Include(ui => ui.Product)
+                .Include(ui => ui.User)
                 .ToListAsync();
         }
     }
