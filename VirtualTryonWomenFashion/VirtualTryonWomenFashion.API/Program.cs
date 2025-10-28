@@ -27,6 +27,10 @@ builder.Services.AddDbContext<VirtualTryonWomenFashionContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("MyDbContext"));
 });
+builder.Services.AddStackExchangeRedisCache(option =>
+{
+    option.Configuration = builder.Configuration.GetConnectionString("RedisCloud");
+});
 builder.Services.RegistDependencyInjection();
 builder.Services.RegistAutoMapperService();
 
@@ -144,6 +148,8 @@ builder.Services.AddCors(options =>
           );
 });
 var app = builder.Build();
+
+app.UseMiddleware<JwtBlacklistMiddleware>();
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();

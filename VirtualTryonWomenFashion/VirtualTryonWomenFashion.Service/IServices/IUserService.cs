@@ -15,5 +15,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModel> ConfirmAccount(RequestConfirmAccount requestConfirmAccount);
         public Task<UserInformation> GetUserInformationAsync();
         public Task<UserInformation> UpdateUserInformationAsync(int userId, RequestUpdateUser requestUpdateUser);
+        public Task<MessageModel> LogoutUser(string token, TimeSpan expiryTime);
+        public Task<bool> IsBlacklistedAsync(string token);
     }
 }

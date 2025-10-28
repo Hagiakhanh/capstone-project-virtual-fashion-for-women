@@ -302,8 +302,9 @@ public class PaymentService : IPaymentService
                         }, true);
                 }
             }
-
+            
             await _unitOfWork.CommitTransactionAsync();
+            await Console.Out.WriteLineAsync("Xử lý IPN của momo thành công");
             return "Xử lý callback thành công";
         }
         catch (Exception ex)
@@ -403,6 +404,7 @@ public class PaymentService : IPaymentService
             }
 
             await _unitOfWork.CommitTransactionAsync();
+            await Console.Out.WriteLineAsync("Xử lý IPN của vnpay thành công");
             return "Xử lý callback thành công";
         }
         catch (Exception ex)

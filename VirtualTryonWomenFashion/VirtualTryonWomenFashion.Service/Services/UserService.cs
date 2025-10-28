@@ -28,6 +28,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IRedisCacheService _redisCacheService;
 
         public UserService(
             IUserRepository userRepository,
@@ -35,7 +36,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             IMailService mailService,
             IUnitOfWork unitOfWork,
             IConfiguration configuration,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IRedisCacheService redisCacheService)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
@@ -43,6 +45,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _unitOfWork = unitOfWork;
             _configuration = configuration;
             _currentUserService = currentUserService;
+            _redisCacheService = redisCacheService;
         }
 
         public async Task<MessageModel> ConfirmAccount(RequestConfirmAccount requestConfirmAccount)
@@ -224,6 +227,28 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 throw ex;
             }
+        }
+
+        public async Task<MessageModel> LogoutUser(string token, TimeSpan expiryTime)
+        {
+            var key = $"Blacklist_{token}";
+            await _redisCacheService.SetData(key, "revoked", expiryTime);
+            return new MessageModel
+            {
+                Message = "Đăng xuất thành công",
+                StatusCode = StatusCodes.Status200OK
+            };
+        }
+
+        public async Task<bool> IsBlacklistedAsync(string token)
+        {
+            var key = $"Blacklist_{token}";
+            var data = await _redisCacheService.GetData<string>(key);
+            if (data == null)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

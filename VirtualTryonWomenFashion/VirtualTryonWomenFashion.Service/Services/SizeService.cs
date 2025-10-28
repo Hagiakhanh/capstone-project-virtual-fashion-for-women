@@ -105,5 +105,41 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             return await _sizeRepository.GetAll();
         }
+
+        public async Task<Size?> GetByBodySize(double bust, double waist, double hips)
+        {
+            var sizes = await _sizeRepository.GetAll();
+
+            if (sizes == null || !sizes.Any())
+                return null;
+
+            var matched = sizes.FirstOrDefault(x =>
+               bust >= x.MinBust && bust <= x.MaxBust &&
+                waist >= x.MinWaist && waist <= x.MaxWaist &&
+               hips >= x.MinHips && hips <= x.MaxHips
+            );
+
+            if (matched != null)
+                return matched;
+
+            decimal bustDec = (decimal)bust;
+            decimal waistDec = (decimal)waist;
+            decimal hipsDec = (decimal)hips;
+
+            var closest = sizes
+                .Select(x => new
+                {
+                    Size = x,
+                    Deviation =
+                        Math.Abs((decimal)(bustDec - (((decimal)x.MinBust + (decimal)x.MaxBust) / 2))) +
+                        Math.Abs(waistDec - (((decimal)x.MinWaist + (decimal)x.MaxWaist) / 2)) +
+                        Math.Abs(hipsDec - (((decimal)x.MinHips + (decimal)x.MaxHips) / 2))
+                })
+                .OrderBy(x => x.Deviation)
+                .FirstOrDefault()?.Size;
+
+            return closest;
+        }
+
     }
 }

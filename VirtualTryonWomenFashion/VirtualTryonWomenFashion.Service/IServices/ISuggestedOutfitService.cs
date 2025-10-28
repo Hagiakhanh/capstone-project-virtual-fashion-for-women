@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.SuggestedOutfit;
+using VirtualTryonWomenFashion.Service.Helpers;
 
 namespace VirtualTryonWomenFashion.Service.IServices
 {
     public interface ISuggestedOutfitService
     {
-        public Task<Pagination<ResponseSuggestedOutfitModel>> GetSuggestedOutfitsAsync(PaginationParameter paginationParameter, int? AIConversationID);
+        public Task<ResponsePaginationModel<List<ResponseSuggestedOutfitModel>>> GetSuggestedOutfitsAsync(PaginationParameter paginationParameter, int? AIConversationID);
         public Task<SuggestedOutfit> CreateSuggestedOutfit(SuggestedOutfit suggestedOutfit);
     }
 }
