@@ -73,6 +73,7 @@ export async function middleware(req: NextRequest) {
     }
   } catch (error) {
     console.log("Invalid token");
+    console.log(error)
     const response = NextResponse.redirect(new URL("/login", req.url));
     response.cookies.delete("token");
     return response;
