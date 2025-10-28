@@ -19,8 +19,8 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<ResponseProductDto> GetProductByIdAsync(string productId);
         Task<ResponseProductDto> GetProductByVariantIdAsync(string variantId);
         Task<ResponseProductDto> GetProductByProductColorIdAsyncForTryOn(string productColorId);
-        Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParameter pagination, string? searchTerm,
-            string? status);
+        // Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParameter pagination, string? searchTerm,
+        //     string? status);
         Task<MessageModelWithData<Pagination<ResponseProductDto>>> GetAllProducts(
             PaginationParameter pagination,
             string? searchTerm,
