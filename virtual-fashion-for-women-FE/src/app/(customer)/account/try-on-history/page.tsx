@@ -100,7 +100,7 @@ export default function TryOnHistoryListPage() {
                                 {/* Ảnh */}
                                 <div className="relative flex justify-center items-center bg-gray-50 rounded-xl h-[260px] mb-4">
                                     <img
-                                        src={slot.uploadImageUrl}
+                                        src={slot.outputImageUrl}
                                         alt="Upload"
                                         className="max-h-full max-w-full object-contain rounded-lg"
                                     />
