@@ -26,6 +26,7 @@ export interface ProductColor {
     color?: Color;
     noBgImgUrl: string;
     lensId?: string;
+    packageLens?: string;
     productImagesDto: ProductImage[];
     productVariants: ProductVariant[];
 }
@@ -85,6 +86,7 @@ export interface UpdateProductColorFormData {
     noBgImgUrl?: File;
     noBgImgPreview?: string;
     lensId?: string;
+    packageLens?: string;
     productVariantImages?: File[];
     productVariantImagePreviews?: string[];
     variants?: UpdateProductVariantFormData[];
