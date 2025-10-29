@@ -82,6 +82,7 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
                             productColorId: pc.productColorId,
                             colorId: pc.colorId,
                             lensId: pc.lensId || '',
+                            packageLens: pc.packageLens || '',
                             noBgImgUrl: undefined,
                             noBgImgPreview: pc.noBgImgUrl,
                             productVariantImages: [],
@@ -155,6 +156,7 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
                 hexCode: '#FFFFFF',
                 // Other fields
                 lensId: '',
+                packageLens: '',
                 noBgImgUrl: undefined,
                 noBgImgPreview: undefined,
                 productVariantImages: [],
@@ -216,6 +218,12 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        for (const [index, color] of productColors.entries()) {
+            if (color.lensId && !color.packageLens) {
+                messageToast.error(`Màu ${index + 1}: Nếu bạn cung cấp LensID, bạn cũng phải cung cấp PackageLens.`);
+                return; // Dừng submit
+            }
+        }
         // **Frontend Validation for new colors (Optional but recommended)**
         const newColorEntries = productColors.filter(pc => !pc.colorId && pc.colorPrefix && pc.hexCode);
         const colorNames = newColorEntries.map(pc => pc.colorName?.toLowerCase());

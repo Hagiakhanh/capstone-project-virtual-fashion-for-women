@@ -33,24 +33,28 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
     // Product colors and variants
     formData.productColor.forEach((color, colorIndex) => {
         formDataToSend.append(
-        `ProductColor[${colorIndex}].ColorId`,
-        color.colorId.toString()
+            `ProductColor[${colorIndex}].ColorId`,
+            color.colorId.toString()
         );
         formDataToSend.append(
-        `ProductColor[${colorIndex}].ColorName`,
-        color.colorName
+            `ProductColor[${colorIndex}].ColorName`,
+            color.colorName
         );
         formDataToSend.append(
-        `ProductColor[${colorIndex}].ColorPrefix`,
-        color.colorPrefix
+            `ProductColor[${colorIndex}].ColorPrefix`,
+            color.colorPrefix
         );
         formDataToSend.append(
-        `ProductColor[${colorIndex}].HexCode`,
-        color.hexCode
+            `ProductColor[${colorIndex}].HexCode`,
+            color.hexCode
         );
         formDataToSend.append(
-        `ProductColor[${colorIndex}].LensId`,
-        color.lensId || ""
+            `ProductColor[${colorIndex}].LensId`,
+            color.lensId || ""
+        );
+        formDataToSend.append(
+            `ProductColor[${colorIndex}].PackageLens`,
+            color.packageLens || ""
         );
 
         if (color.noBgImgUrl) {
@@ -70,95 +74,95 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
 
         // Variants
         color.variants.forEach((variant, variantIndex) => {
-        formDataToSend.append(
-            `ProductColor[${colorIndex}].Variants[${variantIndex}].SizeId`,
-            variant.sizeId.toString()
-        );
-        formDataToSend.append(
-            `ProductColor[${colorIndex}].Variants[${variantIndex}].SizeCode`,
-            variant.sizeCode
-        );
-        formDataToSend.append(
-            `ProductColor[${colorIndex}].Variants[${variantIndex}].VariantName`,
-            variant.variantName
-        );
-        formDataToSend.append(
-            `ProductColor[${colorIndex}].Variants[${variantIndex}].Quantity`,
-            variant.quantity.toString()
-        );
-        formDataToSend.append(
-            `ProductColor[${colorIndex}].Variants[${variantIndex}].ProductWeight`,
-            variant.productWeight.toString()
-        );
-        formDataToSend.append(
-            `ProductColor[${colorIndex}].Variants[${variantIndex}].ProductLength`,
-            variant.productLength.toString()
-        );
-        formDataToSend.append(
-            `ProductColor[${colorIndex}].Variants[${variantIndex}].ProductWidth`,
-            variant.productWidth.toString()
-        );
-        formDataToSend.append(
-            `ProductColor[${colorIndex}].Variants[${variantIndex}].ProductHeight`,
-            variant.productHeight.toString()
-        );
-
-        if (variant.imageUrl) {
             formDataToSend.append(
-            `ProductColor[${colorIndex}].Variants[${variantIndex}].ImageUrl`,
-            variant.imageUrl
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].SizeId`,
+                variant.sizeId.toString()
             );
-        }
+            formDataToSend.append(
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].SizeCode`,
+                variant.sizeCode
+            );
+            formDataToSend.append(
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].VariantName`,
+                variant.variantName
+            );
+            formDataToSend.append(
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].Quantity`,
+                variant.quantity.toString()
+            );
+            formDataToSend.append(
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].ProductWeight`,
+                variant.productWeight.toString()
+            );
+            formDataToSend.append(
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].ProductLength`,
+                variant.productLength.toString()
+            );
+            formDataToSend.append(
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].ProductWidth`,
+                variant.productWidth.toString()
+            );
+            formDataToSend.append(
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].ProductHeight`,
+                variant.productHeight.toString()
+            );
+
+            if (variant.imageUrl) {
+                formDataToSend.append(
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].ImageUrl`,
+                variant.imageUrl
+                );
+            }
         });
     });
 
     return formDataToSend;
+}
+
+/**
+ * Validate product form data
+ */
+export function validateProductForm(
+    formData: CreateProductFormData
+): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!formData.productName.trim()) {
+        errors.push("Tên sản phẩm không được để trống");
     }
 
-    /**
-     * Validate product form data
-     */
-    export function validateProductForm(
-        formData: CreateProductFormData
-    ): { isValid: boolean; errors: string[] } {
-        const errors: string[] = [];
+    if (!formData.description.trim()) {
+        errors.push("Mô tả không được để trống");
+    }
 
-        if (!formData.productName.trim()) {
-            errors.push("Tên sản phẩm không được để trống");
-        }
+    if (formData.price <= 0) {
+        errors.push("Giá sản phẩm phải lớn hơn 0");
+    }
 
-        if (!formData.description.trim()) {
-            errors.push("Mô tả không được để trống");
-        }
+    if (!formData.mainImageUrl) {
+        errors.push("Vui lòng chọn ảnh chính cho sản phẩm");
+    }
 
-        if (formData.price <= 0) {
-            errors.push("Giá sản phẩm phải lớn hơn 0");
-        }
+    if (formData.productColor.length === 0) {
+        errors.push("Sản phẩm phải có ít nhất một màu");
+    }
 
-        if (!formData.mainImageUrl) {
-            errors.push("Vui lòng chọn ảnh chính cho sản phẩm");
-        }
+    if (formData.categoryId === 0) {
+        errors.push("Vui lòng chọn danh mục");
+    }
 
-        if (formData.productColor.length === 0) {
-            errors.push("Sản phẩm phải có ít nhất một màu");
-        }
+    // Validate new tags
+    if (formData.newTags && formData.newTags.length > 0) {
+        formData.newTags.forEach((tag, index) => {
+            if (!tag.trim()) {
+                errors.push(`Tag mới ${index + 1}: Tên tag không được để trống`);
+            }
+        });
+    }
 
-        if (formData.categoryId === 0) {
-            errors.push("Vui lòng chọn danh mục");
-        }
-
-        // Validate new tags
-        if (formData.newTags && formData.newTags.length > 0) {
-            formData.newTags.forEach((tag, index) => {
-                if (!tag.trim()) {
-                    errors.push(`Tag mới ${index + 1}: Tên tag không được để trống`);
-                }
-            });
-        }
-
-        formData.productColor.forEach((color, index) => {
-            // Nếu tạo màu mới (colorId = 0) thì phải nhập đủ thông tin
-            if (color.colorId === 0) {
+    formData.productColor.forEach((color, index) => {
+        // Nếu tạo màu mới (colorId = 0) thì phải nhập đủ thông tin
+        if (color.colorId === 0) {
             if (!color.colorName.trim()) {
                 errors.push(`Màu ${index + 1}: Tên màu không được để trống`);
             }
@@ -168,54 +172,60 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
             if (!color.hexCode.trim()) {
                 errors.push(`Màu ${index + 1}: Hex code không được để trống`);
             }
-            }
+        }
 
-            // if (!color.noBgImgUrl) {
-            // errors.push(`Màu ${index + 1}: Vui lòng chọn ảnh không nền`);
-            // }
+        if (color.lensId && !color.packageLens) {
+            errors.push(
+                `Màu ${index + 1}: Nếu bạn cung cấp LensID, bạn cũng phải cung cấp PackageLens.`
+            );
+        }
 
-            if (color.variants.length === 0) {
-            errors.push(`Màu ${index + 1}: Phải có ít nhất một biến thể (size)`);
-            }
+        // if (!color.noBgImgUrl) {
+        // errors.push(`Màu ${index + 1}: Vui lòng chọn ảnh không nền`);
+        // }
 
-            color.variants.forEach((variant, vIndex) => {
-            // Nếu tạo size mới (sizeId = 0) thì phải nhập sizeCode
-            if (variant.sizeId === 0 && !variant.sizeCode.trim()) {
-                errors.push(
-                `Màu ${index + 1}, Size ${vIndex + 1}: Mã size không được để trống`
-                );
-            }
+        if (color.variants.length === 0) {
+        errors.push(`Màu ${index + 1}: Phải có ít nhất một biến thể (size)`);
+        }
 
-            if (!variant.variantName.trim()) {
-                errors.push(
-                `Màu ${index + 1}, Size ${vIndex + 1}: Tên biến thể không được để trống`
-                );
-            }
+        color.variants.forEach((variant, vIndex) => {
+        // Nếu tạo size mới (sizeId = 0) thì phải nhập sizeCode
+        if (variant.sizeId === 0 && !variant.sizeCode.trim()) {
+            errors.push(
+            `Màu ${index + 1}, Size ${vIndex + 1}: Mã size không được để trống`
+            );
+        }
 
-            if (variant.quantity < 0) {
-                errors.push(
-                `Màu ${index + 1}, Size ${vIndex + 1}: Số lượng không được âm`
-                );
-            }
+        if (!variant.variantName.trim()) {
+            errors.push(
+            `Màu ${index + 1}, Size ${vIndex + 1}: Tên biến thể không được để trống`
+            );
+        }
 
-            if (!variant.imageUrl) {
-                errors.push(
-                `Màu ${index + 1}, Size ${vIndex + 1}: Vui lòng chọn ảnh cho biến thể`
-                );
-            }
-            });
+        if (variant.quantity < 0) {
+            errors.push(
+            `Màu ${index + 1}, Size ${vIndex + 1}: Số lượng không được âm`
+            );
+        }
+
+        if (!variant.imageUrl) {
+            errors.push(
+            `Màu ${index + 1}, Size ${vIndex + 1}: Vui lòng chọn ảnh cho biến thể`
+            );
+        }
         });
+    });
 
-        return {
-            isValid: errors.length === 0,
-            errors,
-        };
-    }
+    return {
+        isValid: errors.length === 0,
+        errors,
+    };
+}
 
-    /**
-     * Create initial empty product color
-     */
-    export function createEmptyProductColor() {
+/**
+ * Create initial empty product color
+ */
+export function createEmptyProductColor() {
     return {
         colorId: 0,
         colorName: "",
@@ -223,15 +233,16 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
         hexCode: "#ffffff",
         noBgImgUrl: null,
         lensId: "",
+        packageLens: "",
         productVariantImages: [],
         variants: [],
     };
-    }
+}
 
-    /**
-     * Create initial empty variant
-     */
-    export function createEmptyVariant() {
+/**
+ * Create initial empty variant
+ */
+export function createEmptyVariant() {
     return {
         sizeId: 0,
         sizeCode: "",
@@ -287,29 +298,29 @@ export const objectToFormData = (
     parentKey = ''
 ): FormData => {
     Object.entries(obj).forEach(([key, value]) => {
-      const formKey = parentKey ? `${parentKey}.${key}` : key;
-      
-      if (value === undefined || value === null) {
-          return;
-      }
-      
-      if (value instanceof File) {
-          formData.append(formKey, value);
-      } else if (Array.isArray(value)) {
-          value.forEach((item, index) => {
-            if (item instanceof File) {
-                formData.append(`${formKey}[${index}]`, item);
-            } else if (typeof item === 'object' && item !== null) {
-                objectToFormData(item, formData, `${formKey}[${index}]`);
-            } else if (item !== undefined && item !== null) {
-                formData.append(`${formKey}[${index}]`, item.toString());
-            }
-          });
-      } else if (typeof value === 'object' && !(value instanceof Blob)) {
-          objectToFormData(value, formData, formKey);
-      } else {
-          formData.append(formKey, value.toString());
-      }
+        const formKey = parentKey ? `${parentKey}.${key}` : key;
+        
+        if (value === undefined || value === null) {
+            return;
+        }
+        
+        if (value instanceof File) {
+            formData.append(formKey, value);
+        } else if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+                if (item instanceof File) {
+                    formData.append(`${formKey}[${index}]`, item);
+                } else if (typeof item === 'object' && item !== null) {
+                    objectToFormData(item, formData, `${formKey}[${index}]`);
+                } else if (item !== undefined && item !== null) {
+                    formData.append(`${formKey}[${index}]`, item.toString());
+                }
+            });
+        } else if (typeof value === 'object' && !(value instanceof Blob)) {
+            objectToFormData(value, formData, formKey);
+        } else {
+            formData.append(formKey, value.toString());
+        }
     });
   
     return formData;
@@ -362,7 +373,7 @@ export function convertUpdateToFormData(
     mainImageFile: File | null,
     productColors: UpdateProductColorFormData[],
     tags: TagDto[]
-    ): FormData {
+): FormData {
     const formData = new FormData();
 
     // Add basic fields only if they changed
@@ -397,67 +408,70 @@ export function convertUpdateToFormData(
     // Add product colors
     productColors.forEach((pc, i) => {
         if (pc.productColorId) {
-        formData.append(`ProductColor[${i}].ProductColorId`, pc.productColorId);
+            formData.append(`ProductColor[${i}].ProductColorId`, pc.productColorId);
         }
 
         // Use existing color or create new one
         if (pc.colorId && pc.colorId > 0) {
-        formData.append(`ProductColor[${i}].ColorId`, pc.colorId.toString());
+            formData.append(`ProductColor[${i}].ColorId`, pc.colorId.toString());
         } else if (pc.colorPrefix) {
-        formData.append(`ProductColor[${i}].ColorPrefix`, pc.colorPrefix);
+            formData.append(`ProductColor[${i}].ColorPrefix`, pc.colorPrefix);
         if (pc.colorName) formData.append(`ProductColor[${i}].ColorName`, pc.colorName);
         if (pc.hexCode) formData.append(`ProductColor[${i}].HexCode`, pc.hexCode);
         }
 
         if (pc.noBgImgUrl) {
-        formData.append(`ProductColor[${i}].NoBgImgUrl`, pc.noBgImgUrl);
+            formData.append(`ProductColor[${i}].NoBgImgUrl`, pc.noBgImgUrl);
         }
         if (pc.lensId) {
-        formData.append(`ProductColor[${i}].LensId`, pc.lensId);
+            formData.append(`ProductColor[${i}].LensId`, pc.lensId);
+        }
+        if (pc.packageLens) {
+            formData.append(`ProductColor[${i}].PackageLens`, pc.packageLens);
         }
 
         // Add variant images
         pc.productVariantImages?.forEach((img) => {
-        formData.append(`ProductColor[${i}].ProductVariantImages`, img);
+            formData.append(`ProductColor[${i}].ProductVariantImages`, img);
         });
 
         // Add variants
         pc.variants?.forEach((v, j) => {
-        if (v.productVariantId) {
-            formData.append(`ProductColor[${i}].Variants[${j}].ProductVariantId`, v.productVariantId);
-        }
+            if (v.productVariantId) {
+                formData.append(`ProductColor[${i}].Variants[${j}].ProductVariantId`, v.productVariantId);
+            }
 
-        // Use existing size or create new one
-        if (v.sizeId && v.sizeId > 0) {
-            formData.append(`ProductColor[${i}].Variants[${j}].SizeId`, v.sizeId.toString());
-        } else if (v.sizeCode) {
-            formData.append(`ProductColor[${i}].Variants[${j}].SizeCode`, v.sizeCode);
-        }
+            // Use existing size or create new one
+            if (v.sizeId && v.sizeId > 0) {
+                formData.append(`ProductColor[${i}].Variants[${j}].SizeId`, v.sizeId.toString());
+            } else if (v.sizeCode) {
+                formData.append(`ProductColor[${i}].Variants[${j}].SizeCode`, v.sizeCode);
+            }
 
-        if (v.variantName) {
-            formData.append(`ProductColor[${i}].Variants[${j}].VariantName`, v.variantName);
-        }
-        if (v.quantity !== undefined) {
-            formData.append(`ProductColor[${i}].Variants[${j}].Quantity`, v.quantity.toString());
-        }
-        if (v.imageUrl) {
-            formData.append(`ProductColor[${i}].Variants[${j}].ImageUrl`, v.imageUrl);
-        }
-        if (v.status) {
-            formData.append(`ProductColor[${i}].Variants[${j}].Status`, v.status);
-        }
-        if (v.productWeight !== undefined) {
-            formData.append(`ProductColor[${i}].Variants[${j}].ProductWeight`, v.productWeight.toString());
-        }
-        if (v.productLength !== undefined) {
-            formData.append(`ProductColor[${i}].Variants[${j}].ProductLength`, v.productLength.toString());
-        }
-        if (v.productWidth !== undefined) {
-            formData.append(`ProductColor[${i}].Variants[${j}].ProductWidth`, v.productWidth.toString());
-        }
-        if (v.productHeight !== undefined) {
-            formData.append(`ProductColor[${i}].Variants[${j}].ProductHeight`, v.productHeight.toString());
-        }
+            if (v.variantName) {
+                formData.append(`ProductColor[${i}].Variants[${j}].VariantName`, v.variantName);
+            }
+            if (v.quantity !== undefined) {
+                formData.append(`ProductColor[${i}].Variants[${j}].Quantity`, v.quantity.toString());
+            }
+            if (v.imageUrl) {
+                formData.append(`ProductColor[${i}].Variants[${j}].ImageUrl`, v.imageUrl);
+            }
+            if (v.status) {
+                formData.append(`ProductColor[${i}].Variants[${j}].Status`, v.status);
+            }
+            if (v.productWeight !== undefined) {
+                formData.append(`ProductColor[${i}].Variants[${j}].ProductWeight`, v.productWeight.toString());
+            }
+            if (v.productLength !== undefined) {
+                formData.append(`ProductColor[${i}].Variants[${j}].ProductLength`, v.productLength.toString());
+            }
+            if (v.productWidth !== undefined) {
+                formData.append(`ProductColor[${i}].Variants[${j}].ProductWidth`, v.productWidth.toString());
+            }
+            if (v.productHeight !== undefined) {
+                formData.append(`ProductColor[${i}].Variants[${j}].ProductHeight`, v.productHeight.toString());
+            }
         });
     });
 
