@@ -98,7 +98,7 @@ public class PaymentService : IPaymentService
                 $"&requestId={requestId}" +
                 $"&requestType={requestType}";
 
-
+            await Console.Out.WriteLineAsync("Đây là IPN của momo: "+ ipnUrl);
             string signature = ComputeHmacSha256(rawSignature, secretKey);
 
             if (!string.IsNullOrEmpty(signature))
