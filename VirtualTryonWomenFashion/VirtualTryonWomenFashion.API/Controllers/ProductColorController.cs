@@ -77,5 +77,34 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
         }
+
+        [HttpGet("by-lens-id/{lensId}")]
+        public async Task<IActionResult> GetProductColorByLensId([FromRoute] string lensId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(lensId))
+                    return BadRequest("Lens id is required");
+
+                var productColorResponse = await _productColorService.GetProductColorByLensId(lensId);
+
+                return Ok(new MessageModelWithData<object>()
+                {
+                    Message = "Lấy product color theo lensId thành công",
+                    StatusCode = StatusCodes.Status200OK,
+                    Data = productColorResponse
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest( new MessageModelWithData<object>()
+                {
+                    Message = "Lỗi khi lấy product color theo lensId: "+ ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Data = null
+                });
+            }
+            
+        }
     }
 }

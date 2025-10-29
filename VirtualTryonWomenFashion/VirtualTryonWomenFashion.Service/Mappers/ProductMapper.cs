@@ -31,6 +31,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                     ColorId = pc.ColorId,
                     NoBgImgUrl = pc.NoBgImgUrl,
                     LensId = pc.LensId,
+                    PackageLens = pc.PackageLens,
                     Color = pc.Color != null ? new ResponseColorDto()
                     {
                         ColorId = pc.Color.ColorId,

@@ -16,5 +16,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<ProductColor> GetProductColorByIdAsync(string productColorId);
         Task<MessageModelWithData<ProductColor>> UpdateAsync(string productColorId, UpdateProductColorDto request);
         Task<MessageModel> DeleteAsync(string productColorId);
+        Task<ResponseProductColorDto> GetProductColorByLensId(string productColorLensId);
     }
 }
