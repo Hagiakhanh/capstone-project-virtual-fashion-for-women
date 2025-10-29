@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 
 function HeaderComponent() {
    const router = useRouter();
-   const { user } = useAuth();
+   const { user, logout } = useAuth();
    const [cartCount, setCartCount] = useState<number>(0);
    const [menuItems, setMenuItems] = useState([]);
 
@@ -44,6 +44,14 @@ function HeaderComponent() {
       }
    };
 
+   const handleLogout = async () => {
+      try {
+         await logout();
+      } catch (err) {
+         console.error('Lỗi khi đăng xuất:', err);
+      }
+   };
+
    useEffect(() => {
       if (user?.role === 'customer') fetchCartTotal();
       fetchCategories();
@@ -69,10 +77,10 @@ function HeaderComponent() {
             <ul className="flex gap-10 text-xl font-normal cursor-pointer">
                <Link href="/" className="hover:underline underline-offset-4">Trang chủ</Link>
                <Link href="/try-on" className="hover:underline underline-offset-4">Phòng thử đồ</Link>
-               <li className="hover:underline underline-offset-4">Phối đồ thông minh</li>
-               <li>
+               <Link href="/recommendation" className="hover:underline underline-offset-4">Phối đồ thông minh</Link>
+               <li className='flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100'>
                   <Dropdown menu={{ items: menuItems }} placement="bottom">
-                     <span className="flex items-center hover:underline underline-offset-4">
+                     <span className="flex items-center h-full">
                         Danh mục sản phẩm
                         <DownOutlined className="ml-1 text-sm" />
                      </span>
@@ -89,20 +97,31 @@ function HeaderComponent() {
                   <Input
                      placeholder="Tìm kiếm sản phẩm"
                      className="rounded-full text-base"
-                     style={{
-                        paddingLeft: '2.5rem',
-                        fontSize: '1rem',
-                        height: '40px'
-                     }}
                   />
                </div>
 
                {user?.role === 'customer' ? (
                   <div className="flex items-center gap-4">
-                     <UserOutlined
-                        className="text-2xl cursor-pointer"
-                        onClick={() => router.push('/account')}
-                     />
+                     <Dropdown
+                        trigger={['hover']}
+                        placement="bottomRight"
+                        menu={{
+                           items: [
+                              {
+                                 key: 'account',
+                                 label: <span className="text-base">Tài khoản của tôi</span>,
+                                 onClick: () => router.push('/account'),
+                              },
+                              {
+                                 key: 'logout',
+                                 label: <span className="text-red-500 text-base">Đăng xuất</span>,
+                                 onClick: handleLogout,
+                              },
+                           ],
+                        }}
+                     >
+                        <UserOutlined className="text-2xl cursor-pointer" />
+                     </Dropdown>
 
                      <div
                         className="relative cursor-pointer"

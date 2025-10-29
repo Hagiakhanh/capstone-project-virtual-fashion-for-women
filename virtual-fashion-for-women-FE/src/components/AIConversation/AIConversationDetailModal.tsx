@@ -1,104 +1,152 @@
 "use client";
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AntButtonCommon } from "../AntDesign/Button/AntButtonCommon";
+import { useRouter } from "next/navigation";
+import { ArrowRightOutlined } from "@ant-design/icons";
 
 interface AIConversationDetailModalProps {
   conversation: any;
+  listSuggested: any[];
+  pagination: {
+    pageSize: number;
+    pageCurrent: number;
+    totalRecords: number;
+  };
+  onPageChange: (page: number) => void;
   onClose: () => void;
 }
 
-export default function AIConversationDetailModal({
+const AIConversationDetailModal: React.FC<AIConversationDetailModalProps> = ({
   conversation,
+  listSuggested = [],
+  pagination,
+  onPageChange,
   onClose,
-}: AIConversationDetailModalProps) {
-  const {
-    messages = [],
-    suggestedOutfits = [],
-    currentUserStyleJson,
-  } = conversation;
-
-  let styleInfo: any = {};
-  try {
-    styleInfo = JSON.parse(currentUserStyleJson || "{}");
-  } catch (error) {
-    console.warn("JSON parse error:", error);
-  }
+}) => {
+  const router = useRouter();
+  const totalPages = Math.ceil(
+    (pagination.totalRecords || listSuggested.length) / pagination.pageSize
+  );
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center border-b pb-3 mb-4">
-          <h2 className="text-2xl font-semibold text-gray-800">
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div
+          className="bg-white rounded-xl shadow-lg w-full max-w-4xl p-6 max-h-[80vh] overflow-y-auto"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h2 className="text-2xl font-bold mb-2 text-gray-800">
             Chi tiết cuộc trò chuyện #{conversation.aiconversationId}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-red-500 text-xl font-bold"
+          <p className="text-gray-500 mb-4">
+            Ngày tạo: {new Date(conversation.createdAt).toLocaleString("vi-VN")}
+          </p>
+          <AntButtonCommon
+            colorType="primary"
+            onClick={() => {
+              router.push("/recommendation/" + conversation.aiconversationId);
+            }}
+            icon={<ArrowRightOutlined />}
+            iconPosition="end"
+            className="mb-4"
           >
-            ×
-          </button>
-        </div>
-
-        <section className="mb-6">
-          <h3 className="text-lg font-medium mb-2 text-gray-700">
-            Thông tin phong cách người dùng
-          </h3>
-          <ul className="list-disc pl-5 text-gray-600 text-sm">
-            <li>Phong cách: {styleInfo.FashionStyle ?? "Không có"}</li>
-            <li>Trang phục: {styleInfo.ItemType ?? "Không có"}</li>
-            <li>Dịp: {styleInfo.Occasion ?? "Không có"}</li>
-          </ul>
-        </section>
-
-        <section className="mb-6">
-          <h3 className="text-lg font-medium mb-2 text-gray-700">Tin nhắn</h3>
-          {messages.length > 0 ? (
-            <div className="space-y-2">
-              {messages.map((msg: any, index: number) => (
+            Đi tới cuộc trò chuyện
+          </AntButtonCommon>
+          <h3 className="text-lg font-semibold mb-3">Danh sách gợi ý:</h3>
+          {listSuggested.length === 0 ? (
+            <p>Không có gợi ý nào.</p>
+          ) : (
+            <div className="space-y-4">
+              {listSuggested.map((suggestion, index) => (
                 <div
-                  key={index}
-                  className={`p-3 rounded-lg text-sm ${
-                    msg.isFromUser
-                      ? "bg-blue-50 text-gray-800 self-end"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
+                  key={suggestion.suggestedOutfitId || index}
+                  className="border rounded-lg p-4 bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    sessionStorage.setItem(
+                      "selectedSuggestion",
+                      JSON.stringify(suggestion)
+                    );
+                    router.push(
+                      `/recommendation/${conversation.aiconversationId}`
+                    );
+                  }}
                 >
-                  <strong>{msg.isFromUser ? "Người dùng:" : "AI:"}</strong>{" "}
-                  {msg.content}
+                  <p className="font-semibold text-gray-700 mb-2">
+                    🪶 {suggestion.reason}
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {suggestion.productVariants.map((variant: any) => (
+                      <div
+                        key={variant.productVariantId}
+                        className="bg-white rounded-lg border overflow-hidden shadow-sm"
+                      >
+                        <img
+                          src={variant.imageUrl}
+                          alt={variant.variantName}
+                          className="w-full h-40 object-cover"
+                        />
+                        <div className="p-2 text-sm">
+                          <p className="font-medium line-clamp-2">
+                            {variant.variantName}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-gray-500 text-sm">Chưa có tin nhắn nào.</p>
           )}
-        </section>
 
-        <section>
-          <h3 className="text-lg font-medium mb-2 text-gray-700">
-            Gợi ý trang phục
-          </h3>
-          {suggestedOutfits.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3">
-              {suggestedOutfits.map((outfit: any, index: number) => (
-                <div
-                  key={index}
-                  className="border rounded-lg p-3 text-sm bg-gray-50 hover:shadow-md transition"
-                >
-                  <p>
-                    <strong>Tên:</strong> {outfit.name}
-                  </p>
-                  <p>
-                    <strong>Mô tả:</strong> {outfit.description}
-                  </p>
-                </div>
-              ))}
+          {/* 🔹 Thanh phân trang */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-6">
+              <button
+                onClick={() =>
+                  onPageChange(Math.max(1, pagination.pageCurrent - 1))
+                }
+                disabled={pagination.pageCurrent === 1}
+                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+              >
+                Trang trước
+              </button>
+              <span className="text-gray-700">
+                Trang {pagination.pageCurrent}/{totalPages}
+              </span>
+              <button
+                onClick={() =>
+                  onPageChange(Math.min(totalPages, pagination.pageCurrent + 1))
+                }
+                disabled={pagination.pageCurrent >= totalPages}
+                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+              >
+                Trang sau
+              </button>
             </div>
-          ) : (
-            <p className="text-gray-500 text-sm">
-              Chưa có gợi ý trang phục nào.
-            </p>
           )}
-        </section>
-      </div>
-    </div>
+
+          <div className="flex justify-center mt-6">
+            <button
+              className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+              onClick={onClose}
+            >
+              Đóng
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
-}
+};
+
+export default AIConversationDetailModal;

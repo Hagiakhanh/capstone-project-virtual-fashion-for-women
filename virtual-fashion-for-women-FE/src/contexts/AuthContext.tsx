@@ -1,7 +1,9 @@
 "use client";
 
 import { api } from "@/api/instance";
+import { messageToast } from "@/helpers/toastHelper";
 import { User } from "@/types/user";
+import { useRouter } from "next/navigation";
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 type AuthContextType = {
@@ -15,14 +17,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   const loginSuccess = (user: User) => {
     setUser(user);
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
+  const logout = async () => {
+
+    try {
+      localStorage.removeItem("token");
+      setUser(null);
+      const response = await api.post('/logout');
+      if (response.status === 200) {
+        router.replace('/login');
+        messageToast.success("Đăng xuất thành công");
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+
   };
 
   useEffect(() => {
