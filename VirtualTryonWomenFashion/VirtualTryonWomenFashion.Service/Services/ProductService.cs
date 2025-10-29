@@ -349,6 +349,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     ProductColorId = targetProductColor.ProductColorId,
                     ColorId = targetProductColor.ColorId,
                     LensId = targetProductColor.LensId,
+                    PackageLens = targetProductColor.PackageLens,
                     Color = _mapper.Map<ResponseColorDto>(targetProductColor.Color),
                             ProductImagesDto = targetProductColor.ProductImages
                                 .Select(pi => _mapper.Map<ResponseProductImageDto>(pi))

@@ -21,8 +21,16 @@ public class PaymentController : ControllerBase
     [HttpPost("momo/momo-callback")]
     public async Task<IActionResult> MomoCallback([FromBody] MomoReturnModel momoReturnModel)
     {
-        await _paymentService.HandleMomoCallback(momoReturnModel);
-        return Ok(momoReturnModel);
+        try
+        {
+            await _paymentService.HandleMomoCallback(momoReturnModel);
+            return Ok(momoReturnModel);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        
     }
    
     
