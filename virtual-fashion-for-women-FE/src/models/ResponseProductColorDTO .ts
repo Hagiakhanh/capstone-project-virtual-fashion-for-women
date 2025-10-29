@@ -6,6 +6,7 @@ export interface ResponseProductColorDTO {
     productColorId: string;
     colorId?: number;
     lensId: string;
+    packageLens: string;
     noBgImgUrl: string;
     color: ColorDTO;
     productImagesDto: ResponseProductImageDTO[];
