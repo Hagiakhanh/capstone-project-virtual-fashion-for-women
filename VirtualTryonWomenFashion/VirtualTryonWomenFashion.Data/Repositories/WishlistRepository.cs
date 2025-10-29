@@ -43,19 +43,21 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         
         public async Task<List<Wishlist>> GetAllWishlistAsync()
         {
-            return await _context.Wishlists
+            var result = await _context.Wishlists
                 .Include(w => w.Product)
                 .ThenInclude(p => p.Tags)
                 .ToListAsync();
+            return result;
         }
         
         public async Task<List<Wishlist>> GetUserWishlistAsync(int userId)
         {
-            return await _context.Wishlists
+            var result = await _context.Wishlists
                 .Include(w => w.Product)
                     .ThenInclude(p => p.Tags)
                 .Where(w => w.UserId == userId)
                 .ToListAsync();
+            return result;
         }
     }
 }

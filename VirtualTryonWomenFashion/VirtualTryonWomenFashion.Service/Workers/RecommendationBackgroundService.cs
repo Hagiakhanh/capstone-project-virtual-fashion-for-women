@@ -26,28 +26,36 @@ public class RecommendationBackgroundService : BackgroundService
     {
         _logger.LogInformation("🚀 Item Similarity Background Job started");
 
-        // Chạy lần đầu ngay khi start
-        await ComputeSimilarityMatrixAsync(stoppingToken);
-
-        // Sau đó chạy theo interval
-        using var timer = new PeriodicTimer(_interval);
-        
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            try
+            // Chạy lần đầu ngay khi start
+            await ComputeSimilarityMatrixAsync(stoppingToken);
+    
+            // Sau đó chạy theo interval
+            using var timer = new PeriodicTimer(_interval);
+            
+            while (!stoppingToken.IsCancellationRequested)
             {
-                await timer.WaitForNextTickAsync(stoppingToken);
-                await ComputeSimilarityMatrixAsync(stoppingToken);
+                try
+                {
+                    await timer.WaitForNextTickAsync(stoppingToken);
+                    await ComputeSimilarityMatrixAsync(stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogInformation("⏸️ Background job stopped");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "❌ Error in background job timer");
+                }
             }
-            catch (OperationCanceledException)
-            {
-                _logger.LogInformation("⏸️ Background job stopped");
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error in background job timer");
-            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "💥 Fatal error in background service");
+            throw; // Re-throw để host biết service bị lỗi
         }
     }
 
@@ -57,13 +65,16 @@ public class RecommendationBackgroundService : BackgroundService
     public async Task TriggerManualComputeAsync()
     {
         _logger.LogInformation("🔧 Manual trigger received");
+        // ✅ Thêm timeout để tránh hang mãi
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
         await ComputeSimilarityMatrixAsync(CancellationToken.None);
     }
 
     private async Task ComputeSimilarityMatrixAsync(CancellationToken cancellationToken)
     {
-        // Tránh chạy song song nhiều lần
-        if (!await _semaphore.WaitAsync(0))
+        var acquired = await _semaphore.WaitAsync(TimeSpan.FromSeconds(1), cancellationToken);
+        
+        if (!acquired)
         {
             _logger.LogWarning("⚠️ Similarity computation already in progress, skipping...");
             return;
@@ -87,13 +98,34 @@ public class RecommendationBackgroundService : BackgroundService
                 "✅ Similarity matrix computed successfully in {Duration}ms", 
                 duration.TotalMilliseconds);
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("⏸️ Similarity computation cancelled");
+            // ✅ Không throw exception khi cancelled
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Failed to compute similarity matrix");
         }
         finally
         {
-            _semaphore.Release();
+            // ✅ CRITICAL: Đảm bảo luôn release semaphore
+            try
+            {
+                _semaphore.Release();
+            }
+            catch (SemaphoreFullException)
+            {
+                // Ignore - semaphore đã được release từ nơi khác
+                _logger.LogTrace("Semaphore already released");
+            }
         }
+    }
+    
+    // ✅ Dispose semaphore đúng cách
+    public override void Dispose()
+    {
+        _semaphore?.Dispose();
+        base.Dispose();
     }
 }

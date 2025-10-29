@@ -13,6 +13,7 @@ using VirtualTryonWomenFashion.Service.Services;
 using VirtualTryonWomenFashion.Service.Utils;
 using VirtualTryonWomenFashion.Service.Workers;
 using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using VirtualTryonWomenFashion.Service.Hubs;
@@ -25,7 +26,13 @@ builder.WebHost.ConfigureKestrel(options =>
 // Add services to the container.
 builder.Services.AddDbContext<VirtualTryonWomenFashionContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MyDbContext"));
+    options.UseSqlServer(
+            builder.Configuration.GetConnectionString("MyDbContext"),
+            sqlOptions =>
+            {
+                sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+            }
+        );
 });
 builder.Services.AddStackExchangeRedisCache(option =>
 {
@@ -61,7 +68,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
     {
-        opt.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     }).ConfigureApiBehaviorOptions(option =>
     {
         option.InvalidModelStateResponseFactory = actioncontext =>
@@ -101,8 +108,8 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]))
     };
 });
-
-builder.Services.AddControllers();
+//
+// builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

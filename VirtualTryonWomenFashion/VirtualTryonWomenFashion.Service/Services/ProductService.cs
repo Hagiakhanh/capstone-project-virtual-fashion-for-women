@@ -49,6 +49,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ITagRepository _tagRepository;
         private readonly IColorRecommendationSerivce _colorRecommendationSerivce;
         private readonly IUserInteractionService _userInteractionService;
+        private readonly IRedisCacheService _redisCacheService;
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             ICloudinaryService cloudinaryService,
@@ -67,7 +68,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             IHttpContextAccessor httpContextAccessor,
             ITagRepository tagRepository,
             IColorRecommendationSerivce colorRecommendationSerivce,
-            IUserInteractionService userInteractionService)
+            IUserInteractionService userInteractionService,
+            IRedisCacheService redisCacheService)
         {
             _unitOfWork = unitOfWork;
             _productRepository = productRepository;
@@ -88,6 +90,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _tagRepository = tagRepository;
             _colorRecommendationSerivce = colorRecommendationSerivce;
             _userInteractionService = userInteractionService;
+            _redisCacheService = redisCacheService;
         }
 
         public static string GenerateFixedLengthString(int length)
@@ -486,7 +489,11 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await CreateEmbeddingsForProductAsync(product);
 
                 await _unitOfWork.CommitTransactionAsync();
-
+                
+                //var productDto = _mapper.Map<ResponseProductDto>(product);
+                
+                //await _redisCacheService.RemoveData(ProductCacheKey);
+                await _redisCacheService.RemoveData("products:recommendation_data");
                 return new MessageModelWithData<Product>
                 {
                     Message = "Tạo sản phẩm thành công",
@@ -1084,18 +1091,19 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 int result = await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
+                await _redisCacheService.RemoveData("products:recommendation_data");
 
                 // Sau khi cập nhật DB thành công
                 var updatedProduct = await _productRepository.GetProductByIdAsync(productId);
 
                 // Gọi hàm cập nhật embedding
                 await UpdateProductEmbeddingsAsync(updatedProduct);
-
+                //var productDto = _mapper.Map<ResponseProductDto>(updatedProduct);
                 return new MessageModelWithData<Product>
                 {
                     Message = "Cập nhật sản phẩm thành công",
                     StatusCode = StatusCodes.Status200OK,
-                    Data = product
+                    Data = updatedProduct
                 };
             }
             catch (Exception ex)
@@ -1491,6 +1499,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 var result = await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
+                await _redisCacheService.RemoveData("products:recommendation_data");
 
                 if (result > 0)
                 {

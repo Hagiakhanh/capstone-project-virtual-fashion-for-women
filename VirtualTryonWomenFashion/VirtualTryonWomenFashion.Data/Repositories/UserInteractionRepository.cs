@@ -19,28 +19,31 @@ namespace VirtualTryonWomenFashion.Data.Repositories
 
         public async Task<List<UserInteraction>> GetInteractionByUserIdAsync(int userId)
         {
-            return await _context.UserInteractions
+            var result = await _context.UserInteractions
                 .Include(ui => ui.Product)
                     .ThenInclude(p =>p.Tags)
                 .Where(ui => ui.UserId == userId)
                 .ToListAsync();
+            return result;
         }
 
         public async Task<List<UserInteraction>> GetInteractionByProductIdAsync(string productId)
         {
-            return await _context.UserInteractions
+            var result = await _context.UserInteractions
                 .Include(ui => ui.Product)
                 .Include(ui => ui.User)
                 .Where(ui => ui.ProductId == productId)
                 .ToListAsync();
+            return result;
         }
         
         public async Task<List<UserInteraction>> GetAllInteractionsAsync()
         {
-            return await _context.UserInteractions
+            var result = await _context.UserInteractions
                 .Include(ui => ui.Product)
                 .Include(ui => ui.User)
                 .ToListAsync();
+            return result;
         }
     }
 }
