@@ -24,8 +24,9 @@ export async function POST(request: Request) {
          }, { status: 200 });
          nextResponse.cookies.set('token', jwtToken, {
             httpOnly: true,
-            secure: false,
+            secure: true,
             sameSite: 'lax',
+            domain: '.onlinewomanfashion.store',
             maxAge: maxAge,
             path: '/',
          });

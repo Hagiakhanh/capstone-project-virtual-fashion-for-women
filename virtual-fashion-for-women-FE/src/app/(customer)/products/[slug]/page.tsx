@@ -14,6 +14,8 @@ import formatPrice from '@/utils/formatPrice';
 import { typeProductColor, typeProductSize } from '@/types/product';
 import { messageToast } from '@/helpers/toastHelper';
 import { useAuth } from '@/contexts/AuthContext';
+import QRCode from 'qrcode'
+import { set } from 'lodash';
 
 function ProductDetailsPage() {
    const { user } = useAuth();
@@ -33,6 +35,8 @@ function ProductDetailsPage() {
    const [errorMessage, setErrorMessage] = useState<string | null>(null);
    const [colorImages, setColorImages] = useState([]);
    const [mainImage, setMainImage] = useState(null);
+   const [lensID, setLensID] = useState<string>('');
+   const [linkToArTryOn, setLinkToArTryOn] = useState<string>('');
 
    const fetchProductDetails = async () => {
       try {
@@ -49,6 +53,10 @@ function ProductDetailsPage() {
             const selectedColorVariant = response.data.productColors.find(
                (productColor) => productColor.colorId === response.data?.color[0]?.colorId
             );
+            setLensID(selectedColorVariant?.lensId);
+            if (selectedColorVariant?.lensId) {
+               QRCode.toDataURL(`https://0d6aa97beb9a.ngrok-free.app/ar-try-on/${selectedColorVariant.lensId}`).then(setLinkToArTryOn);
+            }
             setSelectedColorVariant(selectedColorVariant || null);
             setColorImages(selectedColorVariant?.productImagesDto || [])
             setMainImage(selectedColorVariant?.productImagesDto[0]?.imageUrl || null);
@@ -66,6 +74,10 @@ function ProductDetailsPage() {
       const selectedColorVariant = productDetail.productColors.find(
          (productColor) => productColor.colorId === colorId
       );
+      setLensID(selectedColorVariant?.lensId);
+      if (selectedColorVariant?.lensId) {
+         QRCode.toDataURL(`https://0d6aa97beb9a.ngrok-free.app/ar-try-on`).then(setLinkToArTryOn);
+      }
       setSelectedColorVariant(selectedColorVariant || null);
       setColorImages(selectedColorVariant?.productImagesDto || [])
       setMainImage(selectedColorVariant?.productImagesDto[0]?.imageUrl || null);
@@ -374,22 +386,39 @@ function ProductDetailsPage() {
                   </div>
 
                   {/* Secondary Action - Virtual Try-on */}
-                  <div className="mt-3">
+                  <div className="mt-3 flex flex-col items-center text-center space-y-4">
                      <Button
                         onClick={() => {
-                           router.push('/try-on')
-                           // console.log('productDetail', productDetail);
+                           router.push('/try-on');
                            sessionStorage.setItem("productColor", JSON.stringify(selectedColorVariant?.productColorId));
                         }}
                         className="w-full !h-12 px-3 py-2 !rounded-xl !text-base !font-medium
-                     !bg-gradient-to-r !from-teal-400 !to-blue-500
-                     hover:!from-teal-500 hover:!to-blue-600
-                     !text-white !border-none !shadow-sm hover:!shadow-md
-                     transition-all duration-300"
+                              !bg-gradient-to-r !from-teal-400 !to-blue-500
+                            hover:!from-teal-500 hover:!to-blue-600
+                            !text-white !border-none !shadow-sm hover:!shadow-md
+                              transition-all duration-300"
                      >
                         <span className="mr-2">✨</span>
                         Thử đồ ảo ngay
                      </Button>
+
+                     {lensID && (
+                        <div className="flex flex-col items-center space-y-3 mt-2">
+                           <div className="flex items-center space-x-2 text-gray-400 text-sm font-medium">
+                              <div className="w-8 h-[1px] bg-gray-300"></div>
+                              <span>Hoặc quét mã QR</span>
+                              <div className="w-8 h-[1px] bg-gray-300"></div>
+                           </div>
+
+                           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 shadow-inner hover:shadow-md transition-all">
+                              <img
+                                 src={linkToArTryOn}
+                                 alt="QR Code to AR Try-On"
+                                 className="w-40 h-40 object-contain"
+                              />
+                           </div>
+                        </div>
+                     )}
                   </div>
 
 
