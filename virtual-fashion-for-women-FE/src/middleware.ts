@@ -24,7 +24,7 @@ const routePermissions: Record<string, string[]> = {
 
 // Routes public (không cần login)
 
-const publicRoutes = ["/login", "/register", "/confirm-email", "/products"];
+const publicRoutes = ["/login", "/register", "/confirm-email", "/products", "/ar-try-on"];
 
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
