@@ -10,5 +10,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
     {
         public Task<T?> GetData<T>(string key);
         public Task SetData<T>(string key, T value, TimeSpan? expiryTime);
+        Task RemoveData(string key);
     }
 }
