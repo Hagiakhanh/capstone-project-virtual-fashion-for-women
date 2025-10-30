@@ -84,6 +84,14 @@ export default function AdminSidebar({
           </Link>
           <Link
             onClick={handleLinkClick}
+            href="/admin/category"
+            className={`${baseLinkClasses} ${isActive("/admin/product") ? activeLinkClasses : inactiveLinkClasses}`}
+          >
+            <Package className="w-5 h-5 mr-3" />
+            Category
+          </Link>
+          <Link
+            onClick={handleLinkClick}
             href="/admin/product"
             className={`${baseLinkClasses} ${isActive("/admin/product") ? activeLinkClasses : inactiveLinkClasses}`}
           >
