@@ -25,15 +25,15 @@ const api = axios.create({
 const createApiInstance = (request: Request) => {
   // Phải bỏ cái này khi deploy lên server có SSL
   // Vì nó chỉ dùng để test trên localhost thôi
-  const agent = new https.Agent({
-    rejectUnauthorized: false
-  });
+  // const agent = new https.Agent({
+  //   rejectUnauthorized: false
+  // });
 
   const token = (request as NextRequest).cookies.get('token')?.value;
 
   const api = axios.create({
     baseURL: process.env.API_URL,
-    httpsAgent: agent,
+    // httpsAgent: agent,
     headers: {
       Authorization: token ? `Bearer ${token}` : '',
     },

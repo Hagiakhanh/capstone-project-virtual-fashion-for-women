@@ -26,7 +26,7 @@ export async function POST(request: Request) {
             httpOnly: true,
             secure: true,
             sameSite: 'lax',
-            //domain: '.onlinewomanfashion.store',
+            domain: '.onlinewomanfashion.store',
             maxAge: maxAge,
             path: '/',
          });
