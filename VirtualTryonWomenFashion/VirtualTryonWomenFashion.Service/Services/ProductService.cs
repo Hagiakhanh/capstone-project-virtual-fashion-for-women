@@ -466,6 +466,24 @@ namespace VirtualTryonWomenFashion.Service.Services
                     StatusCode = StatusCodes.Status400BadRequest
                 };
             }
+            
+            foreach (var colorReq in request.ProductColor)
+            {
+                // Nếu có LensId nhưng không có PackageLens -> Lỗi
+                if (!string.IsNullOrEmpty(colorReq.LensId) && string.IsNullOrEmpty(colorReq.PackageLens))
+                {
+                    // Lấy tên/prefix để báo lỗi rõ ràng
+                    string colorIdentifier = !string.IsNullOrEmpty(colorReq.ColorName) 
+                        ? colorReq.ColorName 
+                        : (!string.IsNullOrEmpty(colorReq.ColorPrefix) ? colorReq.ColorPrefix : "một màu");
+            
+                    return new MessageModelWithData<Product>
+                    {
+                        Message = $"Với màu '{colorIdentifier}', nếu bạn cung cấp LensId, bạn cũng phải cung cấp PackageLens.",
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
+                }
+            }
 
             // 🔹 Danh sách để lưu URL ảnh đã upload (phục vụ rollback nếu lỗi)
             var uploadedImageUrls = new List<string>();
@@ -747,7 +765,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 var colorRequest = job.Request;
 
-                // 🔹 Kiểm tra trùng size (GIỮ NGUYÊN LOGIC)
+                // Kiểm tra trùng size (GIỮ NGUYÊN LOGIC)
                 if (colorRequest.Variants != null && colorRequest.Variants.Count > 0)
                 {
                     var duplicateSizeIds = colorRequest.Variants
@@ -765,7 +783,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     }
                 }
 
-                // 🔹 THAY ĐỔI: Dùng helper mới, trả về Color Entity
+                // Dùng helper mới, trả về Color Entity
                 Color colorEntity = GetOrCreateColor(
                                         colorRequest,
                                         dbColorsById,
@@ -786,8 +804,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                     ProductId = product.ProductId,
                     NoBgImgUrl = job.NoBgUrl, // Lấy kết quả đã có
                     LensId = colorRequest.LensId,
-
-                    // TỐI ƯU 2: Gán thẳng Entity, không gán Id
+                    PackageLens = colorRequest.PackageLens,
+                    // Gán thẳng Entity, không gán Id
                     Color = colorEntity
                 };
                 productColorsToInsert.Add(productColor);
@@ -830,13 +848,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
             }
 
-            // ===== 6️⃣ TỐI ƯU 2: Giai đoạn LƯU (1 lần SaveChanges) =====
-            // ⚡ KHÔNG CẦN BATCH INSERT COLOR RIÊNG NỮA
-            // if (newColorsToInsert.Count > 0) { ... } // <-- ĐÃ BỊ XÓA
-
-            // Gộp tất cả insert
-            // Khi thêm productColorsToInsert, EF sẽ tự động theo dõi các
-            // thực thể Color mới được tham chiếu trong 'productColor.Color'
             if (productColorsToInsert.Count > 0)
                 await _productColorRepository.AddRangeAsync(productColorsToInsert);
 
@@ -846,14 +857,6 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (productVariantsToInsert.Count > 0)
                 await _productVariantRepository.AddRangeAsync(productVariantsToInsert);
 
-            // ✅ Gọi SaveChanges một lần duy nhất cuối cùng
-            // EF sẽ tự động:
-            // 1. Bắt đầu Transaction
-            // 2. INSERT vào [Colors] (các màu mới)
-            // 3. INSERT vào [ProductColors] (với các ColorId mới/cũ chính xác)
-            // 4. INSERT vào [ProductImages]
-            // 5. INSERT vào [ProductVariants]
-            // 6. Commit Transaction
             await _unitOfWork.SaveChanges();
         }
 
@@ -1205,12 +1208,44 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public async Task UpdateProductColorsAsync(Product product, List<UpdateProductColorDto> requestColors, IEnumerable<ProductColor> dbColors)
         {
-            if (requestColors == null)
+            if (requestColors == null || !requestColors.Any()) // Nếu request trống thì không xóa, chỉ bỏ qua
                 return; // Không đụng đến dữ liệu cũ
+            
+            // 🔽 BỔ SUNG: LOGIC VALIDATION
+            var dbColorsDict = dbColors.ToDictionary(c => c.ProductColorId, c => c);
+            foreach (var colorReq in requestColors)
+            {
+                string finalLensId;
+                string finalPackageLens;
 
-            // Nếu request trống thì không xóa, chỉ bỏ qua
-            if (!requestColors.Any())
-                return;
+                // Kiểm tra xem đây là update hay add new
+                if (!string.IsNullOrEmpty(colorReq.ProductColorId) && dbColorsDict.TryGetValue(colorReq.ProductColorId, out var existingColor))
+                {
+                    // Đây là UPDATE. Lấy giá trị final
+                    // Nếu request là null, giữ giá trị cũ (existing).
+                    // Nếu request không null (kể cả ""), lấy giá trị request.
+                    finalLensId = colorReq.LensId ?? existingColor.LensId;
+                    finalPackageLens = colorReq.PackageLens ?? existingColor.PackageLens;
+                }
+                else
+                {
+                    // Đây là ADD NEW. Lấy thẳng từ request
+                    finalLensId = colorReq.LensId;
+                    finalPackageLens = colorReq.PackageLens;
+                }
+
+                // Chạy logic kiểm tra
+                if (!string.IsNullOrEmpty(finalLensId) && string.IsNullOrEmpty(finalPackageLens))
+                {
+                    // Lấy tên/prefix để báo lỗi rõ ràng
+                    string colorIdentifier = !string.IsNullOrEmpty(colorReq.ColorName)
+                        ? colorReq.ColorName
+                        : (!string.IsNullOrEmpty(colorReq.ColorPrefix) ? colorReq.ColorPrefix : $"ID {colorReq.ProductColorId ?? "mới"}");
+
+                    // Ném Exception để transaction tự động rollback
+                    throw new InvalidOperationException($"Với màu '{colorIdentifier}', nếu bạn cung cấp LensId, bạn cũng phải cung cấp PackageLens.");
+                }
+            }
 
             var requestColorIds = requestColors.Where(c => !string.IsNullOrEmpty(c.ProductColorId))
                                                .Select(c => c.ProductColorId).ToList();
@@ -1263,7 +1298,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 ProductId = product.ProductId,
                 Color = colorEntity,
                 NoBgImgUrl = noBgUrl,
-                LensId = colorReq.LensId
+                LensId = colorReq.LensId,
+                PackageLens = colorReq.PackageLens
             };
 
             // Upload multiple images
@@ -1288,6 +1324,9 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             if (colorReq.LensId != null)
                 existingColor.LensId = colorReq.LensId;
+            
+            if (colorReq.PackageLens != null)
+                existingColor.PackageLens = colorReq.PackageLens;
 
             // Replace images
             if (colorReq.ProductVariantImages?.Any() == true)
