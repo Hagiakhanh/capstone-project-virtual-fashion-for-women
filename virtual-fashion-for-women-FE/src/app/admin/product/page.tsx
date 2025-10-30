@@ -4,10 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PaginationDTO } from '@/models/PaginationDTO';
 import { messageToast } from '@/helpers/toastHelper';
-import { Search, Package, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Package, CheckCircle, XCircle, Filter, ListRestart } from 'lucide-react';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import { api } from '@/api/instance';
 import ProductItem from '@/components/ManageProduct/ProductItem';
+import { Category } from '@/types/category';
 
 const statusTabs = [
     { key: 'all', label: 'Tất cả', icon: null },
@@ -25,6 +26,14 @@ export interface Product {
     isDeleted: boolean;
 }
 
+const sortOptions = [
+    { key: 2, label: 'Mới nhất' },
+    { key: 0, label: 'Tên: A-Z' },
+    { key: 1, label: 'Tên: Z-A' },
+    { key: 5, label: 'Giá: Thấp đến Cao' },
+    { key: 6, label: 'Giá: Cao đến Thấp' },
+];
+
 export default function ProductListPage() {
     const router = useRouter();
     const [products, setProducts] = useState<Product[]>([]);
@@ -32,6 +41,11 @@ export default function ProductListPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [submittedSearchTerm, setSubmittedSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('active');
+
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>(''); // '' nghĩa là "Tất cả"
+    const [sortBy, setSortBy] = useState<number>(2); // Mặc định là 'Mới nhất'
+
     const [pagination, setPagination] = useState<PaginationDTO>({
         CurrentPage: 1,
         HasNext: false,
@@ -41,6 +55,18 @@ export default function ProductListPage() {
         TotalPages: 0,
     });
 
+    const fetchCategories = async () => {
+        try {
+            const response = await api.get('/category');
+            if (response.status === 200 && response.data) {
+                setCategories(response.data);
+            }
+        } catch (error: any) {
+            console.error("Failed to fetch categories:", error);
+            messageToast.error('Không thể tải danh sách danh mục.');
+        }
+    };
+
     const fetchProducts = async () => {
         try {
             setLoading(true);
@@ -49,6 +75,8 @@ export default function ProductListPage() {
                 pageIndex: pagination.CurrentPage,
                 searchTerm: submittedSearchTerm,
                 status: statusFilter,
+                sortBy: sortBy,
+                categoryId: selectedCategory /*? parseInt(selectedCategory) : undefined*/,
             }
             const response = await api.get("/product", { params: payloadPagination });
             if (response.status === 200) {
@@ -113,9 +141,19 @@ export default function ProductListPage() {
         return range;
     }
 
+    // useEffect(() => {
+    //     fetchProducts();
+    // }, [pagination.CurrentPage, pagination.PageSize, statusFilter, submittedSearchTerm]);
+
+    // Cập nhật: Thêm fetchCategories khi component mount
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    // Cập nhật: Thêm selectedCategory và sortBy vào dependency array
     useEffect(() => {
         fetchProducts();
-    }, [pagination.CurrentPage, pagination.PageSize, statusFilter, submittedSearchTerm]);
+    }, [pagination.CurrentPage, pagination.PageSize, statusFilter, submittedSearchTerm, selectedCategory, sortBy]);
 
     const columnClasses = "px-6 py-3 text-left text-s font-semibold text-gray-600 uppercase tracking-wider";
 
@@ -125,7 +163,7 @@ export default function ProductListPage() {
                 {/* Header */}
                 <h1 className="text-3xl font-semibold text-gray-800 mb-6">Quản lý sản phẩm</h1>
                 <div className="flex justify-between items-center gap-4 mb-4">
-                    <div className="relative w-1/3"> 
+                    {/* <div className="relative w-1/3"> 
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                             type="text"
@@ -135,6 +173,61 @@ export default function ProductListPage() {
                             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                    </div> */}
+                    <div className="flex items-center gap-4 flex-wrap">
+                        {/* Search Bar */}
+                        <div className="relative" style={{ minWidth: '300px' }}>
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm sản phẩm..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+
+                        {/* Thêm mới: Bộ lọc Danh mục */}
+                        <div className="relative">
+                            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => {
+                                    setSelectedCategory(e.target.value);
+                                    setPagination((prev) => ({ ...prev, CurrentPage: 1 })); // Reset trang
+                                }}
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
+                                style={{ minWidth: '200px' }}
+                            >
+                                <option value="">Tất cả danh mục</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.categoryId} value={cat.categoryId.toString()}>
+                                        {cat.categoryName}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Thêm mới: Bộ lọc Sắp xếp */}
+                        <div className="relative">
+                            <ListRestart className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <select
+                                value={sortBy}
+                                onChange={(e) => {
+                                    setSortBy(Number(e.target.value));
+                                    setPagination((prev) => ({ ...prev, CurrentPage: 1 })); // Reset trang
+                                }}
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
+                                style={{ minWidth: '200px' }}
+                            >
+                                {sortOptions.map((opt) => (
+                                    <option key={opt.key} value={opt.key}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <button

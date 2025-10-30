@@ -101,9 +101,13 @@ export default function UpdateColorItem({
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
             // Lấy các File đã có (nếu có) và thêm các file mới vào
-            const existingFiles = (productColor.productVariantImages || []).filter(f => f instanceof File);
-            onUpdate('productVariantImages', [...existingFiles, ...files]);
-             // Preview sẽ tự cập nhật qua useEffect
+            // const existingFiles = (productColor.productVariantImages || []).filter(f => f instanceof File);
+            // onUpdate('productVariantImages', [...existingFiles, ...files]);
+            // Preview sẽ tự cập nhật qua useEffect
+            // 1. Chỉ cập nhật danh sách File là các file vừa chọn
+            onUpdate('productVariantImages', files); 
+            // 2. (Quan trọng) Xóa danh sách preview ảnh cũ (ảnh từ server)
+            onUpdate('productVariantImagePreviews', []);
         }
     };
 
