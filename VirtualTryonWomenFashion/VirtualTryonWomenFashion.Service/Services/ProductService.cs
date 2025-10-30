@@ -163,7 +163,9 @@ namespace VirtualTryonWomenFashion.Service.Services
         public async Task<MessageModelWithData<Pagination<ResponseProductDto>>> GetAllProducts(
             PaginationParameter pagination,
             string? searchTerm,
-            string? status)
+            string? status,
+            ProductSortEnum? sortBy,
+            int? categoryId)
         {
             // ===== 1️⃣ Tạo bộ lọc =====
             Expression<Func<Product, bool>> filterExpression = p =>
@@ -171,14 +173,25 @@ namespace VirtualTryonWomenFashion.Service.Services
                 (status.ToLower() == "active" && p.IsDeleted == false) ||
                 (status.ToLower() == "deleted" && p.IsDeleted == true))
                 &&
-                (string.IsNullOrEmpty(searchTerm) ||
-                 p.ProductId.ToString().Contains(searchTerm.Trim()) ||
+                (string.IsNullOrEmpty(searchTerm) || p.ProductId.ToString().Contains(searchTerm.Trim()) || 
                  p.ProductName.ToLower().Contains(searchTerm.Trim().ToLower()) ||
-                 (p.Description != null && p.Description.ToLower().Contains(searchTerm.Trim().ToLower())));
+                 (p.Description != null && p.Description.ToLower().Contains(searchTerm.Trim().ToLower())))
+                &&
+                (!categoryId.HasValue || p.CategoryId == categoryId);
 
             // ===== 2️⃣ Tổng số bản ghi =====
             int totalCount = await _productRepository.CountAsync(filterExpression);
 
+            Func<IQueryable<Product>, IOrderedQueryable<Product>> orderBy = sortBy switch
+            {
+                ProductSortEnum.AZ => q => q.OrderBy(p => p.ProductName),
+                ProductSortEnum.ZA => q => q.OrderByDescending(p => p.ProductName),
+                ProductSortEnum.Newest => q => q.OrderByDescending(p => p.CreatedAt),
+                ProductSortEnum.PriceAscending => q => q.OrderBy(p => p.Price),
+                ProductSortEnum.PriceDescending => q => q.OrderByDescending(p => p.Price),
+                _ => q => q.OrderByDescending(p => p.CreatedAt) // ProductSortType.Newest
+            };
+            
             // ===== 3️⃣ Truy vấn danh sách có includes =====
             var products = await _productRepository.GetAll(
                 pagination: pagination,
@@ -191,7 +204,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     p => p.ProductColors.Select(pc => pc.ProductImages),
                     p => p.ProductColors.Select(pc => pc.ProductVariants)
                 },
-                orderBy: q => q.OrderByDescending(p => p.CreatedAt)
+                orderBy: orderBy
             );
 
             // ===== 4️⃣ Map sang DTO =====
