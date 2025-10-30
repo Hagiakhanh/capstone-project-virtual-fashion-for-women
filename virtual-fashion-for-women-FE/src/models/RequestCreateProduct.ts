@@ -41,6 +41,7 @@ export interface ProductColorRequest {
     hexCode: string;
     noBgImgUrl: File | null;
     lensId: string;
+    packageLens: string;
     productVariantImages: File[];
     variants: ProductVariantRequest[];
 }

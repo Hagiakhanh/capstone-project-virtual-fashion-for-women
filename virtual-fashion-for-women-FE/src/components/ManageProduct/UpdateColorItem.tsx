@@ -101,9 +101,13 @@ export default function UpdateColorItem({
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
             // Lấy các File đã có (nếu có) và thêm các file mới vào
-            const existingFiles = (productColor.productVariantImages || []).filter(f => f instanceof File);
-            onUpdate('productVariantImages', [...existingFiles, ...files]);
-             // Preview sẽ tự cập nhật qua useEffect
+            // const existingFiles = (productColor.productVariantImages || []).filter(f => f instanceof File);
+            // onUpdate('productVariantImages', [...existingFiles, ...files]);
+            // Preview sẽ tự cập nhật qua useEffect
+            // 1. Chỉ cập nhật danh sách File là các file vừa chọn
+            onUpdate('productVariantImages', files); 
+            // 2. (Quan trọng) Xóa danh sách preview ảnh cũ (ảnh từ server)
+            onUpdate('productVariantImagePreviews', []);
         }
     };
 
@@ -278,6 +282,23 @@ export default function UpdateColorItem({
                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
                         placeholder="Nhập Lens ID (nếu có)"
                     />
+                </div>
+
+                <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">PackageLens (tùy chọn)</label>
+                    <input
+                        type="text"
+                        value={productColor.packageLens || ''}
+                        onChange={(e) => onUpdate('packageLens', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        placeholder="Nhập PackageLens (nếu có)"
+                    />
+                    {/* Gợi ý validation tại UI */}
+                    {productColor.lensId && !productColor.packageLens && (
+                        <p className="text-xs text-red-500 mt-1">
+                            Bạn phải nhập PackageLens vì đã nhập LensID.
+                        </p>
+                    )}
                 </div>
 
                 {/* Ảnh không nền */}

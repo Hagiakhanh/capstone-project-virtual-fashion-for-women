@@ -271,7 +271,6 @@ export default function CreateProductPage() {
 
             if (response.status === 200 || response.status === 201) {
                 messageToast.success("Tạo sản phẩm thành công!");
-                //setMessage("Tạo sản phẩm thành công!");
                 setErrors([]);
                 setFormData({
                     productName: "",
@@ -285,13 +284,9 @@ export default function CreateProductPage() {
                 });
             } else {
                 messageToast.error(`Lỗi: ${response.data.message || "Không thể tạo sản phẩm"}`);
-                //setMessage(
-                //    `Lỗi: ${response.data.message || "Không thể tạo sản phẩm"}`
-                //);
             }
         } catch (error: any) {
             console.error("Error creating product:", error);
-            //setMessage(`Lỗi: ${error.response?.data?.message || error.message}`);
             messageToast.error(`Lỗi: ${error.response?.data?.message || error.message}`);
         } finally {
             setLoading(false);

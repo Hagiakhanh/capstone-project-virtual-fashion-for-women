@@ -69,6 +69,34 @@ export function ChatMessageStage({
       }
     }
   }, [suggestedOutfit]);
+  useEffect(() => {
+    const storedSuggestion = sessionStorage.getItem("selectedSuggestion");
+    if (storedSuggestion) {
+      try {
+        const parsed = JSON.parse(storedSuggestion);
+        if (parsed?.productVariants?.length > 0) {
+          setSuggestedOutfit(
+            parsed.productVariants.map((v: any) => ({
+              id: v.productVariantId,
+              name: v.variantName,
+              ImageUrl: v.imageUrl,
+              ProductColorId: v.productVariantId.substring(
+                0,
+                v.productVariantId.lastIndexOf("-")
+              ),
+            }))
+          );
+          setIsSuggestedMode(true);
+          setToNextState(2);
+        }
+      } catch (error) {
+        console.error("❌ Lỗi khi parse suggestion:", error);
+      } finally {
+        // 🧹 Xóa để tránh hiển thị lại lần sau
+        sessionStorage.removeItem("selectedSuggestion");
+      }
+    }
+  }, []);
 
   const fetchProductColor = async (productColorId: string) => {
     try {

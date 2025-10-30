@@ -273,6 +273,25 @@ export default function ColorSection({
                     />
                 </div>
 
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        PackageLens (tùy chọn)
+                    </label>
+                    <input
+                        type="text"
+                        value={color.packageLens}
+                        onChange={(e) => onUpdate("packageLens", e.target.value)}
+                        placeholder="Nhập PackageLens nếu có"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                    {/* Thêm gợi ý validation tại UI */}
+                    {color.lensId && !color.packageLens && (
+                        <p className="text-xs text-red-500 mt-1">
+                            Bạn phải nhập PackageLens vì đã nhập LensID.
+                        </p>
+                    )}
+                </div>
+
                 {/* Cập nhật "Ảnh không nền" */}
                 <div>
                 <ImageUploader

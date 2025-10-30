@@ -37,7 +37,6 @@ export default function AIConversationDetailPage({
         conversationID={currentConversationId}
         setIsLoading={setIsLoading}
         setToNextState={setCurrentStep}
-        isOnFlow={false}
       />
     </div>
   );

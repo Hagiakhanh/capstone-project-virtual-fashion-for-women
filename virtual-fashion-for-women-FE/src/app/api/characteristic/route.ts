@@ -17,3 +17,39 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const api = createApiInstance(request);
+    const body = await request.json(); // 👈 đổi ở đây
+    const responseBE = await api.post("/characteristic", body, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    return NextResponse.json(responseBE.data, { status: 200 });
+  } catch (error) {
+    console.error("Tạo phong cách cá nhân thất bại", error);
+    return NextResponse.json(
+      { message: "Lỗi tạo phong cách cá nhân thất bại" },
+      { status: 400 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const api = createApiInstance(request);
+    const body = await request.json();
+    const responseBE = await api.put("/characteristic", body, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    return NextResponse.json(responseBE.data, { status: 200 });
+  } catch (error) {
+    console.error("Cập nhật phong cách cá nhân thất bại", error);
+    return NextResponse.json(
+      { message: "Lỗi cập nhật phong cách cá nhân thất bại" },
+      { status: 400 }
+    );
+  }
+}
