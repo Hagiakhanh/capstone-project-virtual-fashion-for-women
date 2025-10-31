@@ -77,7 +77,7 @@ function HeaderComponent() {
             <ul className="flex gap-10 text-xl font-normal cursor-pointer">
                <Link href="/" className="hover:underline underline-offset-4">Trang chủ</Link>
                <Link href="/try-on" className="hover:underline underline-offset-4">Phòng thử đồ</Link>
-               <Link href="/recommendation" className="hover:underline underline-offset-4">Phối đồ thông minh</Link>
+               <li onClick={() => router.push("/recommendation")} className="hover:underline underline-offset-4">Phối đồ thông minh</li>
                <li className='flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100'>
                   <Dropdown menu={{ items: menuItems }} placement="bottom">
                      <span className="flex items-center h-full">
