@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - 'FE-Production'
-
+ 
 env:
   SOURCE_DIR: ./virtual-fashion-for-women-FE
   DEPLOY_DIR: /home/levdefault/nextjs/virtual-fashion-for-women-FE
@@ -80,4 +80,5 @@ jobs:
             fi
 
             echo "✅ Deploy thành công!"
+
 
