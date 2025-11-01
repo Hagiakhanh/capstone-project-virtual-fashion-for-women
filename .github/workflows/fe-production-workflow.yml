@@ -52,13 +52,13 @@ jobs:
             echo "${{ secrets.FE_ENV_FILE }}" > .env.production.local
             echo "✅ Nội dung env:"
             cat .env.production.local
-
+            export NODE_ENV=production
             echo "🧩 Chuẩn bị Node 20"
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm install 20
             nvm use 20
-
+          
             echo "📦 Cài dependencies"
             npm ci
 
@@ -80,3 +80,4 @@ jobs:
             fi
 
             echo "✅ Deploy thành công!"
+
