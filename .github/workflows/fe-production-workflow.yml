@@ -3,12 +3,11 @@ name: FE CI/CD Next.js to VPS
 on:
   push:
     branches:
-      - 'FE-Production'  # đổi tên nhánh nếu cần
+      - 'FE-Production'
 
 env:
   SOURCE_DIR: ./virtual-fashion-for-women-FE
   DEPLOY_DIR: /home/levdefault/nextjs/virtual-fashion-for-women-FE
-  BUILD_DIR: /var/www/vfwfe
 
 jobs:
   deploy-fe:
@@ -49,10 +48,11 @@ jobs:
           script: |
             cd ${{ env.DEPLOY_DIR }}
 
-            echo "📄 Ghi file .env.production.local"
+            echo "📄 Tạo file .env.production.local"
             echo "${{ secrets.FE_ENV_FILE }}" > .env.production.local
+            cat .env.production.local
 
-            echo "🧩 Cài Node & npm nếu cần"
+            echo "🧩 Chuẩn bị Node 20"
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm install 20
@@ -61,16 +61,17 @@ jobs:
             echo "📦 Cài dependencies"
             npm ci
 
-            echo "⚙️ Build dự án Next.js"
+            echo "⚙️ Build Next.js"
             npm run build
 
-            echo "🚀 Chạy production server bằng PM2 (nếu có)"
+            echo "🚀 Start bằng PM2"
             if command -v pm2 > /dev/null; then
               pm2 delete vfwfe || true
-              pm2 start npm --name "vfwfe" -- run start
+              # ⚠️ Dùng lệnh này để Next.js lắng nghe tất cả IP (0.0.0.0) và ăn ENV đúng
+              pm2 start "npm run start -- -H 0.0.0.0 -p 3000" --name "vfwfe" --update-env
               pm2 save
             else
-              echo "⚠️ PM2 chưa được cài. Bạn có thể cài bằng: npm install -g pm2"
+              echo "⚠️ PM2 chưa được cài. Cài bằng: npm install -g pm2"
             fi
 
             echo "✅ Deploy thành công!"
