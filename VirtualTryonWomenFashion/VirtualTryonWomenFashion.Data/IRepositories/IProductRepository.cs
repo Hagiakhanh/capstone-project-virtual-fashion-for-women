@@ -11,10 +11,9 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface IProductRepository : IGenericRepository<Product>
     {
-        Task<List<Product>> GetAllProductsWithIncludes(PaginationParameter? pagination = null, string? searchTerm = null,
-    string? status = "all");
-        Task<List<string>> GetSlugsAsync(string baseSlug);
-        Task<Product> GetProductBySlugAsync(string slug);
+        Task<List<Product>> GetAllProductsWithIncludes();
+        Task<List<Product>> GetProductsByIdsWithIncludesAsync(List<string> productIds);
+        Task<Product?> GetProductBySlugAsync(string slug);
         Task<Product> GetProductByIdAsync(string productId);
         Task<Product> GetProductByVariantIdAsync(string variantId);
         Task<Product> GetProductByProductColorIdAsync(string productColorId);

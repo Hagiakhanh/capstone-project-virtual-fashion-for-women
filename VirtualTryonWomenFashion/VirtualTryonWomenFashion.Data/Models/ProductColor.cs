@@ -17,6 +17,8 @@ public partial class ProductColor
 
     public string NoBgImgUrl { get; set; }
 
+    public string PackageLens { get; set; }
+
     public virtual Color Color { get; set; }
 
     public virtual Product Product { get; set; }

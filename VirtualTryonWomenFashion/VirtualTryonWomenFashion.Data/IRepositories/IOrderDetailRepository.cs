@@ -12,5 +12,8 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     {
         public Task<List<OrderDetail>> GetOrderDetailsByOrderId(int orderId);
         Task<Product> GetProductByOrderDetailIdAsync(int orderDetailId);
+        Task<List<OrderDetail>> GetUserOrderDetailsAsync(int userId);
+        Task<List<OrderDetail>> GetAllOrderDetailsAsync();
+
     }
 }

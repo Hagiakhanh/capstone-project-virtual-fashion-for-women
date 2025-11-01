@@ -39,6 +39,10 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
     public virtual DbSet<OrderDetail> OrderDetails { get; set; }
 
+    public virtual DbSet<OrderRefund> OrderRefunds { get; set; }
+
+    public virtual DbSet<OrderRefundImage> OrderRefundImages { get; set; }
+
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<ProductColor> ProductColors { get; set; }
@@ -330,6 +334,55 @@ public partial class VirtualTryonWomenFashionContext : DbContext
                 .HasForeignKey(d => d.ProductVariantId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__OrderDeta__Produ__18EBB532");
+        });
+
+        modelBuilder.Entity<OrderRefund>(entity =>
+        {
+            entity.HasKey(e => e.OrderRefundId).HasName("PK__OrderRef__9273F2419A3A2346");
+
+            entity.ToTable("OrderRefund");
+
+            entity.Property(e => e.OrderRefundId).HasColumnName("OrderRefundID");
+            entity.Property(e => e.AttemptNumber).HasDefaultValue(1);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.CustomerId).HasColumnName("CustomerID");
+            entity.Property(e => e.CustomerReason).IsRequired();
+            entity.Property(e => e.OrderId).HasColumnName("OrderID");
+            entity.Property(e => e.RefundAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.StaffId).HasColumnName("StaffID");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Customer).WithMany(p => p.OrderRefundCustomers)
+                .HasForeignKey(d => d.CustomerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_OrderRefund_Customer");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.OrderRefunds)
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_OrderRefund_Orders");
+
+            entity.HasOne(d => d.Staff).WithMany(p => p.OrderRefundStaffs)
+                .HasForeignKey(d => d.StaffId)
+                .HasConstraintName("FK_OrderRefund_Staff");
+        });
+
+        modelBuilder.Entity<OrderRefundImage>(entity =>
+        {
+            entity.HasKey(e => e.OrderRefundImageId).HasName("PK__OrderRef__10302D090D8D64C4");
+
+            entity.ToTable("OrderRefundImage");
+
+            entity.Property(e => e.OrderRefundImageId).HasColumnName("OrderRefundImageID");
+            entity.Property(e => e.ImageUrl).IsRequired();
+            entity.Property(e => e.OrderRefundId).HasColumnName("OrderRefundID");
+
+            entity.HasOne(d => d.OrderRefund).WithMany(p => p.OrderRefundImages)
+                .HasForeignKey(d => d.OrderRefundId)
+                .HasConstraintName("FK_OrderRefundImage_OrderRefund");
         });
 
         modelBuilder.Entity<Product>(entity =>
@@ -654,13 +707,16 @@ public partial class VirtualTryonWomenFashionContext : DbContext
         {
             entity.HasKey(e => e.TransactionId).HasName("PK__Transact__55433A4B45431902");
 
-            entity.HasIndex(e => e.OrderId, "UQ__Transact__C3905BAE0DA0D775").IsUnique();
+            entity.HasIndex(e => e.OrderId, "UQ_Transactions_OrderID").IsUnique();
+
+            entity.HasIndex(e => e.OrderRefundId, "UQ_Transactions_OrderRefundID").IsUnique();
 
             entity.Property(e => e.TransactionId).HasColumnName("TransactionID");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Method).HasMaxLength(100);
             entity.Property(e => e.Money).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
+            entity.Property(e => e.OrderRefundId).HasColumnName("OrderRefundID");
             entity.Property(e => e.Status).HasMaxLength(50);
             entity.Property(e => e.ThirdPartyCode).HasMaxLength(255);
             entity.Property(e => e.ThirdPartyOrderIdCode).HasMaxLength(255);
@@ -669,8 +725,11 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
             entity.HasOne(d => d.Order).WithOne(p => p.Transaction)
                 .HasForeignKey<Transaction>(d => d.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Transactions_Orders");
+
+            entity.HasOne(d => d.OrderRefund).WithOne(p => p.Transaction)
+                .HasForeignKey<Transaction>(d => d.OrderRefundId)
+                .HasConstraintName("FK_Transactions_OrderRefund");
 
             entity.HasOne(d => d.User).WithMany(p => p.Transactions)
                 .HasForeignKey(d => d.UserId)

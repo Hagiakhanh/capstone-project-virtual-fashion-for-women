@@ -18,6 +18,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<bool> InsertListProductInSaleCampaign(List<ProductInSaleCampaign> listProductInSaleCampaign);
         public Task<List<ResponseGetProductInSaleCampaign>> GetListProductBasedCampaignID(int campaignID);
         public Task<List<ResponseGetProductInSaleCampaign>> GetProductInSaleCampaign(string productId);
+        Task<Dictionary<string, decimal>> GetPricesOfProductsInActiveCampaignAsync(List<string> productIds);
         public Task<ResponseGetProductInSaleCampaign> GetPriceOfProductInActiveCampaign(string productId);
         public Task<bool> BulkDeleteProductInCampaign(int campaignID, List<string> listProductID);
 

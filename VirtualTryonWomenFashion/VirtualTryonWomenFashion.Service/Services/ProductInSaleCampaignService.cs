@@ -136,6 +136,50 @@ namespace VirtualTryonWomenFashion.Service.Services
                 return null;
             }
         }
+        
+        // Đặt hàm này trong cùng service với hàm cũ
+
+        public async Task<Dictionary<string, decimal>> GetPricesOfProductsInActiveCampaignAsync(List<string> productIds)
+        {
+            if (productIds == null || !productIds.Any())
+            {
+                return new Dictionary<string, decimal>();
+            }
+
+            try
+            {
+                var allProductsInCampaign = await _repository.GetAll(
+                    null, 
+                    x => productIds.Contains(x.ProductId) && 
+                    x.Campaign.Status.Equals(SaleCampaignStatusEnum.Active.ToString()), 
+                    x => x.OrderBy(x => x.Campaign.StartDate), 
+                    includes: x => x.Campaign
+                );
+
+                if (allProductsInCampaign == null || !allProductsInCampaign.Any())
+                {
+                    return new Dictionary<string, decimal>();
+                }
+
+                var latestCampaignsPerProduct = allProductsInCampaign
+                    .GroupBy(x => x.ProductId)
+                    .Select(g => g.First())
+                    .ToList();
+
+                var resultDictionary = latestCampaignsPerProduct
+                    .Where(campaign => campaign.SalePrice.HasValue)
+                    .ToDictionary(
+                        campaign => campaign.ProductId,
+                        campaign => campaign.SalePrice.Value 
+                    );
+        
+                return resultDictionary;
+            }
+            catch (Exception)
+            {
+                return new Dictionary<string, decimal>();
+            }
+        }
 
         public async Task<List<ResponseGetProductInSaleCampaign>> GetProductInSaleCampaign(string productId)
         {

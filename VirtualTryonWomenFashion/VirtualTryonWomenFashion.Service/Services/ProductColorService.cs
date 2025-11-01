@@ -10,6 +10,7 @@ using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Color;
 using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
@@ -396,6 +397,29 @@ namespace VirtualTryonWomenFashion.Service.Services
                     StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
+        }
+
+        public async Task<ResponseProductColorDto> GetProductColorByLensId(string productColorLensId)
+        {
+            ProductColor? productColor = await _productColorRepository.GetProductColorByLensId(productColorLensId);
+            if(productColor == null)
+            {
+                throw new Exception("Không tìm thấy product color theo lensId");
+            }
+
+            ResponseProductColorDto productColorDto = new ResponseProductColorDto()
+            {
+                ColorId = productColor.ColorId,
+                LensId = productColor.LensId,
+                NoBgImgUrl = productColor.NoBgImgUrl,
+                PackageLens = productColor.PackageLens,
+                ProductColorId = productColor.ProductId,
+                Color = new ResponseColorDto(),
+                ProductImagesDto = new List<ResponseProductImageDto>(),
+                ProductVariants = new List<ResponseProductVariantDto>()
+            };
+
+            return productColorDto;
         }
     }
 }

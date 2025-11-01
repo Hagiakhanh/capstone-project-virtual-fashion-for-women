@@ -14,5 +14,7 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
         Task<bool> IsProductInWishlistAsync(int userId, string productId);
         public Task<Wishlist> GetWishlistByUserIdAndWishlistId(int userId, int wishlistId);
         public Task<Wishlist> GetWishListByUserIdAndProductId(int userId, string productId);
+        Task<List<Wishlist>> GetUserWishlistAsync(int userId);
+        Task<List<Wishlist>> GetAllWishlistAsync();
     }
 }

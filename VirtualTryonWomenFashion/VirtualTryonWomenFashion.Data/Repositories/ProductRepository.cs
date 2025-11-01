@@ -28,49 +28,31 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<Product>> GetAllProductsWithIncludes(PaginationParameter? pagination = null,
-            string? searchTerm = null,
-            string? status = "all")
+        public async Task<List<Product>> GetAllProductsWithIncludes()
         {
-            IQueryable<Product> query = _context.Products
+            return await _context.Products
+                .Include(p => p.Tags)
                 .Include(p => p.Category)
                 .Include(p => p.ProductColors).ThenInclude(pc => pc.Color)
                 .Include(p => p.ProductColors).ThenInclude(pc => pc.ProductImages)
-                .Include(p => p.ProductColors).ThenInclude(pc => pc.ProductVariants).ThenInclude(pv => pv.Size);
+                .Include(p => p.ProductColors).ThenInclude(pc => pc.ProductVariants).ThenInclude(pv => pv.Size)
+                .Where(p => p.IsDeleted == false).ToListAsync();
+        }
 
-            // lọc product không bị xóa
-            if (status?.ToLower() == "active")
-            {
-                query = query.Where(p => p.IsDeleted != true);
-            }
-            else if (status?.ToLower() == "deleted")
-            {
-                query = query.Where(p => p.IsDeleted == true);
-            }
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                string lowerSearchTerm = searchTerm.ToLower().Trim();
-
-                query = query.Where(p =>
-                    // Giả sử ProductId là string. Nếu là Guid/int, dùng .ToString()
-                    p.ProductId.ToString().ToLower().Contains(lowerSearchTerm) ||
-                    p.ProductName.ToLower().Contains(lowerSearchTerm) ||
-                    (p.Description != null && p.Description.ToLower().Contains(lowerSearchTerm))
-                );
-            }
-
-            // sắp xếp
-            query = query.OrderByDescending(p => p.CreatedAt);
-
-            // phân trang
-            if (pagination != null)
-            {
-                query = query.Skip((pagination.PageIndex - 1) * pagination.PageSize)
-                             .Take(pagination.PageSize);
-            }
-
-            return await query.ToListAsync();
+        public async Task<List<Product>> GetProductsByIdsWithIncludesAsync(List<string> productIds)
+        {
+            var products = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Tags)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.Color)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(p => p.ProductImages)
+                .Where(p => productIds.Contains(p.ProductId))
+                .Include(p => p.ProductColors).ThenInclude(pc => pc.ProductVariants).ThenInclude(pv => pv.Size)
+                .AsNoTracking()
+                .ToListAsync();
+            return products;
         }
 
         public async Task<int> CountProductsAsync(string? searchTerm = null, string? status = "all")
@@ -95,7 +77,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             return await query.CountAsync();
         }
 
-        public async Task<Product> GetProductBySlugAsync(string slug)
+        public async Task<Product?> GetProductBySlugAsync(string slug)
         {
             return await _context.Products
                 .Include(p => p.Category)
@@ -111,7 +93,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Product> GetProductByIdAsync(string productId)
+        public async Task<Product?> GetProductByIdAsync(string productId)
         {
             return await _context.Products
                 .Include(p => p.Category)
@@ -127,7 +109,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Product> GetProductByVariantIdAsync(string variantId)
+        public async Task<Product?> GetProductByVariantIdAsync(string variantId)
         {
             return await _context.Products
                 .Include(p => p.Category)
@@ -143,8 +125,6 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                          && p.IsDeleted != true)
                 .FirstOrDefaultAsync();
         }
-        
-        
 
         public async Task<List<Product>> SearchProductsWithIncludes(string productName, string categoryName, string productSort, PaginationParameter pagination)
         {

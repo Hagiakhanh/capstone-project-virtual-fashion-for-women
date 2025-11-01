@@ -11,7 +11,7 @@ public partial class Transaction
 
     public int UserId { get; set; }
 
-    public int OrderId { get; set; }
+    public int? OrderId { get; set; }
 
     public string Status { get; set; }
 
@@ -27,7 +27,11 @@ public partial class Transaction
 
     public DateTime CreatedAt { get; set; }
 
+    public int? OrderRefundId { get; set; }
+
     public virtual Order Order { get; set; }
+
+    public virtual OrderRefund OrderRefund { get; set; }
 
     public virtual User User { get; set; }
 }

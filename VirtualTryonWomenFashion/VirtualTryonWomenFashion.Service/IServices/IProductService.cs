@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Commons;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
@@ -19,12 +20,14 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<ResponseProductDto> GetProductByIdAsync(string productId);
         Task<ResponseProductDto> GetProductByVariantIdAsync(string variantId);
         Task<ResponseProductDto> GetProductByProductColorIdAsyncForTryOn(string productColorId);
-        Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParameter pagination, string? searchTerm,
-            string? status);
+        // Task<ResponsePaginationModel<List<ResponseProductDto>>> GetAllProductsAsync(PaginationParameter pagination, string? searchTerm,
+        //     string? status);
         Task<MessageModelWithData<Pagination<ResponseProductDto>>> GetAllProducts(
             PaginationParameter pagination,
             string? searchTerm,
-            string? status);
+            string? status,
+            ProductSortEnum? sortBy,
+            int? categoryId);
         Task<MessageModelWithData<Product>> UpdateAsync(string productId, UpdateProductRequest request);
         Task<ResponsePaginationModel<List<ResponseProductDto>>> SearchProductAsync(
             ProductSearchRequest request,

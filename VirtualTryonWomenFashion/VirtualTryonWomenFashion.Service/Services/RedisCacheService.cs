@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -12,6 +13,13 @@ namespace VirtualTryonWomenFashion.Service.Services
     public class RedisCacheService : IRedisCacheService
     {
         private readonly IDistributedCache _cache;
+        
+        // ✅ 2. Tạo một cấu hình (options) static cho Serializer
+        private static readonly JsonSerializerOptions _serializerOptions = new()
+        {
+            // ✅ 3. Bật chế độ xử lý tham chiếu vòng
+            ReferenceHandler = ReferenceHandler.Preserve
+        };
 
         public RedisCacheService(IDistributedCache cache)
         {
@@ -25,7 +33,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 return default(T?);
             }
-            return JsonSerializer.Deserialize<T>(data);
+            return JsonSerializer.Deserialize<T>(data, _serializerOptions);
         }
 
         public async Task SetData<T>(string key, T value, TimeSpan? expiryTime)
@@ -34,7 +42,12 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 AbsoluteExpirationRelativeToNow = expiryTime
             };
-            await _cache?.SetStringAsync(key, JsonSerializer.Serialize(value), option);
+            await _cache?.SetStringAsync(key, JsonSerializer.Serialize(value, _serializerOptions), option);
+        }
+        
+        public async Task RemoveData(string key)
+        {
+            await _cache.RemoveAsync(key);
         }
     }
 }

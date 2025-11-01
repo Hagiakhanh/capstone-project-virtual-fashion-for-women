@@ -70,7 +70,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     ProductId = product.ProductId,
                     InteractionType = UserInteractionEnum.Wishlist.ToString(),
-                    Weight = 2.5m
+                    Weight = 3m
                 });
                 return new MessageModel
                 {
