@@ -26,7 +26,7 @@ export async function POST(request: Request) {
             httpOnly: true,
             secure: true,
             sameSite: 'lax',
-            //domain: '.onlinewomanfashion.store',
+            domain: process.env.NODE_ENV === 'production' ? '.onlinewomanfashion.store' : undefined,
             maxAge: maxAge,
             path: '/',
          });

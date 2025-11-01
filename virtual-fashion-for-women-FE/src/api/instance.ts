@@ -33,7 +33,7 @@ const createApiInstance = (request: Request) => {
 
   const api = axios.create({
     baseURL: process.env.API_URL,
-    httpsAgent: agent,
+    httpsAgent: process.env.NODE_ENV === 'production' ? undefined : agent,
     headers: {
       Authorization: token ? `Bearer ${token}` : '',
     },
