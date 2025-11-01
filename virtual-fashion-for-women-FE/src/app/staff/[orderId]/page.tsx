@@ -82,6 +82,7 @@ export default function StaffOrderDetailsPage() {
          dataIndex: "productName",
          key: "productName",
          render: (text, record) => (
+            console.log(record),
             <div className="flex items-center space-x-3">
                {/* Hình ảnh sản phẩm (imageUrl) */}
                <img

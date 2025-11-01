@@ -281,7 +281,7 @@ function ProductDetailsPage() {
                   </p>
                   <div className="flex mt-3 gap-5">
                      <span className="font-bold text-xl">Màu sắc:</span>
-                     <span className="font-normal text-xl">Nâu</span>
+                     <span className="font-normal text-xl">{productColor.find(color => color.colorId === selectedColorVariant?.colorId)?.colorName}</span>
                   </div>
                   <div>
                      <div className="flex gap-3">
