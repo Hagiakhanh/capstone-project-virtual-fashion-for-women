@@ -41,9 +41,11 @@ export async function GET(request: NextRequest) {
         const pageSize = searchParams.get("pageSize") || "10";
         const searchTerm = searchParams.get("searchTerm") || "";
         const status = searchParams.get("status") || "all";
+        const sortBy = searchParams.get("sortBy") || "";
+        const categoryId = searchParams.get("categoryId") || "";
 
         const response = await api.get("/product", {
-          params: { pageIndex, pageSize, searchTerm, status },
+            params: { pageIndex, pageSize, searchTerm, status, sortBy, categoryId },
         });
         if (response.status === 200) {
             const paginationHeader = response?.headers?.get('X-Pagination');

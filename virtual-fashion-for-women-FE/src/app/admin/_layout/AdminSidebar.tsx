@@ -76,11 +76,11 @@ export default function AdminSidebar({
           </Link>
           <Link
             onClick={handleLinkClick}
-            href="/admin/orders"
-            className={`${baseLinkClasses} ${isActive("/admin/orders") ? activeLinkClasses : inactiveLinkClasses}`}
+            href="/admin/category"
+            className={`${baseLinkClasses} ${isActive("/admin/product") ? activeLinkClasses : inactiveLinkClasses}`}
           >
-            <ShoppingCart className="w-5 h-5 mr-3" />
-            Orders
+            <Package className="w-5 h-5 mr-3" />
+            Category
           </Link>
           <Link
             onClick={handleLinkClick}
@@ -97,14 +97,6 @@ export default function AdminSidebar({
           >
             <Users className="w-5 h-5 mr-3" />
             Customers
-          </Link>
-          <Link
-            onClick={handleLinkClick}
-            href="/admin/analytics"
-            className={`${baseLinkClasses} ${isActive("/admin/analytics") ? activeLinkClasses : inactiveLinkClasses}`}
-          >
-            <LineChart className="w-5 h-5 mr-3" />
-            Thống kê
           </Link>
           <Link
             onClick={handleLinkClick}
