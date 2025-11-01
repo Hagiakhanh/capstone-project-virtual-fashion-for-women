@@ -8,6 +8,7 @@ import formatPrice from "@/utils/formatPrice";
 import { Calendar, Copy, Icon, Mail, Phone, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Modal, Input, Upload as AntUpload, Button, Checkbox, Form, Upload } from "antd";
 
 export default function OrderDetailPage() {
     const route = useRouter();
@@ -17,6 +18,9 @@ export default function OrderDetailPage() {
     const [order, setOrder] = useState<OrderDTO>();
     const [statusPaymentInformation, setStatusPaymentInformation] = useState<any>({});
     const [statusOrderInformation, setStatusOrderInformation] = useState<any>({});
+    const [showRefundModal, setShowRefundModal] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [form] = Form.useForm();
 
     const fetchOrderDetails = async (orderId: number) => {
         try {
@@ -39,6 +43,52 @@ export default function OrderDetailPage() {
         if (orderId)
             fetchOrderDetails(orderId);
     }, [orderId]);
+
+
+    const beforeUpload = (file, fileList) => {
+        const isImage = file.type.startsWith("image/");
+        if (!isImage) {
+            return Upload.LIST_IGNORE; // không thêm file này vào danh sách
+        }
+
+        return false; // ngăn auto upload, chỉ preview thôi (vì ta dùng FormData để gửi)
+    };
+
+    const handleSubmitRefund = async (values: any) => {
+        try {
+            setIsSubmitting(true);
+            const formData = new FormData();
+            formData.append("OrderID", orderId.toString());
+            formData.append("CustomerReason", values.CustomerReason);
+
+            values.ImageUrl?.fileList.forEach((file: any) => {
+                formData.append("ImageUrl", file.originFileObj);
+            });
+
+            values.SelectedItems.forEach((id: number, index: number) => {
+                formData.append(`Items[${index}].OrderDetailID`, id.toString());
+            });
+
+            const response = await api.post('/orderRefund', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (response.status === 200) {
+                messageToast.success("Yêu cầu hoàn hàng đã được gửi thành công");
+                form.resetFields();
+                setShowRefundModal(false);
+            } else {
+                messageToast.error("Lỗi không thể gửi yêu cầu hoàn hàng");
+            }
+
+        } catch (error) {
+            messageToast.error("Lỗi không thể gửi yêu cầu hoàn hàng");
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-4">
@@ -69,14 +119,100 @@ export default function OrderDetailPage() {
 
                     </div>
 
-                    <button
-                        className="mt-3 sm:mt-0 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-all"
-                        onClick={() => {
-                            route.back()
-                        }}
+                    <div className="flex gap-3 mt-3 sm:mt-0">
+                        <Button
+                            type="primary"
+                            size="large"
+                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                            onClick={() => setShowRefundModal(true)}
+                        >
+                            Yêu cầu hoàn hàng
+                        </Button>
+                        <button
+                            className="mt-3 sm:mt-0 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-all"
+                            onClick={() => {
+                                route.back()
+                            }}
+                        >
+                            Quay lại
+                        </button>
+                    </div>
+
+                    <Modal
+                        title={<span className="font-semibold text-xl">Tạo yêu cầu hoàn hàng</span>}
+                        open={showRefundModal}
+                        onCancel={() => setShowRefundModal(false)}
+                        footer={null}
+                        centered
                     >
-                        Quay lại
-                    </button>
+                        <Form
+                            form={form}
+                            layout="vertical"
+                            onFinish={handleSubmitRefund}
+                            className="mt-2"
+                        >
+                            <Form.Item
+                                label={<span className="text-base">Lý do hoàn hàng</span>}
+                                name="CustomerReason"
+                                rules={[{ required: true, message: "Vui lòng nhập lý do hoàn hàng" }]}
+                            >
+                                <Input.TextArea className="!text-base" rows={3} placeholder="Nhập lý do hoàn hàng..." />
+                            </Form.Item>
+
+                            <Form.Item
+                                label={<span className="text-base">Hình ảnh minh chứng (tối đa 4 hình ảnh)</span>}
+                                name="ImageUrl"
+                                rules={[{ required: true, message: "Vui lòng tải lên hình ảnh minh chứng" }]}
+                            >
+                                <AntUpload
+                                    listType="picture"
+                                    accept="image/*"
+                                    beforeUpload={beforeUpload}
+                                    multiple
+                                    maxCount={4}
+                                >
+                                    <Button icon={<Upload />}>Tải hình ảnh</Button>
+                                </AntUpload>
+                            </Form.Item>
+
+                            <Form.Item
+                                label={<span className="text-base">Chọn sản phẩm muốn hoàn</span>}
+                                name="SelectedItems"
+                                rules={[
+                                    {
+                                        required: true,
+                                        validator: (_, value) =>
+                                            value && value.length > 0
+                                                ? Promise.resolve()
+                                                : Promise.reject(new Error("Vui lòng chọn ít nhất một sản phẩm")),
+                                    },
+                                ]}
+                            >
+                                <Checkbox.Group className="w-full">
+                                    <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-2 w-full">
+                                        {order?.responseOrderDetails.map((item) => (
+                                            <Checkbox className="w-full" key={item.orderDetailId} value={item.orderDetailId}>
+                                                {item.responseProductVariantDto.variantName}
+                                            </Checkbox>
+                                        ))}
+                                    </div>
+                                </Checkbox.Group>
+                            </Form.Item>
+
+                            <div className="flex justify-end gap-2 mt-4">
+                                <Button onClick={() => {
+                                    form.resetFields();
+                                    setShowRefundModal(false);
+                                }}>Hủy</Button>
+                                <Button type="primary" htmlType="submit"
+                                    loading={isSubmitting}
+                                >
+                                    Gửi yêu cầu
+                                </Button>
+                            </div>
+                        </Form>
+                    </Modal>
+
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6 mb-6">
