@@ -25,8 +25,8 @@ export async function POST(request: Request) {
          nextResponse.cookies.set('token', jwtToken, {
             httpOnly: true,
             secure: true,
-            sameSite: 'none',
-            domain: '.onlinewomanfashion.store',
+            sameSite: 'lax',
+            domain: process.env.NODE_ENV === 'production' ? '.onlinewomanfashion.store' : undefined,
             maxAge: maxAge,
             path: '/',
          });
