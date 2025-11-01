@@ -82,8 +82,8 @@ export default function StaffSidebar({
                </Link>
                <Link
                   onClick={handleLinkClick}
-                  href="/admin/product"
-                  className={`${baseLinkClasses} ${isActive("/admin/product") ? activeLinkClasses : inactiveLinkClasses}`}
+                  href="/staff/notifications"
+                  className={`${baseLinkClasses} ${isActive("/staff/notifications") ? activeLinkClasses : inactiveLinkClasses}`}
                >
                   <Bell className="w-5 h-5 mr-3" />
                   Thông báo
