@@ -147,7 +147,7 @@ builder.Services.AddHostedService<RecommendationBackgroundService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-           builder => builder.WithOrigins("http://localhost:3000")
+           builder => builder.WithOrigins("http://localhost:3000", "https://onlinewomanfashion.store")
           .AllowAnyMethod()
           .AllowAnyHeader()
           .AllowCredentials()
