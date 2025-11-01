@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.User;
 using VirtualTryonWomenFashion.Service.Helpers;
 
@@ -17,5 +18,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<UserInformation> UpdateUserInformationAsync(int userId, RequestUpdateUser requestUpdateUser);
         public Task<MessageModel> LogoutUser(string token, TimeSpan expiryTime);
         public Task<bool> IsBlacklistedAsync(string token);
+        public Task<List<User>> GetAllStaff();
     }
 }

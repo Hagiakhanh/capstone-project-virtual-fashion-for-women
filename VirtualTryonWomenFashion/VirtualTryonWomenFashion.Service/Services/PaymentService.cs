@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Ocsp;
@@ -9,10 +10,12 @@ using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.Momo;
+using VirtualTryonWomenFashion.Service.DTO.Notification;
 using VirtualTryonWomenFashion.Service.DTO.Order;
 using VirtualTryonWomenFashion.Service.DTO.OrderDetail;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
 using VirtualTryonWomenFashion.Service.Helpers;
+using VirtualTryonWomenFashion.Service.Hubs;
 using VirtualTryonWomenFashion.Service.IServices;
 
 namespace VirtualTryonWomenFashion.Service.Services;
@@ -27,6 +30,9 @@ public class PaymentService : IPaymentService
     private readonly IOrderDetailService _orderDetailService;
     private readonly IProductVariantService _productVariantService;
     private readonly ICartService _cartService;
+    private readonly INotificationService _notificationService;
+    private readonly IHubContext<NotificationHub> _notificationHub;
+    private readonly IUserService _userService;
 
     public PaymentService(
         IConfiguration configuration,
@@ -36,7 +42,10 @@ public class PaymentService : IPaymentService
         IOrderService orderService,
         IOrderDetailService orderDetailService,
         IProductVariantService productVariantService,
-        ICartService cartService
+        ICartService cartService,
+        INotificationService notificationService,
+        IHubContext<NotificationHub> notificationHub,
+        IUserService userService
     )
     {
         _configuration = configuration;
@@ -47,6 +56,9 @@ public class PaymentService : IPaymentService
         _orderDetailService = orderDetailService;
         _productVariantService = productVariantService;
         _cartService = cartService;
+        _notificationService = notificationService;
+        _notificationHub = notificationHub;
+        _userService = userService;
     }
 
     public async Task<string> CreatePaymentUrlInMomoAsync(Order order)
@@ -98,7 +110,7 @@ public class PaymentService : IPaymentService
                 $"&requestId={requestId}" +
                 $"&requestType={requestType}";
 
-            await Console.Out.WriteLineAsync("Đây là IPN của momo: "+ ipnUrl);
+            await Console.Out.WriteLineAsync("Đây là IPN của momo: " + ipnUrl);
             string signature = ComputeHmacSha256(rawSignature, secretKey);
 
             if (!string.IsNullOrEmpty(signature))
@@ -265,7 +277,33 @@ public class PaymentService : IPaymentService
                 await _cartService.RemoveMultipleProductsFromCartAsync(productVariantIds, transaction.UserId);
                 // Cập nhật trạng thái đơn hàng thành "Confirmed"
                 await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(), responseOrder.OrderId);
-                // Tạo đơn hàng trên giao hàng nhanh 
+                RequestCreateNotification requestCreateNotification = new RequestCreateNotification()
+                {
+                    ReceiverId = transaction.UserId,
+                    Title = "Đặt hàng thành công",
+                    Content = "Đơn hàng của bạn đã được đặt thành công và đang chờ shop đóng gói."
+                };
+                await _notificationService.CreateNotificationAsync(requestCreateNotification);
+                await _notificationHub.Clients.Group(transaction.UserId.ToString())
+                    .SendAsync("ReceiveNotification", "Bạn có thông báo mới.");
+                List<User> staffUsers = await _userService.GetAllStaff();
+                if (staffUsers.Count > 0)
+                {
+                    List<RequestCreateNotification> requestCreateNotificationStaff = new List<RequestCreateNotification>();
+                    foreach (var staff in staffUsers)
+                    {
+                        RequestCreateNotification requestNotificationStaff = new RequestCreateNotification()
+                        {
+                            ReceiverId = staff.UserId,
+                            Title = "Có đơn vừa mới tạo",
+                            Content = "Vừa có đơn hàng mới được đặt trong hệ thống"
+                        };
+                        requestCreateNotificationStaff.Add(requestNotificationStaff);
+                    }
+                    await _notificationService.CreateListNotificationAsync(requestCreateNotificationStaff);
+                    await _notificationHub.Clients.Group("StaffGroup")
+                       .SendAsync("ReceiveNotification", requestCreateNotificationStaff.First().Title);
+                }
             }
             else
             {
@@ -302,7 +340,7 @@ public class PaymentService : IPaymentService
                         }, true);
                 }
             }
-            
+
             await _unitOfWork.CommitTransactionAsync();
             await Console.Out.WriteLineAsync("Xử lý IPN của momo thành công");
             return "Xử lý callback thành công";
@@ -365,7 +403,16 @@ public class PaymentService : IPaymentService
                 await _cartService.RemoveMultipleProductsFromCartAsync(productVariantIds, transaction.UserId);
                 // Cập nhật trạng thái đơn hàng thành "Confirmed"
                 await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(), responseOrder.OrderId);
-                // Tạo đơn hàng trên giao hàng nhanh 
+
+                RequestCreateNotification requestCreateNotification = new RequestCreateNotification()
+                {
+                    ReceiverId = transaction.UserId,
+                    Title = "Đặt hàng thành công",
+                    Content = "Đơn hàng của bạn đã được đặt thành công và đang chờ shop đóng gói."
+                };
+                await _notificationService.CreateNotificationAsync(requestCreateNotification);
+                await _notificationHub.Clients.Group(transaction.UserId.ToString())
+                    .SendAsync("ReceiveNotification", "Bạn có thông báo mới.");
             }
             else
             {
@@ -569,7 +616,7 @@ public class PaymentService : IPaymentService
                         break;
                 }
             }
-            if(pendingTransactions.Count > 0)
+            if (pendingTransactions.Count > 0)
             {
                 await _transactionService.UpdateTransactionStatusAsync(pendingTransactions);
                 await _orderService.HandleSuccessfulOrders(successfulOrders);
