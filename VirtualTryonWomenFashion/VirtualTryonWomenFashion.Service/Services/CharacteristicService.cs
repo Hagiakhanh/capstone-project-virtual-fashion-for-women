@@ -73,7 +73,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     newCharacteristic.Waist = requestModel.Waist;
                     newCharacteristic.Hips = requestModel.Hips;
                 }
-               
+
 
                 // ---- Xử lý StyleType ----
                 if (requestModel.StyleTypeID == 0)
@@ -164,7 +164,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public string GetCharacteristicDescription(Characteristic c)
+        public async Task<string> GetCharacteristicDescription(Characteristic c)
         {
             if (c == null) return string.Empty;
 

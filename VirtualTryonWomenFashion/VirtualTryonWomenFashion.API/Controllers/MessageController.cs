@@ -15,20 +15,6 @@ namespace VirtualTryonWomenFashion.API.Controllers
         {
             _messageService = messageService;
         }
-        // GET: api/<MessageController>
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
-        // GET api/<MessageController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
         // POST api/<MessageController>
         [HttpPost("AIConversation")]
         public async Task<IActionResult> SendMessageToAiConversation([FromBody] RequestCreateChatWithAI model)
@@ -44,16 +30,5 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
-        // PUT api/<MessageController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<MessageController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
 }
