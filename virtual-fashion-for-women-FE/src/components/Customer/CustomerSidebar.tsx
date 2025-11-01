@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, Package, MessageCircle, CreditCard, Shirt, History, BotMessageSquare, CalendarSync } from 'lucide-react';
+import { User, Package, MessageCircle, CreditCard, Shirt, History, BotMessageSquare, CalendarSync, Bell } from 'lucide-react';
 
 const navItems = [
     { name: 'Thông tin tài khoản', href: '/account', icon: User },
+    { name: 'Thông báo', href: '/account/notifications', icon: Bell },
     { name: 'Đơn hàng của bạn', href: '/account/orders', icon: Package },
     { name: 'Trò chuyện với AI', href: '/account/aiConversations', icon: BotMessageSquare },
     { name: 'Lịch sử giao dịch', href: '/account/transactions', icon: CreditCard },
