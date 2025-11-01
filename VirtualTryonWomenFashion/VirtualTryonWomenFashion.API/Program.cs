@@ -175,6 +175,13 @@ app.Use(async (context, next) =>
             context.Request.Headers.Add("Authorization", $"Bearer {token}");
         }
     }
+    if (context.Request.Path.StartsWithSegments("/notificationhub"))
+    {
+        if (context.Request.Cookies.TryGetValue("token", out var token))
+        {
+            context.Request.Headers.Add("Authorization", $"Bearer {token}");
+        }
+    }
     await next();
 });
 
@@ -183,7 +190,7 @@ app.UseAuthorization();
 app.UseCors("AllowAll");
 
 app.MapHub<TicketChatHub>("/chathub");
-
+app.MapHub<NotificationHub>("/notificationhub");
 app.MapControllers();
 
 app.Run();

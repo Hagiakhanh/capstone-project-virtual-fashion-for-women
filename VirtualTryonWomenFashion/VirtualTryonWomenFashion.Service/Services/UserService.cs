@@ -250,5 +250,14 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
             return true;
         }
+
+        public async Task<List<User>> GetAllStaff()
+        {
+            Role customerRole = await _roleRepository.GetRoleByRoleName("Staff");
+            List<User> staffUser = await _userRepository.GetAll(
+                filter: x => x.RoleId == customerRole.RoleId
+                );
+            return staffUser ??= new List<User>();
+        }
     }
 }
