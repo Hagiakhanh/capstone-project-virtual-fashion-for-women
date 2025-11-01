@@ -77,7 +77,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             return await query.CountAsync();
         }
 
-        public async Task<Product> GetProductBySlugAsync(string slug)
+        public async Task<Product?> GetProductBySlugAsync(string slug)
         {
             return await _context.Products
                 .Include(p => p.Category)
@@ -93,7 +93,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Product> GetProductByIdAsync(string productId)
+        public async Task<Product?> GetProductByIdAsync(string productId)
         {
             return await _context.Products
                 .Include(p => p.Category)
@@ -109,7 +109,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Product> GetProductByVariantIdAsync(string variantId)
+        public async Task<Product?> GetProductByVariantIdAsync(string variantId)
         {
             return await _context.Products
                 .Include(p => p.Category)

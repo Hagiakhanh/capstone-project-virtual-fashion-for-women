@@ -14,6 +14,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductColor
         public int? ColorId { get; set; } = 0;
         public IFormFile? NoBgImgUrl { get; set; }
         public string? LensId { get; set; }
+        public string? PackageLens { get; set; }
         public List<IFormFile>? ProductVariantImages { get; set; } = new List<IFormFile>();
         public List<UpdateProductVariantRequest>? Variants { get; set; } = new List<UpdateProductVariantRequest> { };
         public string? ColorName { get; set; } = string.Empty;

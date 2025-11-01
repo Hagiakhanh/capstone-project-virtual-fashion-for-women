@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using VirtualTryonWomenFashion.Data.Commons;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.Order;
 using VirtualTryonWomenFashion.Service.DTO.Product;
@@ -26,22 +27,17 @@ namespace VirtualTryonWomenFashion.API.Controllers
             _productService = productService;
         }
 
-        /*[HttpGet]
-        public async Task<ActionResult<List<ResponseProductDto>>> GetAll([FromQuery] PaginationParameter pagination,
-            [FromQuery] string? searchTerm, [FromQuery] string? status)
-        {
-            var result = await _productService.GetAllProductsAsync(pagination, searchTerm, status);
-            return StatusCode(result.StatusCode, result);
-        }*/
         [HttpGet]
         public async Task<IActionResult> GetAllProducts(
             [FromQuery] PaginationParameter pagination,
             [FromQuery] string? searchTerm,
-            [FromQuery] string? status)
+            [FromQuery] string? status,
+            [FromQuery] ProductSortEnum? sortBy,
+            [FromQuery] int? categoryId)
         {
             try
             {
-                MessageModelWithData<Pagination<ResponseProductDto>> result = await _productService.GetAllProducts(pagination, searchTerm, status);
+                MessageModelWithData<Pagination<ResponseProductDto>> result = await _productService.GetAllProducts(pagination, searchTerm, status, sortBy, categoryId);
 
                 // Metadata cho client (Next.js)
                 var metadata = new
