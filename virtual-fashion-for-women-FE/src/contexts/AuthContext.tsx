@@ -27,9 +27,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       localStorage.removeItem("token");
-      setUser(null);
       const response = await api.post('/logout');
       if (response.status === 200) {
+        setUser(null);
         router.replace('/login');
         messageToast.success("Đăng xuất thành công");
       }
