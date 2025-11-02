@@ -21,6 +21,7 @@ const routePermissions: Record<string, string[]> = {
   "/account/notifications": ["Customer"],
   "/account/try-on-history": ["Customer"],
   "/account/history-chats": ["Customer"],
+  "/wallet": ["Customer"],
 };
 
 // Routes public (không cần login)

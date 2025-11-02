@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { TransactionInformation } from '@/models/TransactionInformation';
-import { Calendar, CheckCircle2, Clock, Receipt, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, Receipt, Wallet, XCircle } from 'lucide-react';
 import formatPrice from '@/utils/formatPrice';
 import formatDate from '@/utils/formatDate';
 import MomoPng from '../../assets/payment/momo.png';
@@ -73,10 +73,21 @@ export default function TransactionTable({ transactions, loading }: Props) {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <img src={transaction.method === 'Momo' ? MomoPng.src : VnpayPng.src} alt={transaction.method} className="w-7 h-7 mr-2" />
+                                                    {transaction.method === 'Momo' && (
+                                                        <img src={MomoPng.src} alt="Momo" className="w-7 h-7 mr-2" />
+                                                    )}
+                                                    {transaction.method === 'Vnpay' && (
+                                                        <img src={VnpayPng.src} alt="Vnpay" className="w-7 h-7 mr-2" />
+                                                    )}
+                                                    {transaction.method === 'Wallet' && (
+                                                        <div className="w-7 h-7 flex items-center justify-center bg-indigo-100 rounded-full mr-2">
+                                                            <Wallet className="w-4 h-4 text-indigo-600" />
+                                                        </div>
+                                                    )}
                                                     <span className="base text-gray-900">{transaction.method}</span>
                                                 </div>
                                             </td>
+
                                             <td className="px-6 py-4">
                                                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${statusInfo.bg}`}>
                                                     <StatusIcon className={`w-4 h-4 ${statusInfo.color}`} />
