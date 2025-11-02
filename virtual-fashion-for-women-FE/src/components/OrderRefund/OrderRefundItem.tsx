@@ -5,6 +5,7 @@ import { OrderRefundDTO } from "@/models/OrderRefundDTO";
 import formatDate from "@/utils/formatDate";
 import formatPrice from "@/utils/formatPrice";
 import { Calendar, Clock, MapPin } from 'lucide-react';
+import { useRouter } from "next/navigation";
 
 export default function OrderRefundItem({ data }: { data: OrderRefundDTO }) {
 
@@ -18,6 +19,7 @@ export default function OrderRefundItem({ data }: { data: OrderRefundDTO }) {
    const StatusIcon = statusInfo.icon;
    const productCount = data.itemRefunds.length;
    const firstName = data.itemRefunds[0]?.productVarientName || 'Sản phẩm';
+   const router = useRouter();
 
    return (
       <div className="w-full bg-white rounded-2xl shadow-sm border p-6 mb-4 hover:shadow-md transition-all">
@@ -113,8 +115,8 @@ export default function OrderRefundItem({ data }: { data: OrderRefundDTO }) {
             {/* Right - Nút bấm */}
             <div className="flex flex-shrink-0 gap-2">
                <button
-                  // onClick={() => router.push(`/account/orders/${order.orderId}`)}
-                  className="px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-700 transition-all"
+                  onClick={() => router.push(`/account/order-refund/${data.orderRefundId}`)}
+                  className="cursor-pointer px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-700 transition-all"
                >
                   Xem chi tiết
                </button>
