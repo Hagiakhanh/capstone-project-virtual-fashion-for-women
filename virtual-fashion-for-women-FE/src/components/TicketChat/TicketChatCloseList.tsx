@@ -7,9 +7,9 @@ import formatDate from '@/utils/formatDate';
 
 function TicketChatCloseList({ tickets, onSelect }: { tickets: ItemTicketChatInformationDTO[], onSelect: (slug: string) => void }) {
    return (
-      <div className='p-6'>
+      <div className=''>
          <div className='flex justify-between items-center mb-4'>
-            <h2 className='text-xl font-semibold'>Lịch sử hỗ trợ</h2>
+            <h2 className='text-3xl font-semibold text-gray-800 mb-6'>Lịch sử hỗ trợ</h2>
          </div>
 
          <List

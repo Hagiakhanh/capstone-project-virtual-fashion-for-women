@@ -71,7 +71,7 @@ export default function AIConversationManagementPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto font-sans p-6">
+    <div className="mx-auto font-sans pb-6">
       <h1 className="text-3xl font-semibold mb-6 text-gray-800">
         Các cuộc trò chuyện với AI
       </h1>

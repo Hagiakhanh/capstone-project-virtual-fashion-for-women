@@ -123,11 +123,10 @@ export default function NotificationPage() {
     }, [pagination.CurrentPage, pagination.PageSize]);
 
     return (
-        <div className="p-5">
-            {/* Header */}
+        <>
             <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-gray-900">Thông báo</h1>
+                    <h1 className="text-3xl font-semibold text-gray-800 mb-6">Thông báo</h1>
                     {!loading && unReadCount > 0 && (
                         <p className="text-gray-600 mt-1">
                             Bạn có <span className="font-semibold">{unReadCount}</span> thông báo chưa đọc
@@ -245,6 +244,6 @@ export default function NotificationPage() {
                     </div>
                 </>
             )}
-        </div>
+        </>
     );
 }

@@ -33,10 +33,10 @@ function TicketChatList({ tickets, onSelect }: { tickets: ItemTicketChatInformat
    }
 
    return (
-      <div className='p-6'>
+      <>
          {/* Phần header bên trên */}
          <div className='flex justify-between items-center mb-4'>
-            <h2 className='text-xl font-semibold'>Yêu cầu hỗ trợ</h2>
+            <h2 className='text-3xl font-semibold text-gray-800 mb-6'>Yêu cầu hỗ trợ</h2>
             <Button icon={<PlusOutlined />} style={{ fontWeight: 'normal', backgroundColor: '#FAE3B6', border: 'none' }} className="!py-4 !text-black !hover:text-black !rounded-xl !text-lg" size="large"
                onClick={handleCreate}>
                Tạo yêu cầu hỗ trợ mới
@@ -94,7 +94,8 @@ function TicketChatList({ tickets, onSelect }: { tickets: ItemTicketChatInformat
                </Form.Item>
             </Form>
          </Modal>
-      </div>
+      </>
+
    )
 }
 
