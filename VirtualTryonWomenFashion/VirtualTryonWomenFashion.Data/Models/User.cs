@@ -11,6 +11,8 @@ public partial class User
 
     public string RoleId { get; set; }
 
+    public int? WalletId { get; set; }
+
     public string FullName { get; set; }
 
     public string Email { get; set; }
@@ -60,6 +62,8 @@ public partial class User
     public virtual ICollection<TryOnSlot> TryOnSlots { get; set; } = new List<TryOnSlot>();
 
     public virtual ICollection<UserInteraction> UserInteractions { get; set; } = new List<UserInteraction>();
+
+    public virtual Wallet Wallet { get; set; }
 
     public virtual ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
 }

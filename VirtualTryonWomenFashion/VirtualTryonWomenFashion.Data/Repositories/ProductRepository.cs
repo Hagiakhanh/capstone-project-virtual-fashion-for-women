@@ -39,6 +39,22 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Where(p => p.IsDeleted == false).ToListAsync();
         }
 
+        public async Task<List<Product>> GetProductsByIdsWithIncludesAsync(List<string> productIds)
+        {
+            var products = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Tags)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(pc => pc.Color)
+                .Include(p => p.ProductColors)
+                    .ThenInclude(p => p.ProductImages)
+                .Where(p => productIds.Contains(p.ProductId))
+                .Include(p => p.ProductColors).ThenInclude(pc => pc.ProductVariants).ThenInclude(pv => pv.Size)
+                .AsNoTracking()
+                .ToListAsync();
+            return products;
+        }
+
         public async Task<int> CountProductsAsync(string? searchTerm = null, string? status = "all")
         {
             IQueryable<Product> query = _context.Products;
@@ -61,7 +77,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             return await query.CountAsync();
         }
 
-        public async Task<Product> GetProductBySlugAsync(string slug)
+        public async Task<Product?> GetProductBySlugAsync(string slug)
         {
             return await _context.Products
                 .Include(p => p.Category)
@@ -77,7 +93,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Product> GetProductByIdAsync(string productId)
+        public async Task<Product?> GetProductByIdAsync(string productId)
         {
             return await _context.Products
                 .Include(p => p.Category)
@@ -93,7 +109,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Product> GetProductByVariantIdAsync(string variantId)
+        public async Task<Product?> GetProductByVariantIdAsync(string variantId)
         {
             return await _context.Products
                 .Include(p => p.Category)

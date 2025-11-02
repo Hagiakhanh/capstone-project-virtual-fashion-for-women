@@ -29,6 +29,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IConfiguration _configuration;
         private readonly ICurrentUserService _currentUserService;
         private readonly IRedisCacheService _redisCacheService;
+        private readonly IWalletService _walletService;
 
         public UserService(
             IUserRepository userRepository,
@@ -37,7 +38,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             IUnitOfWork unitOfWork,
             IConfiguration configuration,
             ICurrentUserService currentUserService,
-            IRedisCacheService redisCacheService)
+            IRedisCacheService redisCacheService,
+            IWalletService walletService
+            )
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
@@ -46,6 +49,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _configuration = configuration;
             _currentUserService = currentUserService;
             _redisCacheService = redisCacheService;
+            _walletService = walletService;
         }
 
         public async Task<MessageModel> ConfirmAccount(RequestConfirmAccount requestConfirmAccount)
@@ -128,10 +132,12 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _unitOfWork.BeginTransactionAsync();
             try
             {
+                Wallet userWallet = await _walletService.CreateWalletAsync();
                 Role customerRole = await _roleRepository.GetRoleByRoleName("Customer");
                 User newUser = new User
                 {
                     RoleId = customerRole.RoleId,
+                    WalletId = userWallet.WalletId,
                     FullName = requestCreateAccount.FullName,
                     Email = requestCreateAccount.Email,
                     Password = PasswordUtils.HashPassword(requestCreateAccount.Password),
@@ -249,6 +255,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                 return false;
             }
             return true;
+        }
+
+        public async Task<List<User>> GetAllStaff()
+        {
+            Role customerRole = await _roleRepository.GetRoleByRoleName("Staff");
+            List<User> staffUser = await _userRepository.GetAll(
+                filter: x => x.RoleId == customerRole.RoleId
+                );
+            return staffUser ??= new List<User>();
         }
     }
 }

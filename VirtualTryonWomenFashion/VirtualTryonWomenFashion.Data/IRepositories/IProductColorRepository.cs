@@ -12,5 +12,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     {
         Task<ProductColor> GetProductColorByIdAsync(string productColorId);
         Task<ProductColor> GetByIdWithVariantsAsync(string productColorId);
+        Task<ProductColor> GetProductColorByLensId(string productColorLensId);
     }
 }

@@ -16,17 +16,19 @@ public class TransactionController : ControllerBase
 
     public TransactionController(
         ITransactionService transactionService
-        )
+    )
     {
         _transactionService = transactionService;
     }
-    
+
     [HttpGet("get-transaction-history")]
-    public async Task<IActionResult> GetTransactionHistory([FromQuery] PaginationParameter page, [FromQuery] string transactionStatus ="", [FromQuery] bool isDescesing = true)
+    public async Task<IActionResult> GetTransactionHistory([FromQuery] PaginationParameter page,
+        [FromQuery] string transactionStatus = "", [FromQuery] bool isDescesing = true)
     {
         try
         {
-            Pagination<TransactionInformation> result = await _transactionService.GetTransactionHistory(page, transactionStatus, isDescesing);
+            Pagination<TransactionInformation> result =
+                await _transactionService.GetTransactionHistory(page, transactionStatus, isDescesing);
             var metadata = new
             {
                 result.TotalCount,
@@ -55,5 +57,40 @@ public class TransactionController : ControllerBase
             });
         }
     }
-    
+
+    [HttpGet("get-recharge-transaction-history")]
+    public async Task<IActionResult> GetRechargeTransactionHistory([FromQuery] PaginationParameter page)
+    {
+        try
+        {
+            Pagination<TransactionInformation> result =
+                await _transactionService.GetRechargeTransactionHistory(page);
+            var metadata = new
+            {
+                result.TotalCount,
+                result.PageSize,
+                result.CurrentPage,
+                result.TotalPages,
+                result.HasNext,
+                result.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+            return Ok(new MessageModelWithData<object>()
+            {
+                Message = "Lấy lịch sử nạp tiền thành công",
+                StatusCode = 200,
+                Data = result
+            });
+        }
+        catch (Exception ex)
+        {
+            return Ok(new MessageModelWithData<object>()
+            {
+                Message = "Lấy lịch sử nạp tiền thất bại: " + ex.Message,
+                StatusCode = 200,
+                Data = null
+            });
+        }
+    }
 }

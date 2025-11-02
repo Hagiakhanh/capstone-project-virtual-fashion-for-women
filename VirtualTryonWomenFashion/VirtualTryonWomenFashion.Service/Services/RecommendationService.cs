@@ -8,6 +8,17 @@ using VirtualTryonWomenFashion.Service.IServices;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
+    public class ProductRecommendationCache
+    {
+        public string ProductId { get; set; }
+        public string Name { get; set; }
+        public decimal? Price { get; set; }
+        public int? CategoryId { get; set; }
+        public List<int> TagIds { get; set; } // Chỉ lưu ID thay vì object
+        public DateTime CreatedAt { get; set; }
+        public bool? IsDeleted { get; set; }
+    }
+    
     public class RecommendationService : IRecommendationService
     {
         private readonly IProductRepository _productRepository;
@@ -18,8 +29,11 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IMapper _mapper;
         private readonly IProductInSaleCampaignService _productInSaleCampaignService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IRedisCacheService _redisCacheService;
 
         private const double Alpha = 0.6; // 60% collaborative + 40% content-based
+        private const string CACHE_KEY_RECOMMENDATION_PRODUCTS = "products:recommendation_data";
+        private const int FALLBACK_CANDIDATE_SIZE = 50; // Giới hạn ứng viên fallback
 
         public RecommendationService(
             IProductRepository productRepository,
@@ -29,7 +43,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             IItemSimilarityMatrixBuilder matrixBuilder,
             IMapper mapper,
             IProductInSaleCampaignService productInSaleCampaignService,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IRedisCacheService redisCacheService)
         {
             _productRepository = productRepository;
             _userInteractionRepository = userInteractionRepository;
@@ -39,11 +54,79 @@ namespace VirtualTryonWomenFashion.Service.Services
             _mapper = mapper;
             _productInSaleCampaignService = productInSaleCampaignService;
             _httpContextAccessor = httpContextAccessor;
+            _redisCacheService = redisCacheService;
+        }
+        
+        private async Task<List<ProductRecommendationCache>> GetCachedRecommendationProductsAsync()
+        {
+            const string cacheKey = CACHE_KEY_RECOMMENDATION_PRODUCTS;
+            
+            // 1. Thử lấy từ cache
+            var cachedData = await _redisCacheService.GetData<List<ProductRecommendationCache>>(cacheKey);
+            
+            if (cachedData != null && cachedData.Any())
+            {
+                return cachedData;
+            }
+            
+            var productList = await _productRepository.GetAllProductsWithIncludes();
+            // 2. Cache miss: Query từ DB với projection
+            var products = productList
+                .Select(p => new ProductRecommendationCache
+                {
+                    ProductId = p.ProductId,
+                    Name = p.ProductName,
+                    Price = p.Price,
+                    CategoryId = p.CategoryId,
+                    TagIds = p.Tags.Select(t => t.TagId).ToList(), // ✅ Chỉ lấy TagId
+                    CreatedAt = p.CreatedAt,
+                    IsDeleted = p.IsDeleted
+                }).ToList();
+            
+            // 3. Lưu vào cache (30 phút)
+            if (products.Any())
+            {
+                await _redisCacheService.SetData(cacheKey, products, TimeSpan.FromMinutes(30));
+            }
+            
+            return products;
+        }
+        
+        // ✅ NEW: Helper method để tránh code duplicate và .Result blocking
+        private async Task<List<ResponseProductDto>> MapToProductDtos(
+            List<Product> products,
+            HashSet<string> userWishlistProductIds)
+        {
+            if (!products.Any())
+                return new List<ResponseProductDto>();
+
+            // ✅ FIX: Batch load tất cả sale prices cùng lúc thay vì gọi từng cái
+            var productIds = products.Select(p => p.ProductId).ToList();
+            var salePrices = await GetBatchSalePricesAsync(productIds);
+
+            return products.Select(p =>
+            {
+                var dto = _mapper.Map<ResponseProductDto>(p);
+
+                // ✅ FIX: Dùng dictionary lookup thay vì .Result
+                dto.PriceAtTime = salePrices.ContainsKey(p.ProductId)
+                    ? salePrices[p.ProductId]
+                    : dto.Price;
+
+                dto.IsInWishlist = userWishlistProductIds.Contains(p.ProductId);
+
+                return dto;
+            }).ToList();
         }
 
-        public async Task<List<ResponseProductDto>> GetHybridRecommendationsAsync(int topN = 8)
+        // ✅ NEW: Batch load sale prices để tránh N+1 query problem
+        private async Task<Dictionary<string, decimal>> GetBatchSalePricesAsync(List<string> productIds)
         {
-            //---------------------------------------------------------------------------------------------
+            return await _productInSaleCampaignService.GetPricesOfProductsInActiveCampaignAsync(productIds);
+        }
+
+        public async Task<List<ResponseProductDto>> GetHybridRecommendationsAsync(int topN)
+        {
             int? userId = null;
 
             // Lấy HttpContext
@@ -67,8 +150,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     .GetUserWishlistProductIdsAsync(userId.Value)).ToHashSet();
             
             // ===== 1️⃣ Lấy similarity matrix từ cache =====
-            var itemSimilarityMatrix = _matrixBuilder.GetCachedMatrix();
-
+            //var itemSimilarityMatrix = _matrixBuilder.GetCachedMatrix();
+            var itemSimilarityMatrix = await _matrixBuilder.GetCachedMatrixAsync();
+            
             // Nếu cache chưa có, return fallback
             if (!itemSimilarityMatrix.Any())
             {
@@ -76,44 +160,24 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             // ===== 2️⃣ Lấy products =====
-            var allProducts = await _productRepository.GetAllProductsWithIncludes();
-            var activeProducts = allProducts.Where(p => p.IsDeleted == false).ToList();
+            var allProducts = (await GetCachedRecommendationProductsAsync())
+                .Where(p => p.IsDeleted == false)
+                .ToList();
 
             // ===== 3️⃣ Lấy hành vi của user hiện tại =====
             var currentUserProducts = await GetUserBehaviorVectorAsync(userId.Value);
 
             // ===== 4️⃣ User mới → Fallback =====
-            var productDtos = new List<ResponseProductDto>();
             if (!currentUserProducts.Any())
             {
-                // return activeProducts
-                //     .OrderByDescending(p => p.CreatedAt)
-                //     .Take(topN)
-                //     .ToList();
-                // Lấy product thô
-                var fallbackProducts = activeProducts
+                var fallbackProductIds = allProducts
                     .OrderByDescending(p => p.CreatedAt)
                     .Take(topN)
+                    .Select(p => p.ProductId)
                     .ToList();
 
                 // Map sang DTO và xử lý logic nghiệp vụ
-                productDtos = fallbackProducts.Select(p =>
-                {
-                    var dto = _mapper.Map<ResponseProductDto>(p);
-
-                    // Lấy giá sale
-                    var productActiveInSaleCampaign = _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(p.ProductId);
-                    dto.PriceAtTime = productActiveInSaleCampaign.Result != null
-                        ? productActiveInSaleCampaign.Result.SalePrice
-                        : dto.Price;
-
-                    // Kiểm tra wishlist
-                    dto.IsInWishlist = userWishlistProductIds.Contains(p.ProductId);
-        
-                    return dto;
-                }).ToList();
-
-                return productDtos; // <-- Đã trả về List<ResponseProductDto>
+                return await GetProductDtosByIdsAsync(fallbackProductIds, userWishlistProductIds);
             }
 
             // ===== 5️⃣ Tính Item-Item Collaborative Score =====
@@ -143,10 +207,33 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             // ===== 6️⃣ Kết hợp Content-based =====
-            var hybridScores = new List<(Product product, double score)>();
+            var hybridScores = new List<(string productId, double score)>();
+            
+            var productCacheById = allProducts.ToDictionary(p => p.ProductId);
 
-            foreach (var candidate in activeProducts)
+            // ✅ FIX #3: Giới hạn candidate set
+            // Lấy ứng viên chính từ Collaborative Filtering
+            var collabCandidates = itemCollabScores.Keys;
+
+            // Lấy ứng viên fallback (sản phẩm mới nhất)
+            var newProductCandidates = allProducts
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(FALLBACK_CANDIDATE_SIZE)
+                .Select(p => p.ProductId);
+            
+            // Gộp 2 tập ứng viên và loại bỏ trùng lặp
+            var candidateIds = collabCandidates
+                .Union(newProductCandidates)
+                .ToHashSet(); // Dùng HashSet để gộp và loại trùng
+
+            // ✅ FIX #3: Lặp qua TẬP ỨNG VIÊN (nhỏ) thay vì TẤT CẢ sản phẩm
+            foreach (var candidateId in candidateIds)
             {
+                // Lấy object product từ dictionary
+                if (!productCacheById.TryGetValue(candidateId, out var candidate))
+                    continue; // Bỏ qua nếu product không có (ví dụ: đã xóa)
+
+                // Bỏ qua nếu user đã tương tác rồi
                 if (currentUserProducts.ContainsKey(candidate.ProductId))
                     continue;
 
@@ -154,58 +241,112 @@ namespace VirtualTryonWomenFashion.Service.Services
                     ? itemCollabScores[candidate.ProductId]
                     : 0;
 
-                var contentScore = currentUserProducts.Keys
-                    .Select(pid =>
-                    {
-                        var product = activeProducts.FirstOrDefault(p => p.ProductId == pid);
-                        return product != null
-                            ? ComputeContentSimilarity(product, candidate)
-                            : 0;
-                    })
-                    .DefaultIfEmpty(0)
-                    .Average();
+                var contentScores = currentUserProducts.Select(pair =>
+                {
+                    var pid = pair.Key;
+                    var userWeight = (double)pair.Value; // Trọng số từ user (mua, xem,...)
+                    var product = productCacheById.ContainsKey(pid) ? productCacheById[pid] : null;
+
+                    var sim = product != null
+                        ? ComputeContentSimilarityFromCache(product, candidate)
+                        : 0;
+
+                    return (sim * userWeight);
+                });
+
+                double totalWeight = (double)currentUserProducts.Values.Sum();
+                var contentScore = (totalWeight > 0) ? contentScores.Sum() / totalWeight : 0;
 
                 var hybridScore = Alpha * collabScore + (1 - Alpha) * contentScore;
 
                 if (hybridScore > 0)
-                    hybridScores.Add((candidate, hybridScore));
+                    hybridScores.Add((candidate.ProductId, hybridScore));
             }
 
             // ===== 7️⃣ Trả về top N =====
-            // return hybridScores
-            //     .OrderByDescending(x => x.score)
-            //     .Take(topN)
-            //     .Select(x => x.product)
-            //     .ToList();
-            // Lấy danh sách Product thô
-            var recommendedProducts = hybridScores
+            var recommendedProductIds = hybridScores
                 .OrderByDescending(x => x.score)
                 .Take(topN)
-                .Select(x => x.product)
+                .Select(x => x.productId)
                 .ToList();
 
             // ===== 4. Map DTO và xử lý logic nghiệp vụ (giống hệt bên Search) =====
-            productDtos = recommendedProducts.Select(p =>
-            {
-                // Dùng AutoMapper để map các trường cơ bản
-                var dto = _mapper.Map<ResponseProductDto>(p); 
-
-                // Xử lý logic PriceAtTime
-                // (LƯU Ý: GetPriceOfProductInActiveCampaign là async, 
-                // nhưng .Select() của LINQ không phải async-aware. 
-                // Bạn nên gọi .Result nếu chắc chắn nó nhanh, hoặc dùng Task.WhenAll)
-                var productActiveInSaleCampaign = _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(p.ProductId);
-                dto.PriceAtTime = productActiveInSaleCampaign.Result != null
-                    ? productActiveInSaleCampaign.Result.SalePrice
-                    : dto.Price;
-
-                // Xử lý logic IsInWishlist
-                dto.IsInWishlist = userWishlistProductIds.Contains(p.ProductId);
+            return await GetProductDtosByIdsAsync(recommendedProductIds, userWishlistProductIds);
+        }
         
-                return dto;
-            }).ToList();
+        private async Task<List<ResponseProductDto>> GetProductDtosByIdsAsync(
+            List<string> productIds,
+            HashSet<string> userWishlistProductIds)
+        {
+            if (!productIds.Any())
+                return new List<ResponseProductDto>();
 
-            return productDtos;
+            // Load full entities với includes (không dùng cache ở đây)
+            var products = await _productRepository.GetProductsByIdsWithIncludesAsync(productIds);
+
+            if (!products.Any()) // ✅ Thêm null check
+                return new List<ResponseProductDto>();
+            // Sắp xếp theo thứ tự trong productIds
+            var orderedProducts = productIds
+                .Select(id => products.FirstOrDefault(p => p.ProductId == id))
+                .Where(p => p != null)
+                .ToList();
+
+            return await MapToProductDtos(orderedProducts, userWishlistProductIds);
+        }
+
+        // ===== ✅ NEW: Content similarity dựa trên cache data =====
+        private static double ComputeContentSimilarityFromCache(
+            ProductRecommendationCache a,
+            ProductRecommendationCache b)
+        {
+            double score = 0;
+
+            // Category match
+            if (a.CategoryId == b.CategoryId)
+                score += 0.4;
+
+            // Tag overlap (dùng TagIds thay vì Tag objects)
+            var tagOverlap = a.TagIds.Intersect(b.TagIds).Count();
+            var totalTags = a.TagIds.Union(b.TagIds).Count();
+
+            if (totalTags > 0)
+                score += 0.3 * (tagOverlap / (double)totalTags);
+
+            // Price similarity
+            if (a.Price.HasValue && b.Price.HasValue)
+            {
+                var diff = Math.Abs(a.Price.Value - b.Price.Value);
+                if (diff < 200000) score += 0.2;
+            }
+
+            return Math.Min(score, 1.0);
+        }
+
+        // ===== ✅ UPDATED: Fallback =====
+        private async Task<List<ResponseProductDto>> GetFallbackRecommendationsAsync(int topN, int? userId)
+        {
+            HashSet<string> userWishlistProductIds = new HashSet<string>();
+            
+            if (userId.HasValue)
+            {
+                userWishlistProductIds = (await _wishlistRepository
+                    .GetUserWishlistProductIdsAsync(userId.Value))
+                    .ToHashSet();
+            }
+
+            // Dùng cached data cho fallback
+            var cachedProducts = (await GetCachedRecommendationProductsAsync())
+                .Where(p => p.IsDeleted == false)
+                .ToList();
+            
+            var fallbackProductIds = cachedProducts
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(topN)
+                .Select(p => p.ProductId)
+                .ToList();
+
+            return await GetProductDtosByIdsAsync(fallbackProductIds, userWishlistProductIds);
         }
 
         private async Task<Dictionary<string, decimal>> GetUserBehaviorVectorAsync(int userId)
@@ -244,53 +385,6 @@ namespace VirtualTryonWomenFashion.Service.Services
             return result;
         }
 
-        // private async Task<List<Product>> GetFallbackRecommendationsAsync(int topN)
-        // {
-        //     var allProducts = await _productRepository.GetAllProductsWithIncludes();
-        //     return allProducts
-        //         .Where(p => p.IsDeleted == false)
-        //         .OrderByDescending(p => p.CreatedAt)
-        //         .Take(topN)
-        //         .ToList();
-        // }
-        
-        private async Task<List<ResponseProductDto>> GetFallbackRecommendationsAsync(int topN, int? userId)
-        {
-            HashSet<string> userWishlistProductIds = new HashSet<string>();
-            
-            if (userId.HasValue)
-            {
-                userWishlistProductIds = (await _wishlistRepository
-                        .GetUserWishlistProductIdsAsync(userId.Value))
-                    .ToHashSet();
-            }
-            
-            var allProducts = await _productRepository.GetAllProductsWithIncludes();
-    
-            var fallbackProducts = allProducts
-                .Where(p => p.IsDeleted == false)
-                .OrderByDescending(p => p.CreatedAt)
-                .Take(topN)
-                .ToList();
-
-            // Map tương tự
-            var productDtos = fallbackProducts.Select(p =>
-            {
-                var dto = _mapper.Map<ResponseProductDto>(p);
-        
-                var productActiveInSaleCampaign = _productInSaleCampaignService.GetPriceOfProductInActiveCampaign(p.ProductId);
-                dto.PriceAtTime = productActiveInSaleCampaign.Result != null
-                    ? productActiveInSaleCampaign.Result.SalePrice
-                    : dto.Price;
-            
-                dto.IsInWishlist = userWishlistProductIds.Contains(p.ProductId);
-        
-                return dto;
-            }).ToList();
-    
-            return productDtos;
-        }
-
         private static decimal ComputeInteractionWeight(string type)
         {
             return type.ToLower() switch
@@ -302,30 +396,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                 "review" => 4,
                 _ => 0
             };
-        }
-
-        private static double ComputeContentSimilarity(Product a, Product b)
-        {
-            double score = 0;
-
-            if (a.CategoryId == b.CategoryId)
-                score += 0.5;
-
-            var tagOverlap = a.Tags.Select(t => t.TagId)
-                .Intersect(b.Tags.Select(t => t.TagId)).Count();
-            var totalTags = a.Tags.Select(t => t.TagId)
-                .Union(b.Tags.Select(t => t.TagId)).Count();
-
-            if (totalTags > 0)
-                score += 0.3 * (tagOverlap / (double)totalTags);
-
-            if (a.Price.HasValue && b.Price.HasValue)
-            {
-                var diff = Math.Abs(a.Price.Value - b.Price.Value);
-                if (diff < 200000) score += 0.2;
-            }
-
-            return Math.Min(score, 1.0);
         }
     }
 }

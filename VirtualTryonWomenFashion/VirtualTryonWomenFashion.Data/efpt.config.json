@@ -155,6 +155,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[Wallet]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Wishlists]",
          "ObjectType": 0
       }

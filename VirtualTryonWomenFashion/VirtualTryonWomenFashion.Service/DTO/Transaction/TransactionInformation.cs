@@ -12,13 +12,15 @@ namespace VirtualTryonWomenFashion.Service.DTO.Transaction
 
         public int UserId { get; set; }
 
-        public int OrderId { get; set; }
+        public int? OrderId { get; set; }
 
         public string Status { get; set; }
 
         public decimal? Money { get; set; }
 
         public string Method { get; set; }
+        
+        public string Type { get; set; }
 
         public string TransactionCode { get; set; }
 
