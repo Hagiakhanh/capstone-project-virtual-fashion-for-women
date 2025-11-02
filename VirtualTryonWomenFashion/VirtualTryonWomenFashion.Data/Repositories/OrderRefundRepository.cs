@@ -46,5 +46,23 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                     .Take(pageSize);
             return await query.ToListAsync();
         }
+
+        public async Task<OrderRefund> GetOrderRefundById(int orderRefundId)
+        {
+            return await _context.OrderRefunds
+                .Include(x => x.OrderRefundDetails)
+                    .ThenInclude(x => x.OrderDetail)
+                    .ThenInclude(x => x.ProductVariant)
+                    .ThenInclude(x => x.ProductColor)
+                    .ThenInclude(x => x.Color)
+                 .Include(x => x.OrderRefundDetails)
+                    .ThenInclude(x => x.OrderDetail)
+                    .ThenInclude(x => x.ProductVariant)
+                    .ThenInclude(x => x.Size)
+                .Include(x => x.Customer)
+                .Include(x => x.Order)
+                .Include(x => x.Transaction)
+                .FirstOrDefaultAsync(x => x.OrderRefundId == orderRefundId);
+        }
     }
 }

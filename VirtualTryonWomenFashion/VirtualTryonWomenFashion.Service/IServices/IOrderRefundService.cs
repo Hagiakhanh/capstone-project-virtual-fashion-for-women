@@ -15,5 +15,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModel> CreateOrderRefund(RequestCreateOrderRefund requestCreateOrderRefund);
         public Task<MessageModelWithData<Pagination<ResponseListOrderRefund>>> ListOrderRefundForCustomer(PaginationParameter page, OrderRefundStatusEnum? statusEnum);
         public Task ListOrderRefundForStaff();
+        public Task<MessageModelWithData<ResponseOrderRefundDetail>> GetOrderRefundDetailForCustomer(int orderRefundId);
     }
 }
