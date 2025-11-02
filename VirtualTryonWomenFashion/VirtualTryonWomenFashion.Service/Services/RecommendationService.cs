@@ -125,7 +125,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             return await _productInSaleCampaignService.GetPricesOfProductsInActiveCampaignAsync(productIds);
         }
 
-        public async Task<List<ResponseProductDto>> GetHybridRecommendationsAsync(int topN = 8)
+        public async Task<List<ResponseProductDto>> GetHybridRecommendationsAsync(int topN)
         {
             int? userId = null;
 
