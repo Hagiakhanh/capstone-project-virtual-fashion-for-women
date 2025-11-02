@@ -41,6 +41,8 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
     public virtual DbSet<OrderRefund> OrderRefunds { get; set; }
 
+    public virtual DbSet<OrderRefundDetail> OrderRefundDetails { get; set; }
+
     public virtual DbSet<OrderRefundImage> OrderRefundImages { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
@@ -368,6 +370,28 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.HasOne(d => d.Staff).WithMany(p => p.OrderRefundStaffs)
                 .HasForeignKey(d => d.StaffId)
                 .HasConstraintName("FK_OrderRefund_Staff");
+        });
+
+        modelBuilder.Entity<OrderRefundDetail>(entity =>
+        {
+            entity.HasKey(e => e.OrderRefundDetailId).HasName("PK__OrderRef__681DAAAAF28FF7C9");
+
+            entity.ToTable("OrderRefundDetail");
+
+            entity.Property(e => e.OrderRefundDetailId).HasColumnName("OrderRefundDetailID");
+            entity.Property(e => e.OrderDetailId).HasColumnName("OrderDetailID");
+            entity.Property(e => e.OrderRefundId).HasColumnName("OrderRefundID");
+            entity.Property(e => e.RefundPriceAtTime).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.OrderDetail).WithMany(p => p.OrderRefundDetails)
+                .HasForeignKey(d => d.OrderDetailId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_OrderRefundDetail_OrderDetail");
+
+            entity.HasOne(d => d.OrderRefund).WithMany(p => p.OrderRefundDetails)
+                .HasForeignKey(d => d.OrderRefundId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_OrderRefundDetail_OrderRefund");
         });
 
         modelBuilder.Entity<OrderRefundImage>(entity =>

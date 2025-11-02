@@ -65,5 +65,10 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .ThenInclude(p => p.Product).ThenInclude(p => p.Tags)
                 .ToListAsync();
         }
+
+        public async Task<List<OrderDetail>> GetByListOrderDetailIdAsync(List<int> orderDetailId)
+        {
+            return await _context.OrderDetails.Where(x => orderDetailId.Contains(x.OrderId)).ToListAsync();
+        }
     }
 }

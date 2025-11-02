@@ -55,6 +55,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[OrderRefundDetail]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[OrderRefundImage]",
          "ObjectType": 0
       },
