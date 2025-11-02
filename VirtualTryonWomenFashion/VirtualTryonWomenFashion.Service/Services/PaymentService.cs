@@ -1,4 +1,6 @@
-﻿using System.Security.Cryptography;
+﻿using System.Net.Sockets;
+using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
@@ -525,9 +527,20 @@ public class PaymentService : IPaymentService
             string orderInfo = $"Truy vấn trạng thái giao dịch {txnRef} từ VnPay";
             string transactionDate = transaction.CreatedAt.ToString("yyyyMMddHHmmss");
             string createDate = DateTime.UtcNow.AddHours(7).ToString("yyyyMMddHHmmss");
+            string ipAddress;
 
-            HttpContext context = new HttpContextAccessor().HttpContext;
-            var ipAddress = VnPayUtils.GetIpAddress(context);
+            var context = new HttpContextAccessor().HttpContext;
+            if (context != null)
+            {
+                ipAddress = VnPayUtils.GetIpAddress(context);
+            }
+            else
+            {
+                // Không có HttpContext (trong worker)
+                ipAddress = Dns.GetHostAddresses(Dns.GetHostName())
+                                .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork)?
+                                .ToString() ?? "127.0.0.1";
+            }
 
             var rawData = requestId + "|" +
                           version + "|" +
