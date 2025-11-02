@@ -185,9 +185,10 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors("AllowAll");
+
 
 app.MapHub<TicketChatHub>("/chathub");
 app.MapHub<NotificationHub>("/notificationhub");

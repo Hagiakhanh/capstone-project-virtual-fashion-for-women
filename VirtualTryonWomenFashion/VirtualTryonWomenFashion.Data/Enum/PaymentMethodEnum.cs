@@ -3,5 +3,6 @@
 public enum PaymentMethodEnum
 {
     Momo,
-    VnPay
+    VnPay,
+    Wallet
 }

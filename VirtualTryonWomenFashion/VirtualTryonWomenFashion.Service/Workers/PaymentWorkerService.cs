@@ -27,11 +27,12 @@ public class PaymentWorkerService : BackgroundService
             {
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    var saleCampaignService = scope.ServiceProvider
+                    var paymentService = scope.ServiceProvider
                         .GetRequiredService<IPaymentService>();
 
                     // Gọi method của service
-                    await saleCampaignService.HandleOrderStatusAndTransactionStatus();
+                    await paymentService.HandleOrderStatusAndTransactionStatus();
+                    await paymentService.HandleRechargeTransactionStatus(); 
                 }
                 _logger.LogInformation("Function HandleOrderStatusAndTransactionStatus executed successfully at: {time}", DateTimeOffset.Now);
                 _logger.LogInformation("Next execution scheduled in 15 minute");
