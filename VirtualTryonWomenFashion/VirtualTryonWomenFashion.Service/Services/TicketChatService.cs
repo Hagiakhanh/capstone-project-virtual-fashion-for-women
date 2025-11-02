@@ -12,6 +12,7 @@ using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Notification;
 using VirtualTryonWomenFashion.Service.DTO.TicketChat;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Hubs;
@@ -26,15 +27,20 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMessageRepository _messageRepository;
         private readonly IHubContext<TicketChatHub> _chatHub;
+        private readonly INotificationService _notificationService;
+        private readonly IHubContext<NotificationHub> _notificationHub;
 
         public TicketChatService(ICurrentUserService currentUserService, ITicketChatRepository ticketChatRepository,
-            IUnitOfWork unitOfWork, IMessageRepository messageRepository, IHubContext<TicketChatHub> chatHub)
+            IUnitOfWork unitOfWork, IMessageRepository messageRepository, IHubContext<TicketChatHub> chatHub,
+            INotificationService notificationService, IHubContext<NotificationHub> notificationHub)
         {
             _currentUserService = currentUserService;
             _ticketChatRepository = ticketChatRepository;
             _unitOfWork = unitOfWork;
             _messageRepository = messageRepository;
             _chatHub = chatHub;
+            _notificationService = notificationService;
+            _notificationHub = notificationHub;
         }
 
         public async Task<MessageModelWithData<ResponseAssignTicketChat>> AssignStaffToTicketChat(
@@ -64,6 +70,15 @@ namespace VirtualTryonWomenFashion.Service.Services
             int result = await _unitOfWork.SaveChanges();
             if (result > 0)
             {
+                RequestCreateNotification newNotification = new RequestCreateNotification()
+                {
+                    ReceiverId = ticketChat.CustomerId,
+                    Title = "Yêu cầu hỗ trợ đã được tiếp nhận",
+                    Content = $"Yêu cầu hỗ trợ '{ticketChat.Title}' của bạn đã được nhân viên hỗ trợ tiếp nhận.",
+                };
+                await _notificationService.CreateNotificationAsync(newNotification);
+                await _notificationHub.Clients.Group(ticketChat.CustomerId.ToString())
+                    .SendAsync("ReceiveNotification", newNotification.Title);
                 // Thông báo realtime cho customer là đã có staff nhận 
                 return new MessageModelWithData<ResponseAssignTicketChat>
                 {
@@ -152,6 +167,15 @@ namespace VirtualTryonWomenFashion.Service.Services
             int result = await _unitOfWork.SaveChanges();
             if (result > 0)
             {
+                RequestCreateNotification newNotification = new RequestCreateNotification()
+                {
+                    ReceiverId = ticketChat.CustomerId,
+                    Title = "Yêu cầu hỗ trợ đã được nhân viên kết thúc",
+                    Content = $"Yêu cầu hỗ trợ '{ticketChat.Title}' của bạn đã được nhân viên kết thúc.",
+                };
+                await _notificationService.CreateNotificationAsync(newNotification);
+                await _notificationHub.Clients.Group(ticketChat.CustomerId.ToString())
+                    .SendAsync("ReceiveNotification", newNotification.Title);
                 // Gửi thông báo realtime cho khách hàng
                 await _chatHub.Clients.Group(ticketChat.Slug)
                     .SendAsync("TicketClosed", new

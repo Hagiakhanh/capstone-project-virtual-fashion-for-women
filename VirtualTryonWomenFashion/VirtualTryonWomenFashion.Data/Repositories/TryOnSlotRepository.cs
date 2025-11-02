@@ -22,7 +22,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             var productColorIds = new List<string> {topProductColorId, bottomProductColorId};
             var tryOnSlot =  await _context.TryOnSlots
                 .AsNoTracking()
-                .Where(slot =>slot.CustomerId == userId && slot.UploadImageBinary == userModelImageHash &&  slot.ProductColors
+                .Where(slot =>slot.CustomerId == userId && slot.UploadImageUrl == userModelImageHash &&  slot.ProductColors
                     .Any(pc => productColorIds.Contains(pc.ProductColorId)))
                 .Include(to => to.ProductColors).FirstOrDefaultAsync();
             return tryOnSlot ??= null;
@@ -42,7 +42,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
             var tryOnSlot = await _context.TryOnSlots
                 .AsNoTracking()
-                .Where(slot => slot.CustomerId == userId && slot.UploadImageBinary == userModelImageHash)
+                .Where(slot => slot.CustomerId == userId && slot.UploadImageHash == userModelImageHash)
                 .Include(to => to.ProductColors).FirstOrDefaultAsync();
             return tryOnSlot != null;
         }

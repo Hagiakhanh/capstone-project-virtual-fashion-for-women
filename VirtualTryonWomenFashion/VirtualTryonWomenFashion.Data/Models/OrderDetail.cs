@@ -23,6 +23,8 @@ public partial class OrderDetail
 
     public virtual Order Order { get; set; }
 
+    public virtual ICollection<OrderRefundDetail> OrderRefundDetails { get; set; } = new List<OrderRefundDetail>();
+
     public virtual ProductVariant ProductVariant { get; set; }
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();

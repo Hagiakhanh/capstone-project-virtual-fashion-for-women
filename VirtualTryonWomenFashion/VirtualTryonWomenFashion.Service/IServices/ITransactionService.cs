@@ -11,5 +11,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<int> UpdateTransactionStatusAsync(IEnumerable<Transaction> transaction);
         public Task<Transaction> GetTransactionByOrderIdAsync(int orderId);
         public Task<Pagination<TransactionInformation>> GetTransactionHistory(PaginationParameter paginationParameter,string transactionStatus, bool isDescending);
+        public Task<Pagination<TransactionInformation>> GetRechargeTransactionHistory(PaginationParameter paginationParameter);
+        public Task<List<Transaction>> GetAllPendingRechargeTransaction();
     }
 }

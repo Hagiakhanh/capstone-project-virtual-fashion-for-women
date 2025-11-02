@@ -147,7 +147,7 @@ builder.Services.AddHostedService<RecommendationBackgroundService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-           builder => builder.WithOrigins("http://localhost:3000")
+           builder => builder.WithOrigins("http://localhost:3000", "https://onlinewomanfashion.store")
           .AllowAnyMethod()
           .AllowAnyHeader()
           .AllowCredentials()
@@ -175,15 +175,23 @@ app.Use(async (context, next) =>
             context.Request.Headers.Add("Authorization", $"Bearer {token}");
         }
     }
+    if (context.Request.Path.StartsWithSegments("/notificationhub"))
+    {
+        if (context.Request.Cookies.TryGetValue("token", out var token))
+        {
+            context.Request.Headers.Add("Authorization", $"Bearer {token}");
+        }
+    }
     await next();
 });
 
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors("AllowAll");
+
 
 app.MapHub<TicketChatHub>("/chathub");
-
+app.MapHub<NotificationHub>("/notificationhub");
 app.MapControllers();
 
 app.Run();

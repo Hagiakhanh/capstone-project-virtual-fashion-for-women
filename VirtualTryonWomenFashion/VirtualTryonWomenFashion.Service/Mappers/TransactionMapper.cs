@@ -11,11 +11,12 @@ namespace VirtualTryonWomenFashion.Service.Mappers
             return new TransactionInformation()
             {
                 TransactionId = transaction.TransactionId,
-                OrderId = transaction.OrderId.Value,
+                OrderId = transaction.OrderId,
                 UserId = transaction.UserId,
                 CreatedAt = transaction.CreatedAt,
                 Method = transaction.Method,
                 Money = transaction.Money,
+                Type = transaction.Type,
                 Status = transaction.Status,
                 TransactionCode = transaction.ThirdPartyCode,
                 UpdatedAt = transaction.UpdatedAt

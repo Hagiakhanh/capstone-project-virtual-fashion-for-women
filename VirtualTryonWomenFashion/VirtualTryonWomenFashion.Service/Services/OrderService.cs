@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
@@ -31,8 +32,10 @@ using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Mappers;
 using VirtualTryonWomenFashion.Service.Utils;
 using Newtonsoft.Json.Serialization;
+using VirtualTryonWomenFashion.Service.DTO.Notification;
 using VirtualTryonWomenFashion.Service.DTO.UserInteraction;
 using VirtualTryonWomenFashion.Service.DTO.StatusLog;
+using VirtualTryonWomenFashion.Service.Hubs;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -49,6 +52,9 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IUserInteractionService _userInteractionService;
         private readonly IProductService _productService;
         private readonly IStatusLogService _statusLogService;
+        private readonly INotificationService _notificationService;
+        private readonly IHubContext<NotificationHub> _notificationHub;
+        private readonly IUserService _userService;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -61,7 +67,10 @@ namespace VirtualTryonWomenFashion.Service.Services
             HttpClient client,
             IUserInteractionService userInteractionService,
             IProductService productService,
-            IStatusLogService statusLogService
+            IStatusLogService statusLogService,
+            INotificationService notificationService,
+            IHubContext<NotificationHub> notificationHub,
+            IUserService userService
         )
         {
             _orderDetailService = orderDetailService;
@@ -75,6 +84,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             _userInteractionService = userInteractionService;
             _productService = productService;
             _statusLogService = statusLogService;
+            _notificationService = notificationService;
+            _notificationHub = notificationHub;
+            _userService = userService;
         }
 
         public async Task<Order> CreateOrderAsync(RequestCreateOrder requestCreateOrder)
@@ -381,6 +393,25 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _orderRepository.UpdateRangeAsync(successfulOrders);
             await _unitOfWork.SaveChanges();
             await _statusLogService.CreateStatusLog(statusLogs);
+            List<User> staffUsers = await _userService.GetAllStaff();
+            if (staffUsers.Count > 0)
+            {
+                List<RequestCreateNotification> requestCreateNotificationStaff = new List<RequestCreateNotification>();
+                foreach (var staff in staffUsers)
+                {
+                    RequestCreateNotification requestNotificationStaff = new RequestCreateNotification()
+                    {
+                        ReceiverId = staff.UserId,
+                        Title = "Có đơn vừa mới tạo",
+                        Content = "Vừa có đơn hàng mới được đặt trong hệ thống"
+                    };
+                    requestCreateNotificationStaff.Add(requestNotificationStaff);
+                }
+                await _notificationService.CreateListNotificationAsync(requestCreateNotificationStaff);
+
+                await _notificationHub.Clients.Group("StaffGroup")
+                        .SendAsync("ReceiveNotification", requestCreateNotificationStaff.First().Title);
+            }
         }
 
         public async Task<MessageModelWithData<Pagination<ResponseOrderForStaff>>> GetAllOrderForStaff(
@@ -413,15 +444,15 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             List<ResponseOrderForStaff> responseOrderForStaff = listOrder.Select(x => new ResponseOrderForStaff
-                {
-                    OrderID = x.OrderId,
-                    ReceiverName = x.ReceiverName,
-                    ReceiverPhone = x.ReceiverPhone,
-                    CreatedAt = x.CreatedAt,
-                    Status = ((OrderStatusEnum)Enum.Parse(typeof(OrderStatusEnum), x.Status)).ToString(),
-                    Amount = x.Amount.Value,
-                    Email = x.Customer.Email
-                }
+            {
+                OrderID = x.OrderId,
+                ReceiverName = x.ReceiverName,
+                ReceiverPhone = x.ReceiverPhone,
+                CreatedAt = x.CreatedAt,
+                Status = ((OrderStatusEnum)Enum.Parse(typeof(OrderStatusEnum), x.Status)).ToString(),
+                Amount = x.Amount.Value,
+                Email = x.Customer.Email
+            }
             ).ToList();
 
             if (responseOrderForStaff.Any())
@@ -584,6 +615,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     GhnCreateOrderResponse resultGHNObj = JsonSerializer.Deserialize<GhnCreateOrderResponse>(resultGHN);
                     // ... xử lý result
                     order.ShippingCode = resultGHNObj.Data.OrderCode;
+                    order.EstimatedDelivery = resultGHNObj.Data.ExpectedDeliveryTime;
                     await _orderRepository.UpdateAsync(order);
                     int result = await _unitOfWork.SaveChanges();
                     await _statusLogService.CreateStatusLog(new List<RequestCreateStatusLog>()
@@ -595,6 +627,16 @@ namespace VirtualTryonWomenFashion.Service.Services
                             UpdateAt = DateTime.UtcNow.AddHours(7)
                         }
                     });
+                    RequestCreateNotification requestCreateNotification = new RequestCreateNotification()
+                    {
+                        ReceiverId = order.CustomerId,
+                        Title = $"Đơn hàng {order.OrderId} đã được đóng gói",
+                        Content =
+                            $"Đơn hàng {order.OrderId} của bạn đã được shop xác nhận và đóng gói thành công. Mã vận đơn: {resultGHNObj.Data.OrderCode}"
+                    };
+                    await _notificationService.CreateNotificationAsync(requestCreateNotification);
+                    await _notificationHub.Clients.Group(order.CustomerId.ToString())
+                        .SendAsync("ReceiveNotification", requestCreateNotification.Title);
                     await _unitOfWork.CommitTransactionAsync();
                     if (result > 0)
                     {
@@ -674,15 +716,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                         switch (responseGHNObject.Data.Status)
                         {
                             case "delivering":
-                            {
-                                order.Status = OrderStatusEnum.Delivering.ToString();
-                                break;
-                            }
+                                {
+                                    order.Status = OrderStatusEnum.Delivering.ToString();
+                                    break;
+                                }
                             case "delivered":
-                            {
-                                order.Status = OrderStatusEnum.Delivered.ToString();
-                                break;
-                            }
+                                {
+                                    order.Status = OrderStatusEnum.Delivered.ToString();
+                                    break;
+                                }
                         }
 
                         if (oldStatus == order.Status)
@@ -712,6 +754,28 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 UpdateAt = DateTime.UtcNow.AddHours(7)
                             }
                         });
+
+                        RequestCreateNotification requestCreateNotification = new RequestCreateNotification()
+                        {
+                            ReceiverId = order.CustomerId,
+                        };
+                        if (order.Status == OrderStatusEnum.Delivering.ToString())
+                        {
+                            requestCreateNotification.Title = $"Đơn hàng {order.OrderId} đã được shipper lấy hàng";
+                            requestCreateNotification.Content =
+                                $"Đơn hàng {order.OrderId} của bạn đã được shipper lấy và đang trong quá trình vận chuyển.";
+                        }
+                        else if (order.Status == OrderStatusEnum.Delivered.ToString())
+                        {
+                            requestCreateNotification.Title = $"Đơn hàng {order.OrderId} đã được giao thành công";
+                            requestCreateNotification.Content =
+                                $"Đơn hàng {order.OrderId} của bạn đã được giao thành công. Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi!";
+                        }
+
+                        await _notificationService.CreateNotificationAsync(requestCreateNotification);
+                        await _notificationHub.Clients.Group(order.CustomerId.ToString())
+                            .SendAsync("ReceiveNotification", requestCreateNotification.Title);
+
                         await _unitOfWork.CommitTransactionAsync();
                         if (result > 0)
                         {
@@ -797,6 +861,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _unitOfWork.BeginTransactionAsync();
             try
             {
+                List<RequestCreateNotification> notifications = new List<RequestCreateNotification>();
                 List<RequestCreateStatusLog> statusLogs = new List<RequestCreateStatusLog>();
                 foreach (var (order, newGhnStatus) in resultsFromGHN)
                 {
@@ -824,6 +889,25 @@ namespace VirtualTryonWomenFashion.Service.Services
                             UpdateAt = DateTime.UtcNow.AddHours(7)
                         };
                         statusLogs.Add(newStatusLog);
+
+                        RequestCreateNotification newNotification = new RequestCreateNotification()
+                        {
+                            ReceiverId = order.CustomerId,
+                        };
+                        if (order.Status == OrderStatusEnum.Delivering.ToString())
+                        {
+                            newNotification.Title = $"Đơn hàng {order.OrderId} đã được shipper lấy hàng";
+                            newNotification.Content =
+                                $"Đơn hàng {order.OrderId} của bạn đã được shipper lấy và đang trong quá trình vận chuyển.";
+                        }
+                        else if (order.Status == OrderStatusEnum.Delivered.ToString())
+                        {
+                            newNotification.Title = $"Đơn hàng {order.OrderId} đã được giao thành công";
+                            newNotification.Content =
+                                $"Đơn hàng {order.OrderId} của bạn đã được giao thành công. Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi!";
+                        }
+
+                        notifications.Add(newNotification);
                     }
                 }
 
@@ -831,7 +915,23 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     await _unitOfWork.SaveChanges();
                     await _statusLogService.CreateStatusLog(statusLogs);
+                    await _notificationService.CreateListNotificationAsync(notifications);
                     await _unitOfWork.CommitTransactionAsync();
+                    var notificationSendToCustomer = notifications.GroupBy(n => n.ReceiverId);
+                    foreach (var item in notificationSendToCustomer)
+                    {
+                        if (item.Count() > 1)
+                        {
+                            await _notificationHub.Clients.Group(item.First().ReceiverId.ToString())
+                                .SendAsync("ReceiveNotification", "Các đơn hàng của bạn đã được cập nhật trạng thái");
+                        }
+                        else
+                        {
+                            var singleNotification = item.First();
+                            await _notificationHub.Clients.Group(singleNotification.ReceiverId.ToString())
+                                .SendAsync("ReceiveNotification", singleNotification.Title);
+                        }
+                    }
                     return new MessageModel
                     {
                         Message = $"Đã cập nhật trạng thái cho {successCount} đơn hàng",

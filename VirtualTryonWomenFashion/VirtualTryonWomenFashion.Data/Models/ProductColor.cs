@@ -15,9 +15,9 @@ public partial class ProductColor
 
     public string LensId { get; set; }
 
-    public string NoBgImgUrl { get; set; }
-
     public string PackageLens { get; set; }
+
+    public string NoBgImgUrl { get; set; }
 
     public virtual Color Color { get; set; }
 
