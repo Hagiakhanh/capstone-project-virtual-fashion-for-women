@@ -67,8 +67,7 @@ export default function ArTryOnPage() {
         try {
             console.log('📷 Starting AR camera...')
             const cameraKit = await bootstrapCameraKit({
-                apiToken:
-                    "eyJhbGciOiJIUzI1NiIsImtpZCI6IkNhbnZhc1MyU0hNQUNQcm9kIiwidHlwIjoiSldUIn0.eyJhdWQiOiJjYW52YXMtY2FudmFzYXBpIiwiaXNzIjoiY2FudmFzLXMyc3Rva2VuIiwibmJmIjoxNzU2ODI4OTI3LCJzdWIiOiI5NzYyNzgwNC1kODE5LTQ5MWItYTQ2OC1lNDFiOGEzODA1MjF-U1RBR0lOR344ODQ3YTk2Yy1lMDE4LTRiODQtYmViNi1jZjJiYWQ3ZTZmMTQifQ.ylXy5H9fw90jsqdK5Mrprq33hr-h5FkuS8HyqPY6Prk",
+                apiToken: process.env.NEXT_PUBLIC_SNAP_KIT_API_KEY,
             })
 
             const liveRenderTarget = document.getElementById('camera-view') as HTMLCanvasElement
