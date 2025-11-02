@@ -31,7 +31,7 @@ export default function CustomerChatPage() {
 
     // Giao diện danh sách ticket
     return (
-        <div className='p-6'>
+        <div >
             {!selectedTicket ? (
                 <TicketChatList tickets={ticketData} onSelect={setSelectedTicket} />
             ) : (

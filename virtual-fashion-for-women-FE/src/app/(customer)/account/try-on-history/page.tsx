@@ -69,8 +69,8 @@ export default function TryOnHistoryListPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto font-sans">
-            <h1 className="text-3xl font-semibold mb-8 text-gray-800 flex items-center gap-2">
+        <div className="max-w-7xl mx-auto">
+            <h1 className="text-3xl font-semibold text-gray-800 mb-6">
                 Lịch sử thử đồ
             </h1>
 

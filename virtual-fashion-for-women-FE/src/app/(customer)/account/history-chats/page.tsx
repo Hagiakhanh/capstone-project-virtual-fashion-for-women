@@ -28,7 +28,7 @@ function HistoryChatsPage() {
    }, [])
 
    return (
-      <div className='p-6'>
+      <div>
          {!selectedTicket ? (
             <TicketChatCloseList tickets={ticketData} onSelect={setSelectedTicket} />
          ) : (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronRight, ShoppingBag, MapPin } from 'lucide-react';
+import { ChevronRight, ShoppingBag, MapPin, Wallet } from 'lucide-react';
 import { CheckoutDTO } from '@/models/CheckoutDTO';
 import { RequestCheckout } from '@/models/RequestCheckout';
 import { api } from '@/api/instance';
@@ -11,6 +11,8 @@ import VnpayPng from '../../../assets/payment/vnpay.png';
 import { useRouter } from 'next/navigation';
 import { messageToast } from '@/helpers/toastHelper';
 import LoadingOverlay from '@/components/Loading/LoadingOverlay';
+import { WalletDTO } from '@/models/WalletDTO';
+import formatPrice from '@/utils/formatPrice';
 
 export default function CheckoutForm() {
     const router = useRouter();
@@ -52,6 +54,7 @@ export default function CheckoutForm() {
             addressInformation.wardName.trim() !== ''
         );
     }, [formData, addressInformation]);
+    const [wallet, setWallet] = useState<WalletDTO>();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
@@ -90,17 +93,28 @@ export default function CheckoutForm() {
         };
 
         try {
-            const response = await api.post('/payment', payload);
-            if (response.status === 200) {
-                const paymentUrl = response.data;
-                router.push(paymentUrl);
+            if (selectedPayment === 'Wallet') {
+                const response = await api.post('/wallet/payment', payload);
+                if (response.status === 200) {
+                    router.push('/');
+                    messageToast.success("Thanh toán thành công đơn hàng qua ví!");
+                } else {
+                    messageToast.error("Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau.");
+                    setIsProcessing(false);
+                }
             } else {
-                messageToast.error("Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau.");
-                setIsProcessing(false);
+                const response = await api.post('/payment', payload);
+                if (response.status === 200) {
+                    const paymentUrl = response.data;
+                    router.push(paymentUrl);
+                } else {
+                    messageToast.error("Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau.");
+                    setIsProcessing(false);
+                }
             }
         } catch (error: any) {
-            console.error("Payment error:", error.response.data.message);
-            messageToast.error(error.response.data.message);
+            console.error("Payment error:", error.response.data);
+            messageToast.error(error.response.data);
             setIsProcessing(false);
         }
     };
@@ -299,6 +313,19 @@ export default function CheckoutForm() {
         }
     };
 
+    const fetchWallet = async () => {
+        try {
+            const response = await api.get("/wallet");
+            if (response.status === 200) {
+                setWallet(response.data);
+            }
+        } catch (error: any) {
+            console.error('Lỗi khi lấy thông tin ví:', error);
+            messageToast.error(error.response?.data?.message);
+        }
+    }
+
+
     useEffect(() => {
         if (isSelectingRef.current) {
             isSelectingRef.current = false;
@@ -335,6 +362,7 @@ export default function CheckoutForm() {
             return;
         }
         fetchProvinceData();
+        fetchWallet();
     }, []);
 
     useEffect(() => {
@@ -523,6 +551,31 @@ export default function CheckoutForm() {
                                 <img src={VnpayPng.src} alt="VNPay" className="w-8 h-8 mr-3" />
                                 <span className="text-gray-700">Thanh toán qua cổng VNPay (ATM / Visa / MasterCard / QR Pay)</span>
                             </label>
+                            <label
+                                className={`flex items-center p-3 border rounded-lg transition-all cursor-pointer
+                                        ${(!wallet || (wallet?.balance ?? 0) < checkoutDTO.totalPrice)
+                                        ? 'opacity-60 cursor-not-allowed bg-gray-100 hover:bg-gray-100'
+                                        : 'hover:bg-gray-50'
+                                    }`}
+                            >
+                                <input
+                                    type="radio"
+                                    disabled={!wallet || (wallet?.balance ?? 0) < checkoutDTO.totalPrice}
+                                    name="payment"
+                                    value="Wallet"
+                                    checked={selectedPayment === 'Wallet'}
+                                    onChange={(e) => setSelectedPayment(e.target.value)}
+                                    className="mr-3 accent-red-500"
+                                />
+                                <Wallet className="w-8 h-8 mr-3" />
+                                <div className="flex flex-col">
+                                    <span className="text-gray-700 font-medium">Thanh toán qua ví</span>
+                                    <span className="text-sm text-gray-500">
+                                        Số dư khả dụng: {formatPrice(wallet?.balance ?? 0)} đ
+                                    </span>
+                                </div>
+                            </label>
+
                         </div>
                     </div>
 
