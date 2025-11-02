@@ -47,7 +47,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception($"Lỗi khi tạo transaction: {ex.Message}");
             }
         }
-        
+
         public async Task<Transaction> GetTransactionByThirdPartyIdAsync(string thirdPartyId)
         {
             try
@@ -59,7 +59,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
 
                 return exsitingTransaction;
-
             }
             catch (Exception ex)
             {
@@ -91,7 +90,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
 
                 return exsitingTransaction;
-
             }
             catch (Exception ex)
             {
@@ -99,21 +97,58 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<Pagination<TransactionInformation>> GetTransactionHistory(PaginationParameter paginationParameter, string transactionStatus, bool isDescending)
+        public async Task<Pagination<TransactionInformation>> GetTransactionHistory(
+            PaginationParameter paginationParameter, string transactionStatus, bool isDescending)
         {
             int userId = _currentUserService.GetUserId();
             List<Transaction> rawTransactions = await _transactionRepository.GetAll(
-                filter: t => t.UserId == userId && ( t.Status == transactionStatus || string.IsNullOrEmpty(transactionStatus)),
+                filter: t => t.UserId == userId
+                             && (t.Status == transactionStatus || string.IsNullOrEmpty(transactionStatus))
+                             && t.Type == TypeTransactionEnum.Purchase.ToString(),
                 pagination: paginationParameter,
-                orderBy: t => isDescending?  t.OrderByDescending(x => x.UpdatedAt): t.OrderBy(x=>x.UpdatedAt)
-                );
-            int totalRecords = await _transactionRepository.CountAsync(t => t.UserId == userId && (t.Status == transactionStatus || string.IsNullOrEmpty(transactionStatus)));
+                orderBy: t => isDescending ? t.OrderByDescending(x => x.UpdatedAt) : t.OrderBy(x => x.UpdatedAt)
+            );
+            int totalRecords = await _transactionRepository.CountAsync(t =>
+                t.UserId == userId && (t.Status == transactionStatus || string.IsNullOrEmpty(transactionStatus)) && t.Type == TypeTransactionEnum.Purchase.ToString());
             List<TransactionInformation> responseTransactions = new List<TransactionInformation>();
             foreach (Transaction transaction in rawTransactions)
             {
                 responseTransactions.Add(transaction.MapToTransactionInformation());
             }
-            return new Pagination<TransactionInformation>(responseTransactions, totalRecords, paginationParameter.PageIndex, paginationParameter.PageSize);
+
+            return new Pagination<TransactionInformation>(responseTransactions, totalRecords,
+                paginationParameter.PageIndex, paginationParameter.PageSize);
+        }
+
+        public async Task<Pagination<TransactionInformation>> GetRechargeTransactionHistory(PaginationParameter paginationParameter)
+        {
+            int userId = _currentUserService.GetUserId();
+            List<Transaction> rawTransactions = await _transactionRepository.GetAll(
+                filter: t => t.UserId == userId
+                             && t.Type == TypeTransactionEnum.Recharge.ToString(),
+                pagination: paginationParameter,
+                orderBy: t =>t.OrderByDescending(x => x.UpdatedAt) 
+            );
+            int totalRecords = await _transactionRepository.CountAsync(t =>
+                t.UserId == userId && t.Type == TypeTransactionEnum.Recharge.ToString());
+            List<TransactionInformation> responseTransactions = new List<TransactionInformation>();
+            foreach (Transaction transaction in rawTransactions)
+            {
+                responseTransactions.Add(transaction.MapToTransactionInformation());
+            }
+
+            return new Pagination<TransactionInformation>(responseTransactions, totalRecords,
+                paginationParameter.PageIndex, paginationParameter.PageSize);
+        }
+
+        public async Task<List<Transaction>> GetAllPendingRechargeTransaction()
+        {
+            var pendingRechargeTransaction = await _transactionRepository.GetAll(
+                filter: t =>
+                    t.Type == TypeTransactionEnum.Recharge.ToString() &&
+                    t.Status == TransactionStatusEnum.Pending.ToString()
+            );
+            return pendingRechargeTransaction;
         }
     }
 }

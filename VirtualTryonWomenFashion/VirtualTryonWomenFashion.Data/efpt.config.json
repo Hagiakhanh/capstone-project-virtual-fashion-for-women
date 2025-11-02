@@ -55,6 +55,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[OrderRefundDetail]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[OrderRefundImage]",
          "ObjectType": 0
       },
@@ -148,6 +152,10 @@
       },
       {
          "Name": "[dbo].[Users]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Wallet]",
          "ObjectType": 0
       },
       {

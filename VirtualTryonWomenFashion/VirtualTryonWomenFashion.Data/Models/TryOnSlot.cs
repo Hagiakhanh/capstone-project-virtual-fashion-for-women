@@ -15,7 +15,7 @@ public partial class TryOnSlot
 
     public string UploadImageUrl { get; set; }
 
-    public string UploadImageBinary { get; set; }
+    public string UploadImageHash { get; set; }
 
     public string OutputImageUrl { get; set; }
 
