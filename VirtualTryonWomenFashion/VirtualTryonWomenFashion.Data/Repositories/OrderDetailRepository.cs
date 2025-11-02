@@ -78,7 +78,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
 
         public async Task<List<OrderDetail>> GetByListOrderDetailIdAsync(List<int> orderDetailId)
         {
-            return await _context.OrderDetails.Where(x => orderDetailId.Contains(x.OrderId)).ToListAsync();
+            return await _context.OrderDetails.Where(x => orderDetailId.Contains(x.OrderDetailId)).ToListAsync();
         }
     }
 }
