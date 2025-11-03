@@ -11,6 +11,7 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     public interface IRatingRepository : IGenericRepository<Rating>
     {
         Task<Rating?> GetRatingByIdAsync(int ratingId);
+        Task<Rating?> GetRatingByOrderDetailIdAsync(int orderDetailId, int userId);
         Task<Rating?> GetCustomerRatingInProductAsync(string productId, int userId);
         Task<List<Rating>> GetAllProductRatingsAsync(string productId);
     }
