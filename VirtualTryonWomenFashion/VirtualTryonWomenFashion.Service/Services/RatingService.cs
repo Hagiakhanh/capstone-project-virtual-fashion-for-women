@@ -53,6 +53,23 @@ namespace VirtualTryonWomenFashion.Service.Services
                 return null;
             }
         }
+        
+        public async Task<ResponseRatingDto?> GetRatingByOrderDetailIdAsync(int orderDetailId)
+        {
+            int userId = _currentUserService.GetUserId();
+            try
+            {
+                var rating = await _ratingRepository.GetRatingByOrderDetailIdAsync(orderDetailId, userId);
+
+                if (rating == null) throw new ArgumentNullException();
+
+                return _mapper.Map<ResponseRatingDto>(rating);
+            }
+            catch (Exception ex) 
+            {
+                return null;
+            }
+        }
 
         public async Task<ResponseRatingDto?> GetCustomerRatingInProductAsync(string productId)
         {

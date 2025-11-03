@@ -20,7 +20,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             _ratingService = ratingService;
         }
 
-        [HttpGet("all-product-rating")]
+        [HttpGet("all-product-rating/{productId}")]
         public async Task<IActionResult> GetAllProductRating(string productId) 
         {
             try
@@ -56,12 +56,12 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
-        [HttpGet("customer-rating")]
-        public async Task<IActionResult> GetCustomerRatingInProductAsync(string productId)
+        [HttpGet("customer-rating/{orderDetailId}")]
+        public async Task<IActionResult> GetCustomerRatingInOrderDetailAsync(int orderDetailId)
         {
             try
             {
-                var result = await _ratingService.GetCustomerRatingInProductAsync(productId);
+                var result = await _ratingService.GetRatingByOrderDetailIdAsync(orderDetailId);
                 return Ok(result);
             }
             catch (ArgumentNullException ex)

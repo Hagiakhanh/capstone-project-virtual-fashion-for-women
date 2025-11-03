@@ -24,6 +24,14 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                     .ThenInclude(od => od.ProductVariant)
                 .FirstOrDefaultAsync(r => r.RatingId == ratingId);
         }
+        
+        public async Task<Rating?> GetRatingByOrderDetailIdAsync(int orderDetailId, int userId)
+        {
+            return await _context.Ratings
+                .Include(r => r.OrderDetail)
+                    .ThenInclude(od => od.ProductVariant)
+                .FirstOrDefaultAsync(r => r.OrderDetailId == orderDetailId && r.UserId == userId);
+        }
 
         public async Task<Rating?> GetCustomerRatingInProductAsync(string productId, int userId)
         {
@@ -40,6 +48,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(r => r.OrderDetail)
                     .ThenInclude(od => od.ProductVariant)
                         .ThenInclude(v => v.ProductColor)
+                .Include(r => r.User)
                 .Where(r => r.OrderDetail.ProductVariant.ProductColor.ProductId == productId)
                 .ToListAsync();
         }

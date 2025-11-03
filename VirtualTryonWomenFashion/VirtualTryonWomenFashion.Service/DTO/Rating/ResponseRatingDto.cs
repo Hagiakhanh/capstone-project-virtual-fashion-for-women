@@ -8,6 +8,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.Rating
 {
     public class ResponseRatingDto
     {
+        public string UserName { get; set; }
         public int RatingId { get; set; }
         public int? RatingValue { get; set; }
         public string Comment { get; set; }
