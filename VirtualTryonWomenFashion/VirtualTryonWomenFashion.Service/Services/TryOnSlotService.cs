@@ -69,7 +69,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 TryOnSlot newTryOnSlot = new TryOnSlot
                 {
                     CustomerId = _currentUserService.GetUserId(),
-                    UploadImageBinary = imageUserHash,
+                    UploadImageHash = imageUserHash,
                     ProductColors = productColors,
                     CreatedAt = DateTime.UtcNow.AddHours(7),
                     UpdatedAt = DateTime.UtcNow.AddHours(7),

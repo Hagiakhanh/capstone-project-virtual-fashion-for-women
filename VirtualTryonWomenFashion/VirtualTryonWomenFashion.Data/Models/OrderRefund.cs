@@ -33,6 +33,8 @@ public partial class OrderRefund
 
     public virtual Order Order { get; set; }
 
+    public virtual ICollection<OrderRefundDetail> OrderRefundDetails { get; set; } = new List<OrderRefundDetail>();
+
     public virtual ICollection<OrderRefundImage> OrderRefundImages { get; set; } = new List<OrderRefundImage>();
 
     public virtual User Staff { get; set; }

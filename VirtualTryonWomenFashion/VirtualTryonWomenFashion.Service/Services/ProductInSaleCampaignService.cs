@@ -114,7 +114,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 List<ResponseGetProductInSaleCampaign> listResult = new();
                 List<ProductInSaleCampaign> productInListSaleCampaign = await _repository.GetAll(null, x => x.ProductId.Equals(productId)
-                && !x.Campaign.Status.Equals(SaleCampaignStatusEnum.Active.ToString()), x => x.OrderBy(x => x.Campaign.StartDate), includes: x => x.Campaign);
+                && x.Campaign.Status.Equals(SaleCampaignStatusEnum.Active.ToString()), x => x.OrderBy(x => x.Campaign.StartDate), includes: x => x.Campaign);
                 ProductInSaleCampaign selectCurrentCampaign = productInListSaleCampaign.FirstOrDefault();
                 if (selectCurrentCampaign != null)
                 {

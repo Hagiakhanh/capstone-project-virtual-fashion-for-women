@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Service.DTO.Momo;
 using VirtualTryonWomenFashion.Service.DTO.Order;
+using VirtualTryonWomenFashion.Service.DTO.Wallet;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -90,17 +91,17 @@ public class PaymentController : ControllerBase
         }
     }
     
-    [HttpPost("query-momo-transaction-status/{momoOrderId}") ]
-    public async Task<IActionResult> QueryMomoTransactionStatus([FromRoute] int momoOrderId)
+    [HttpPost("create-recharge-payment")]
+    public async Task<IActionResult> CreateRechargePayment([FromBody] RequestRechargeWallet requestRechargeWallet)
     {
         try
         {
-            int status = await _paymentService.QueryTransactionStatusInMomoAsync(momoOrderId);
+            string paymentUrl = await _paymentService.CreateLinkPaymentForRehargeAsync(requestRechargeWallet);
             return Ok(new MessageModelWithData<object>()
             {
                 StatusCode = StatusCodes.Status200OK,
-                Message = "Truy vấn trạng thái giao dịch MoMo thành công",
-                Data = status
+                Message = "Tạo URL nạp tiền thành công",
+                Data = paymentUrl
             });
         }
         catch (Exception ex)
@@ -108,31 +109,44 @@ public class PaymentController : ControllerBase
             return BadRequest(new MessageModelWithData<object>()
             {
                 StatusCode = StatusCodes.Status400BadRequest,
-                Message = "Truy vấn trạng thái giao dịch MoMo thất bại: " + ex.Message,
+                Message = "Tạo URL nạp tiền thất bại: " + ex.Message,
                 Data = null
             });
         }
     }
     
-    [HttpPost("query-vnpay-transaction-status/{orderId}") ]
-    public async Task<IActionResult> QueryVnPayTransactionStatus([FromRoute] int orderId)
+    [HttpPost("pay-order-by-wallet")]
+    public async Task<IActionResult> PayOrderByWalletAsync([FromBody] RequestCreateOrder requestCreateOrder)
     {
         try
         {
-            string status = await _paymentService.QueryTransactionStatusInVnPayAsync(orderId);
-            return Ok(new MessageModelWithData<object>()
+            bool result = await _paymentService.PaymentByWalletAsync(requestCreateOrder);
+            if (result)
             {
-                StatusCode = StatusCodes.Status200OK,
-                Message = "Truy vấn trạng thái giao dịch VnPay thành công",
-                Data = status
-            });
+                return Ok(new MessageModelWithData<object>()
+                {
+                    StatusCode = StatusCodes.Status200OK,
+                    Message = "Tạo URL thanh toán thành công",
+                    Data = null
+                });
+            }
+            else
+            {
+                return BadRequest(new MessageModelWithData<object>()
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = "Thanh toán bằng ví thất bại",
+                    Data = null
+                });
+            }
+            
         }
         catch (Exception ex)
         {
             return BadRequest(new MessageModelWithData<object>()
             {
                 StatusCode = StatusCodes.Status400BadRequest,
-                Message = "Truy vấn trạng thái giao dịch VnPay thất bại: " + ex.Message,
+                Message = ex.Message,
                 Data = null
             });
         }
@@ -157,6 +171,30 @@ public class PaymentController : ControllerBase
             {
                 StatusCode = StatusCodes.Status400BadRequest,
                 Message = "Xử lý trạng thái đơn hàng và giao dịch thất bại: " + ex.Message,
+                Data = null
+            });
+        }
+    }
+    
+    [HttpPost("handle-recharge-transaction-status")]
+    public async Task<IActionResult> HandleRechargeTransactionStatus()
+    {
+        try
+        {
+            await _paymentService.HandleRechargeTransactionStatus();
+            return Ok(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Xử lý trạng thái giao dịch nạp tiền thành công",
+                Data = null
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = "Xử lý trạng thái giao dịch nạp tiền thất bại: " + ex.Message,
                 Data = null
             });
         }

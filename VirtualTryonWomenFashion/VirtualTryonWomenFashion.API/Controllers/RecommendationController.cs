@@ -15,7 +15,7 @@ public class RecommendationController : ControllerBase
     }
     
     [HttpGet]
-    public async Task<IActionResult> GetRecommendations([FromQuery] int topN = 8)
+    public async Task<IActionResult> GetRecommendations([FromQuery] int topN)
     {
         var recommendations = await _recommendationService
             .GetHybridRecommendationsAsync(topN);
