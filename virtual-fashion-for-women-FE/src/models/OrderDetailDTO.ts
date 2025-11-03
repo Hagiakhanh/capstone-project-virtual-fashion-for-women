@@ -6,6 +6,7 @@ export interface OrderDetailDTO {
     orderId: number;
     priceAtTime: number;
     responseProductVariantDto: ProductVariantDTO;
+    isReviewed: boolean;
 }
 
 export interface OrderDetailStaffResponseDTO {
