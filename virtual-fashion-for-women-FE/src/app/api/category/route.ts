@@ -22,7 +22,7 @@ export async function POST(request: Request) {
         const api = createApiInstance(request);
         const responseBE = await api.post("/category/create", body);
 
-        if (responseBE.status === 200) {
+        if (responseBE.status === 201) {
             const dataResponse = responseBE.data?.data || [];
             return NextResponse.json(dataResponse, { status: responseBE.data?.statusCode });
         }
