@@ -16,6 +16,7 @@ import { messageToast } from '@/helpers/toastHelper';
 import { useAuth } from '@/contexts/AuthContext';
 import QRCode from 'qrcode'
 import { set } from 'lodash';
+import ProductRatings from '@/components/Rating/ProductRatings';
 
 function ProductDetailsPage() {
    const { user } = useAuth();
@@ -437,6 +438,10 @@ function ProductDetailsPage() {
             </div>
          </div >
          <PolicyInProductDetail />
+
+         {productDetail && (
+          <ProductRatings productId={productDetail?.productId} />
+        )}
       </>
    );
 }
