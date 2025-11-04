@@ -132,6 +132,7 @@ function HeaderComponent() {
          fetchNotifications();
          window.addEventListener("cart-updated", handleCartUpdated);
          window.addEventListener("notification-updated", fetchNotifications);
+         console.log(`${process.env.NEXT_PUBLIC_SIGNALR_URL}/notificationhub`);
          const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(`${process.env.NEXT_PUBLIC_SIGNALR_URL}/notificationhub`, {
                withCredentials: true
@@ -269,7 +270,17 @@ function HeaderComponent() {
                      className="rounded-full text-base"
                   />
                </div>
-
+               <div
+                        className="relative cursor-pointer"
+                        onClick={() => router.push('/cart')}
+                     >
+                        <ShoppingCartOutlined className="text-3xl" />
+                        {cartCount > 0 && (
+                           <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-white">
+                              {cartCount > 99 ? '99+' : cartCount}
+                           </span>
+                        )}
+                     </div>
                {user?.role === 'customer' ? (
                   <div className="flex items-center gap-4">
 
@@ -294,17 +305,7 @@ function HeaderComponent() {
                         <UserOutlined className="text-2xl cursor-pointer" />
                      </Dropdown>
 
-                     <div
-                        className="relative cursor-pointer"
-                        onClick={() => router.push('/cart')}
-                     >
-                        <ShoppingCartOutlined className="text-3xl" />
-                        {cartCount > 0 && (
-                           <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-white">
-                              {cartCount > 99 ? '99+' : cartCount}
-                           </span>
-                        )}
-                     </div>
+                     
                      {/* Wallet */}
                      <div
                         className="relative cursor-pointer"
