@@ -1,4 +1,5 @@
 ﻿using VirtualTryonWomenFashion.Service.DTO.OrderDetail;
+using VirtualTryonWomenFashion.Service.DTO.StatusLog;
 using VirtualTryonWomenFashion.Service.DTO.Transaction;
 using VirtualTryonWomenFashion.Service.DTO.User;
 
@@ -22,4 +23,5 @@ public class ResponseOrder
     public TransactionInformation TransactionInformation { get; set; }
     public UserInformation UserInformation { get; set; }
     public List<ResponseOrderDetail> ResponseOrderDetails { get; set; }
+    public List<ResponseStatusLog> ResponseStatusLogs { get; set; }
 }
