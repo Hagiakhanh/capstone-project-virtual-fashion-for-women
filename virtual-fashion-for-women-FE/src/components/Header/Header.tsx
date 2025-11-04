@@ -307,7 +307,18 @@ function HeaderComponent() {
                         <UserOutlined className="text-2xl cursor-pointer" />
                      </Dropdown>
                      <Link href="/cart" className="flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100">Phòng thử đồ</Link>
-                     
+                     <div
+                        className="relative cursor-pointer"
+                        onClick={() => router.push('/cart')}
+                     >
+                        <WalletOutlined className="text-2xl" />
+                     </div>
+                     <div
+                        className="relative cursor-pointer"
+                        onClick={() => router.push('/recommendation')}
+                     >
+                        <WalletOutlined className="text-2xl" />
+                     </div>
                      {/* Wallet */}
                      <div
                         className="relative cursor-pointer"
