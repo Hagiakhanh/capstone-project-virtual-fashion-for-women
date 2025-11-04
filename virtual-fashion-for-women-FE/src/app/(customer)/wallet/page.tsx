@@ -89,7 +89,7 @@ export default function WalletPage() {
     const handleDeposit = async () => {
         if (!depositAmount || !selectedMethod) return;
         if (depositAmount < 10000 || depositAmount > 50000000) {
-            alert('Số tiền nạp tối thiểu là 10.000đ và tối đa là 50.000.000đ');
+            messageToast.error('Số tiền nạp tối thiểu là 10.000đ và tối đa là 50.000.000đ');
             return;
         }
         try {

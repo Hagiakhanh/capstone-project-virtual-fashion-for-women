@@ -1,4 +1,5 @@
 import { OrderDetailDTO, OrderDetailStaffResponseDTO } from "./OrderDetailDTO";
+import { StatusLogDTO } from "./StatusLogDTO";
 import { TransactionInformation } from "./TransactionInformation";
 import { UserInformation } from "./UserInformation";
 
@@ -19,6 +20,7 @@ export interface OrderDTO {
     transactionInformation: TransactionInformation;
     userInformation: UserInformation;
     responseOrderDetails: OrderDetailDTO[];
+    responseStatusLogs: StatusLogDTO[];
 }
 
 export interface OrderStaffResponseDTO {
