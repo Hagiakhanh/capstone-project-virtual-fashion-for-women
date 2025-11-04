@@ -71,5 +71,21 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
+        [HttpGet("{orderRefundId}")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> GetOrderRefundDetailForCustomer(int orderRefundId)
+        {
+            try
+            {
+                MessageModelWithData<ResponseOrderRefundDetail> result = await _orderRefundService.GetOrderRefundDetailForCustomer(orderRefundId);
+                return StatusCode(result.StatusCode, result);
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }

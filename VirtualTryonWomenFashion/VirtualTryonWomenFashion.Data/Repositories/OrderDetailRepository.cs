@@ -29,22 +29,13 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(od=>od.ProductVariant)
                     .ThenInclude(pv =>pv.ProductColor)
                         .ThenInclude(pc => pc.Color)
+                .Include(od => od.Ratings)
                 .ToListAsync();
             return orderDetails ??= new List<OrderDetail>();
         }
         
         public async Task<Product> GetProductByOrderDetailIdAsync(int orderDetailId)
         {
-            // var product = await _context.OrderDetails
-            //     .Where(od => od.OrderDetailId == orderDetailId)
-            //     .Include(od => od.ProductVariant)
-            //     .ThenInclude(pv => pv.ProductColor)
-            //     .ThenInclude(pc => pc.Product)
-            //     .ThenInclude(p => p.Category)
-            //     .Select(od => od.ProductVariant.ProductColor.Product)
-            //     .FirstOrDefaultAsync();
-            //
-            // return product;
             var product = await _context.OrderDetails
                 .AsNoTracking()
                 .Where(od => od.OrderDetailId == orderDetailId)
@@ -78,7 +69,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
 
         public async Task<List<OrderDetail>> GetByListOrderDetailIdAsync(List<int> orderDetailId)
         {
-            return await _context.OrderDetails.Where(x => orderDetailId.Contains(x.OrderId)).ToListAsync();
+            return await _context.OrderDetails.Where(x => orderDetailId.Contains(x.OrderDetailId)).ToListAsync();
         }
     }
 }

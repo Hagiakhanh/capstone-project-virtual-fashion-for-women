@@ -313,7 +313,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             foreach (Order order in rawOrders)
             {
                 List<ResponseOrderDetail> responseOrderDetails =
-                    await _orderDetailService.GetOrderDetailsByOrderIdAsync(order.OrderId);
+                    await _orderDetailService.GetOrderDetailsByOrderIdAsync(order.OrderId, userId);
                 responseOrders.Add(order.MapToResponseOrder(responseOrderDetails));
             }
 

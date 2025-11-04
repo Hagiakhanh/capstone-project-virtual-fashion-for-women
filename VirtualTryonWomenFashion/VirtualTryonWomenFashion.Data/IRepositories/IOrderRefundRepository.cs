@@ -12,5 +12,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     {
         public Task<bool> CheckNonRejectedRefundByOrderId(int orderId);
         public Task<List<OrderRefund>> GetListOrderRefundForCustomer(string? status, int pageIndex, int pageSize, int userId);
+        public Task<OrderRefund> GetOrderRefundById(int orderRefundId);
     }
 }

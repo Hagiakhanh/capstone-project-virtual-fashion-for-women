@@ -13,7 +13,12 @@ namespace VirtualTryonWomenFashion.Service.Mappers
     { 
         public RatingProfile() 
         { 
-            CreateMap<Rating, ResponseRatingDto>();
+            CreateMap<Rating, ResponseRatingDto>().ForMember(dest => dest.UserName,
+                    opt => opt.MapFrom(src => src.User != null ? src.User.FullName : null))
+                .ForMember(dest => dest.ProductVariantName,
+                    opt => opt.MapFrom(src => src.OrderDetail != null && src.OrderDetail.ProductVariant != null
+                        ? src.OrderDetail.ProductVariant.VariantName
+                        : null));;
         }
     }
 }

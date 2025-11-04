@@ -231,5 +231,58 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             throw new NotImplementedException();
         }
+
+        public async Task<MessageModelWithData<ResponseOrderRefundDetail>> GetOrderRefundDetailForCustomer(int orderRefundId)
+        {
+            int customerId = _currentUserService.GetUserId();
+            OrderRefund orderRefund = await _orderRefundRepository.GetOrderRefundById(orderRefundId);
+            if (orderRefund == null)
+            {
+                throw new Exception("Yêu cầu hoàn hàng không hợp lệ");
+            }
+            if (orderRefund.CustomerId != customerId)
+            {
+                throw new Exception("Không có quyền xem chi tiết yêu cầu hoàn hàng này");
+            }
+
+            int productCount = orderRefund.OrderRefundDetails.Count();
+            decimal amountRefund = orderRefund.OrderRefundDetails.Sum(detail => detail.Quantity * detail.RefundPriceAtTime);
+
+            ResponseOrderRefundDetail responseOrderRefundDetail = new ResponseOrderRefundDetail
+            {
+                OrderRefundId = orderRefund.OrderRefundId,
+                CreatedAt = orderRefund.CreatedAt,
+                OrderRefundStatus = orderRefund.Status,
+                ProductCount = productCount,
+                CustomerName = orderRefund.Customer.FullName,
+                CustomerPhone = orderRefund.Customer.PhoneNumber,
+                CustomerEmail = orderRefund.Customer.Email,
+                ReceiverName = orderRefund.Order.ReceiverName,
+                ReceiverAddress = orderRefund.Order.ReceiverAddress,
+                ReceiverPhone = orderRefund.Order.ReceiverPhone,
+                Amount = amountRefund,
+                TransactionStatus = orderRefund.Transaction?.Status,
+                TransactionTime = orderRefund.Transaction?.CreatedAt,
+                Items = orderRefund.OrderRefundDetails.Select(detail => new OrderRefundDetailItem
+                {
+                    VariantName = detail.OrderDetail.ProductVariant.VariantName,
+                    VariantImage = detail.OrderDetail.ProductVariant.ImageUrl,
+                    VariantColor = detail.OrderDetail.ProductVariant.ProductColor.Color.ColorName,
+                    VariantSize = detail.OrderDetail.ProductVariant.Size.SizeCode,
+                    VariantPrice = detail.OrderDetail.PriceAtTime,
+                    Quantity = detail.OrderDetail.Quantity,
+                    VariantAmount = detail.OrderDetail.Quantity * detail.OrderDetail.PriceAtTime,
+                }).ToList(),
+            };
+
+            return new MessageModelWithData<ResponseOrderRefundDetail>
+            {
+                Message = "Thông tin chi tiết yêu cầu hoàn hàng",
+                StatusCode = StatusCodes.Status200OK,
+                Data = responseOrderRefundDetail
+            };
+
+        }
+
     }
 }
