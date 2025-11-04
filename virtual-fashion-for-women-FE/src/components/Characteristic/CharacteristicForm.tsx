@@ -61,6 +61,9 @@ export const CharacteristicForm: React.FC<CharacteristicFormProps> = ({
       occasionPreferenceNote: values.occasionPreferenceNote ?? "",
       skinToneID: values.skinToneID,
       skinToneNote: values.skinToneNote ?? "",
+      bust: values.bust,
+      waist: values.waist,
+      hips: values.hips,
     };
 
     try {
