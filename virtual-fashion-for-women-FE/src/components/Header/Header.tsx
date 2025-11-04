@@ -132,12 +132,9 @@ function HeaderComponent() {
          fetchNotifications();
          window.addEventListener("cart-updated", handleCartUpdated);
          window.addEventListener("notification-updated", fetchNotifications);
-         console.log(`${process.env.NEXT_PUBLIC_SIGNALR_URL}/notificationhub`);
          const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(`${process.env.NEXT_PUBLIC_SIGNALR_URL}/notificationhub`, {
-               withCredentials: true,
-               skipNegotiation: true,
-               transport: signalR.HttpTransportType.WebSockets
+               withCredentials: true
             })
             .withAutomaticReconnect()
             .configureLogging(signalR.LogLevel.Information)
@@ -249,7 +246,8 @@ function HeaderComponent() {
             {/* Menu trung tâm */}
             <ul className="flex gap-10 text-xl font-normal cursor-pointer">
                <Link href="/" className="flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100">Trang chủ</Link>
-               <Link href="/cart" className="flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100">Phòng thử đồ</Link>
+               <Link href="/try-on" className="flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100">Phòng thử đồ</Link>
+               <li onClick={() => router.push("/recommendation")} className="flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100">Phối đồ thông minh</li>
                <li className='flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100'>
                   <Dropdown menu={{ items: menuItems }} placement="bottom">
                      <span className="flex items-center h-full">
@@ -259,7 +257,6 @@ function HeaderComponent() {
                   </Dropdown>
                </li>
             </ul>
-            <div onClick={() => router.push("/recommendation")} className="flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100">Phối đồ thông minh</div>
 
             {/* Tìm kiếm và icon */}
             <div className="flex items-center gap-6">
@@ -272,17 +269,7 @@ function HeaderComponent() {
                      className="rounded-full text-base"
                   />
                </div>
-               <div
-                        className="relative cursor-pointer"
-                        onClick={() => router.push('/cart')}
-                     >
-                        <ShoppingCartOutlined className="text-3xl" />
-                        {cartCount > 0 && (
-                           <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-white">
-                              {cartCount > 99 ? '99+' : cartCount}
-                           </span>
-                        )}
-                     </div>
+
                {user?.role === 'customer' ? (
                   <div className="flex items-center gap-4">
 
@@ -306,7 +293,7 @@ function HeaderComponent() {
                      >
                         <UserOutlined className="text-2xl cursor-pointer" />
                      </Dropdown>
-                     <Link href="/cart" className="flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100">Phòng thử đồ</Link>
+
                      <div
                         className="relative cursor-pointer"
                         onClick={() => router.push('/cart')}
@@ -317,18 +304,6 @@ function HeaderComponent() {
                               {cartCount > 99 ? '99+' : cartCount}
                            </span>
                         )}
-                     </div>
-                     <div
-                        className="relative cursor-pointer"
-                        onClick={() => router.push('/cart')}
-                     >
-                        <WalletOutlined className="text-2xl" />
-                     </div>
-                     <div
-                        className="relative cursor-pointer"
-                        onClick={() => router.push('/recommendation')}
-                     >
-                        <WalletOutlined className="text-2xl" />
                      </div>
                      {/* Wallet */}
                      <div
