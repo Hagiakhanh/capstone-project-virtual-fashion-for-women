@@ -45,7 +45,7 @@ export default function OrderDetailPage() {
     }, [orderId]);
 
 
-    const beforeUpload = (file, fileList) => {
+    const beforeUpload = (file: any, fileList: any) => {
         const isImage = file.type.startsWith("image/");
         if (!isImage) {
             return Upload.LIST_IGNORE; // không thêm file này vào danh sách
@@ -401,6 +401,41 @@ export default function OrderDetailPage() {
                         </div>
                     </div>
                 </div>
+                {/* Order Status Log */}
+                <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+                    <h2 className="text-2xl font-bold mb-4">Lịch sử trạng thái đơn hàng</h2>
+
+                    {order?.responseStatusLogs && order.responseStatusLogs.length > 0 ? (
+                        <div className="relative pl-6 border-l-2 border-gray-200 space-y-6">
+                            {order.responseStatusLogs
+                                .sort((a, b) => new Date(a.updateDate).getTime() - new Date(b.updateDate).getTime())
+                                .map((log, index) => (
+                                    <div key={log.statusLogId} className="relative">
+                                        {/* Timeline dot */}
+                                        <div
+                                            className={`absolute -left-[9px] top-1.5 w-3 h-3 rounded-full ${index === order.responseStatusLogs.length - 1
+                                                ? "bg-green-500"
+                                                : "bg-gray-400"
+                                                }`}
+                                        ></div>
+
+                                        {/* Status info */}
+                                        <div className="ml-2">
+                                            <p className="font-semibold text-gray-800">
+                                                {statusMap[log.status]?.label || log.status}
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                {formatDate(log.updateDate)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-500">Chưa có lịch sử trạng thái</p>
+                    )}
+                </div>
+
             </div>
         </div >
     );
