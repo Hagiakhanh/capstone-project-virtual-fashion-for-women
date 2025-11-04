@@ -132,6 +132,7 @@ function HeaderComponent() {
          fetchNotifications();
          window.addEventListener("cart-updated", handleCartUpdated);
          window.addEventListener("notification-updated", fetchNotifications);
+         console.log(`${process.env.NEXT_PUBLIC_SIGNALR_URL}/notificationhub`);
          const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(`${process.env.NEXT_PUBLIC_SIGNALR_URL}/notificationhub`, {
                withCredentials: true
