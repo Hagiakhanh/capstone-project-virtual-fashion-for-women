@@ -10,13 +10,23 @@ namespace VirtualTryonWomenFashion.Service.Mappers
 {
     public static class StatusLogMapper
     {
-        public static StatusLog ToStatusLogFromRequest(this RequestCreateStatusLog requestCreateStatusLog)
+        public static StatusLog MapToStatusLogFromRequest(this RequestCreateStatusLog requestCreateStatusLog)
         {
             return new StatusLog()
             {
                 OrderId = requestCreateStatusLog.OrderId,
                 Status = requestCreateStatusLog.Status,
                 UpdateDate = requestCreateStatusLog.UpdateAt,
+            };
+        }
+        
+        public static ResponseStatusLog MapToResponseStatusLog(this StatusLog statusLog)
+        {
+            return new ResponseStatusLog()
+            {
+                StatusLogId = statusLog.StatusLogId,
+                Status = statusLog.Status,
+                UpdateDate = statusLog.UpdateDate,
             };
         }
     }

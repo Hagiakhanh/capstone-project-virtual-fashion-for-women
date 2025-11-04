@@ -24,7 +24,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         }
         public async Task<int> CreateStatusLog(List<RequestCreateStatusLog> requestCreateStatusLogs)
         {
-            List<StatusLog> newStatusLogs = requestCreateStatusLogs.Select(x => x.ToStatusLogFromRequest()).ToList();
+            List<StatusLog> newStatusLogs = requestCreateStatusLogs.Select(x => x.MapToStatusLogFromRequest()).ToList();
             await _statusLogRepository.AddRangeAsync(newStatusLogs);
             return await _unitOfWork.SaveChanges();
         }
