@@ -3,6 +3,7 @@
 import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
 import { SaleCampaignTable } from "./_index/SaleCampaignTable";
 import { useRouter } from "next/navigation";
+import { Pencil } from 'lucide-react';
 
 export default function SaleCampaignMangementPage() {
   const router = useRouter();
@@ -21,6 +22,8 @@ export default function SaleCampaignMangementPage() {
             }}
             label="Tạo chiến dịch"
             style={{ margin: 0 }}
+            icon={<Pencil/>} 
+            iconPosition="end"
           />
         </div>
         <SaleCampaignTable />

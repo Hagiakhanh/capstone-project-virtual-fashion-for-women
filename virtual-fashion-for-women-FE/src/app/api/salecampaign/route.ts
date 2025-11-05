@@ -24,3 +24,17 @@ export async function GET(request: Request) {
     );
   }
 }
+export async function POST(request: Request) {
+  try {
+    const payload = await request.json();
+    const api = createApiInstance(request);
+    const responseBE = await api.post("/saleCampaign", payload);
+
+    const dataResponse = responseBE.data;
+    return NextResponse.json(dataResponse, {
+      status: responseBE.data?.statusCode,
+    });
+  } catch (error: any) {
+    return NextResponse.json(error.response.data.message, { status: 400 });
+  }
+}
