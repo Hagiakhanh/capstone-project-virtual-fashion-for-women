@@ -46,7 +46,9 @@ export async function GET(request: Request) {
                pagination: paginationMetadata
             }, { status: 200 });
          }
-         return NextResponse.json(responseBE.data, { status: 200 });
+         return NextResponse.json({
+            data: responseBE.data?.data
+         }, { status: 200 });
       }
 
 
