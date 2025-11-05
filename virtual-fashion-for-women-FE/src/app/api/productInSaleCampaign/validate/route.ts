@@ -11,9 +11,9 @@ export async function POST(request: Request) {
     );
 
     if (responseBE.status === 200) {
-      const dataResponse = responseBE.data?.data || [];
-      return NextResponse.json(dataResponse, {
-        status: responseBE.data?.statusCode,
+      const dataResponse = responseBE.data;
+      return NextResponse.json({...dataResponse}, {
+        status: dataResponse.statusCode,
       });
     }
     return NextResponse.json("Lỗi kiểm tra các sản phẩm thất bại", {

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Form,
   Input,
@@ -45,6 +45,34 @@ function CreateSaleCampaignPage() {
     end: string | undefined;
   } | null>(null);
 
+  const [isFormValid, setIsFormValid] = useState(false);
+  const formValues = Form.useWatch([], form); // Theo dõi toàn bộ form
+
+  useEffect(() => {
+    const name = formValues?.CampaignName?.trim();
+    const desc = formValues?.Description?.trim();
+    const image = formValues?.ImageFile?.[0];
+    const dateRange = formValues?.DateRange;
+    const productList = formValues?.ProductInSalesCampaigns || [];
+
+    // Kiểm tra có ít nhất 1 sản phẩm hợp lệ
+    const hasValidProducts =
+      productList.length > 0 &&
+      !productList.some((p: any) => p.IsValid === false);
+
+    // Kiểm tra toàn bộ điều kiện form
+    const isValid =
+      !!name &&
+      !!desc &&
+      !!image &&
+      Array.isArray(dateRange) &&
+      dateRange.length === 2 &&
+      !!dateRange[0] &&
+      !!dateRange[1] &&
+      hasValidProducts;
+
+    setIsFormValid(isValid);
+  }, [formValues]);
   const handleSubmit = async (values: any) => {
     try {
       setLoading(true);
@@ -89,9 +117,45 @@ function CreateSaleCampaignPage() {
       router.push("/admin/campaigns");
     } catch (err: any) {
       console.error(err);
-      message.error(err.message || "Có lỗi xảy ra");
+      messageToast.error(
+        err.response?.data?.message || err.message || "Có lỗi xảy ra"
+      );
     } finally {
       setLoading(false);
+    }
+  };
+  const handleValidateProducts = async (dates: any) => {
+    const [start, end] = dates || [];
+    const productList = form.getFieldValue("ProductInSalesCampaigns") || [];
+
+    if (!start || !end || productList.length === 0) return;
+
+    try {
+      const res = await apiToken.post("/productInSaleCampaign/validate", {
+        startDate: start.format("YYYY-MM-DD"),
+        endDate: end.format("YYYY-MM-DD"),
+        listProductID: productList.map((p: any) => p.ProductID),
+      });
+
+      if (res.status === 200 && res.data?.data) {
+        const validIds = res.data.data.validProductIDList || [];
+        const updated = productList.map((p: any) => ({
+          ...p,
+          IsValid: validIds.includes(p.ProductID),
+        }));
+
+        form.setFieldsValue({ ProductInSalesCampaigns: updated });
+
+        const invalidCount = updated.filter((p: any) => !p.IsValid).length;
+        if (invalidCount > 0) {
+          messageToast.warning(
+            `⚠️ Có ${invalidCount} sản phẩm không còn hợp lệ với thời gian này`
+          );
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      messageToast.error("Lỗi khi kiểm tra sản phẩm hợp lệ");
     }
   };
 
@@ -183,6 +247,7 @@ function CreateSaleCampaignPage() {
                       start: dates?.[0]?.format("YYYY-MM-DD"),
                       end: dates?.[1]?.format("YYYY-MM-DD"),
                     });
+                    handleValidateProducts(dates);
                   } else setSelectedDateRange(null);
                 }}
               />
@@ -244,10 +309,21 @@ function CreateSaleCampaignPage() {
                             extra={
                               <MinusCircleOutlined
                                 onClick={() => remove(name)}
-                                className="text-red-500 cursor-pointer"
+                                className={`cursor-pointer ${
+                                  item.IsValid === false
+                                    ? "text-gray-400 cursor-not-allowed"
+                                    : "text-red-500"
+                                }`}
                               />
                             }
+                            aria-disabled
                           >
+                            {item.IsValid === false && (
+                              <p className="text-red-500 text-sm font-medium mb-2">
+                                ⚠️ Sản phẩm này đã thuộc chiến dịch khác trong
+                                thời gian đã chọn
+                              </p>
+                            )}
                             <Space wrap align="center">
                               <Image
                                 src={item.mainImageUrl}
@@ -290,15 +366,15 @@ function CreateSaleCampaignPage() {
                                   () => ({
                                     validator(_, val) {
                                       if (discountType === "PercentDiscount") {
-                                        if (val < 0 || val > 100) {
+                                        if (val < 1 || val > 100) {
                                           return Promise.reject(
                                             new Error(
-                                              "Phần trăm giảm phải trong khoảng 0–100%"
+                                              "Phần trăm giảm phải trong khoảng 1–100%"
                                             )
                                           );
                                         }
                                       } else {
-                                        if (val < 0) {
+                                        if (val <= 0) {
                                           return Promise.reject(
                                             new Error(
                                               "Giá sau giảm phải lớn hơn 0"
@@ -325,6 +401,7 @@ function CreateSaleCampaignPage() {
                                       ? 100
                                       : price
                                   }
+                                  disabled={item.IsValid === false}
                                   style={{ width: 150 }}
                                   placeholder={
                                     discountType === "PercentDiscount"
@@ -364,9 +441,17 @@ function CreateSaleCampaignPage() {
               )}
             </Form.List>
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading}>
+              <div className="flex justify-center">
+              <AntButtonCommon
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                disabled={!isFormValid || loading}
+              >
                 Tạo chiến dịch
-              </Button>
+              </AntButtonCommon>
+
+              </div>
             </Form.Item>
           </Form>
         </Card>
@@ -378,6 +463,11 @@ function CreateSaleCampaignPage() {
           onClose={() => setShowProductModal(false)}
           onSelect={handleSelectProduct}
           campaignDate={selectedDateRange}
+          selectedProducts={
+            form
+              .getFieldValue("ProductInSalesCampaigns")
+              ?.map((p: any) => p.ProductID) || []
+          }
         />
       )}
     </div>
