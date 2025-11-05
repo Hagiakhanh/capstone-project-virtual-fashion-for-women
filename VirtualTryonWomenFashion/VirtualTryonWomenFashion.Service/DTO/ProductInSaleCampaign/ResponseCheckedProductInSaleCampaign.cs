@@ -8,11 +8,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductInSaleCampaign
 {
     public class ResponseCheckedProductInSaleCampaign
     {
-        public List<string> ValidProductIDList = new List<string>();
-        public List<string> InvalidProductIDList = new List<string>();
-    }
-    public class ResponseCheckingExistingSaleCampaignForProduct
-    {
-       
+        public List<string> ValidProductIDList { get; set; } = new List<string>();
+        public List<string> InvalidProductIDList { get; set; } = new List<string>();
     }
 }

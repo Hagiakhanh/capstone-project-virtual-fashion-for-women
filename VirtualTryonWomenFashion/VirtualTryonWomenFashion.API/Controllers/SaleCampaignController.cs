@@ -59,7 +59,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             try
             {
                 var result = await _saleCampaignService.CreateSaleCampaign(model);
-                return Ok(result);
+                return StatusCode(result.StatusCode,result);
             }
             catch (Exception ex)
             {
