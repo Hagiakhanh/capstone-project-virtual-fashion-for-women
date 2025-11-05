@@ -5,17 +5,17 @@ import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import { apiToken } from "@/api/instance";
 
 interface SaleCampaign {
-  CampaignID: number;
-  CampaignName: string;
-  Description?: string;
-  StartDate: string;
-  EndDate: string;
-  CreatedAt: string;
-  Status: "Active" | "Pending" | "Inactive" | "Expired";
-  ImageUrl?: string;
+  campaignID: number;
+  campaignName: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  createdAt: string;
+  status: "Active" | "Pending" | "Inactive" | "Expired";
+  imageUrl?: string;
 }
 
-const statusColorMap: Record<SaleCampaign["Status"], string> = {
+const statusColorMap: Record<SaleCampaign["status"], string> = {
   Active: "green",
   Pending: "gold",
   Inactive: "default",
@@ -59,7 +59,7 @@ export const SaleCampaignTable: React.FC = () => {
   const columns: ColumnsType<SaleCampaign> = [
     {
       title: "Hình ảnh",
-      dataIndex: "ImageUrl",
+      dataIndex: "imageUrl",
       key: "image",
       render: (url) =>
         url ? (
@@ -76,27 +76,27 @@ export const SaleCampaignTable: React.FC = () => {
     },
     {
       title: "Tên chiến dịch",
-      dataIndex: "CampaignName",
+      dataIndex: "campaignName",
       key: "name",
       render: (text) => <b>{text}</b>,
     },
     {
       title: "Ngày bắt đầu",
-      dataIndex: "StartDate",
+      dataIndex: "startDate",
       key: "start",
       render: (date) => new Date(date).toLocaleDateString(),
     },
     {
       title: "Ngày kết thúc",
-      dataIndex: "EndDate",
+      dataIndex: "endDate",
       key: "end",
       render: (date) => new Date(date).toLocaleDateString(),
     },
     {
       title: "Trạng thái",
-      dataIndex: "Status",
+      dataIndex: "status",
       key: "status",
-      render: (status: SaleCampaign["Status"]) => (
+      render: (status: SaleCampaign["status"]) => (
         <Tag color={statusColorMap[status]}>{status}</Tag>
       ),
     },
@@ -107,13 +107,13 @@ export const SaleCampaignTable: React.FC = () => {
         <Space>
           <Button
             type="link"
-            onClick={() => console.log("View", record.CampaignID)}
+            onClick={() => console.log("View", record.campaignID)}
           >
             Xem
           </Button>
           <Button
             type="link"
-            onClick={() => console.log("Edit", record.CampaignID)}
+            onClick={() => console.log("Edit", record.campaignID)}
           >
             Sửa
           </Button>
