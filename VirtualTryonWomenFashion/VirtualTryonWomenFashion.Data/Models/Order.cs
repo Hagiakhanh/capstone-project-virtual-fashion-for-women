@@ -49,6 +49,8 @@ public partial class Order
 
     public string PaymentUrl { get; set; }
 
+    public DateTime? DeliveredAt { get; set; }
+
     public virtual User Customer { get; set; }
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

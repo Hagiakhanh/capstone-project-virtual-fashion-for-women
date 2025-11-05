@@ -22,6 +22,10 @@ namespace VirtualTryonWomenFashion.Service.DTO.OrderRefund
         public string? TransactionStatus { get; set; }
         public DateTime? TransactionTime { get; set; }
         public List<OrderRefundDetailItem> Items { get; set; }
+        public string CustomerReason { get; set; }
+        public string? StaffResponse { get; set; }
+        public string? ShippingCode { get; set; }
+        public List<string> CustomerImage { get; set; }
 
     }
     public class OrderRefundDetailItem

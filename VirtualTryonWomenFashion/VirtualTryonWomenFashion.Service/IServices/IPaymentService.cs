@@ -24,4 +24,5 @@ public interface IPaymentService
     public Task<string> CreateLinkPaymentForRehargeAsync(RequestRechargeWallet requestRechargeWallet);
     public Task<string> CreatePaymentUrlInMomoForRechargeAsync(RequestRechargeWallet requestRechargeWallet);
     public Task<string> CreatePaymentUrlInVnPayForRechargeAsync(RequestRechargeWallet requestRechargeWallet);
+    public Task HandleTransactionStatusWithMomoMethod();
 }
