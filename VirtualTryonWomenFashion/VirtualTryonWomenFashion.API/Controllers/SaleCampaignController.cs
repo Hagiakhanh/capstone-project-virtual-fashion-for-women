@@ -19,7 +19,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
         // GET: api/<SaleCampaignController>
         [HttpGet]
-        public async Task<IActionResult> Get(int pageSize, int pageIndex)
+        public async Task<IActionResult> Get(int pageSize =3, int pageIndex=1)
         {
             try
             {
