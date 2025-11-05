@@ -11,6 +11,7 @@ import {
   Space,
   message,
   Card,
+  Modal,
 } from "antd";
 import {
   UploadOutlined,
@@ -23,6 +24,8 @@ import { AntButtonCommon } from "@/components/AntDesign/Button/AntButtonCommon";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { messageToast } from "@/helpers/toastHelper";
 import { apiToken } from "@/api/instance";
+import SelectProductModal from "./_index/SelectProductModal";
+import Image from "next/image";
 
 const { RangePicker } = DatePicker;
 
@@ -35,6 +38,12 @@ function CreateSaleCampaignPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [selectedDateRange, setSelectedDateRange] = useState<{
+    start: string | undefined;
+    end: string | undefined;
+  } | null>(null);
 
   const handleSubmit = async (values: any) => {
     try {
@@ -51,16 +60,8 @@ function CreateSaleCampaignPage() {
 
       // Convert ngày sang object { year, month, day, dayOfWeek }
       const [start, end] = values.DateRange;
-      const toDateObj = (d: dayjs.Dayjs) => ({
-        year: d.year(),
-        month: d.month() + 1,
-        day: d.date(),
-        dayOfWeek: d.day(),
-      });
-
-      formData.append("StartDate", JSON.stringify(toDateObj(start)));
-      formData.append("EndDate", JSON.stringify(toDateObj(end)));
-
+      formData.append("StartDate", start?.format("YYYY-MM-DD"));
+      formData.append("EndDate", end?.format("YYYY-MM-DD"));
       // Danh sách sản phẩm
       const products =
         values.ProductInSalesCampaigns?.map((p: any) => ({
@@ -68,11 +69,19 @@ function CreateSaleCampaignPage() {
           DiscountType: p.DiscountType,
           Value: p.Value,
         })) || [];
-      formData.append("ProductInSalesCampaigns", JSON.stringify(products));
-
-      const res = await apiToken.post("/api/salecampaign", {
-        body: formData,
+      products?.forEach((p: any, index: number) => {
+        formData.append(
+          `ProductInSalesCampaigns[${index}].ProductID`,
+          p.ProductID
+        );
+        formData.append(
+          `ProductInSalesCampaigns[${index}].DiscountType`,
+          p.DiscountType
+        );
+        formData.append(`ProductInSalesCampaigns[${index}].Value`, p.Value);
       });
+
+      const res = await apiToken.post("/salecampaign", formData);
 
       if (res.status != 200) throw new Error("Tạo chiến dịch thất bại");
 
@@ -84,6 +93,31 @@ function CreateSaleCampaignPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ Hàm xử lý chọn sản phẩm từ modal
+  const handleSelectProduct = (product: any) => {
+    const current = form.getFieldValue("ProductInSalesCampaigns") || [];
+    const exists = current.some((p: any) => p.ProductID === product.productId);
+    if (exists) {
+      message.warning("Sản phẩm này đã được thêm rồi!");
+      return;
+    }
+
+    form.setFieldsValue({
+      ProductInSalesCampaigns: [
+        ...current,
+        {
+          ProductID: product.productId,
+          ProductName: product.productName,
+          OriginalPrice: product.price,
+          mainImageUrl: product.mainImageUrl,
+          DiscountType: "PercentDiscount",
+          Value: 0,
+        },
+      ],
+    });
+    setShowProductModal(false);
   };
 
   return (
@@ -108,9 +142,7 @@ function CreateSaleCampaignPage() {
             form={form}
             onFinish={handleSubmit}
             initialValues={{
-              ProductInSalesCampaigns: [
-                { ProductID: "", DiscountType: "PercentDiscount", Value: 0 },
-              ],
+              ProductInSalesCampaigns: [],
             }}
           >
             <Form.Item
@@ -141,80 +173,196 @@ function CreateSaleCampaignPage() {
             <Form.Item
               name="DateRange"
               label="Thời gian chiến dịch"
-              rules={[
-                {
-                  required: true,
-                  message: "Vui lòng chọn thời gian bắt đầu và kết thúc",
-                },
-              ]}
+              rules={[{ required: true, message: "Vui lòng chọn thời gian" }]}
             >
-              <RangePicker format="DD/MM/YYYY" />
+              <RangePicker
+                format="DD/MM/YYYY"
+                onChange={(dates) => {
+                  if (dates) {
+                    setSelectedDateRange({
+                      start: dates?.[0]?.format("YYYY-MM-DD"),
+                      end: dates?.[1]?.format("YYYY-MM-DD"),
+                    });
+                  } else setSelectedDateRange(null);
+                }}
+              />
             </Form.Item>
 
+            {/* Danh sách sản phẩm */}
             <Form.List name="ProductInSalesCampaigns">
-              {(fields, { add, remove }) => (
+              {(fields, { remove }) => (
                 <>
-                  <label className="font-medium">
-                    Danh sách sản phẩm áp dụng
-                  </label>
-                  {fields.map(({ key, name, ...restField }) => (
-                    <Space
-                      key={key}
-                      align="baseline"
-                      style={{ display: "flex", marginBottom: 8 }}
-                    >
-                      <Form.Item
-                        {...restField}
-                        name={[name, "ProductID"]}
-                        rules={[
-                          { required: true, message: "Nhập mã sản phẩm" },
-                        ]}
-                      >
-                        <Input
-                          placeholder="Product ID"
-                          style={{ width: 160 }}
-                        />
-                      </Form.Item>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "DiscountType"]}
-                        rules={[{ required: true }]}
-                      >
-                        <Select
-                          placeholder="Kiểu giảm giá"
-                          options={discountTypeOptions}
-                          style={{ width: 160 }}
-                        />
-                      </Form.Item>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "Value"]}
-                        rules={[
-                          { required: true, message: "Nhập giá trị giảm" },
-                        ]}
-                      >
-                        <InputNumber
-                          min={0}
-                          style={{ width: 120 }}
-                          placeholder="Giá trị"
-                        />
-                      </Form.Item>
-                      <MinusCircleOutlined onClick={() => remove(name)} />
-                    </Space>
-                  ))}
-                  <Form.Item>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="font-medium">Sản phẩm áp dụng</label>
                     <Button
                       type="dashed"
-                      onClick={() => add()}
                       icon={<PlusOutlined />}
+                      onClick={() => {
+                        if (!selectedDateRange) {
+                          message.warning(
+                            "Vui lòng chọn thời gian chiến dịch trước"
+                          );
+                          return;
+                        }
+                        setShowProductModal(true);
+                      }}
                     >
-                      Thêm sản phẩm
+                      Chọn sản phẩm
                     </Button>
-                  </Form.Item>
+                  </div>
+
+                  {fields.map(({ key, name, ...restField }) => (
+                    <Form.Item key={key} noStyle shouldUpdate>
+                      {() => {
+                        const item =
+                          form.getFieldValue("ProductInSalesCampaigns")?.[
+                            name
+                          ] || {};
+                        const discountType =
+                          item.DiscountType || "PercentDiscount";
+                        const value = item.Value || 0;
+                        const price = item.OriginalPrice || 0;
+
+                        // 🧮 Tính giá sau giảm
+                        const discountedPrice =
+                          discountType === "PercentDiscount"
+                            ? Math.round(price * (1 - value / 100))
+                            : value;
+
+                        const percentDisplay =
+                          discountType === "PercentDiscount"
+                            ? `${value}%`
+                            : `${Math.round(
+                                (1 - discountedPrice / price) * 100
+                              )}%`;
+
+                        return (
+                          <Card
+                            size="small"
+                            style={{ marginBottom: 12 }}
+                            title={item.ProductName || "Sản phẩm"}
+                            extra={
+                              <MinusCircleOutlined
+                                onClick={() => remove(name)}
+                                className="text-red-500 cursor-pointer"
+                              />
+                            }
+                          >
+                            <Space wrap align="center">
+                              <Image
+                                src={item.mainImageUrl}
+                                width={150}
+                                height={30}
+                                alt={item.ProductName}
+                              />
+                              {/* Loại giảm giá */}
+                              <Form.Item
+                                {...restField}
+                                name={[name, "DiscountType"]}
+                                rules={[{ required: true }]}
+                              >
+                                <Select
+                                  style={{ width: 180 }}
+                                  options={discountTypeOptions}
+                                  onChange={() => {
+                                    // reset giá trị khi đổi loại
+                                    form.setFieldValue(
+                                      [
+                                        "ProductInSalesCampaigns",
+                                        name,
+                                        "Value",
+                                      ],
+                                      0
+                                    );
+                                  }}
+                                />
+                              </Form.Item>
+
+                              {/* Giá trị giảm / giá sau giảm */}
+                              <Form.Item
+                                {...restField}
+                                name={[name, "Value"]}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: "Vui lòng nhập giá trị",
+                                  },
+                                  () => ({
+                                    validator(_, val) {
+                                      if (discountType === "PercentDiscount") {
+                                        if (val < 0 || val > 100) {
+                                          return Promise.reject(
+                                            new Error(
+                                              "Phần trăm giảm phải trong khoảng 0–100%"
+                                            )
+                                          );
+                                        }
+                                      } else {
+                                        if (val < 0) {
+                                          return Promise.reject(
+                                            new Error(
+                                              "Giá sau giảm phải lớn hơn 0"
+                                            )
+                                          );
+                                        }
+                                        if (val > price) {
+                                          return Promise.reject(
+                                            new Error(
+                                              "Giá sau giảm không được vượt quá giá gốc"
+                                            )
+                                          );
+                                        }
+                                      }
+                                      return Promise.resolve();
+                                    },
+                                  }),
+                                ]}
+                              >
+                                <InputNumber
+                                  min={0}
+                                  max={
+                                    discountType === "PercentDiscount"
+                                      ? 100
+                                      : price
+                                  }
+                                  style={{ width: 150 }}
+                                  placeholder={
+                                    discountType === "PercentDiscount"
+                                      ? "Giá trị giảm (%)"
+                                      : "Giá sau giảm (₫)"
+                                  }
+                                  step={
+                                    discountType === "PercentDiscount"
+                                      ? 1
+                                      : 1000
+                                  }
+                                  onChange={() => {
+                                    // cập nhật hiển thị giá động
+                                    form.validateFields();
+                                  }}
+                                />
+                              </Form.Item>
+
+                              {/* Thông tin minh họa */}
+                              <div className="text-gray-600 text-sm leading-6">
+                                <p>Giá gốc: {price.toLocaleString()} ₫</p>
+                                <p>
+                                  Sau giảm:{" "}
+                                  <span className="text-green-600 font-medium">
+                                    {discountedPrice.toLocaleString()} ₫
+                                  </span>{" "}
+                                  ({percentDisplay})
+                                </p>
+                              </div>
+                            </Space>
+                          </Card>
+                        );
+                      }}
+                    </Form.Item>
+                  ))}
                 </>
               )}
             </Form.List>
-
             <Form.Item>
               <Button type="primary" htmlType="submit" loading={loading}>
                 Tạo chiến dịch
@@ -223,6 +371,15 @@ function CreateSaleCampaignPage() {
           </Form>
         </Card>
       </div>
+
+      {/* Modal chọn sản phẩm */}
+      {showProductModal && selectedDateRange && (
+        <SelectProductModal
+          onClose={() => setShowProductModal(false)}
+          onSelect={handleSelectProduct}
+          campaignDate={selectedDateRange}
+        />
+      )}
     </div>
   );
 }
