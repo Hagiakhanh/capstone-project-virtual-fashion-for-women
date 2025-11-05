@@ -15,7 +15,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             _productInSaleCampaignService = productInSaleCampaign;
         }
         // GET: api/<SaleCampaignController>
-        [HttpPost("/validate")]
+        [HttpPost("validate")]
         public async Task<IActionResult> ValidateProductInSale([FromBody] RequestCheckingProductInSaleCampaign request)
         {
             try
@@ -29,7 +29,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
-        [HttpGet("/product/{productId}/campaign")]
+        [HttpGet("product/{productId}/campaign")]
         public async Task<IActionResult> GetListProductInExistingCampaign(string productId)
         {
             try
