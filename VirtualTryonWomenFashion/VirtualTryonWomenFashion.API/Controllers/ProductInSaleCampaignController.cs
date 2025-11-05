@@ -21,7 +21,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
             try
             {
                 var listForSaleCampaignForAdmin = await _productInSaleCampaignService.CheckListProductIdInSaleCampaign(request.startDate, request.endDate, request.listProductID);
-                return Ok(listForSaleCampaignForAdmin);
+                
+                return StatusCode(listForSaleCampaignForAdmin.StatusCode, listForSaleCampaignForAdmin);
             }
             catch (Exception ex)
             {
