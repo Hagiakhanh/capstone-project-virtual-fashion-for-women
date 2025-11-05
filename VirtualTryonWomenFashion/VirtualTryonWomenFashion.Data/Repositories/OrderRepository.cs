@@ -42,6 +42,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                     .ThenInclude(x => x.ProductVariant)
                     .ThenInclude(x => x.ProductColor)
                     .ThenInclude(x => x.Product)
+                .Include(x => x.StatusLogs)
                 .SingleOrDefaultAsync(x => x.OrderId == orderID);
         }
 

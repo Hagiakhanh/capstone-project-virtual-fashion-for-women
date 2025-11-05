@@ -10,4 +10,5 @@ public class ResponseOrderDetail
     public int OrderId { get; set; }
     public decimal PriceAtTime { get; set; }
     public ResponseProductVariantDto ResponseProductVariantDto { get; set; }
+    public bool IsReviewed { get; set; }
 }

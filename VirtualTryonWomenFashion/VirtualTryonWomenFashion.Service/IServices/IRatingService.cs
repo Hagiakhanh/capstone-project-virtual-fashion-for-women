@@ -12,7 +12,8 @@ namespace VirtualTryonWomenFashion.Service.IServices
     public interface IRatingService
     {
         Task<ResponseRatingDto?> GetRatingByIdAsync(int ratingId);
-        Task<ResponseRatingDto?> GetCustomerRatingInProductAsync(string productId);
+        Task<ResponseRatingDto?> GetRatingByOrderDetailIdAsync(int orderDetailId);
+        //Task<ResponseRatingDto?> GetCustomerRatingInProductAsync(string productId);
         Task<List<ResponseRatingDto>> GetAllProductRatingsAsync(string productId);
         Task<MessageModelWithData<Rating>> CreateRatingAsync(CreateUpdateRatingDto request);
         Task<MessageModelWithData<Rating>> UpdateRatingAsync(int ratingId, CreateUpdateRatingDto dto);

@@ -284,15 +284,6 @@ public class PaymentService : IPaymentService
                     // Cập nhật trạng thái đơn hàng thành "Confirmed"
                     await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(),
                         responseOrder.OrderId);
-                    RequestCreateNotification requestCreateNotification = new RequestCreateNotification()
-                    {
-                        ReceiverId = transaction.UserId,
-                        Title = "Đặt hàng thành công",
-                        Content = "Đơn hàng của bạn đã được đặt thành công và đang chờ shop đóng gói."
-                    };
-                    await _notificationService.CreateNotificationAsync(requestCreateNotification);
-                    await _notificationHub.Clients.Group(transaction.UserId.ToString())
-                        .SendAsync("ReceiveNotification", requestCreateNotification.Title);
                     List<User> staffUsers = await _userService.GetAllStaff();
                     if (staffUsers.Count > 0)
                     {
@@ -435,16 +426,6 @@ public class PaymentService : IPaymentService
                     // Cập nhật trạng thái đơn hàng thành "Confirmed"
                     await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(),
                         responseOrder.OrderId);
-
-                    RequestCreateNotification requestCreateNotification = new RequestCreateNotification()
-                    {
-                        ReceiverId = transaction.UserId,
-                        Title = "Đặt hàng thành công",
-                        Content = "Đơn hàng của bạn đã được đặt thành công và đang chờ shop đóng gói."
-                    };
-                    await _notificationService.CreateNotificationAsync(requestCreateNotification);
-                    await _notificationHub.Clients.Group(transaction.UserId.ToString())
-                        .SendAsync("ReceiveNotification", requestCreateNotification.Title);
                 }
                 else if (transaction.Type == TypeTransactionEnum.Recharge.ToString())
                 {
@@ -656,7 +637,7 @@ public class PaymentService : IPaymentService
             }
             else
             {
-                throw new Exception("Unsupported payment method");
+                throw new Exception("Phương thức thanh toán không hỗ trợ");
             }
 
             if (!string.IsNullOrEmpty(paymentUrl)) await _orderService.UpdatePaymentUrlAsync(paymentUrl, order.OrderId);
@@ -773,7 +754,6 @@ public class PaymentService : IPaymentService
                                 item.UpdatedAt = DateTime.UtcNow.AddHours(7);
                                 break;
                         }
-
                         break;
                     case "VnPay":
                         string resultCodeFromVnPay = await this.QueryTransactionStatusInVnPayAsync(item);
@@ -1094,6 +1074,112 @@ public class PaymentService : IPaymentService
         catch (Exception ex)
         {
             throw new Exception($"Không thể tạo URL thanh toán VNPay cho nạp tiềnL: {ex.Message}");
+        }
+    }
+
+    public async Task HandleTransactionStatusWithMomoMethod()
+    {
+       await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            List<Order> pendingOrders = await _orderService.GetOrdersByStatusAsync(OrderStatusEnum.Pending.ToString());
+            List<Transaction> pendingTransactions = new List<Transaction>();
+            List<Order> failedOrders = new List<Order>();
+            List<Order> successfulOrders = new List<Order>();
+            foreach (var item in pendingOrders)
+            {
+                var transaction = await _transactionService.GetTransactionByOrderIdAsync(item.OrderId);
+                switch (transaction.Method)
+                {
+                    case "Momo":
+                        int resultCodeFromMomo = await this.QueryTransactionStatusInMomoAsync(transaction);
+                        switch (resultCodeFromMomo)
+                        {
+                            case 0:
+                                transaction.Status = TransactionStatusEnum.Success.ToString();
+                                transaction.UpdatedAt = DateTime.UtcNow.AddHours(7);
+                                pendingTransactions.Add(transaction);
+                                successfulOrders.Add(item);
+                                break;
+                            case 1006:
+                            case 1005:
+                                transaction.Status = TransactionStatusEnum.Failed.ToString();
+                                transaction.UpdatedAt = DateTime.UtcNow.AddHours(7);
+                                pendingTransactions.Add(transaction);
+                                failedOrders.Add(item);
+                                break;
+                        }
+
+                        break;
+                    case "VnPay":
+                        continue;
+                }
+            }
+
+            if (pendingTransactions.Count > 0)
+            {
+                await _transactionService.UpdateTransactionStatusAsync(pendingTransactions);
+                await _orderService.HandleSuccessfulOrders(successfulOrders);
+                await _orderService.HandleFailedOrders(failedOrders);
+            }
+
+            
+            //xử lý cho nạp tiền bằng momo kh gọi được callback
+            List<Transaction> pendingRechargeTransactions = await _transactionService.GetAllPendingRechargeTransaction();
+            List<RequestUpdateRecharge> successfulTransaction = new List<RequestUpdateRecharge>();
+            foreach (var item in pendingRechargeTransactions)
+            {
+                switch (item.Method)
+                {
+                    case "Momo":
+                        int resultCodeFromMomo = await this.QueryTransactionStatusInMomoAsync(item);
+                        switch (resultCodeFromMomo)
+                        {
+                            case 0:
+                                item.Status = TransactionStatusEnum.Success.ToString();
+                                item.UpdatedAt = DateTime.UtcNow.AddHours(7);
+                                successfulTransaction.Add(new RequestUpdateRecharge()
+                                {
+                                    WalletId = item.WalletId.Value,
+                                    Amount = item.Money ?? 0
+                                });
+                                break;
+                            case 1006:
+                            case 1005:
+                            case 99:
+                                item.Status = TransactionStatusEnum.Failed.ToString();
+                                item.UpdatedAt = DateTime.UtcNow.AddHours(7);
+                                break;
+                        }
+                        break;
+                    case "VnPay":
+                        continue;
+                }
+            }
+
+            if (pendingRechargeTransactions.Count > 0)
+            {
+                await _transactionService.UpdateTransactionStatusAsync(pendingRechargeTransactions);
+                if(successfulTransaction.Count > 0)
+                {
+                    successfulTransaction = successfulTransaction
+                   .GroupBy(x => x.WalletId)
+                   .Select(g => new RequestUpdateRecharge
+                   {
+                       WalletId = g.Key,
+                       Amount = g.Sum(x => x.Amount)
+                   })
+                   .ToList();
+                    await _walletService.HandleSuccesfulRecharge(successfulTransaction);
+                }
+            }
+
+            await _unitOfWork.CommitTransactionAsync();
+        }
+        catch (Exception ex)
+        {
+            await _unitOfWork.RollbackTransactionAsync();
+            throw new Exception($"Lỗi khi xử lý trạng thái đơn hàng và giao dịch: {ex.Message}");
         }
     }
 

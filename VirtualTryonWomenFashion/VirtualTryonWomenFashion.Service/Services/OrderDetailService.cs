@@ -32,7 +32,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             return await _unitOfWork.SaveChanges();
         }
 
-        public async Task<List<ResponseOrderDetail>> GetOrderDetailsByOrderIdAsync(int orderId)
+        public async Task<List<ResponseOrderDetail>> GetOrderDetailsByOrderIdAsync(int orderId, int? userId = null)
         {
             var orderDetails = await _orderDetailRepository.GetOrderDetailsByOrderId(orderId);
             List<ResponseOrderDetail> listResponseOrderDetail = new List<ResponseOrderDetail>();
@@ -64,7 +64,18 @@ namespace VirtualTryonWomenFashion.Service.Services
                     } : null
                 };
                 
-                listResponseOrderDetail.Add(item.MapToResponseOrderDetail(responseProductVariantDto));
+                //listResponseOrderDetail.Add(item.MapToResponseOrderDetail(responseProductVariantDto));
+                bool isReviewed = false;
+                if (userId.HasValue)
+                {
+                    //isReviewed = item.Ratings.Any(r => r.UserId == userId.Value);
+                    isReviewed = item.Ratings?.Any(r => r.UserId == userId.Value) ?? false;
+                }
+                
+                var response = item.MapToResponseOrderDetail(responseProductVariantDto);
+                response.IsReviewed = isReviewed;
+                
+                listResponseOrderDetail.Add(response);
             }
 
             return listResponseOrderDetail;

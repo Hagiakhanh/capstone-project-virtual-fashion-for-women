@@ -303,7 +303,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 new Expression<Func<Order, object>>[]
                 {
                     o => o.Customer,
-                    o => o.Transaction
+                    o => o.Transaction,
+                    o => o.StatusLogs
                 }
             );
             int totalRecords = await _orderRepository.CountAsync(o =>
@@ -312,7 +313,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             foreach (Order order in rawOrders)
             {
                 List<ResponseOrderDetail> responseOrderDetails =
-                    await _orderDetailService.GetOrderDetailsByOrderIdAsync(order.OrderId);
+                    await _orderDetailService.GetOrderDetailsByOrderIdAsync(order.OrderId, userId);
                 responseOrders.Add(order.MapToResponseOrder(responseOrderDetails));
             }
 
@@ -627,16 +628,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                             UpdateAt = DateTime.UtcNow.AddHours(7)
                         }
                     });
-                    RequestCreateNotification requestCreateNotification = new RequestCreateNotification()
-                    {
-                        ReceiverId = order.CustomerId,
-                        Title = $"Đơn hàng {order.OrderId} đã được đóng gói",
-                        Content =
-                            $"Đơn hàng {order.OrderId} của bạn đã được shop xác nhận và đóng gói thành công. Mã vận đơn: {resultGHNObj.Data.OrderCode}"
-                    };
-                    await _notificationService.CreateNotificationAsync(requestCreateNotification);
-                    await _notificationHub.Clients.Group(order.CustomerId.ToString())
-                        .SendAsync("ReceiveNotification", requestCreateNotification.Title);
                     await _unitOfWork.CommitTransactionAsync();
                     if (result > 0)
                     {
