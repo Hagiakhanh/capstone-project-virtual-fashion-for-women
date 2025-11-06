@@ -26,6 +26,7 @@ import { messageToast } from "@/helpers/toastHelper";
 import { apiToken } from "@/api/instance";
 import SelectProductModal from "./_index/SelectProductModal";
 import Image from "next/image";
+import ImageUploader from "@/components/ManageProduct/ImageUploader";
 
 const { RangePicker } = DatePicker;
 
@@ -51,7 +52,7 @@ function CreateSaleCampaignPage() {
   useEffect(() => {
     const name = formValues?.CampaignName?.trim();
     const desc = formValues?.Description?.trim();
-    const image = formValues?.ImageFile?.[0];
+    const image = formValues?.ImageFile;
     const dateRange = formValues?.DateRange;
     const productList = formValues?.ProductInSalesCampaigns || [];
 
@@ -82,8 +83,9 @@ function CreateSaleCampaignPage() {
       formData.append("Description", values.Description || "");
 
       // Gửi file (chỉ 1 ảnh)
-      if (values.ImageFile?.[0]?.originFileObj) {
-        formData.append("ImageFile", values.ImageFile[0].originFileObj);
+      console.log(values);
+      if (values.ImageFile) {
+        formData.append("ImageFile", values.ImageFile);
       }
 
       // Convert ngày sang object { year, month, day, dayOfWeek }
@@ -111,9 +113,7 @@ function CreateSaleCampaignPage() {
 
       const res = await apiToken.post("/salecampaign", formData);
 
-      if (res.status != 200) throw new Error("Tạo chiến dịch thất bại");
-
-      messageToast.success("Tạo chiến dịch thành công");
+      messageToast.success(res.data?.message || "Tạo thành công");
       router.push("/admin/campaigns");
     } catch (err: any) {
       console.error(err);
@@ -226,12 +226,16 @@ function CreateSaleCampaignPage() {
             <Form.Item
               name="ImageFile"
               label="Ảnh đại diện chiến dịch"
-              valuePropName="fileList"
-              getValueFromEvent={(e) => e?.fileList}
+              valuePropName="selectedFile"
+              getValueFromEvent={(file: File | null) => file}
             >
-              <Upload beforeUpload={() => false} maxCount={1}>
-                <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
-              </Upload>
+              <ImageUploader
+                label="Tải ảnh đại diện"
+                onFileChange={(file) => {
+                  form.setFieldValue("ImageFile", file);
+                }}
+                selectedFile={null}
+              />
             </Form.Item>
 
             <Form.Item
@@ -442,15 +446,14 @@ function CreateSaleCampaignPage() {
             </Form.List>
             <Form.Item>
               <div className="flex justify-center">
-              <AntButtonCommon
-                type="primary"
-                htmlType="submit"
-                loading={loading}
-                disabled={!isFormValid || loading}
-              >
-                Tạo chiến dịch
-              </AntButtonCommon>
-
+                <AntButtonCommon
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  disabled={!isFormValid || loading}
+                >
+                  Tạo chiến dịch
+                </AntButtonCommon>
               </div>
             </Form.Item>
           </Form>
