@@ -11,6 +11,7 @@ interface TagsSectionProps {
     onRemoveTag: (tagId: number) => void;
     onAddNewTag: (tagName: string) => void;
     onRemoveNewTag: (index: number) => void;
+    error?: string;
 }
 
 export default function TagsSection({
@@ -21,6 +22,7 @@ export default function TagsSection({
     onRemoveTag,
     onAddNewTag,
     onRemoveNewTag,
+    error,
 }: TagsSectionProps) {
     const [newTagInput, setNewTagInput] = useState("");
     const [showTagDropdown, setShowTagDropdown] = useState(false);
@@ -50,6 +52,10 @@ export default function TagsSection({
         <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Tags</h2>
 
+            {error && (
+                <p className="text-red-500 text-sm mb-3">{error}</p>
+            )}
+
             {/* Selected existing tags */}
             <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -65,11 +71,11 @@ export default function TagsSection({
                             >
                                 {tag.tagName}
                                 <button
-                                type="button"
-                                onClick={() => onRemoveTag(tagId)}
-                                className="hover:text-blue-900"
+                                    type="button"
+                                    onClick={() => onRemoveTag(tagId)}
+                                    className="hover:text-blue-900"
                                 >
-                                <X size={14} />
+                                    <X size={14} />
                                 </button>
                             </span>
                         ) : null;

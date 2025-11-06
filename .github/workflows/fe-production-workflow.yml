@@ -1,0 +1,82 @@
+name: FE CI/CD Next.js to VPS
+
+on:
+  push:
+    branches:
+      - 'FE-Production'
+
+env:
+  SOURCE_DIR: ./virtual-fashion-for-women-FE
+  DEPLOY_DIR: /home/levdefault/nextjs/virtual-fashion-for-women-FE
+
+jobs:
+  deploy-fe:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Upload frontend source to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "virtual-fashion-for-women-FE/*"
+          target: "${{ env.DEPLOY_DIR }}"
+          strip_components: 1
+          rm: true
+          exclude: |
+            node_modules
+            .next
+            out
+
+      - name: SSH to VPS - Build and Deploy Next.js
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ${{ env.DEPLOY_DIR }}
+
+            echo "📄 Tạo file .env.production.local"
+            echo "${{ secrets.FE_ENV_FILE }}" > .env.production.local
+            echo "✅ Nội dung env:"
+            cat .env.production.local
+
+            echo "🧩 Chuẩn bị Node 20"
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install 20
+            nvm use 20
+
+            echo "📦 Cài dependencies"
+            npm ci
+
+            echo "⚙️ Build Next.js (env sẽ được load từ .env.production.local)"
+            npm run build
+
+            echo "📝 Kiểm tra biến môi trường dùng trong Node"
+            echo "NODE_ENV=$NODE_ENV"
+            echo "API_URL=$API_URL"
+
+            echo "🚀 Start bằng PM2"
+            if command -v pm2 > /dev/null; then
+              pm2 delete vfwfe || true
+              # --update-env để PM2 lấy env hiện tại
+              pm2 start "npm run start -- -H 0.0.0.0 -p 3000" --name "vfwfe" --update-env
+              pm2 save
+            else
+              echo "⚠️ PM2 chưa được cài. Cài bằng: npm install -g pm2"
+            fi
+
+            echo "✅ Deploy thành công!"
