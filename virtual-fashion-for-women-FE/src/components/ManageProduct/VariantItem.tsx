@@ -2,6 +2,7 @@
 import { X, Upload } from "lucide-react";
 import { Size } from "@/models/RequestCreateProduct";
 import ImageUploader from "./ImageUploader";
+import { VariantError } from "@/utils/productHelpers";
 
 interface VariantItemProps {
     variant: {
@@ -22,6 +23,7 @@ interface VariantItemProps {
     onSizeSelect: (sizeId: number) => void;
     //onFileChange: (file: File) => void;
     usedSizeIds: number[];
+    errors?: VariantError | null;
 }
 
 export default function VariantItem({
@@ -33,6 +35,7 @@ export default function VariantItem({
     onSizeSelect,
     usedSizeIds,
     //onFileChange,
+    errors,
 }: VariantItemProps) {
 
     return (
@@ -59,8 +62,14 @@ export default function VariantItem({
                         type="text"
                         value={variant.variantName}
                         onChange={(e) => onUpdate("variantName", e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        //className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                            errors?.variantName ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
+                    {errors?.variantName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.variantName}</p>
+                    )}
                 </div>
 
                 <div>
@@ -70,7 +79,10 @@ export default function VariantItem({
                     <select
                         value={variant.sizeId}
                         onChange={(e) => onSizeSelect(parseInt(e.target.value))}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        //className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                            errors?.sizeId ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     >
                         <option value={0}>-- Chọn size --</option>
                         {sizes.map((s) => {
@@ -90,6 +102,9 @@ export default function VariantItem({
                             );
                         })}
                     </select>
+                    {errors?.sizeId && (
+                        <p className="text-red-500 text-xs mt-1">{errors.sizeId}</p>
+                    )}
                 </div>
 
                 <div>
@@ -101,8 +116,14 @@ export default function VariantItem({
                         min="0"
                         value={variant.quantity}
                         onChange={(e) => onUpdate("quantity", parseInt(e.target.value))}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        //className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                            errors?.quantity ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
+                    {errors?.quantity && (
+                        <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>
+                    )}
                 </div>
 
                 <div>
@@ -159,7 +180,7 @@ export default function VariantItem({
                         step="0.1"
                         value={variant.productHeight}
                         onChange={(e) =>
-                        onUpdate("productHeight", parseFloat(e.target.value))
+                            onUpdate("productHeight", parseFloat(e.target.value))
                         }
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
@@ -171,6 +192,7 @@ export default function VariantItem({
                     label="Ảnh variant *"
                     selectedFile={variant.imageUrl}
                     onFileChange={(file) => onUpdate("imageUrl", file)}
+                    error={errors?.imageUrl}
                 />
                 </div>
             </div>
