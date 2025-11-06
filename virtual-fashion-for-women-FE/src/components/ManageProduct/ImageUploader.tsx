@@ -9,12 +9,14 @@ interface ImageUploaderProps {
     label: string;
     selectedFile: File | null;
     onFileChange: (file: File | null) => void;
+    error?: string;
 }
 
 export default function ImageUploader({
     label,
     selectedFile,
     onFileChange,
+    error,
 }: ImageUploaderProps) {
     const [preview, setPreview] = useState<string | null>(null);
 
@@ -65,7 +67,10 @@ export default function ImageUploader({
             <label
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
-                className="relative flex flex-col items-center justify-center w-80 h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                //className="relative flex flex-col items-center justify-center w-80 h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                className={`relative flex flex-col items-center justify-center w-80 h-48 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors ${
+                    error ? 'border-red-500' : 'border-gray-300'
+                }`}
             >
                 {preview ? (
                     <>
@@ -100,6 +105,9 @@ export default function ImageUploader({
                     onChange={handleFileSelect}
                 />
             </label>
+            {error && (
+                <p className="text-red-500 text-xs mt-1">{error}</p>
+            )}
         </div>
     );
 }

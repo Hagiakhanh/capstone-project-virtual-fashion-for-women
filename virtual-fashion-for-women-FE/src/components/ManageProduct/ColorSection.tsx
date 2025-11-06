@@ -1,6 +1,7 @@
 // src/app/admin/product/create/components/ColorSection.tsx
 import { Trash2, Upload, Plus } from "lucide-react";
 import { Color, Size, ProductColorRequest } from "@/models/RequestCreateProduct";
+import { ProductColorError } from "@/utils/productHelpers";
 import VariantItem from "./VariantItem";
 import { useCallback, useEffect, useState } from "react";
 import ImageUploader from "./ImageUploader";
@@ -36,6 +37,7 @@ interface ColorSectionProps {
     existingNames: string[];
     existingPrefixes: string[];
     existingHexCodes: string[];
+    errors?: ProductColorError | null;
 }
 
 // HÀM HELPER: Xóa 1 phần tử đầu tiên khỏi mảng
@@ -70,6 +72,7 @@ export default function ColorSection({
     existingNames,
     existingPrefixes,
     existingHexCodes,
+    errors,
     }: ColorSectionProps) {
     const [isColorModalOpen, setIsColorModalOpen] = useState(false);
     const [multiPreviews, setMultiPreviews] = useState<string[]>([]);
@@ -217,7 +220,10 @@ export default function ColorSection({
                         <select
                             value={color.colorId}
                             onChange={(e) => handleColorSelectChange(parseInt(e.target.value))}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            //className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                errors?.colorId ? 'border-red-500' : 'border-gray-300'
+                            }`}
                         >
                             <option value={0}>-- Tạo màu mới --</option>
                             {colors.map((c) => {
@@ -237,6 +243,9 @@ export default function ColorSection({
                                 );
                             })}
                         </select>
+                        {errors?.colorId && (
+                            <p className="text-red-500 text-xs mt-1">{errors.colorId}</p>
+                        )}
                     </div>
 
                     {color.colorId === 0 && (
@@ -282,12 +291,20 @@ export default function ColorSection({
                         value={color.packageLens}
                         onChange={(e) => onUpdate("packageLens", e.target.value)}
                         placeholder="Nhập PackageLens nếu có"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        //className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                            errors?.packageLens ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
                     {/* Thêm gợi ý validation tại UI */}
-                    {color.lensId && !color.packageLens && (
+                    {/* {color.lensId && !color.packageLens && (
                         <p className="text-xs text-red-500 mt-1">
                             Bạn phải nhập PackageLens vì đã nhập LensID.
+                        </p>
+                    )} */}
+                    {(errors?.packageLens || (color.lensId && !color.packageLens)) && (
+                        <p className="text-xs text-red-500 mt-1">
+                            {errors?.packageLens || "Bạn phải nhập PackageLens vì đã nhập LensID."}
                         </p>
                     )}
                 </div>
@@ -310,7 +327,10 @@ export default function ColorSection({
                         htmlFor={`multi-image-upload-${colorIndex}`}
                         onDrop={handleMultipleImagesDrop}
                         onDragOver={handleDragOver}
-                        className="relative flex flex-col items-center justify-center w-30 h-30 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                        //className="relative flex flex-col items-center justify-center w-30 h-30 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                        className={`relative flex flex-col items-center justify-center w-30 h-30 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors ${
+                            errors?.productVariantImages ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     >
                         {/* ... (Icon Upload và text giữ nguyên) ... */}
                         <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
@@ -330,7 +350,9 @@ export default function ColorSection({
                             className="hidden"
                         />
                     </label>
-
+                    {errors?.productVariantImages && (
+                        <p className="text-red-500 text-xs mt-1">{errors.productVariantImages}</p>
+                    )}
                     {/* SỬA ĐỔI: Hiển thị grid ảnh preview thay vì text list */}
                     {multiPreviews.length > 0 && (
                         <div className="mt-2">
@@ -383,6 +405,11 @@ export default function ColorSection({
                             onRemove={() => onRemoveVariant(variantIndex)}
                             onSizeSelect={(sizeId) => onSizeSelect(variantIndex, sizeId)}
                             usedSizeIds={usedSizeIds}
+                            errors={
+                                errors?.variants 
+                                ? errors.variants[variantIndex] 
+                                : null
+                            }
                         />
                     ))}
                 </div>

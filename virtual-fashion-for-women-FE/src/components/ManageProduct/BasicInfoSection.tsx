@@ -7,11 +7,16 @@ interface BasicInfoSectionProps {
         description: string;
     };
     onUpdate: (field: string, value: any) => void;
+    errors: {
+        productName?: string;
+        description?: string;
+    };
 }
 
 export default function BasicInfoSection({
     formData,
     onUpdate,
+    errors,
 }: BasicInfoSectionProps) {
     return (
         <div className="bg-white rounded-lg shadow-lg p-10">
@@ -28,8 +33,14 @@ export default function BasicInfoSection({
                         required
                         value={formData.productName}
                         onChange={(e) => onUpdate("productName", e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        //className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            errors.productName ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
+                    {errors.productName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.productName}</p>
+                    )}
                 </div>
 
                 <div>
@@ -41,8 +52,14 @@ export default function BasicInfoSection({
                         value={formData.description}
                         onChange={(e) => onUpdate("description", e.target.value)}
                         rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        //className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            errors.description ? 'border-red-500' : 'border-gray-300'
+                        }`}
                     />
+                    {errors.description && (
+                        <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+                    )}
                 </div>
             </div>
         </div>
