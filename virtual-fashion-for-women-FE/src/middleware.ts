@@ -57,6 +57,7 @@ export async function middleware(req: NextRequest) {
 
   // Nếu chưa login thì redirect về /login
   if (!token) {
+    console.log("da o day!");
     return NextResponse.redirect(new URL("/login", req.url));
   }
 

@@ -4,46 +4,45 @@ import { useEffect, useState } from "react";
 import { RefreshCcw, Search } from "lucide-react";
 import { Table, Button, Space } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
-import { messageToast } from "@/helpers/toastHelper";
 import { api } from "@/api/instance";
 import formatPrice from "@/utils/formatPrice";
 import formatDate from "@/utils/formatDate";
-import statusMap from "@/helpers/statusMapper";
 import { useRouter } from "next/navigation";
+import { OrderRefundStaffDTO } from "@/models/OrderRefundDTO";
+import type { ColumnsType } from "antd/es/table";
+import statusMapRefund from "@/helpers/statusMapperRefund";
 
 const ORDER_STATUSES = [
-   { key: "Pending", value: 0, label: "Chờ thanh toán" },
-   { key: "Confirmed", value: 1, label: "Đã xác nhận" },
-   { key: "Packed", value: 2, label: "Đã đóng gói" },
-   { key: "Delivering", value: 3, label: "Đang giao hàng" },
-   { key: "Delivered", value: 4, label: "Đã giao hàng" },
+   { key: "Pending", value: 0, label: "Chờ xác nhận" },
+   { key: "Accepted", value: 1, label: "Đã xác nhận" },
+   { key: "Delivering", value: 3, label: "Đang hoàn hàng" },
+   { key: "Delivered", value: 4, label: "Đã hoàn hàng" },
    { key: "Completed", value: 5, label: "Hoàn tất" },
-   { key: "Failed", value: 6, label: "Thất bại" },
+   { key: "Rejected", value: 2, label: "Từ chối yêu cầu" },
 ];
 
-export default function StaffOrderPage() {
-   const [searchText, setSearchText] = useState("");
+
+
+export default function RefundPage() {
    const [selectedStatus, setSelectedStatus] = useState<number | null>(null);
-   const [isDateDecrease, setIsDateDecrease] = useState<boolean>(true);
-   const [orders, setOrders] = useState<any[]>([]);
    const [pagination, setPagination] = useState({
       currentPage: 1,
       pageSize: 5,
       totalCount: undefined,
    });
+   const [orderRefunds, setOrderRefunds] = useState<OrderRefundStaffDTO[]>([]);
    const router = useRouter();
-   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
-   const columns = [
+   const columns: ColumnsType<OrderRefundStaffDTO> = [
       {
-         title: "ID Đơn Hàng",
-         dataIndex: "orderID",
-         key: "orderID",
+         title: "ID Yêu Cầu",
+         dataIndex: "orderRefundId",
+         key: "orderRefundId",
       },
       {
          title: "Ngày Tạo",
          key: "createdAt",
-         render: (_: any, record: any) => (
+         render: (_: any, record: OrderRefundStaffDTO) => (
             <div className="font-semibold text-gray-800">
                {formatDate(record?.createdAt)}
             </div>
@@ -52,7 +51,7 @@ export default function StaffOrderPage() {
       {
          title: "Khách Hàng",
          key: "name",
-         render: (_: any, record: any) => (
+         render: (_: any, record: OrderRefundStaffDTO) => (
             <div>
                <div className="font-semibold text-gray-800">{record?.receiverName}</div>
                <div className="text-gray-500">{record?.receiverPhone}</div>
@@ -61,9 +60,16 @@ export default function StaffOrderPage() {
          ),
       },
       {
-         title: "Tổng Cộng",
+         title: "Lý Do Trả Hàng",
+         key: "reason",
+         render: (_: any, record: OrderRefundStaffDTO) => (
+            <div className="font-semibold text-gray-800 line-clamp-3">{record?.reason}</div>
+         ),
+      },
+      {
+         title: "Số Tiền Hoàn",
          key: "amount",
-         render: (_: any, record: any) => (
+         render: (_: any, record: OrderRefundStaffDTO) => (
             <div className="font-semibold text-gray-800">
                {formatPrice(record?.amount)} đ
             </div>
@@ -73,9 +79,9 @@ export default function StaffOrderPage() {
          title: "Trạng Thái",
          dataIndex: "status",
          key: "status",
-         render: (status: keyof typeof statusMap) => {
+         render: (status: keyof typeof statusMapRefund) => {
             // 1. Tra cứu chi tiết trạng thái
-            const detail = statusMap[status];
+            const detail = statusMapRefund[status];
 
             return (
                <div className="font-semibold text-gray-800">
@@ -87,49 +93,16 @@ export default function StaffOrderPage() {
       {
          title: "Thao Tác",
          key: "action",
-         render: (_: any, record: any) => (
+         render: (_: any, record: OrderRefundStaffDTO) => (
             <Space>
                <EyeOutlined className="cursor-pointer text-gray-600 hover:text-black"
-                  onClick={() => handleShowDetails(record.orderID)}
+                  onClick={() => handleShowDetails(record.orderRefundId)}
                />
             </Space>
          ),
       },
    ];
 
-   const fetchOrdersData = async () => {
-      try {
-         const response = await api.get('/order/staff', {
-            params: {
-               PageIndex: pagination.currentPage,
-               PageSize: pagination.pageSize,
-               orderStatusEnum: selectedStatus,
-               isDateDecrease: isDateDecrease,
-            }
-         });
-         if (response.status === 200) {
-            setOrders(response.data?.data || []);
-            setPagination({
-               ...pagination,
-               totalCount: response.data?.pagination?.TotalCount,
-               currentPage: response.data?.pagination?.CurrentPage,
-            });
-         } else {
-            setOrders([]);
-         }
-
-      } catch (error) {
-         console.log("Lấy dữ liệu đơn hàng thất bại:", error);
-         messageToast.error("Lấy dữ liệu đơn hàng thất bại");
-      }
-   }
-
-   const handleTableChange = (page: number) => {
-      setPagination(prev => ({
-         ...prev,
-         currentPage: page,
-      }));
-   };
    const handleFilterChange = (status: number | null) => {
       setSelectedStatus(status);
 
@@ -138,39 +111,51 @@ export default function StaffOrderPage() {
          currentPage: 1,
       }));
    };
-   const handleSortChange = () => {
-      setIsDateDecrease(prev => !prev);
-      setPagination(prev => ({ ...prev, currentPage: 1 }));
+
+   const handleTableChange = (page: number) => {
+      setPagination(prev => ({
+         ...prev,
+         currentPage: page,
+      }));
    };
-   const handleShowDetails = (orderID: string) => {
-      router.push(`/staff/${orderID}`);
+
+   const handleShowDetails = (orderRefundId: number) => {
+      router.push(`/staff/order-refund/${orderRefundId}`);
    }
-   const handleSyncAllGHNOrders = async () => {
-      setIsSyncing(true);
+
+   const fetchOrderRefund = async () => {
       try {
-         const response = await api.put('/order/staff/sync-ghn-status');
+         const response = await api.get('/orderRefund/staff', {
+            params: {
+               PageIndex: pagination.currentPage,
+               PageSize: pagination.pageSize,
+               refundEnum: selectedStatus
+            }
+         });
          if (response.status === 200) {
-            messageToast.success("Đồng bộ dữ liệu GHN thành công");
-            fetchOrdersData();
+            setOrderRefunds(response.data?.data || []);
+            setPagination({
+               ...pagination,
+               totalCount: response.data?.pagination?.TotalCount,
+               currentPage: response.data?.pagination?.CurrentPage,
+            });
          } else {
-            messageToast.error("Đồng bộ dữ liệu GHN thất bại");
+            setOrderRefunds([]);
          }
 
       } catch (error) {
-         messageToast.error("Đồng bộ dữ liệu GHN thất bại");
-      } finally {
-         setIsSyncing(false);
+         console.log('Lỗi khi lấy danh sách đơn hàng hoàn trả:', error);
       }
    }
 
    useEffect(() => {
-      fetchOrdersData();
+      fetchOrderRefund();
    }, [pagination.currentPage, selectedStatus]);
 
    return (
       <div className="p-6 bg-gray-50 min-h-[80%]">
          {/* Header */}
-         <h1 className="text-2xl font-bold mb-6">Quản lý đơn hàng</h1>
+         <h1 className="text-2xl font-bold mb-6">Yêu cầu hoàn hàng</h1>
 
          {/* Search + Filter */}
          <div className="bg-white p-4 rounded-xl shadow-sm flex items-center justify-between mb-6">
@@ -190,8 +175,8 @@ export default function StaffOrderPage() {
                   Apply
                </button>
                <Button
-                  onClick={handleSyncAllGHNOrders}
-                  disabled={isSyncing}
+                  // onClick={handleSyncAllGHNOrders}
+                  // disabled={isSyncing}
                   icon={<RefreshCcw size={16} />}
                   className="!border-[#000] !text-base !text-black !hover:text-black"
                   size="large"
@@ -228,7 +213,7 @@ export default function StaffOrderPage() {
          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <Table
                columns={columns}
-               dataSource={orders}
+               dataSource={orderRefunds}
                pagination={{
                   pageSize: 5,
                   current: pagination.currentPage,
@@ -240,6 +225,7 @@ export default function StaffOrderPage() {
                rowKey="orderID"
             />
          </div>
+
       </div>
    );
 }

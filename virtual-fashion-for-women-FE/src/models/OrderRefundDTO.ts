@@ -27,6 +27,10 @@ export interface OrderRefundDetailDTO {
    transactionStatus: string | null;
    transactionTime: string | null;
    items: ItemRefundDetailDTO[];
+   customerReason: string;
+   staffResponse: string | null;
+   shippingCode: string | null;
+   customerImage: string[];
 }
 
 export interface ItemRefundDetailDTO {
@@ -37,4 +41,15 @@ export interface ItemRefundDetailDTO {
    variantPrice: number;
    quantity: number;
    variantAmount: number;
+}
+
+export interface OrderRefundStaffDTO {
+   orderRefundId: number;
+   createdAt: string;
+   receiverName: string;
+   receiverPhone: string;
+   email: string;
+   reason: string;
+   amount: number;
+   status: string;
 }
