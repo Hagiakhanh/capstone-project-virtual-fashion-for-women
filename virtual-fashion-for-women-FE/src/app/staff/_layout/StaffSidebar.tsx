@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // 1. Import hook usePathname
-import { ShoppingBasket, MessagesSquare, Bell, X } from "lucide-react";
+import { ShoppingBasket, MessagesSquare, Bell, X, CalendarSync } from "lucide-react";
 
 // Interface cho props
 interface SidebarProps {
@@ -67,10 +67,18 @@ export default function StaffSidebar({
                <Link
                   onClick={handleLinkClick}
                   href="/staff"
-                  className={`${baseLinkClasses} ${isActive("staff") ? activeLinkClasses : inactiveLinkClasses}`}
+                  className={`${baseLinkClasses} ${isActive("/staff") ? activeLinkClasses : inactiveLinkClasses}`}
                >
                   <ShoppingBasket className="w-5 h-5 mr-3" />
                   Quản lý đơn hàng
+               </Link>
+               <Link
+                  onClick={handleLinkClick}
+                  href="/staff/order-refund"
+                  className={`${baseLinkClasses} ${isActive("/staff/order-refund") ? activeLinkClasses : inactiveLinkClasses}`}
+               >
+                  <CalendarSync className="w-5 h-5 mr-3" />
+                  Yêu cầu hoàn hàng
                </Link>
                <Link
                   onClick={handleLinkClick}

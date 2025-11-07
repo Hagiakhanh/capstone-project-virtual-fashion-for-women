@@ -1,22 +1,32 @@
 'use client';
 
 import { api } from "@/api/instance";
-import statusMap from "@/helpers/statusMapper";
-import { messageToast } from "@/helpers/toastHelper";
-import { OrderDTO } from "@/models/OrderDTO";
 import formatDate from "@/utils/formatDate";
 import formatPrice from "@/utils/formatPrice";
-import { Calendar, MapPin, Icon, Mail, Phone, User } from "lucide-react";
+import { Calendar, MapPin, Mail, Phone, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { OrderRefundDetailDTO } from "@/models/OrderRefundDTO";
 import statusMapRefund from "@/helpers/statusMapperRefund";
+import { Modal } from "antd";
 
 export default function RefundDetailsPage() {
    const { refundId } = useParams();
    const [refundDetails, setRefundDetails] = useState<OrderRefundDetailDTO>();
    const [statusOrderInformation, setStatusOrderInformation] = useState<any>();
    const route = useRouter();
+   const [previewVisible, setPreviewVisible] = useState(false);
+   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+   const handlePreview = (img: string) => {
+      setSelectedImage(img);
+      setPreviewVisible(true);
+   };
+
+   const handleClose = () => {
+      setPreviewVisible(false);
+      setSelectedImage(null);
+   };
 
    const fetchOrderRefundDetails = async () => {
       if (!refundId) {
@@ -118,6 +128,73 @@ export default function RefundDetailsPage() {
 
                   </div>
                </div>
+            </div>
+
+            {/* Hình ảnh và lý do */}
+            <div className="px-6 py-4 mb-6 border-1 border-[#E5E5E5] rounded-2xl shadow-md bg-white">
+               <h2 className="font-bold text-xl text-black pb-3">Hình ảnh & Lý do hoàn hàng</h2>
+
+               {/* Lý do hoàn hàng */}
+               <div className="mb-4">
+                  <p className="text-base text-gray-600 mb-1">Lý do từ khách hàng:</p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                     <p className="text-gray-800 leading-relaxed">
+                        {refundDetails?.customerReason}
+                     </p>
+                  </div>
+               </div>
+
+               {/* Danh sách hình ảnh */}
+               <div className="mb-4">
+                  <p className="text-base text-gray-600 mb-2">Hình ảnh minh chứng:</p>
+                  <div className="flex flex-wrap gap-3">
+                     {refundDetails?.customerImage?.map((img, index) => (
+                        <div
+                           key={index}
+                           onClick={() => handlePreview(img)}
+                           className="relative group w-[120px] h-[120px] rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                        >
+                           <img
+                              src={img}
+                              alt={`Hình ${index + 1}`}
+                              className="w-full h-full object-cover"
+                           />
+                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all">
+                              <span className="text-white text-sm opacity-0 group-hover:opacity-100">
+                                 Xem
+                              </span>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+
+               {/* Nhân viên */}
+               <div className="mb-4">
+                  <p className="text-base text-gray-600 mb-1">Phản hồi từ nhân viên:</p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                     <p className="text-gray-800 leading-relaxed">
+                        {refundDetails?.staffResponse || 'Chưa có phản hồi từ nhân viên.'}
+                     </p>
+                  </div>
+               </div>
+
+               <Modal
+                  open={previewVisible}
+                  footer={null}
+                  onCancel={handleClose}
+                  centered
+                  width={800}
+               >
+                  {selectedImage && (
+                     <img
+                        src={selectedImage}
+                        alt="Preview"
+                        className="w-full h-auto rounded-lg object-contain"
+                     />
+                  )}
+               </Modal>
+
             </div>
 
             {/* Products Table */}

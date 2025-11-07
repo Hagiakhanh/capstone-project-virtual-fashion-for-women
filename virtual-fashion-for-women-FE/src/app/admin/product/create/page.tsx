@@ -15,6 +15,7 @@ import {
     ProductColorRequest,
 } from "@/models/RequestCreateProduct";
 import {
+    ValidationErrors,
     convertToFormData,
     validateProductForm,
     createEmptyProductColor,
@@ -26,7 +27,7 @@ import UploadImgCard from "@/components/ManageProduct/UploadImgCard";
 import CategoryCard from "@/components/ManageProduct/CategoryCard";
 import ColorSection from "@/components/ManageProduct/ColorSection";
 import TagsSection from "@/components/ManageProduct/TagsSection";
-import ErrorDisplay from "@/components/ManageProduct/ErrorDisplay";
+//import ErrorDisplay from "@/components/ManageProduct/ErrorDisplay";
 import LoadingSpinner from "@/components/ManageProduct/LoadingSpinner";
 
 export default function CreateProductPage() {
@@ -43,7 +44,8 @@ export default function CreateProductPage() {
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
-    const [errors, setErrors] = useState<string[]>([]);
+    //const [errors, setErrors] = useState<string[]>([]);
+    const [errors, setErrors] = useState<ValidationErrors>({});
     const [categories, setCategories] = useState<Category[]>([]);
     const [colors, setColors] = useState<Color[]>([]);
     const [sizes, setSizes] = useState<Size[]>([]);
@@ -248,12 +250,14 @@ export default function CreateProductPage() {
         e.preventDefault();
         setLoading(true);
         setMessage("");
-        setErrors([]);
+        //setErrors([]);
+        setErrors({});
 
         const validation = validateProductForm(formData);
         if (!validation.isValid) {
             setErrors(validation.errors);
             setLoading(false);
+            messageToast.error("Vui lòng kiểm tra lại các trường thông tin");
             window.scrollTo(0, 0); // Cuộn lên đầu để thấy lỗi
             return;
         }
@@ -271,7 +275,8 @@ export default function CreateProductPage() {
 
             if (response.status === 200 || response.status === 201) {
                 messageToast.success("Tạo sản phẩm thành công!");
-                setErrors([]);
+                //setErrors([]);
+                setErrors({});
                 setFormData({
                     productName: "",
                     description: "",
@@ -317,7 +322,7 @@ export default function CreateProductPage() {
                 </div>
 
                 {/* Hiển thị lỗi và thông báo */}
-                <ErrorDisplay errors={errors} />
+                {/* <ErrorDisplay errors={errors} /> */}
                 {message && (
                     <div
                         className={`text-sm font-medium mb-4 p-3 rounded-lg ${
@@ -340,6 +345,11 @@ export default function CreateProductPage() {
                                 description: formData.description,
                             }}
                             onUpdate={updateBasicInfo}
+                            // THAY ĐỔI 5: Truyền lỗi xuống
+                            errors={{
+                                productName: errors.productName,
+                                description: errors.description,
+                            }}
                         />
 
                         <TagsSection
@@ -350,6 +360,7 @@ export default function CreateProductPage() {
                             onRemoveTag={handleRemoveTag}
                             onAddNewTag={handleAddNewTag}
                             onRemoveNewTag={handleRemoveNewTag}
+                            error={errors.tags}
                         />
 
                         {/* Card Màu Sắc & Biến Thể */}
@@ -436,6 +447,12 @@ export default function CreateProductPage() {
                                         existingNames={existingNames}
                                         existingPrefixes={existingPrefixes}
                                         existingHexCodes={existingHexCodes}
+                                        // THAY ĐỔI 7: Truyền lỗi của màu cụ thể
+                                        errors={
+                                            errors.productColor 
+                                            ? errors.productColor[colorIndex] 
+                                            : null
+                                        }
                                      />
                                 ));
                             })()}
@@ -447,11 +464,13 @@ export default function CreateProductPage() {
                         <UploadImgCard
                             mainImageUrl={formData.mainImageUrl}
                             onFileChange={(file) => updateBasicInfo("mainImageUrl", file)}
+                            error={errors.mainImageUrl}
                         />
                         <CategoryCard
                             categoryId={formData.categoryId}
                             categories={categories}
                             onUpdate={updateBasicInfo}
+                            error={errors.categoryId}
                         />
 
                         {/* Card Giá */}
@@ -471,8 +490,14 @@ export default function CreateProductPage() {
                                         const rawValue = e.target.value.replace(/\D/g, ""); // bỏ ký tự không phải số
                                         updateBasicInfo("price", Number(rawValue));
                                     }}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    //className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                                        errors.price ? 'border-red-500' : 'border-gray-300'
+                                    }`}
                                 />
+                                {errors.price && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.price}</p>
+                                )}
                             </div>
                         </div>
                     </div>
