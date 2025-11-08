@@ -158,8 +158,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                         // Có thể parse lại response nếu AI chọn ra 1 item cụ thể trong list
 
                         var allTrackedVariants = groupedVariants
-    .SelectMany(g => g.Value)
-    .ToDictionary(v => v.ProductVariantId, v => v);
+                            .SelectMany(g => g.Value)
+                            .ToDictionary(v => v.ProductVariantId, v => v);
 
                         List<ProductVariant> productVariantsSuggested = new();
 
