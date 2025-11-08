@@ -61,6 +61,8 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
     public virtual DbSet<SaleCampaign> SaleCampaigns { get; set; }
 
+    public virtual DbSet<ShopAddress> ShopAddresses { get; set; }
+
     public virtual DbSet<Size> Sizes { get; set; }
 
     public virtual DbSet<SkinTone> SkinTones { get; set; }
@@ -604,6 +606,25 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.ImageUrl).HasMaxLength(300);
             entity.Property(e => e.Status).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<ShopAddress>(entity =>
+        {
+            entity.HasKey(e => e.ShopAddressId).HasName("PK__ShopAddr__C552529FEC8F9606");
+
+            entity.ToTable("ShopAddress");
+
+            entity.Property(e => e.ShopAddressId).HasColumnName("ShopAddressID");
+            entity.Property(e => e.DistrictId).HasColumnName("DistrictID");
+            entity.Property(e => e.ProvinceId).HasColumnName("ProvinceID");
+            entity.Property(e => e.ShopAddress1)
+                .HasMaxLength(500)
+                .HasColumnName("ShopAddress");
+            entity.Property(e => e.ShopName)
+                .IsRequired()
+                .HasMaxLength(255);
+            entity.Property(e => e.ShopPhone).HasMaxLength(20);
+            entity.Property(e => e.WardCode).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Size>(entity =>

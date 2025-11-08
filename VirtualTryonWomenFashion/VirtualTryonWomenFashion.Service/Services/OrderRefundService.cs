@@ -43,6 +43,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly INotificationService _notificationService;
         private readonly IHubContext<NotificationHub> _notificationHub;
         private readonly IWalletRepository _walletRepository;
+        private readonly IShopAddressRepository _shopAddressRepository;
 
         public OrderRefundService(ICurrentUserService currentUserService, IOrderRepository orderRepository,
             IOrderRefundRepository orderRefundRepository, IUnitOfWork unitOfWork, IOrderDetailRepository orderDetailRepository,
@@ -50,7 +51,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             IOrderRefundImageRepository orderRefundImageRepository, IShippingService shippingService,
             HttpClient client, ITransactionRepository transactionRepository, IStatusLogService statusLogService,
             INotificationService notificationService, IHubContext<NotificationHub> notificationHub,
-            IWalletRepository walletRepository)
+            IWalletRepository walletRepository, IShopAddressRepository shopAddressRepository)
         {
             _currentUserService = currentUserService;
             _orderRepository = orderRepository;
@@ -67,6 +68,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _notificationService = notificationService;
             _notificationHub = notificationHub;
             _walletRepository = walletRepository;
+            _shopAddressRepository = shopAddressRepository;
         }
         public async Task<MessageModel> CreateOrderRefund(RequestCreateOrderRefund requestCreateOrderRefund)
         {
@@ -499,6 +501,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                     var fromDistrictName = await _shippingService.GetDistrictName(orderRefund.Order.ProvinceId.Value);
                     var fromProvinceName = await _shippingService.GetProvinceName();
 
+                    ShopAddress shopAddress = await _shopAddressRepository.GetShopAddress();
+
                     GhnCreateOrderRequest ghnCreateOrderRequest = new GhnCreateOrderRequest
                     {
                         PaymentTypeId = 1, // Người trả phí shop | 1: Seller, 2: Buyer
@@ -518,11 +522,11 @@ namespace VirtualTryonWomenFashion.Service.Services
                         //ReturnWardCode = "90752",   // ID địa chỉ của phường trả hàng | Phải theo api của GHN
 
                         ClientOrderCode = "", // Không thêm trường này
-                        ToName = "Shop thời trang", // Tên của khách hàng
-                        ToPhone = "0868728859", // Số điện thoại của khách hàng
-                        ToAddress = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam", // Địa chỉ của khách hàng
-                        ToWardCode = "90752", // Phường của người nhận hàng | Phải theo api của GHN
-                        ToDistrictId = 3695, // Huyện của người nhận hàng | Phải theo api của GHN
+                        ToName = shopAddress.ShopName, // Tên của khách hàng
+                        ToPhone = shopAddress.ShopPhone, // Số điện thoại của khách hàng
+                        ToAddress = shopAddress.ShopAddress1, // Địa chỉ của khách hàng
+                        ToWardCode = shopAddress.WardCode, // Phường của người nhận hàng | Phải theo api của GHN
+                        ToDistrictId = shopAddress.DistrictId.Value, // Huyện của người nhận hàng | Phải theo api của GHN
 
                         CodAmount = 0, // Tiền COD mà shipper phải thu
                         Content = "Cửa hàng thời trang nữ", // Có thể đặt tên sản phẩm ở đây
