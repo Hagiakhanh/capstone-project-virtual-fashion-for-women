@@ -850,6 +850,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             SizeId = v.SizeId,
                             VariantName = v.VariantName,
                             Quantity = v.Quantity,
+                            ClothesLength = v.ClothesLength,
                             ImageUrl = job.VariantImageUrlsDict[v], // Lấy kết quả đã có
                             Status = "Active",
                             ProductWeight = v.ProductWeight,
@@ -873,11 +874,6 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _unitOfWork.SaveChanges();
         }
 
-        /// <summary>
-        /// Helper tối ưu: Trả về một thực thể Color (có sẵn hoặc mới)
-        /// Kiểm tra trùng lặp trên cả 3 trường: Prefix, Name, HexCode.
-        /// Sử dụng Dictionaries (O(1)) để tra cứu hiệu năng cao.
-        /// </summary>
         private Color GetOrCreateColor(
             CreateProductColorRequest request,
             // Dictionaries cho màu từ DB
@@ -1054,8 +1050,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                         if (variant.SizeId <= 0)
                             return (false, "Thông tin size không đầy đủ");
 
-                        if (variant.Quantity < 0)
-                            return (false, "Số lượng không được âm");
+                        if (variant.Quantity < 0 || variant.ClothesLength <= 0 || variant.ProductWidth <= 0 
+                            || variant.ProductLength <= 0 || variant.ProductWeight <= 0 || variant.ProductHeight <= 0)
+                            return (false, "Số lượng, độ dài đồ, dài gói, nặng gói, rộng gói, cao gói không được âm");
                     }
                 }
             }
@@ -1392,6 +1389,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                         Size = sizeEntity,
                         VariantName = vReq.VariantName,
                         Quantity = vReq.Quantity,
+                        ClothesLength = vReq.ClothesLength,
                         ImageUrl = imageUrl,
                         Status = vReq.Status ?? "Active",
                         ProductWeight = vReq.ProductWeight,
@@ -1418,6 +1416,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 dbVariant.ImageUrl = await _cloudinaryService.UploadImageAsync(req.ImageUrl);
 
             dbVariant.Quantity = req.Quantity ?? dbVariant.Quantity;
+            dbVariant.ClothesLength = req.ClothesLength ?? dbVariant.ClothesLength;
             dbVariant.Status = req.Status ?? dbVariant.Status;
             dbVariant.VariantName = req.VariantName ?? dbVariant.VariantName;
             dbVariant.ProductWeight = req.ProductWeight ?? dbVariant.ProductWeight;

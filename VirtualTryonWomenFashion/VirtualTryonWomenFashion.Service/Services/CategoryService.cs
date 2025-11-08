@@ -235,7 +235,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     return new MessageModel
                     {
                         Message = "Xóa thành công category",
-                        StatusCode = StatusCodes.Status204NoContent
+                        StatusCode = StatusCodes.Status200OK
                     };
                 }
                 else
