@@ -48,8 +48,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         throw new ArgumentException(selectedCharacteristic.Message);
                     }
-                    string characteristicDescribe = _characteristicService.GetCharacteristicDescription(selectedCharacteristic.Data);
-
+                    string characteristicDescribe = await _characteristicService.GetCharacteristicDescription(selectedCharacteristic.Data);
                     aiConversation.Messages.Add(new Message() { Content = characteristicDescribe, SenderId = currentUserId, IsAiresponse = false, CreatedAt = DateTime.UtcNow.AddHours(7) });
 
                     List<Category> categories = await _categoryService.GetAllCategories();

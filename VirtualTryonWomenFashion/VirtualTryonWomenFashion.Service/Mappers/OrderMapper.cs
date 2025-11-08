@@ -29,7 +29,8 @@ public static class OrderMapper
             EstimatedDelivery = model.EstimatedDelivery,
             UserInformation = model.Customer.MapToUserInformation(),
             TransactionInformation = model.Transaction.MapToTransactionInformation(),
-            ResponseOrderDetails = responseOrderDetails
+            ResponseOrderDetails = responseOrderDetails,
+            ResponseStatusLogs = model.StatusLogs.Select(sl => sl.MapToResponseStatusLog()).ToList()
         };
     }
 }

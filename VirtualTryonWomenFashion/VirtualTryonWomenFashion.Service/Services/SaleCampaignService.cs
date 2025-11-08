@@ -186,21 +186,21 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         }
 
-        public async Task<ResponsePaginationModel<List<ResponseGetSaleCampaign>>> GetAllSaleCampaign(PaginationParameter paginationParameter)
+        public async Task<ResponsePaginationModel<List<ResponseGetShortSaleCampaignDetail>>> GetAllSaleCampaign(PaginationParameter paginationParameter)
         {
             // for admin
             try
             {
                 int totalRecords = _saleCampaignRepository.Count(x => x.IsDeleted == false);
-                List<SaleCampaign> listSaleCampaign = await _saleCampaignRepository.GetAll(paginationParameter, x => x.IsDeleted == false, null, x => x.ProductInSaleCampaigns);
+                List<SaleCampaign> listSaleCampaign = await _saleCampaignRepository.GetAll(paginationParameter, x => x.IsDeleted == false, null, []);
                 int totalPages = (int)Math.Ceiling((decimal)totalRecords / paginationParameter.PageSize);
-                List<ResponseGetSaleCampaign> listMapper = _mapper.Map<List<ResponseGetSaleCampaign>>(listSaleCampaign);
-                return new ResponsePaginationModel<List<ResponseGetSaleCampaign>>(StatusCodes.Status200OK, listMapper, totalRecords, totalPages);
+                List<ResponseGetShortSaleCampaignDetail> listMapper = _mapper.Map<List<ResponseGetShortSaleCampaignDetail>>(listSaleCampaign);
+                return new ResponsePaginationModel<List<ResponseGetShortSaleCampaignDetail>>(StatusCodes.Status200OK, listMapper, totalRecords, totalPages);
 
             }
             catch (Exception ex)
             {
-                return new ResponsePaginationModel<List<ResponseGetSaleCampaign>>(StatusCodes.Status400BadRequest, [], 0, 0);
+                return new ResponsePaginationModel<List<ResponseGetShortSaleCampaignDetail>>(StatusCodes.Status400BadRequest, [], 0, 0);
             }
         }
 

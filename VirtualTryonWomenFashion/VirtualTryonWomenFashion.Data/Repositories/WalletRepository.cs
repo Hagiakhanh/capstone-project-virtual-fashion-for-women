@@ -28,6 +28,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         public async Task<List<Wallet>> GetAllWalletsByIds(List<int> walletIds)
         {
             var wallets = await _context.Wallets
+                .Include(w => w.User)
                 .Where(w => walletIds.Contains(w.WalletId))
                 .ToListAsync();
             return wallets;
