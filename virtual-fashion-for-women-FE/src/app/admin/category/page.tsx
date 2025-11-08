@@ -6,9 +6,17 @@ import { Category, CategoryFormData } from "@/types/category";
 import CategoryCard from "@/components/Category/CategoryCard";
 import CategoryModal from "@/components/Category/CategoryModal";
 import DeleteConfirmModal from "@/components/Category/DeleteConfirmModal";
+import { Size } from "@/types/size";
+import CategorySizeTemplateModal from "@/components/Category/CategorySizeTemplateModal";
+// Giả sử bạn có 1 component toast message
+import { messageToast } from "@/helpers/toastHelper";
+import { api } from "@/api/instance";
 
 export default function CategoryManagementPage() {
     const [categories, setCategories] = useState<Category[]>([]);
+
+    const [allSizes, setAllSizes] = useState<Size[]>([]);
+
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -19,27 +27,40 @@ export default function CategoryManagementPage() {
         null
     );
 
+    // State cho modal Size Template (MỚI)
+    const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+    // Dùng state riêng để tránh nhầm lẫn với selectedCategory
+    const [categoryForTemplate, setCategoryForTemplate] = useState<Category | null>(null);
+
     // Hàm fetch dữ liệu
-    const fetchCategories = async () => {
+    const fetchMasterData = async () => {
         setIsLoading(true);
         setError(null);
         try {
-        const response = await fetch("/api/category");
-        if (!response.ok) {
-            throw new Error("Lỗi khi tải danh mục");
-        }
-        const data = await response.json();
-        setCategories(data);
+            // Dùng Promise.all như ví dụ của bạn
+            const [categoriesRes, sizesRes] = await Promise.all([
+                api.get("/category"), // Gọi route handler
+                api.get("/size"),     // Gọi route handler
+            ]);
+
+            setCategories(
+                Array.isArray(categoriesRes.data) ? categoriesRes.data : []
+            );
+            setAllSizes(Array.isArray(sizesRes.data) ? sizesRes.data : []);
         } catch (err: any) {
-        setError(err.message);
+            const errMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
+            setError(errMsg);
+            messageToast.error(errMsg);
+            console.error("Error fetching master data:", err);
         } finally {
-        setIsLoading(false);
+            setIsLoading(false);
         }
     };
 
-  // Fetch dữ liệu khi component được mount
+    // Fetch dữ liệu khi component được mount
     useEffect(() => {
-        fetchCategories();
+        //fetchCategories();
+        fetchMasterData();
     }, []);
 
     // === CÁC HÀM XỬ LÝ ===
@@ -62,32 +83,37 @@ export default function CategoryManagementPage() {
     const handleCloseModals = () => {
         setIsModalOpen(false);
         setIsDeleteModalOpen(false);
+        setIsTemplateModalOpen(false); // <-- Đóng cả modal template
         setSelectedCategory(null);
+        setCategoryForTemplate(null); // <-- Reset cả state template
     };
 
     // Xử lý Save (Create hoặc Update)
     const handleSave = async (formData: CategoryFormData) => {
-        const url = selectedCategory
-        ? `/api/category/${selectedCategory.categoryId}` // Update
-        : "/api/category"; // Create
-        const method = selectedCategory ? "PUT" : "POST";
-
         try {
-        const response = await fetch(url, {
-            method: method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData),
-        });
+            let response;
+            if (selectedCategory) {
+                // Update
+                response = await api.put(
+                    `/category/${selectedCategory.categoryId}`,
+                    formData
+                );
+            } else {
+                // Create
+                response = await api.post("/category", formData);
+            }
 
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || "Thao tác thất bại");
-        }
-
-        handleCloseModals();
-        fetchCategories(); // Tải lại danh sách
+            if (response.status === 200 || response.status === 201) {
+                messageToast.success(response.data.message || "Thao tác thành công");
+                handleCloseModals();
+                fetchMasterData(); // Tải lại danh sách
+            } else {
+                throw new Error(response.data.message || "Thao tác thất bại");
+            }
         } catch (err: any) {
-        alert(`Lỗi: ${err.message}`);
+            const errMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
+            messageToast.error(errMsg);
+            console.error("Error saving category:", err);
         }
     };
 
@@ -96,23 +122,27 @@ export default function CategoryManagementPage() {
         if (!selectedCategory) return;
 
         try {
-        const response = await fetch(
-            `/api/category/${selectedCategory.categoryId}`,
-            {
-            method: "DELETE",
+            const response = await api.delete(
+                `/category/${selectedCategory.categoryId}`
+            );
+            
+            if (response.status === 200) {
+                messageToast.success(response.data.message || "Xóa thành công");
+                handleCloseModals();
+                fetchMasterData(); // Tải lại danh sách
+            } else {
+                throw new Error(response.data.message || "Xóa thất bại");
             }
-        );
-
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || "Xóa thất bại");
-        }
-
-        handleCloseModals();
-        fetchCategories(); // Tải lại danh sách
         } catch (err: any) {
-        alert(`Lỗi: ${err.message}`);
+            const errMsg = err.response?.data?.message || err.message || "Lỗi không xác định";
+            messageToast.error(errMsg);
+            console.error("Error deleting category:", err);
         }
+    };
+
+    const handleOpenTemplateModal = (category: Category) => {
+        setCategoryForTemplate(category);
+        setIsTemplateModalOpen(true);
     };
 
   // === RENDER ===
@@ -141,6 +171,7 @@ export default function CategoryManagementPage() {
                         category={category}
                         onEdit={() => handleOpenEditModal(category)}
                         onDelete={() => handleOpenDeleteModal(category)}
+                        onEditTemplate={() => handleOpenTemplateModal(category)} // <-- Truyền hàm
                     />
                 ))}
             </div>
@@ -158,6 +189,20 @@ export default function CategoryManagementPage() {
                 onDelete={handleDelete}
                 categoryName={selectedCategory?.categoryName}
             />
+            {/* Modal MỚI cho Size Template */}
+            {isTemplateModalOpen && (
+                <CategorySizeTemplateModal
+                    isOpen={isTemplateModalOpen}
+                    onClose={handleCloseModals}
+                    category={categoryForTemplate}
+                    allSizes={allSizes}
+                    onSaveSuccess={() => {
+                        messageToast.success("Cập nhật bảng size thành công!");
+                        handleCloseModals();
+                        // Không cần fetch lại vì data này không hiển thị ở page
+                    }}
+                />
+            )}
         </div>
     );
 }

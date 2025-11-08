@@ -14,6 +14,7 @@ interface VariantItemProps {
         productLength: number;
         productWidth: number;
         productHeight: number;
+        clothesLength: number;
         imageUrl: File | null;
     };
     variantIndex: number;
@@ -37,6 +38,29 @@ export default function VariantItem({
     //onFileChange,
     errors,
 }: VariantItemProps) {
+
+    const handleNumericChange = (
+        field: string,
+        value: string,
+        max: number,
+        defaultOnEmpty: number = 0,
+        isInteger: boolean = false
+    ) => {
+        if (value === "") {
+            onUpdate(field, defaultOnEmpty);
+            return;
+        }
+
+        const num = isInteger ? parseInt(value) : parseFloat(value);
+
+        if (isNaN(num)) {
+            return;
+        }
+
+        if (num <= max) {
+            onUpdate(field, num);
+        }
+    };
 
     return (
         <div className="border border-gray-200 rounded-md p-3 mb-3 bg-white">
@@ -62,7 +86,6 @@ export default function VariantItem({
                         type="text"
                         value={variant.variantName}
                         onChange={(e) => onUpdate("variantName", e.target.value)}
-                        //className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${
                             errors?.variantName ? 'border-red-500' : 'border-gray-300'
                         }`}
@@ -79,7 +102,6 @@ export default function VariantItem({
                     <select
                         value={variant.sizeId}
                         onChange={(e) => onSizeSelect(parseInt(e.target.value))}
-                        //className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${
                             errors?.sizeId ? 'border-red-500' : 'border-gray-300'
                         }`}
@@ -114,9 +136,11 @@ export default function VariantItem({
                     <input
                         type="number"
                         min="0"
+                        max="9999"
                         value={variant.quantity}
-                        onChange={(e) => onUpdate("quantity", parseInt(e.target.value))}
-                        //className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) =>
+                            handleNumericChange("quantity", e.target.value, 9999,  0, true)
+                        }
                         className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${
                             errors?.quantity ? 'border-red-500' : 'border-gray-300'
                         }`}
@@ -132,10 +156,12 @@ export default function VariantItem({
                     </label>
                     <input
                         type="number"
-                        step="0.01"
+                        step="0.1"
+                        min="0.1"
+                        max="10"
                         value={variant.productWeight}
                         onChange={(e) =>
-                        onUpdate("productWeight", parseFloat(e.target.value))
+                            handleNumericChange("productWeight", e.target.value, 10, 0.1)
                         }
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
@@ -148,12 +174,37 @@ export default function VariantItem({
                     <input
                         type="number"
                         step="0.1"
+                        min="0.1"
+                        max="100"
                         value={variant.productLength}
                         onChange={(e) =>
-                        onUpdate("productLength", parseFloat(e.target.value))
+                            handleNumericChange("productLength", e.target.value, 100, 1)
                         }
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
+                </div>
+
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Dài áo/quần/váy/đầm (cm)
+                    </label>
+                    <input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        max="500"
+                        value={variant.clothesLength}
+                        onChange={(e) =>
+                            handleNumericChange("clothesLength", e.target.value, 500, 1)
+                        }
+                        // Thêm logic hiển thị lỗi nếu cần
+                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                            errors?.clothesLength ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                    />
+                    {errors?.clothesLength && (
+                        <p className="text-red-500 text-xs mt-1">{errors.clothesLength}</p>
+                    )}
                 </div>
 
                 <div>
@@ -163,9 +214,11 @@ export default function VariantItem({
                     <input
                         type="number"
                         step="0.1"
+                        min="0.1"
+                        max="100"
                         value={variant.productWidth}
                         onChange={(e) =>
-                        onUpdate("productWidth", parseFloat(e.target.value))
+                            handleNumericChange("productWidth", e.target.value, 100, 1)
                         }
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
@@ -178,9 +231,11 @@ export default function VariantItem({
                     <input
                         type="number"
                         step="0.1"
+                        min="0.1"
+                        max="100"
                         value={variant.productHeight}
                         onChange={(e) =>
-                            onUpdate("productHeight", parseFloat(e.target.value))
+                            handleNumericChange("productHeight", e.target.value, 100, 1)
                         }
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />

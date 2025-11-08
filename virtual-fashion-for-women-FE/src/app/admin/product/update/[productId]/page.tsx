@@ -99,6 +99,7 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
                                 productLength: pv.productLength,
                                 productWidth: pv.productWidth,
                                 productHeight: pv.productHeight,
+                                clothesLength: pv.clothesLength || 0,
                             })) || [],
                             colorName: pc.color?.colorName || '',
                             colorPrefix: pc.color?.colorPrefix || '',
@@ -188,7 +189,7 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
         updated[colorIndex].variants!.push({
             sizeId: undefined, variantName: '', quantity: 0, imageUrl: undefined,
             imagePreview: undefined, status: 'Active', productWeight: 0.1,
-            productLength: 15, productWidth: 10, productHeight: 0.2, sizeCode: ''
+            productLength: 15, productWidth: 10, productHeight: 0.2, clothesLength: 0.1, sizeCode: ''
         });
         setProductColors(updated);
     };
@@ -212,6 +213,10 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
 
     const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const raw = e.target.value.replace(/\./g, '').replace(/,/g, '');
+        const MAX_DIGITS = 9;
+        if (raw.length > MAX_DIGITS) {
+            return;
+        }
         const numericValue = raw === '' ? '' : parseFloat(raw);
         setPrice(numericValue);
     };
