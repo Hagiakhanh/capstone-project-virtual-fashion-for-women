@@ -41,9 +41,13 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                            opt => opt.MapFrom(src => src.ProductColors
                                .SelectMany(pc => pc.ProductVariants)
                                .Where(pv => pv.Size != null)
-                               .Select(pv => pv.Size)
+                               //.Select(pv => pv.Size.CategorySizeTemplates)
+                               .SelectMany(pv => pv.Size.CategorySizeTemplates)
+                                .Where(tpl => tpl.CategoryId == src.CategoryId)
+                                .OrderBy(tpl => tpl.MinBust)
+                                .Select(tpl => tpl.Size)
                                .Distinct()
-                               .OrderBy(s => s.MinHeight)
+                               //.OrderBy(s => s.MinHeight)
                                .ToList()))
                 // ProductColors map sang ResponProductColorWithListSize
                 .ForMember(dest => dest.ProductColors,
@@ -60,7 +64,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 .ForMember(dest => dest.ProductVariants,
                            opt => opt.MapFrom(src =>
                                src.ProductVariants
-                                  .OrderBy(pv => pv.Size.MinHeight) // ✅ Sort tại đây
+                                  //.OrderBy(pv => pv.Size.MinHeight) // ✅ Sort tại đây
                                   .ToList()));
 
             // ProductColor -> ResponProductColorWithListSize
@@ -69,9 +73,13 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 .ForMember(dest => dest.SizeDto,
                            opt => opt.MapFrom(src => src.ProductVariants
                                .Where(pv => pv.Size != null)
-                               .Select(pv => pv.Size)
+                               //.Select(pv => pv.Size)
+                               .SelectMany(pv => pv.Size.CategorySizeTemplates)
+                                .Where(tpl => tpl.CategoryId == src.Product.CategoryId)
+                                .OrderBy(tpl => tpl.MinBust)
+                                .Select(tpl => tpl.Size)
                                .Distinct()
-                               .OrderBy(s => s.MinHeight)
+                               //.OrderBy(s => s.MinHeight)
                                .ToList()))
                 .ForMember(dest => dest.ProductImagesDto,
                            opt => opt.MapFrom(src => src.ProductImages))

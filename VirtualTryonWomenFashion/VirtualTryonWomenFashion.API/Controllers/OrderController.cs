@@ -163,5 +163,20 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpGet("{orderId}/can-refund")]
+        public async Task<IActionResult> CanRequestOrderRefund(int orderId)
+        {
+            try
+            {
+                MessageModelWithData<bool> result = await _orderService.CanRequestOrderRefund(orderId);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }

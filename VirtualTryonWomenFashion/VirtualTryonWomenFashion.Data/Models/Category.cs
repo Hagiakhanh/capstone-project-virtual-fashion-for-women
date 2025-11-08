@@ -15,5 +15,7 @@ public partial class Category
 
     public string BodyPart { get; set; }
 
+    public virtual ICollection<CategorySizeTemplate> CategorySizeTemplates { get; set; } = new List<CategorySizeTemplate>();
+
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 }

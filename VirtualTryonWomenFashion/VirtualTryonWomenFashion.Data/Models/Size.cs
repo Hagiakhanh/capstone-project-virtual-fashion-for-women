@@ -11,21 +11,7 @@ public partial class Size
 
     public string SizeCode { get; set; }
 
-    public double? MinHeight { get; set; }
-
-    public double? MaxHeight { get; set; }
-
-    public double? MinBust { get; set; }
-
-    public double? MaxBust { get; set; }
-
-    public double? MinWaist { get; set; }
-
-    public double? MaxWaist { get; set; }
-
-    public double? MinHips { get; set; }
-
-    public double? MaxHips { get; set; }
+    public virtual ICollection<CategorySizeTemplate> CategorySizeTemplates { get; set; } = new List<CategorySizeTemplate>();
 
     public virtual ICollection<ProductVariant> ProductVariants { get; set; } = new List<ProductVariant>();
 }

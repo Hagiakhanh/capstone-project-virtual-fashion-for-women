@@ -27,6 +27,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[CategorySizeTemplates]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Characteristics]",
          "ObjectType": 0
       },
@@ -104,6 +108,10 @@
       },
       {
          "Name": "[dbo].[SaleCampaigns]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ShopAddress]",
          "ObjectType": 0
       },
       {

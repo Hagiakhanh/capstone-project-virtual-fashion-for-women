@@ -13,6 +13,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductVariant
         public int? SizeId { get; set; }
         public string? VariantName { get; set; }
         public int? Quantity { get; set; }
+        public double? ClothesLength { get; set; }
         public IFormFile? ImageUrl { get; set; }
         public string? Status { get; set; }
         public decimal? ProductWeight { get; set; }

@@ -84,6 +84,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     SizeId = sizeId,
                     VariantName = request.VariantName,
                     Quantity = request.Quantity,
+                    ClothesLength = request.ClothesLength,
                     ImageUrl = imageUrl,
                     Status = "Active",
                     ProductWeight = request.ProductWeight,
@@ -178,6 +179,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 existingVariant.SizeId = sizeId;
                 existingVariant.VariantName = request.VariantName ?? existingVariant.VariantName;
                 existingVariant.Quantity = request.Quantity ?? existingVariant.Quantity;
+                existingVariant.ClothesLength = request.ClothesLength ?? existingVariant.ClothesLength;
                 existingVariant.ImageUrl = imageUrl;
                 existingVariant.ProductWeight = request.ProductWeight ?? existingVariant.ProductWeight;
                 existingVariant.ProductLength = request.ProductLength ?? existingVariant.ProductLength;
