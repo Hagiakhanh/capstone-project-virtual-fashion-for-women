@@ -1,37 +1,35 @@
+// components/Size/SizeModal.tsx
 import React, { useState, useEffect, FormEvent } from "react";
-import { Category, CategoryFormData } from "@/types/category";
+import { Size, SizeFormData } from "@/types/size"; // <-- Thay đổi
 
-export default function CategoryModal({
+export default function SizeModal({ // <-- Thay đổi
     isOpen,
     onClose,
     onSave,
-    category,
+    size, // <-- Thay đổi
 }: {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (formData: CategoryFormData) => void;
-    category: Category | null;
+    onSave: (formData: SizeFormData) => void;
+    size: Size | null; // <-- Thay đổi
 }) {
-    const [formData, setFormData] = useState<CategoryFormData>({
-        categoryName: "",
-        bodyPart: "",
+    const [formData, setFormData] = useState<SizeFormData>({
+        sizeCode: "", // <-- Chỉ còn 1 trường
     });
 
-  // Load dữ liệu vào form khi mở modal Edit
+    // Load dữ liệu vào form khi mở modal Edit
     useEffect(() => {
-        if (category) {
+        if (size) { // <-- Thay đổi
         setFormData({
-            categoryName: category.categoryName,
-            bodyPart: category.bodyPart,
+            sizeCode: size.sizeCode, // <-- Thay đổi
         });
         } else {
         // Reset form khi mở modal Create
         setFormData({
-            categoryName: "",
-            bodyPart: "",
+            sizeCode: "", // <-- Thay đổi
         });
         }
-    }, [category, isOpen]);
+    }, [size, isOpen]); // <-- Thay đổi
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -51,35 +49,25 @@ export default function CategoryModal({
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
                 <h2 className="text-2xl font-bold mb-4">
-                    {category ? "Chỉnh sửa Danh mục" : "Tạo Danh mục mới"}
+                    {size ? "Chỉnh sửa Kích thước" : "Tạo Kích thước mới"} {/* <-- Thay đổi */}
                 </h2>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Tên Danh mục (categoryName)
+                            Mã Kích thước (sizeCode) {/* <-- Thay đổi */}
                         </label>
                         <input
                             type="text"
-                            name="categoryName"
-                            value={formData.categoryName}
+                            name="sizeCode" // <-- Thay đổi
+                            value={formData.sizeCode} // <-- Thay đổi
                             onChange={handleChange}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                             required
                         />
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Bộ phận (bodyPart)
-                        </label>
-                        <input
-                            type="text"
-                            name="bodyPart"
-                            value={formData.bodyPart}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                            required
-                        />
-                    </div>
+
+                    {/* Xóa 2 trường bodyPart và categorySlug */}
+
                     <div className="flex justify-end gap-3 mt-6">
                         <button
                             type="button"

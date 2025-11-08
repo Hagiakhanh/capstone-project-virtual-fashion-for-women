@@ -1,28 +1,24 @@
-import { Category } from "@/types/category";
+// components/Size/SizeCard.tsx
+import { Size } from "@/types/size"; // <-- Thay đổi
 
-export default function CategoryCard({
-    category,
+export default function SizeCard({ // <-- Thay đổi
+    size, // <-- Thay đổi
     onEdit,
     onDelete,
-    onEditTemplate,
 }: {
-    category: Category;
+    size: Size; // <-- Thay đổi
     onEdit: () => void;
     onDelete: () => void;
-    onEditTemplate: () => void;
 }) {
     return (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all hover:shadow-xl">
             {/* Phần nội dung */}
             <div className="p-5">
                 <h3 className="text-xl font-bold text-gray-900 mb-1">
-                    {category.categoryName}
+                    {size.sizeCode} {/* <-- Thay đổi */}
                 </h3>
-                <p className="text-gray-600 text-sm">{category.bodyPart}</p>
-                
                 {/* Đường kẻ ngang */}
                 <hr className="my-4" />
-                
                 {/* Nút Bấm */}
                 <div className="flex justify-start gap-3">
                     <button
@@ -36,12 +32,6 @@ export default function CategoryCard({
                         className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
                     >
                         Sửa
-                    </button>
-                    <button
-                        onClick={onEditTemplate}
-                        className="px-4 py-2 text-sm font-medium text-green-700 bg-green-100 rounded-lg hover:bg-green-200 transition-colors"
-                    >
-                        Chỉnh Bảng Size
                     </button>
                 </div>
             </div>
