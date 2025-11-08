@@ -12,6 +12,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductVariant
         public string ProductVariantId { get; set; }
         public int? SizeId { get; set; }
         public string VariantName { get; set; }
+        public double? ClothesLength { get; set; }
         public int? Quantity { get; set; }
         public string ImageUrl { get; set; }
         public string Status { get; set; }

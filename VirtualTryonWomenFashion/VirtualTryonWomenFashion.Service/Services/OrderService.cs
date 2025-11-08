@@ -36,6 +36,7 @@ using VirtualTryonWomenFashion.Service.DTO.Notification;
 using VirtualTryonWomenFashion.Service.DTO.UserInteraction;
 using VirtualTryonWomenFashion.Service.DTO.StatusLog;
 using VirtualTryonWomenFashion.Service.Hubs;
+using VirtualTryonWomenFashion.Service.DTO.OrderRefund;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -55,6 +56,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly INotificationService _notificationService;
         private readonly IHubContext<NotificationHub> _notificationHub;
         private readonly IUserService _userService;
+        private readonly IOrderRefundRepository _orderRefundRepository;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -70,7 +72,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             IStatusLogService statusLogService,
             INotificationService notificationService,
             IHubContext<NotificationHub> notificationHub,
-            IUserService userService
+            IUserService userService,
+            IOrderRefundRepository orderRefundRepository
         )
         {
             _orderDetailService = orderDetailService;
@@ -87,6 +90,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _notificationService = notificationService;
             _notificationHub = notificationHub;
             _userService = userService;
+            _orderRefundRepository = orderRefundRepository;
         }
 
         public async Task<Order> CreateOrderAsync(RequestCreateOrder requestCreateOrder)
@@ -714,6 +718,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                             case "delivered":
                                 {
                                     order.Status = OrderStatusEnum.Delivered.ToString();
+                                    if (order.Status == OrderStatusEnum.Delivered.ToString())
+                                    {
+                                        order.DeliveredAt = DateTime.UtcNow.AddHours(7);
+                                    }
                                     break;
                                 }
                         }
@@ -871,6 +879,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                     if (!oldStatus.Equals(newSystemStatus))
                     {
                         order.Status = newSystemStatus;
+                        if (order.Status == OrderStatusEnum.Delivered.ToString())
+                        {
+                            order.DeliveredAt = DateTime.UtcNow.AddHours(7);
+                        }
                         await _orderRepository.UpdateAsync(order);
                         successCount++;
                         RequestCreateStatusLog newStatusLog = new RequestCreateStatusLog()
@@ -988,6 +1000,42 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 throw new Exception($"Không thể cập nhật trạng thái GHN cho mã {order.ShippingCode}.", ex);
             }
+        }
+
+        public async Task<MessageModelWithData<bool>> CanRequestOrderRefund(int orderId)
+        {
+            Order order = await _orderRepository.GetOrderByOrderID(orderId);
+            if (order == null)
+            {
+                throw new Exception("Không tìm thấy đơn hàng");
+            }
+            if (order.Status != OrderStatusEnum.Delivered.ToString())
+            {
+                throw new Exception("Không thể tạo đơn hoàn hàng");
+            }
+            bool hasAnyActiveRefund = await _orderRefundRepository.CheckNonRejectedRefundByOrderId(orderId);
+            if (hasAnyActiveRefund)
+            {
+                throw new Exception("Đơn hàng hiện tại đã có yêu cầu hoàn hàng");
+            }
+
+            if (order.DeliveredAt != null && DateTime.UtcNow.AddHours(7) <= order.DeliveredAt.Value.AddDays(2))
+            {
+                return new MessageModelWithData<bool>
+                {
+                    Message = "Thời gian hoàn hàng hợp lệ",
+                    StatusCode = StatusCodes.Status200OK,
+                    Data = true
+                };
+            }
+
+            return new MessageModelWithData<bool>
+            {
+                Message = "Thời gian hoàn hàng không hợp lệ",
+                StatusCode = StatusCodes.Status400BadRequest,
+                Data = false
+            };
+
         }
     }
 }
