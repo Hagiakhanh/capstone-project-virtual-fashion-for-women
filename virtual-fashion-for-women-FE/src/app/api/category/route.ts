@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const api = createApiInstance(request);
-        const responseBE = await api.post("/category/create", body);
+        const responseBE = await api.post("/category", body);
 
         if (responseBE.status === 201) {
             const dataResponse = responseBE.data?.data || [];

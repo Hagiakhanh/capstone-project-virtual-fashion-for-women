@@ -8,6 +8,7 @@ export interface ProductVariantRequest {
     productLength: number;
     productWidth: number;
     productHeight: number;
+    clothesLength: number;
 }
 
 // Backend entities
