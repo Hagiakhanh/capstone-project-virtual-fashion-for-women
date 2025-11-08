@@ -256,34 +256,32 @@ export default function VirtualTryOnPage() {
         }
     }
 
+    const fetchCategories = async () => {
 
+        const categoryRes = await api.get('/category');
+        if (categoryRes.status === 200) {
+            setCategory(categoryRes.data);
 
+            // Đọc danh sách productColorID (mảng chuỗi)
+            const storedItems = sessionStorage.getItem("productColor");
+            if (storedItems) {
+                try {
+                    const parsedItems = JSON.parse(storedItems);
+                    const productColorIds = Array.isArray(parsedItems) ? parsedItems : [parsedItems];
 
-    useEffect(() => {
-        const fetchCategories = async () => {
+                    await Promise.all(
+                        productColorIds.map(id => fetchProductColor(id, categoryRes.data))
+                    );
 
-            const categoryRes = await api.get('/category');
-            if (categoryRes.status === 200) {
-                setCategory(categoryRes.data);
-
-                // Đọc danh sách productColorID (mảng chuỗi)
-                const storedItems = sessionStorage.getItem("productColor");
-                if (storedItems) {
-                    try {
-                        const parsedItems = JSON.parse(storedItems);
-                        const productColorIds = Array.isArray(parsedItems) ? parsedItems : [parsedItems];
-
-                        await Promise.all(
-                            productColorIds.map(id => fetchProductColor(id, categoryRes.data))
-                        );
-
-                    } catch (e) {
-                        console.error("❌ Lỗi parse sessionStorage productColor:", e);
-                    } finally {
-                    }
+                } catch (e) {
+                    console.error("❌ Lỗi parse sessionStorage productColor:", e);
+                } finally {
                 }
             }
-        };
+        }
+    };
+
+    useEffect(() => {
 
         fetchCategories();
     }, []);
