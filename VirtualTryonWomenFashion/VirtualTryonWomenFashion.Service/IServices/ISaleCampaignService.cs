@@ -20,5 +20,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModelWithData<ResponseGetSaleCampaign>> GetDetailSaleCampaign(int saleCampaignID);
         public Task ChangeStatusForExistingSaleCampaign();
 
+        public Task<ResponseSaleCampaignStatistic> GetStatisticBySaleCampaignID(int saleCampaignID, DateOnly? startDate = null, DateOnly? endDate = null);
+
     }
 }

@@ -56,6 +56,7 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IOrderRefundDetailRepository, OrderRefundDetailRepository>();
             services.AddScoped<IWalletRepository, WalletRepository>();
             services.AddScoped<ICategorySizeTemplateRepository, CategorySizeTemplateRepository>();
+            services.AddScoped<IShopAddressRepository, ShopAddressRepository>();
             //Services
             services.AddScoped<IAiconversationService, AiconversationService>();
             services.AddScoped<ICartService, CartService>();

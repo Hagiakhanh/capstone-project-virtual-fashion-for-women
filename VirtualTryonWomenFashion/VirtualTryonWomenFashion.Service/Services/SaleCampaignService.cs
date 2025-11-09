@@ -26,7 +26,9 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IProductRepository _productRepository;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IMapper _mapper;
-        public SaleCampaignService(ISaleCampaignRepository saleCampaignRepository, IUnitOfWork unitOfWork, IProductRepository productRepository, ICloudinaryService cloudinaryService, IMapper mapper, IProductInSaleCampaignService productInSaleCampaignService)
+        private readonly IOrderDetailRepository _orderDetailRepository;
+        public SaleCampaignService(ISaleCampaignRepository saleCampaignRepository, IUnitOfWork unitOfWork, IProductRepository productRepository,
+            ICloudinaryService cloudinaryService, IMapper mapper, IProductInSaleCampaignService productInSaleCampaignService, IOrderDetailRepository orderDetailRepository)
         {
             _saleCampaignRepository = saleCampaignRepository;
             _unitOfWork = unitOfWork;
@@ -34,6 +36,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _cloudinaryService = cloudinaryService;
             _mapper = mapper;
             _productInSaleCampaignService = productInSaleCampaignService;
+            _orderDetailRepository = orderDetailRepository;
         }
 
         public async Task<MessageModel> CreateSaleCampaign(RequestCreateSaleCampaign model)
@@ -263,9 +266,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                 // validate discount
                 if (p.DiscountType == SalePriceTypeInputEnum.PercentDiscount)
                 {
-                    if (p.Value <= 0 || p.Value > 100)
+                    if (p.Value < 1 || p.Value > 99)
                     {
-                        throw new ArgumentException($"Sản phẩm {p.ProductID}: % giảm giá phải nằm trong khoảng 0 < value ≤ 100");
+                        throw new ArgumentException($"Sản phẩm {p.ProductID}: % giảm giá phải nằm trong khoảng 1 đến 99");
                     }
                 }
                 else // Direct price
@@ -452,10 +455,10 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 if (p.DiscountType == SalePriceTypeInputEnum.PercentDiscount)
                 {
-                    if (p.Value <= 0 || p.Value > 100)
+                    if (p.Value < 1 || p.Value > 99)
                     {
                         throw new ArgumentException(
-                            $"Sản phẩm {p.ProductID}: % giảm giá phải nằm trong khoảng 0 < value ≤ 100"
+                            $"Sản phẩm {p.ProductID}: % giảm giá phải nằm trong khoảng 1 đến 99"
                         );
                     }
                 }
@@ -519,6 +522,116 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw ex;
             }
         }
+
+        public async Task<ResponseSaleCampaignStatistic> GetStatisticBySaleCampaignID(
+    int saleCampaignID, DateOnly? startDate = null, DateOnly? endDate = null)
+        {
+            // Lấy thông tin chiến dịch
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                if (endDate.Value < startDate.Value)
+                {
+                    throw new ArgumentException("Ngày kết thúc không được nhỏ hơn ngày bắt đầu.");
+                }
+            }
+            var campaign = await _saleCampaignRepository.GetByIdAsync(saleCampaignID);
+            if (campaign == null || campaign.IsDeleted)
+                throw new ArgumentException("Chiến dịch không tồn tại hoặc đã bị xoá");
+
+            // Xác định phạm vi ngày
+            DateOnly actualStart = startDate ?? campaign.StartDate.Value;
+            DateOnly actualEnd = endDate ?? campaign.EndDate.Value;
+
+            // Lấy danh sách sản phẩm thuộc chiến dịch
+            var productInCampaigns = campaign.ProductInSaleCampaigns?.ToList() ?? [];
+            var productIds = productInCampaigns.Select(x => x.ProductId).ToList();
+
+            if (!productIds.Any())
+            {
+                return new ResponseSaleCampaignStatistic
+                {
+                    TotalRevenue = 0,
+                    TotalSoldQuantity = 0,
+                    AverageRevenuePerDate = 0,
+                    ListProductInCampaign = new(),
+                    ListSaleRevenueDate = new()
+                };
+            }
+
+            var orderDetails = await _orderDetailRepository.GetAllThenInclude(
+                null,
+                od => od.CampaignId == campaign.CampaignId
+                   && od.Order.Status == OrderStatusEnum.Completed.ToString(), null,
+                [x => x.ProductVariant.ProductColor.Product]
+            );
+
+            if (orderDetails == null || !orderDetails.Any())
+            {
+                return new ResponseSaleCampaignStatistic
+                {
+                    TotalRevenue = 0,
+                    TotalSoldQuantity = 0,
+                    AverageRevenuePerDate = 0,
+                    ListProductInCampaign = new(),
+                    ListSaleRevenueDate = new()
+                };
+            }
+
+            // Tổng doanh thu & số lượng
+            decimal totalRevenue = orderDetails.Sum(x => x.PriceAtTime);
+            int totalSoldQuantity = orderDetails.Sum(x => x.Quantity);
+
+            // Trung bình doanh thu mỗi ngày
+            int totalDays = (actualEnd.DayNumber - actualStart.DayNumber) + 1;
+            decimal avgRevenue = totalDays > 0 ? totalRevenue / totalDays : totalRevenue;
+
+            // Nhóm doanh thu theo ngày
+            var revenueByDate = orderDetails
+                .GroupBy(x => DateOnly.FromDateTime(x.Order.CreatedAt))
+                .Select(g => new ResponseSaleCampaignRevenueDate
+                {
+                    Date = g.Key.ToDateTime(TimeOnly.MinValue),
+                    Revenue = g.Sum(x => x.PriceAtTime)
+                })
+                .OrderBy(x => x.Date)
+                .ToList();
+
+            // Nhóm sản phẩm trong chiến dịch
+            var productStatistic = orderDetails
+       .GroupBy(x => x.ProductVariant.ProductColor.ProductId)
+       .Select(g => new ResponseProductInSaleCampaignStatistic
+       {
+           ProductID = g.Key,
+           ProductName = g.First().ProductVariant.ProductColor.Product.ProductName,
+           ImageUrl = g.First().ProductVariant.ProductColor.Product.MainImageUrl,
+           TotalSoldQuantity = g.Sum(x => x.Quantity),
+
+           // 🔹 Lấy chi tiết từng variant trong sản phẩm
+           ListResponseProductVariant = g.GroupBy(v => v.ProductVariantId)
+               .Select(vg => new ResponseVariantInSaleCampaignStatistic
+               {
+                   ProductVariantId = vg.Key,
+                   ProductVariantName = vg.First().ProductVariant.VariantName,
+                   SoldQuantity = vg.Sum(x => x.Quantity),
+                   ImageUrl = vg.First().ProductVariant.ImageUrl
+               })
+               .ToList()
+       })
+       .OrderByDescending(x => x.TotalSoldQuantity)
+       .ToList();
+
+
+            // Kết quả trả về
+            return new ResponseSaleCampaignStatistic
+            {
+                TotalRevenue = totalRevenue,
+                TotalSoldQuantity = totalSoldQuantity,
+                AverageRevenuePerDate = Math.Round(avgRevenue, 2),
+                ListProductInCampaign = productStatistic,
+                ListSaleRevenueDate = revenueByDate
+            };
+        }
+
     }
 
 }
