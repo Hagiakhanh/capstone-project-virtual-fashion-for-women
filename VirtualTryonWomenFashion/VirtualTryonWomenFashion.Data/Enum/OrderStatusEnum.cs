@@ -7,6 +7,7 @@ public enum OrderStatusEnum
     Packed,
     Delivering,
     Delivered,
+    Returned,
     Completed,
     Failed
 }

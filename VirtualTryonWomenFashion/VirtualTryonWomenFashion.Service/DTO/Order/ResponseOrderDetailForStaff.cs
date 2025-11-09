@@ -39,6 +39,8 @@ namespace VirtualTryonWomenFashion.Service.DTO.Order
 
         public string? ShippingCode { get; set; }
 
+        public decimal? InsuranceFee { get; set; }
+
         public DateTime? EstimatedDelivery { get; set; }
         public string? CustomerName { get; set; }
         public string? CustomerPhone { get; set; }

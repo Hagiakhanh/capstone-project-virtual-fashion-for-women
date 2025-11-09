@@ -125,7 +125,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             int userId = _currentUserService.GetUserId();
             List<Transaction> rawTransactions = await _transactionRepository.GetAll(
                 filter: t => t.UserId == userId
-                             && t.Type == TypeTransactionEnum.Recharge.ToString(),
+                             && (t.Type == TypeTransactionEnum.Recharge.ToString() || t.Type == TypeTransactionEnum.Refund.ToString()),
                 pagination: paginationParameter,
                 orderBy: t =>t.OrderByDescending(x => x.UpdatedAt) 
             );
@@ -149,6 +149,19 @@ namespace VirtualTryonWomenFashion.Service.Services
                     t.Status == TransactionStatusEnum.Pending.ToString()
             );
             return pendingRechargeTransaction;
+        }
+
+        public async Task<int> CreateListTransactionAsync(List<Transaction> transactionList)
+        {
+            try
+            {
+                await _transactionRepository.AddRangeAsync(transactionList);
+                return await _unitOfWork.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi khi tạo list transaction: {ex.Message}");
+            }
         }
     }
 }
