@@ -23,7 +23,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 PercentDiscount = model.PercentDiscount,
                 SalePrice = model.SalePrice,
                 Product = model.Product != null
-                          ? productMapper.MapToResponseProductDto(model.Product)
+                          ? productMapper.MapToResponseProductDto(model.Product, model.SalePrice.Value)
                           : null
             };
         }

@@ -13,7 +13,7 @@ namespace VirtualTryonWomenFashion.Service.Mappers
 {
     public class ProductMapper
     {
-        public ResponseProductDto MapToResponseProductDto(Product product)
+        public ResponseProductDto MapToResponseProductDto(Product product, decimal salePrice)
         {
             return new ResponseProductDto
             {
@@ -25,6 +25,8 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 IsDeleted = product.IsDeleted,
                 CreatedAt = product.CreatedAt,
                 CategoryId = product.Category.CategoryId,
+                Price = product.Price,
+                PriceAtTime = salePrice,
                 ProductColors = product.ProductColors?.Select(pc => new ResponseProductColorDto
                 {
                     ProductColorId = pc.ProductColorId,

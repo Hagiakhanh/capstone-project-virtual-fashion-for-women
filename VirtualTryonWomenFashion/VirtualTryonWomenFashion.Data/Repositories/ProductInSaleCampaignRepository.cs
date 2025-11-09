@@ -28,6 +28,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(x => x.Product)
                     .ThenInclude(p => p.ProductColors)
                         .ThenInclude(pc => pc.ProductImages)
+                .Include(x => x.Product).ThenInclude(p => p.Category)
                 .ToListAsync();
 
             return productInSaleCampaigns;

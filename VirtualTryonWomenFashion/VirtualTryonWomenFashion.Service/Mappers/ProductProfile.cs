@@ -41,13 +41,12 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                            opt => opt.MapFrom(src => src.ProductColors
                                .SelectMany(pc => pc.ProductVariants)
                                .Where(pv => pv.Size != null)
-                               //.Select(pv => pv.Size.CategorySizeTemplates)
                                .SelectMany(pv => pv.Size.CategorySizeTemplates)
                                 .Where(tpl => tpl.CategoryId == src.CategoryId)
-                                .OrderBy(tpl => tpl.MinBust)
+                                .OrderBy(tpl => tpl.MaxBust)
+                                .ThenBy(tpl => tpl.MaxWaist)
                                 .Select(tpl => tpl.Size)
-                               .Distinct()
-                               //.OrderBy(s => s.MinHeight)
+                               .DistinctBy(s => s.SizeId)
                                .ToList()))
                 // ProductColors map sang ResponProductColorWithListSize
                 .ForMember(dest => dest.ProductColors,
@@ -64,7 +63,14 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 .ForMember(dest => dest.ProductVariants,
                            opt => opt.MapFrom(src =>
                                src.ProductVariants
-                                  //.OrderBy(pv => pv.Size.MinHeight) // ✅ Sort tại đây
+                                   .OrderBy(pv => pv.Size.CategorySizeTemplates
+                                       .Where(tpl => tpl.CategoryId == src.Product.CategoryId)
+                                       .Select(tpl => tpl.MaxBust)
+                                       .FirstOrDefault()) // 👈 Lấy MaxBust tương ứng Category
+                                   .ThenBy(pv => pv.Size.CategorySizeTemplates
+                                       .Where(tpl => tpl.CategoryId == src.Product.CategoryId)
+                                       .Select(tpl => tpl.MaxWaist)
+                                       .FirstOrDefault())
                                   .ToList()));
 
             // ProductColor -> ResponProductColorWithListSize
@@ -73,13 +79,12 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 .ForMember(dest => dest.SizeDto,
                            opt => opt.MapFrom(src => src.ProductVariants
                                .Where(pv => pv.Size != null)
-                               //.Select(pv => pv.Size)
                                .SelectMany(pv => pv.Size.CategorySizeTemplates)
                                 .Where(tpl => tpl.CategoryId == src.Product.CategoryId)
-                                .OrderBy(tpl => tpl.MinBust)
+                                .OrderBy(tpl => tpl.MaxBust)
+                                .ThenBy(tpl => tpl.MaxWaist)
                                 .Select(tpl => tpl.Size)
-                               .Distinct()
-                               //.OrderBy(s => s.MinHeight)
+                               .DistinctBy(s => s.SizeId)
                                .ToList()))
                 .ForMember(dest => dest.ProductImagesDto,
                            opt => opt.MapFrom(src => src.ProductImages))
