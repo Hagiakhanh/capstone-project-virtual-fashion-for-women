@@ -369,10 +369,10 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 if (!result.ContainsKey(w.ProductId))
                     result[w.ProductId] = 0;
-                result[w.ProductId] += 4;
+                result[w.ProductId] += 3;
             }
 
-            foreach (var o in userOrders)
+            foreach (var o in userOrders.Where(o => o.Order.Status == "Completed"))
             {
                 var product = o.ProductVariant?.ProductColor?.Product;
                 if (product == null) continue;
@@ -390,9 +390,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             return type.ToLower() switch
             {
                 "view" => 1,
-                "wishlist" => 3,
                 "addtocart" => 3,
-                "purchase" => 5,
                 "review" => 4,
                 _ => 0
             };
