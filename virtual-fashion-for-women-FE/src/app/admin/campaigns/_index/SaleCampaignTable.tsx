@@ -1,11 +1,13 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Table, Tag, Image, Space, Button } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import { apiToken } from "@/api/instance";
+import { ChartAreaIcon, Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface SaleCampaign {
-  campaignID: number;
+  campaignId: number;
   campaignName: string;
   description?: string;
   startDate: string;
@@ -21,7 +23,12 @@ const statusColorMap: Record<SaleCampaign["status"], string> = {
   Inactive: "default",
   Expired: "red",
 };
-
+const statusLabelMap: Record<SaleCampaign["status"], string> = {
+  Active: "Đang kích hoạt",
+  Pending: "Chờ kích hoạt",
+  Inactive: "Tạm dừng",
+  Expired: "Đã hết hạn",
+};
 export const SaleCampaignTable: React.FC = () => {
   const [data, setData] = useState<SaleCampaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +37,7 @@ export const SaleCampaignTable: React.FC = () => {
     pageSize: 5,
     total: 0,
   });
-
+  const router = useRouter();
   useEffect(() => {
     fetchData(pagination.current!, pagination.pageSize!);
   }, [pagination.current, pagination.pageSize]);
@@ -97,7 +104,7 @@ export const SaleCampaignTable: React.FC = () => {
       dataIndex: "status",
       key: "status",
       render: (status: SaleCampaign["status"]) => (
-        <Tag color={statusColorMap[status]}>{status}</Tag>
+        <Tag color={statusColorMap[status]}>{statusLabelMap[status]}</Tag>
       ),
     },
     {
@@ -106,16 +113,22 @@ export const SaleCampaignTable: React.FC = () => {
       render: (_, record) => (
         <Space>
           <Button
-            type="link"
-            onClick={() => console.log("View", record.campaignID)}
+            type="primary"
+            onClick={() =>
+              router.push("/admin/campaigns/statistic/" + record.campaignId)
+            }
+            icon={<ChartAreaIcon />}
           >
-            Xem
+            Xem phân tích
           </Button>
           <Button
-            type="link"
-            onClick={() => console.log("Edit", record.campaignID)}
+            type="default"
+            onClick={() =>
+              router.push("/admin/campaigns/edit/" + record.campaignId)
+            }
+            icon={<Pencil />}
           >
-            Sửa
+            Chỉnh sửa
           </Button>
         </Space>
       ),
