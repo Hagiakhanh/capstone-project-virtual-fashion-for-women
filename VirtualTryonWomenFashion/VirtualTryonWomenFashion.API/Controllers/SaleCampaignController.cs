@@ -56,8 +56,12 @@ namespace VirtualTryonWomenFashion.API.Controllers
         {
             try
             {
-                var result = await _saleCampaignService.GetStatisticBySaleCampaignID(id,startDate,endDate);
+                var result = await _saleCampaignService.GetStatisticBySaleCampaignID(id, startDate, endDate);
                 return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return StatusCode(400, ex.Message);
             }
             catch (Exception ex)
             {
