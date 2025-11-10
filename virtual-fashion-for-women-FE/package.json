@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ant-design/plots": "^2.6.6",
     "@microsoft/signalr": "^9.0.6",
     "@snap/camera-kit": "^1.11.0",
     "antd": "^5.26.7",

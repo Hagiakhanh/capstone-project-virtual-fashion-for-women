@@ -44,6 +44,7 @@ export interface ProductVariant {
     productLength?: number;
     productWidth?: number;
     productHeight?: number;
+    clothesLength?: number;
 }
 
 export interface ProductImage {
@@ -108,6 +109,7 @@ export interface UpdateProductVariantFormData {
     productLength?: number;
     productWidth?: number;
     productHeight?: number;
+    clothesLength?: number;
     // For creating new size
     sizeCode?: string;
 }

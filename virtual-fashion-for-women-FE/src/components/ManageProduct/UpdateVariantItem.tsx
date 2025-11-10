@@ -35,6 +35,27 @@ export default function UpdateVariantItem({
 
     const isActive = variant.status === 'Active';
 
+    const handleNumericChange = (
+        field: string,
+        value: string,
+        max: number,
+        isInteger: boolean = false
+    ) => {
+        if (value === "") {
+            onUpdate(field, undefined);
+            return;
+        }
+
+        const num = isInteger ? parseInt(value) : parseFloat(value);
+
+        if (isNaN(num)) {
+            return;
+        }
+        if (num <= max) {
+            onUpdate(field, num);
+        }
+    };
+
     return (
         // Đổi nền sang bg-white và thêm border
         <div className="bg-white p-4 mb-3 rounded-lg border border-gray-200">
@@ -107,8 +128,11 @@ export default function UpdateVariantItem({
                     <input
                         type="number"
                         min="0"
+                        max="9999"
                         value={variant.quantity || ''}
-                        onChange={(e) => onUpdate('quantity', e.target.value ? parseInt(e.target.value) : undefined)}
+                        onChange={(e) => 
+                            handleNumericChange('quantity', e.target.value, 9999, true)
+                        }
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     />
                 </div>
@@ -118,9 +142,13 @@ export default function UpdateVariantItem({
                     <label className="block text-sm font-medium mb-1">Cân nặng (kg)</label>
                     <input
                         type="number"
-                        step="0.01"
+                        step="0.1"
+                        min="0.1"
+                        max="10"
                         value={variant.productWeight || ''}
-                        onChange={(e) => onUpdate('productWeight', e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={(e) => 
+                            handleNumericChange('productWeight', e.target.value, 10)
+                        }
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     />
                 </div>
@@ -129,9 +157,28 @@ export default function UpdateVariantItem({
                     <label className="block text-sm font-medium mb-1">Chiều dài (cm)</label>
                     <input
                         type="number"
-                        step="0.01"
+                        step="0.1"
+                        min="0.1"
+                        max="100"
                         value={variant.productLength || ''}
-                        onChange={(e) => onUpdate('productLength', e.target.value ? parseFloat(e.target.value) : undefined)}
+                        onChange={(e) =>
+                            handleNumericChange('productLength', e.target.value, 100)
+                        }
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium mb-1">Dài áo/quần (cm)</label>
+                    <input
+                        type="number"
+                        step="1"
+                        min="20"
+                        max="200"
+                        value={variant.clothesLength || ''}
+                        onChange={(e) => {
+                            handleNumericChange('clothesLength', e.target.value, 200, true);
+                        }}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     />
                 </div>
@@ -140,9 +187,13 @@ export default function UpdateVariantItem({
                     <label className="block text-sm font-medium mb-1">Chiều rộng (cm)</label>
                     <input
                         type="number"
-                        step="0.01"
-                        value={variant.productWidth || ''}
-                        onChange={(e) => onUpdate('productWidth', e.target.value ? parseFloat(e.target.value) : undefined)}
+                        step="0.1"
+                        min="0.1"
+                        max="100"
+                        value={variant.productWidth || 0.1}
+                        onChange={(e) => {
+                            handleNumericChange('productWidth', e.target.value, 100);
+                        }}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     />
                 </div>
@@ -151,9 +202,13 @@ export default function UpdateVariantItem({
                     <label className="block text-sm font-medium mb-1">Chiều cao (cm)</label>
                     <input
                         type="number"
-                        step="0.01"
-                        value={variant.productHeight || ''}
-                        onChange={(e) => onUpdate('productHeight', e.target.value ? parseFloat(e.target.value) : undefined)}
+                        step="0.1"
+                        min="0.1"
+                        max="100"
+                        value={variant.productHeight || 0.1}
+                        onChange={(e) => 
+                            handleNumericChange('productHeight', e.target.value, 100)
+                        }
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     />
                 </div>

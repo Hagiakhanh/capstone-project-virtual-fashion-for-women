@@ -1,12 +1,17 @@
-"use client"; 
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Search, Bell, UserCircle, Menu, LogOut} from 'lucide-react';
+import { useState, useRef, useEffect } from "react";
+import { Search, Bell, UserCircle, Menu, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
-export default function AdminHeader({ toggleSidebar }: { toggleSidebar: () => void }) {
+export default function AdminHeader({
+  toggleSidebar,
+}: {
+  toggleSidebar: () => void;
+}) {
   // 1. State để quản lý trạng thái của dropdown
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
+  const { user, logout } = useAuth();
   // 2. Ref để tham chiếu đến div của dropdown
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -17,22 +22,31 @@ export default function AdminHeader({ toggleSidebar }: { toggleSidebar: () => vo
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       // Nếu dropdown đang mở và người dùng click vào vị trí không nằm trong dropdown
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
 
     // Thêm event listener khi dropdown được mở
     if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     // Dọn dẹp event listener khi component unmount hoặc dropdown đóng
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isDropdownOpen]); 
-
+  }, [isDropdownOpen]);
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Lỗi khi đăng xuất:", err);
+    }
+  };
   return (
     <header className="flex items-center justify-between h-16 bg-white border-b border-gray-200 px-4 md:px-6">
       <div className="flex items-center">
@@ -63,24 +77,28 @@ export default function AdminHeader({ toggleSidebar }: { toggleSidebar: () => vo
         </button>
 
         <div className="relative">
-          <button onClick={toggleDropdown} className='cursor-pointer'>
+          <button onClick={toggleDropdown} className="cursor-pointer">
             <UserCircle className="w-8 h-8 text-gray-600" />
           </button>
 
           {/* Nội dung Dropdown */}
           {isDropdownOpen && (
             <div
-              ref={dropdownRef} 
+              ref={dropdownRef}
               className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl z-50 py-1"
             >
               <div className="px-4 py-2 border-b">
-                <p className="text-sm font-semibold text-gray-800">Admin User</p>
-                <p className="text-xs text-gray-500">admin@myshop.com</p>
+                <p className="text-sm font-semibold text-gray-800">
+                  {user?.name || "Admin"}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {user?.email || "Admin@myshop.com"}
+                </p>
               </div>
               <div className="border-t border-gray-100"></div>
               <button
-                onClick={() => alert('Logging out...')}
-                className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                onClick={handleLogout}
+                className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -91,4 +109,4 @@ export default function AdminHeader({ toggleSidebar }: { toggleSidebar: () => vo
       </div>
     </header>
   );
-};
+}

@@ -3,6 +3,37 @@ import { Product, UpdateProductColorFormData, TagDto } from '@/models/RequestUpd
 /**
  * Convert form data to FormData object for API submission
  */
+export interface ValidationErrors {
+    productName?: string;
+    description?: string;
+    price?: string;
+    mainImageUrl?: string;
+    categoryId?: string;
+    tags?: string; // Lỗi chung cho cả mục Tag
+    productColorGeneral?: string; // Lỗi chung (ví dụ: 'phải có ít nhất 1 màu')
+    productColor?: (ProductColorError | null)[];
+}
+
+export interface ProductColorError {
+    colorId?: string;       // Lỗi cho dropdown (nếu chọn "Tạo mới" mà không nhập)
+    colorName?: string;     // Lỗi cho modal tạo màu mới
+    colorPrefix?: string;
+    hexCode?: string;
+    packageLens?: string;
+    // noBgImgUrl?: string; // Tùy chọn, nếu bạn muốn bắt buộc
+    productVariantImages?: string; // Lỗi cho upload nhiều ảnh
+    variantsError?: string; // Lỗi chung (ví dụ: 'phải có ít nhất 1 size')
+    variants?: (VariantError | null)[];
+}
+
+export interface VariantError {
+    variantName?: string;
+    sizeId?: string;
+    quantity?: string;
+    imageUrl?: string;
+    clothesLength?: string;
+}
+
 export function convertToFormData(formData: CreateProductFormData): FormData {
     const formDataToSend = new FormData();
 
@@ -106,6 +137,10 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
                 `ProductColor[${colorIndex}].Variants[${variantIndex}].ProductHeight`,
                 variant.productHeight.toString()
             );
+            formDataToSend.append(
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].ClothesLength`,
+                variant.clothesLength.toString()
+            );
 
             if (variant.imageUrl) {
                 formDataToSend.append(
@@ -124,101 +159,138 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
  */
 export function validateProductForm(
     formData: CreateProductFormData
-): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
+): { isValid: boolean; errors: ValidationErrors } { // <-- Trả về object lỗi
+
+    const errors: ValidationErrors = {}; // <-- Khởi tạo object lỗi
+    let isValid = true;
 
     if (!formData.productName.trim()) {
-        errors.push("Tên sản phẩm không được để trống");
+        errors.productName = "Tên sản phẩm không được để trống";
+        isValid = false;
     }
 
     if (!formData.description.trim()) {
-        errors.push("Mô tả không được để trống");
+        errors.description = "Mô tả không được để trống";
+        isValid = false;
     }
 
     if (formData.price <= 0) {
-        errors.push("Giá sản phẩm phải lớn hơn 0");
+        errors.price = "Giá sản phẩm phải lớn hơn 0";
+        isValid = false;
     }
 
     if (!formData.mainImageUrl) {
-        errors.push("Vui lòng chọn ảnh chính cho sản phẩm");
-    }
-
-    if (formData.productColor.length === 0) {
-        errors.push("Sản phẩm phải có ít nhất một màu");
+        errors.mainImageUrl = "Vui lòng chọn ảnh chính cho sản phẩm";
+        isValid = false;
     }
 
     if (formData.categoryId === 0) {
-        errors.push("Vui lòng chọn danh mục");
+        errors.categoryId = "Vui lòng chọn danh mục";
+        isValid = false;
     }
 
-    // Validate new tags
+    // Thêm validation cho tags (bạn chưa có)
+    if (formData.existingTagIds.length === 0 && formData.newTags.length === 0) {
+        errors.tags = "Vui lòng chọn hoặc thêm ít nhất một tag";
+        isValid = false;
+    }
+
+    // Validate new tags (nếu bạn vẫn muốn giữ)
     if (formData.newTags && formData.newTags.length > 0) {
         formData.newTags.forEach((tag, index) => {
             if (!tag.trim()) {
-                errors.push(`Tag mới ${index + 1}: Tên tag không được để trống`);
+                // Lỗi này khó hiển thị inline, có thể gộp chung vào errors.tags
+                errors.tags = (errors.tags || "") + ` Tag mới '${tag}' không hợp lệ.`;
+                isValid = false;
             }
         });
     }
 
-    formData.productColor.forEach((color, index) => {
-        // Nếu tạo màu mới (colorId = 0) thì phải nhập đủ thông tin
-        if (color.colorId === 0) {
-            if (!color.colorName.trim()) {
-                errors.push(`Màu ${index + 1}: Tên màu không được để trống`);
+    // === Validate Product Colors ===
+    if (formData.productColor.length === 0) {
+        errors.productColorGeneral = "Sản phẩm phải có ít nhất một màu";
+        isValid = false;
+    } else {
+        errors.productColor = formData.productColor.map((color, index) => {
+            const colorError: ProductColorError = {};
+            let hasColorError = false;
+
+            // Nếu tạo màu mới (colorId = 0) thì phải nhập đủ thông tin
+            if (color.colorId === 0) {
+                if (!color.colorName.trim()) {
+                    colorError.colorName = "Tên màu không được để trống";
+                    hasColorError = true;
+                }
+                if (!color.colorPrefix.trim()) {
+                    colorError.colorPrefix = "Mã màu không được để trống";
+                    hasColorError = true;
+                }
+                if (!color.hexCode.trim() || color.hexCode.length !== 7) {
+                    colorError.hexCode = "Mã Hex code không hợp lệ";
+                    hasColorError = true;
+                }
             }
-            if (!color.colorPrefix.trim()) {
-                errors.push(`Màu ${index + 1}: Mã màu không được để trống`);
+
+            if (color.lensId && !color.packageLens) {
+                colorError.packageLens = "Phải nhập PackageLens khi đã có LensID.";
+                hasColorError = true;
             }
-            if (!color.hexCode.trim()) {
-                errors.push(`Màu ${index + 1}: Hex code không được để trống`);
+
+            // Thêm validation cho "nhiều ảnh" (bạn chưa có)
+            if (!color.productVariantImages || color.productVariantImages.length === 0) {
+                colorError.productVariantImages = "Vui lòng tải lên ít nhất 1 ảnh biến thể";
+                hasColorError = true;
             }
-        }
+            
+            // === Validate Variants ===
+            if (color.variants.length === 0) {
+                colorError.variantsError = "Phải có ít nhất một biến thể (size)";
+                hasColorError = true;
+            } else {
+                colorError.variants = color.variants.map((variant, vIndex) => {
+                    const variantError: VariantError = {};
+                    let hasVariantError = false;
 
-        if (color.lensId && !color.packageLens) {
-            errors.push(
-                `Màu ${index + 1}: Nếu bạn cung cấp LensID, bạn cũng phải cung cấp PackageLens.`
-            );
-        }
+                    // Yêu cầu chọn 1 size
+                    if (variant.sizeId === 0) {
+                        variantError.sizeId = "Vui lòng chọn size";
+                        hasVariantError = true;
+                    }
 
-        // if (!color.noBgImgUrl) {
-        // errors.push(`Màu ${index + 1}: Vui lòng chọn ảnh không nền`);
-        // }
+                    if (!variant.variantName.trim()) {
+                        variantError.variantName = "Tên biến thể không được để trống";
+                        hasVariantError = true;
+                    }
 
-        if (color.variants.length === 0) {
-        errors.push(`Màu ${index + 1}: Phải có ít nhất một biến thể (size)`);
-        }
+                    // Số lượng nên > 0
+                    if (variant.quantity <= 0) { 
+                        variantError.quantity = "Số lượng phải lớn hơn 0";
+                        hasVariantError = true;
+                    }
 
-        color.variants.forEach((variant, vIndex) => {
-        // Nếu tạo size mới (sizeId = 0) thì phải nhập sizeCode
-        if (variant.sizeId === 0 && !variant.sizeCode.trim()) {
-            errors.push(
-            `Màu ${index + 1}, Size ${vIndex + 1}: Mã size không được để trống`
-            );
-        }
+                    if (variant.clothesLength <= 0) { 
+                        variantError.clothesLength = "Dài áo/quần phải lớn hơn 0";
+                        hasVariantError = true;
+                    }
 
-        if (!variant.variantName.trim()) {
-            errors.push(
-            `Màu ${index + 1}, Size ${vIndex + 1}: Tên biến thể không được để trống`
-            );
-        }
+                    if (!variant.imageUrl) {
+                        variantError.imageUrl = "Vui lòng chọn ảnh cho biến thể";
+                        hasVariantError = true;
+                    }
 
-        if (variant.quantity < 0) {
-            errors.push(
-            `Màu ${index + 1}, Size ${vIndex + 1}: Số lượng không được âm`
-            );
-        }
+                    if (hasVariantError) isValid = false;
+                    return hasVariantError ? variantError : null;
+                });
+            }
 
-        if (!variant.imageUrl) {
-            errors.push(
-            `Màu ${index + 1}, Size ${vIndex + 1}: Vui lòng chọn ảnh cho biến thể`
-            );
-        }
+            if (hasColorError) isValid = false;
+            return hasColorError ? colorError : null;
         });
-    });
+    }
 
     return {
-        isValid: errors.length === 0,
-        errors,
+        isValid,
+        errors, // Trả về object lỗi
     };
 }
 
@@ -253,6 +325,7 @@ export function createEmptyVariant() {
         productLength: 15,
         productWidth: 10,
         productHeight: 0.2,
+        clothesLength: 50,
     };
 }
 
@@ -471,6 +544,9 @@ export function convertUpdateToFormData(
             }
             if (v.productHeight !== undefined) {
                 formData.append(`ProductColor[${i}].Variants[${j}].ProductHeight`, v.productHeight.toString());
+            }
+            if (v.clothesLength !== undefined) {
+                formData.append(`ProductColor[${i}].Variants[${j}].ClothesLength`, v.clothesLength.toString());
             }
         });
     });

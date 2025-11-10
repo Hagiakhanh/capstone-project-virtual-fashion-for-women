@@ -7,11 +7,13 @@ import ImageUploader from "./ImageUploader";
 interface UploadImgCardProps {
     mainImageUrl: File | null;
     onFileChange: (file: File | null) => void;
+    error?: string;
 }
 
 export default function UploadImgCard({
     mainImageUrl,
     onFileChange,
+    error,
 }: UploadImgCardProps) {
     return (
         <div className="bg-white rounded-lg shadow-lg p-6">
@@ -24,6 +26,7 @@ export default function UploadImgCard({
                     label="" // Bạn có thể ẩn label nếu muốn
                     selectedFile={mainImageUrl}
                     onFileChange={onFileChange}
+                    error={error}
                 />
             </div>
         </div>

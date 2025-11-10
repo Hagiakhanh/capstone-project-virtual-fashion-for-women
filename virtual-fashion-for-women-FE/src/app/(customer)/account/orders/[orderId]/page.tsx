@@ -21,6 +21,7 @@ export default function OrderDetailPage() {
     const [showRefundModal, setShowRefundModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [form] = Form.useForm();
+    const [checkCanRefund, setCheckCanRefund] = useState<boolean>(false);
 
     const fetchOrderDetails = async (orderId: number) => {
         try {
@@ -39,9 +40,25 @@ export default function OrderDetailPage() {
             route.back
         }
     }
+
+    const fetchCheckCanRefund = async (orderId: number) => {
+        try {
+            const response = await api.get(`/order/can-refund/${orderId}`);
+            if (response.status === 200) {
+                setCheckCanRefund(true);
+            } else {
+                setCheckCanRefund(false);
+            }
+        } catch (error) {
+            console.log("Lỗi khi kiểm tra hoàn hàng: ", error);
+        }
+    }
+
     useEffect(() => {
-        if (orderId)
+        if (orderId) {
             fetchOrderDetails(orderId);
+            fetchCheckCanRefund(orderId);
+        }
     }, [orderId]);
 
 
@@ -120,14 +137,19 @@ export default function OrderDetailPage() {
                     </div>
 
                     <div className="flex gap-3 mt-3 sm:mt-0">
-                        <Button
-                            type="primary"
-                            size="large"
-                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                            onClick={() => setShowRefundModal(true)}
-                        >
-                            Yêu cầu hoàn hàng
-                        </Button>
+                        {
+                            checkCanRefund == true && (
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                    onClick={() => setShowRefundModal(true)}
+                                >
+                                    Yêu cầu hoàn hàng
+                                </Button>
+                            )
+                        }
+
                         <button
                             className="mt-3 sm:mt-0 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-all"
                             onClick={() => {
