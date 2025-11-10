@@ -192,10 +192,10 @@ public class ItemSimilarityMatrixBuilder : IItemSimilarityMatrixBuilder
 
                 if (!userBehavior[w.UserId].ContainsKey(w.ProductId))
                     userBehavior[w.UserId][w.ProductId] = 0;
-                userBehavior[w.UserId][w.ProductId] += 4;
+                userBehavior[w.UserId][w.ProductId] += 3;
             }
 
-            foreach (var o in allOrders)
+            foreach (var o in allOrders.Where(o => o.Order.Status == "Completed"))
             {
                 var product = o.ProductVariant?.ProductColor?.Product;
                 if (product == null || o.Order == null) continue;
@@ -341,9 +341,7 @@ public class ItemSimilarityMatrixBuilder : IItemSimilarityMatrixBuilder
         return type.ToLower() switch
         {
             "view" => 1,
-            "wishlist" => 3,
             "addtocart" => 3,
-            "purchase" => 5,
             "review" => 4,
             _ => 0
         };
