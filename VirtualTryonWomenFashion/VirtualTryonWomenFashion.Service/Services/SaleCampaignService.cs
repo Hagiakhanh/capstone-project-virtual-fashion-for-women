@@ -534,13 +534,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                     throw new ArgumentException("Ngày kết thúc không được nhỏ hơn ngày bắt đầu.");
                 }
             }
-            var campaign = await _saleCampaignRepository.GetByIdAsync(saleCampaignID);
+            var campaign = await _saleCampaignRepository.GetDetailSaleCampaignByID(saleCampaignID);
             if (campaign == null || campaign.IsDeleted)
                 throw new ArgumentException("Chiến dịch không tồn tại hoặc đã bị xoá");
 
             // Xác định phạm vi ngày
             DateOnly actualStart = startDate ?? campaign.StartDate.Value;
             DateOnly actualEnd = endDate ?? campaign.EndDate.Value;
+            if (actualStart < campaign.StartDate.Value || actualEnd > campaign.EndDate.Value)
+                throw new ArgumentException("Khoảng thời gian thống kê phải nằm trong phạm vi của chiến dịch.");
 
             // Lấy danh sách sản phẩm thuộc chiến dịch
             var productInCampaigns = campaign.ProductInSaleCampaigns?.ToList() ?? [];
@@ -560,9 +562,10 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             var orderDetails = await _orderDetailRepository.GetAllThenInclude(
                 null,
-                od => od.CampaignId == campaign.CampaignId
-                   && od.Order.Status == OrderStatusEnum.Completed.ToString(), null,
-                [x => x.ProductVariant.ProductColor.Product]
+                od => od.CampaignId == campaign.CampaignId && od.Order.CreatedAt >= actualStart.ToDateTime(TimeOnly.MinValue) &&
+            od.Order.CreatedAt <= actualEnd.ToDateTime(TimeOnly.MaxValue)
+                   && (od.Order.Status != OrderStatusEnum.Pending.ToString() || od.Order.Status != OrderStatusEnum.Failed.ToString()), null,
+                [x => x.ProductVariant.ProductColor.Product, x => x.Order]
             );
 
             if (orderDetails == null || !orderDetails.Any())
@@ -605,7 +608,8 @@ namespace VirtualTryonWomenFashion.Service.Services
            ProductName = g.First().ProductVariant.ProductColor.Product.ProductName,
            ImageUrl = g.First().ProductVariant.ProductColor.Product.MainImageUrl,
            TotalSoldQuantity = g.Sum(x => x.Quantity),
-
+           SalePrice = g.First().PriceAtTime,
+           TotalRevenue = g.Sum(x => x.PriceAtTime),
            // 🔹 Lấy chi tiết từng variant trong sản phẩm
            ListResponseProductVariant = g.GroupBy(v => v.ProductVariantId)
                .Select(vg => new ResponseVariantInSaleCampaignStatistic
@@ -613,7 +617,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                    ProductVariantId = vg.Key,
                    ProductVariantName = vg.First().ProductVariant.VariantName,
                    SoldQuantity = vg.Sum(x => x.Quantity),
-                   ImageUrl = vg.First().ProductVariant.ImageUrl
+                   ImageUrl = vg.First().ProductVariant.ImageUrl,
                })
                .ToList()
        })
@@ -626,7 +630,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 TotalRevenue = totalRevenue,
                 TotalSoldQuantity = totalSoldQuantity,
-                AverageRevenuePerDate = Math.Round(avgRevenue, 2),
+                AverageRevenuePerDate = Math.Round(avgRevenue, 0),
                 ListProductInCampaign = productStatistic,
                 ListSaleRevenueDate = revenueByDate
             };
