@@ -5,16 +5,13 @@ import {
   Input,
   DatePicker,
   Button,
-  Upload,
   Select,
   InputNumber,
   Space,
   message,
   Card,
-  Modal,
 } from "antd";
 import {
-  UploadOutlined,
   PlusOutlined,
   MinusCircleOutlined,
 } from "@ant-design/icons";
@@ -245,6 +242,10 @@ function CreateSaleCampaignPage() {
             >
               <RangePicker
                 format="DD/MM/YYYY"
+                disabledDate={(current) => {
+                  // ❌ Không cho chọn ngày trước hôm nay
+                  return current && current < dayjs().startOf("day");
+                }}
                 onChange={(dates) => {
                   if (dates) {
                     setSelectedDateRange({
