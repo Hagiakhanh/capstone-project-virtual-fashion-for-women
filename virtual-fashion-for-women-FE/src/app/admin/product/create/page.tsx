@@ -176,6 +176,7 @@ export default function CreateProductPage() {
             productLength: 15,
             productWidth: 10,
             productHeight: 0.2,
+            clothesLength: 50,
             imageUrl: null,
         });
         setFormData({ ...formData, productColor: updatedColors });
@@ -488,7 +489,10 @@ export default function CreateProductPage() {
                                     value={formData.price.toLocaleString("vi-VN")}
                                     onChange={(e) => {
                                         const rawValue = e.target.value.replace(/\D/g, ""); // bỏ ký tự không phải số
-                                        updateBasicInfo("price", Number(rawValue));
+                                        const MAX_DIGITS = 9;
+                                        if (rawValue.length <= MAX_DIGITS) {
+                                            updateBasicInfo("price", Number(rawValue));
+                                        }
                                     }}
                                     //className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${

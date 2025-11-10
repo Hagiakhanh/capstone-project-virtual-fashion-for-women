@@ -31,6 +31,7 @@ export interface VariantError {
     sizeId?: string;
     quantity?: string;
     imageUrl?: string;
+    clothesLength?: string;
 }
 
 export function convertToFormData(formData: CreateProductFormData): FormData {
@@ -135,6 +136,10 @@ export function convertToFormData(formData: CreateProductFormData): FormData {
             formDataToSend.append(
                 `ProductColor[${colorIndex}].Variants[${variantIndex}].ProductHeight`,
                 variant.productHeight.toString()
+            );
+            formDataToSend.append(
+                `ProductColor[${colorIndex}].Variants[${variantIndex}].ClothesLength`,
+                variant.clothesLength.toString()
             );
 
             if (variant.imageUrl) {
@@ -263,6 +268,11 @@ export function validateProductForm(
                         hasVariantError = true;
                     }
 
+                    if (variant.clothesLength <= 0) { 
+                        variantError.clothesLength = "Dài áo/quần phải lớn hơn 0";
+                        hasVariantError = true;
+                    }
+
                     if (!variant.imageUrl) {
                         variantError.imageUrl = "Vui lòng chọn ảnh cho biến thể";
                         hasVariantError = true;
@@ -315,6 +325,7 @@ export function createEmptyVariant() {
         productLength: 15,
         productWidth: 10,
         productHeight: 0.2,
+        clothesLength: 50,
     };
 }
 
@@ -533,6 +544,9 @@ export function convertUpdateToFormData(
             }
             if (v.productHeight !== undefined) {
                 formData.append(`ProductColor[${i}].Variants[${j}].ProductHeight`, v.productHeight.toString());
+            }
+            if (v.clothesLength !== undefined) {
+                formData.append(`ProductColor[${i}].Variants[${j}].ClothesLength`, v.clothesLength.toString());
             }
         });
     });
