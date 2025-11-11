@@ -8,7 +8,7 @@ import { messageToast } from '@/helpers/toastHelper'
 import { ItemTicketChatInformationDTO } from '@/models/TicketChatDTO'
 import formatDate from '@/utils/formatDate'
 
-function TicketChatList({ tickets, onSelect }: { tickets: ItemTicketChatInformationDTO[], onSelect: (slug: string) => void }) {
+function TicketChatList({ tickets, onSelect, fetchTicketsChat }: { tickets: ItemTicketChatInformationDTO[], onSelect: (slug: string) => void, fetchTicketsChat: () => void }) {
    const [isModalOpen, setIsModalOpen] = useState(false)
    const [form] = Form.useForm()
 
@@ -22,11 +22,13 @@ function TicketChatList({ tickets, onSelect }: { tickets: ItemTicketChatInformat
          const values = await form.validateFields()
          const response = await api.post('/ticketchat', values)
          if (response.status === 201) {
-            messageToast.success('Tạo yêu cầu hỗ trợ mới thành công')
+            messageToast.success('Tạo yêu cầu hỗ trợ mới thành công.')
+            fetchTicketsChat()
             setIsModalOpen(false)
          }
 
       } catch (error) {
+         messageToast.error('Lỗi khi tạo yêu cầu hỗ trợ mới.')
          console.error('Lỗi khi tạo ticket chat:', error)
       }
 
