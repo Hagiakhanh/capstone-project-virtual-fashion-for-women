@@ -5,6 +5,7 @@ import { api } from '@/api/instance'
 import TicketChatDetail from '@/components/TicketChat/TicketChatDetail'
 import TicketChatList from '@/components/TicketChat/TicketChatList'
 import { ItemTicketChatInformationDTO } from '@/models/TicketChatDTO'
+import { messageToast } from '@/helpers/toastHelper'
 
 export default function CustomerChatPage() {
     const [selectedTicket, setSelectedTicket] = useState<string | null>(null)
@@ -17,8 +18,10 @@ export default function CustomerChatPage() {
                 setTicketData(response.data?.data || [])
             } else {
                 setTicketData([])
+                messageToast.error('Không thể tải danh sách ticket chat.')
             }
         } catch (error) {
+            messageToast.error('Không thể tải danh sách ticket chat.')
             console.error('Lỗi khi lấy danh sách ticket chat:', error)
         }
     }
@@ -33,7 +36,7 @@ export default function CustomerChatPage() {
     return (
         <div >
             {!selectedTicket ? (
-                <TicketChatList tickets={ticketData} onSelect={setSelectedTicket} />
+                <TicketChatList tickets={ticketData} onSelect={setSelectedTicket} fetchTicketsChat={fetchTicketsChat} />
             ) : (
                 <TicketChatDetail onBack={setSelectedTicket} ticketSlug={selectedTicket} />
             )}

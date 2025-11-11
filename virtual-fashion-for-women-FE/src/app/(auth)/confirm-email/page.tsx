@@ -8,6 +8,7 @@ import bgConfirm from '@/assets/auth/bg-confirm.jpg';
 import loading from '@/assets/lottie/SandyLoading.json'
 import { typeConfirmEmail } from "@/types/auth";
 import { api } from "@/api/instance";
+import { messageToast } from "@/helpers/toastHelper";
 
 export default function ConfirmEmailPage() {
    const searchParams = useSearchParams();
@@ -30,14 +31,16 @@ export default function ConfirmEmailPage() {
             const response = await api.post('/confirm-email', payload);
             if (response.status === 200) {
                // Thông báo xác nhận thành công
-
+               messageToast.success("Xác nhận email thành công! Vui lòng đăng nhập.");
                router.replace("/login");
             } else {
                // Thông báo lỗi
+               messageToast.error("Xác nhận email thất bại! Vui lòng thử lại.");
                router.replace('/')
             }
          } catch (error) {
             // Thông báo lỗi
+            messageToast.error("Xác nhận email thất bại! Vui lòng thử lại.");
             router.replace('/')
          }
       }

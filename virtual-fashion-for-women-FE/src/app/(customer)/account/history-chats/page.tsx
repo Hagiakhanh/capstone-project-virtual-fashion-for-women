@@ -3,6 +3,7 @@
 import { api } from "@/api/instance";
 import TicketChatCloseList from "@/components/TicketChat/TicketChatCloseList";
 import TicketChatDetail from "@/components/TicketChat/TicketChatDetail";
+import { messageToast } from "@/helpers/toastHelper";
 import { ItemTicketChatInformationDTO } from "@/models/TicketChatDTO";
 import { useEffect, useState } from "react";
 
@@ -19,6 +20,7 @@ function HistoryChatsPage() {
             setTicketData([])
          }
       } catch (error) {
+         messageToast.error('Lỗi khi lấy danh sách ticket chat đóng.')
          console.error('Lỗi khi lấy danh sách ticket chat đóng:', error)
       }
    }

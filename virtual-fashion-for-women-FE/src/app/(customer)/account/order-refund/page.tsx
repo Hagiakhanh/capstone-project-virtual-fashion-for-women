@@ -7,6 +7,7 @@ import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import OrderRefundItem from '@/components/OrderRefund/OrderRefundItem';
 import { api } from '@/api/instance';
 import { OrderRefundDTO } from '@/models/OrderRefundDTO';
+import { messageToast } from '@/helpers/toastHelper';
 
 function OrdersRefund() {
    const [statusFilter, setStatusFilter] = useState<number | undefined>();
@@ -79,6 +80,7 @@ function OrdersRefund() {
 
       } catch (error) {
          setOrderRefundData([]);
+         messageToast.error('Lỗi khi lấy danh sách đơn hàng hoàn trả.');
          console.log('Lỗi khi lấy danh sách đơn hàng hoàn trả:', error);
       } finally {
          setLoading(false)

@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { createApiInstance } from "@/api/instance";
 import { jwtDecode } from "jwt-decode";
 import { User } from "@/types/user";
+import { messageToast } from "@/helpers/toastHelper";
 
 export async function POST(request: Request) {
    try {
       const payload = await request.json();
       const api = createApiInstance(request);
       const responseBE = await api.post('/auth/login', payload);
-      if (responseBE.status === 200) {
+      if (responseBE?.status === 200) {
          const jwtToken = responseBE.data?.data;
          const decodedToken = jwtDecode(jwtToken) as any;
          const maxAge = decodedToken.exp - Math.floor(Date.now() / 1000);
