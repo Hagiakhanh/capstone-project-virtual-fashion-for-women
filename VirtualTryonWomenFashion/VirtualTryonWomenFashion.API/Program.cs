@@ -154,7 +154,7 @@ builder.Services.AddHostedService<RecommendationBackgroundService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-           builder => builder.WithOrigins("http://localhost:3000", "https://onlinewomanfashion.store")
+           builder => builder.WithOrigins("http://localhost:3000", "https://capstone-project-virtual-fashion-fo.vercel.app", "https://onlinewomanfashion.store")
           .AllowAnyMethod()
           .AllowAnyHeader()
           .AllowCredentials()
