@@ -59,6 +59,7 @@ export default function OrderRefundDetailsStaff() {
          setIsModalVisible(false);
       } catch (error) {
          // Nếu validate lỗi thì antd sẽ tự hiển thị, không cần xử lý thêm
+            messageToast.error("Phản hồi yêu cầu hoàn trả thất bại");
       }
    };
 
@@ -72,6 +73,7 @@ export default function OrderRefundDetailsStaff() {
             messageToast.error("Hoàn tiền thất bại");
          }
       } catch (error) {
+         messageToast.error("Hoàn tiền thất bại");
          console.log("Lỗi hoàn tiền:", error);
       }
    }

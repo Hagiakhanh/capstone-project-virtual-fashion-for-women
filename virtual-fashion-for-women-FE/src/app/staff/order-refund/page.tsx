@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { OrderRefundStaffDTO } from "@/models/OrderRefundDTO";
 import type { ColumnsType } from "antd/es/table";
 import statusMapRefund from "@/helpers/statusMapperRefund";
+import { messageToast } from "@/helpers/toastHelper";
 
 const ORDER_STATUSES = [
    { key: "Pending", value: 0, label: "Chờ xác nhận" },
@@ -32,6 +33,7 @@ export default function RefundPage() {
    });
    const [orderRefunds, setOrderRefunds] = useState<OrderRefundStaffDTO[]>([]);
    const router = useRouter();
+   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
    const columns: ColumnsType<OrderRefundStaffDTO> = [
       {
@@ -123,6 +125,24 @@ export default function RefundPage() {
       router.push(`/staff/order-refund/${orderRefundId}`);
    }
 
+   const handleSyncAllGHNOrders = async () => {
+         setIsSyncing(true);
+         try {
+            const response = await api.put('/orderRefund/staff/sync-ghn-status');
+            if (response.status === 200) {
+               messageToast.success("Đồng bộ dữ liệu GHN thành công");
+               fetchOrderRefund();
+            } else {
+               messageToast.error("Đồng bộ dữ liệu GHN thất bại");
+            }
+   
+         } catch (error) {
+            messageToast.error("Đồng bộ dữ liệu GHN thất bại");
+         } finally {
+            setIsSyncing(false);
+         }
+      }
+
    const fetchOrderRefund = async () => {
       try {
          const response = await api.get('/orderRefund/staff', {
@@ -144,6 +164,7 @@ export default function RefundPage() {
          }
 
       } catch (error) {
+         messageToast.error('Lỗi khi lấy danh sách đơn hàng hoàn trả.')
          console.log('Lỗi khi lấy danh sách đơn hàng hoàn trả:', error);
       }
    }
@@ -175,8 +196,8 @@ export default function RefundPage() {
                   Apply
                </button>
                <Button
-                  // onClick={handleSyncAllGHNOrders}
-                  // disabled={isSyncing}
+                  onClick={handleSyncAllGHNOrders}
+                  disabled={isSyncing}
                   icon={<RefreshCcw size={16} />}
                   className="!border-[#000] !text-base !text-black !hover:text-black"
                   size="large"
