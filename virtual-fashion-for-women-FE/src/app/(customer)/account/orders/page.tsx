@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { OrderDTO } from '@/models/OrderDTO';
 import OrderItem from '@/components/Order/OrderItem';
-import { CheckCircle, Clock, Package, Truck, Home, XCircle, ClipboardCheck } from 'lucide-react';
+import { CheckCircle, Clock, Package, Truck, Home, XCircle, ClipboardCheck, Undo2, RotateCcw } from 'lucide-react';
 import { messageToast } from '@/helpers/toastHelper';
 import { api } from '@/api/instance';
 import { PaginationDTO } from '@/models/PaginationDTO';
@@ -15,6 +15,8 @@ const statusTabs = [
     { key: 'Confirmed', label: 'Đã xác nhận', icon: ClipboardCheck },
     { key: 'Packed', label: 'Đã đóng gói', icon: Package },
     { key: 'Delivering', label: 'Đang giao', icon: Truck },
+    { key: 'Returning', label: 'Đang trả hàng', icon: Undo2 },
+    { key: 'Returned', label: 'Đã trả hàng', icon: RotateCcw },
     { key: 'Delivered', label: 'Đã giao', icon: Home },
     { key: 'Completed', label: 'Hoàn tất', icon: CheckCircle },
     { key: 'Failed', label: 'Thất bại', icon: XCircle },
@@ -95,7 +97,7 @@ export default function OrderManagement() {
                 <h1 className="text-3xl font-semibold text-gray-800 mb-6">Đơn hàng của bạn</h1>
 
                 {/* Filter tabs */}
-                <div className="flex flex-wrap gap-3 mb-6">
+                <div className="flex gap-2 mb-4 flex-nowrap items-center">
                     {statusTabs.map((tab) => {
                         const Icon = tab.icon;
                         const active = statusFilter === tab.key;
@@ -106,7 +108,7 @@ export default function OrderManagement() {
                                     setStatusFilter(tab.key);
                                     setPagination((prev) => ({ ...prev, CurrentPage: 1 }));
                                 }}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${active
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-all ${active
                                     ? 'bg-black text-white border-black shadow'
                                     : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
                                     }`}

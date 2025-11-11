@@ -76,8 +76,8 @@ export default function TransactionTable({ transactions, loading }: Props) {
                                                     {transaction.method === 'Momo' && (
                                                         <img src={MomoPng.src} alt="Momo" className="w-7 h-7 mr-2" />
                                                     )}
-                                                    {transaction.method === 'Vnpay' && (
-                                                        <img src={VnpayPng.src} alt="Vnpay" className="w-7 h-7 mr-2" />
+                                                    {transaction.method === 'VnPay' && (
+                                                        <img src={VnpayPng.src} alt="VnPay" className="w-7 h-7 mr-2" />
                                                     )}
                                                     {transaction.method === 'Wallet' && (
                                                         <div className="w-7 h-7 flex items-center justify-center bg-indigo-100 rounded-full mr-2">

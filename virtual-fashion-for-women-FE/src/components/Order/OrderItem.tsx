@@ -37,10 +37,10 @@ export default function OrderItem({ order }: { order: OrderDTO }) {
 
     // 3. State cho modal viết đánh giá (modal cuối)
     const [ratingModalOpen, setRatingModalOpen] = useState(false);
-    
+
     // 4. State lưu chi tiết sản phẩm đang được chọn để đánh giá
     const [selectedDetail, setSelectedDetail] = useState<OrderDetailDTO | null>(null);
-    
+
     // 5. State lưu số sao ban đầu (từ "Đánh giá nhanh")
     const [initialRating, setInitialRating] = useState(0);
 
@@ -60,7 +60,7 @@ export default function OrderItem({ order }: { order: OrderDTO }) {
     // Hàm này được gọi khi bấm "Đánh giá nhanh" hoặc "Viết đánh giá"
     const handleOpenReviewFlow = (rating: number) => {
         setInitialRating(rating); // Lưu số sao (0 nếu bấm "Viết đánh giá")
-        
+
         // Tìm các sản phẩm chưa được đánh giá
         const unreviewedDetails = localOrderDetails.filter(d => !d.isReviewed);
 
@@ -112,7 +112,7 @@ export default function OrderItem({ order }: { order: OrderDTO }) {
                 )
             );
         }
-        
+
         setSelectedDetail(null); // Quan trọng: reset selected detail
     };
 
@@ -190,11 +190,11 @@ export default function OrderItem({ order }: { order: OrderDTO }) {
                                     />
 
                                     {/* Thêm check đã review */}
-                                        {item.isReviewed && (
-                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                                <CheckCircle size={20} className="text-white" />
-                                            </div>
-                                        )}
+                                    {item.isReviewed && (
+                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                            <CheckCircle size={20} className="text-white" />
+                                        </div>
+                                    )}
                                 </div>
                             ))}
 
@@ -242,24 +242,14 @@ export default function OrderItem({ order }: { order: OrderDTO }) {
                                 </button>
                             )
                         }
-
-                        {(order.status === 'Delivered' || order.status === 'Completed') && (
-                            <button
-                                onClick={() => console.log('Mua lại', order.orderId)}
-                                className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-all"
-                            >
-                                Mua lại
-                            </button>
-                        )}
-
                         {/* Thay "Đã đánh giá" bằng nút "Xem đánh giá" */}
                         {canReview && allReviewed && (
-                             <button
+                            <button
                                 onClick={handleOpenEditFlow}
                                 className="px-4 py-2 rounded-lg bg-blue-100 text-blue-700 text-sm font-medium hover:bg-blue-200 transition-all"
-                             >
+                            >
                                 Xem đánh giá
-                             </button>
+                            </button>
                         )}
                     </div>
                 </div>
@@ -268,8 +258,8 @@ export default function OrderItem({ order }: { order: OrderDTO }) {
                 {/* Chỉ hiển thị khi có thể review VÀ chưa review HẾT */}
                 {canReview && !allReviewed && (
                     <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4">
-                        <QuickRating 
-                            onRate={(rating) => handleOpenReviewFlow(rating)} 
+                        <QuickRating
+                            onRate={(rating) => handleOpenReviewFlow(rating)}
                         />
                         <div className="flex gap-2 self-end sm:self-center">
                             <button
@@ -287,7 +277,7 @@ export default function OrderItem({ order }: { order: OrderDTO }) {
                 isOpen={selectionModalOpen}
                 onClose={() => setSelectionModalOpen(false)}
                 onSelectProduct={handleProductSelected}
-                orderDetails={localOrderDetails} 
+                orderDetails={localOrderDetails}
                 mode="review" // Chế độ đánh giá mới
             />
 
@@ -310,10 +300,10 @@ export default function OrderItem({ order }: { order: OrderDTO }) {
                     orderDetailId={selectedDetail.orderDetailId}
                     initialRating={initialRating}
                     // Báo cho modal biết đây là chế độ Sửa
-                    isEditMode={selectedDetail.isReviewed} 
+                    isEditMode={selectedDetail.isReviewed}
                 />
             )}
         </>
-        
+
     );
 }

@@ -6,6 +6,8 @@ import {
     Home,
     XCircle,
     ClipboardCheck,
+    RotateCcw,
+    Undo2,
 } from 'lucide-react';
 
 const statusMap: Record<
@@ -59,6 +61,18 @@ const statusMap: Record<
         color: '#27AE60',
         bg: '#E9F7EF',
         icon: CheckCircle,
+    },
+    Returning: {
+        label: 'Đang trả hàng',
+        color: '#E67E22',
+        bg: '#FEF5E7',
+        icon: Undo2,
+    },
+    Returned: {
+        label: 'Đã trả hàng',
+        color: '#D35400',
+        bg: '#FBEEE6',
+        icon: RotateCcw,
     },
 };
 export default statusMap;
