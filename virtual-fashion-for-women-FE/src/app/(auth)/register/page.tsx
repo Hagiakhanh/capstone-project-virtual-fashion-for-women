@@ -10,6 +10,7 @@ import googleIcon from '../../../assets/auth/GoogleIcon.webp'
 import { typeRegister } from '@/types/auth';
 import { api } from '@/api/instance';
 import { useState } from 'react';
+import { messageToast } from '@/helpers/toastHelper';
 
 export default function RegisterPage() {
    const router = useRouter();
@@ -23,9 +24,11 @@ export default function RegisterPage() {
          if (response.status === 200) {
             router.replace("/login");
             //Thông báo vào mail để xác nhận tài khoản
+            messageToast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.");
          }
       } catch (error) {
          console.error("Register error:", error);
+         messageToast.error("Đăng ký thất bại! Vui lòng thử lại.");
          setLoading(false);
       }
    }

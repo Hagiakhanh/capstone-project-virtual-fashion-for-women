@@ -29,6 +29,7 @@ function StaffTicketChatDetail({ ticketSlug, onBack }: { ticketSlug: string, onB
          }
 
       } catch (error) {
+         messageToast.error('Không thể tải tin nhắn.')
          console.error('Lỗi khi lấy tin nhắn:', error)
       } finally {
          setLoading(false);
@@ -58,6 +59,7 @@ function StaffTicketChatDetail({ ticketSlug, onBack }: { ticketSlug: string, onB
          }
 
       } catch (error) {
+         messageToast.error('Lỗi không thể gửi tin nhắn.')
          console.error('Lỗi khi gửi tin nhắn:', error)
       }
    }

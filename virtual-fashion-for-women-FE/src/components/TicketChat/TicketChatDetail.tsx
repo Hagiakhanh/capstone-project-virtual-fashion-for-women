@@ -31,6 +31,7 @@ export default function TicketChatDetail({
             setMessages(response.data?.data);
          }
       } catch (error) {
+         messageToast.error('Không thể tải tin nhắn.')
          console.error('Lỗi khi lấy tin nhắn:', error)
       } finally {
          setLoading(false)
@@ -138,6 +139,7 @@ export default function TicketChatDetail({
          }
 
       } catch (error) {
+         messageToast.error('Lỗi không thể gửi tin nhắn.')
          console.error('Lỗi khi gửi tin nhắn:', error)
       }
 

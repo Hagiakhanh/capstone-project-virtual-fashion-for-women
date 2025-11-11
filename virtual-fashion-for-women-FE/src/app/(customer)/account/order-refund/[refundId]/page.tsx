@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { OrderRefundDetailDTO } from "@/models/OrderRefundDTO";
 import statusMapRefund from "@/helpers/statusMapperRefund";
 import { Modal } from "antd";
+import { messageToast } from "@/helpers/toastHelper";
 
 export default function RefundDetailsPage() {
    const { refundId } = useParams();
@@ -40,6 +41,7 @@ export default function RefundDetailsPage() {
          }
 
       } catch (error) {
+         messageToast.error('Lỗi khi lấy chi tiết đơn hoàn trả.');
          console.log('Lỗi khi lấy chi tiết đơn hoàn trả:', error);
       }
    };

@@ -10,6 +10,7 @@ import bgLogin from '../../../assets/auth/bg-login.png'
 import googleIcon from '../../../assets/auth/GoogleIcon.webp'
 import { api } from "@/api/instance";
 import { useAuth } from "@/contexts/AuthContext";
+import { messageToast } from "@/helpers/toastHelper";
 
 function LoginPage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ function LoginPage() {
       const response = await api.post('/login', values);
       if (response.status === 200) {
         loginSuccess(response.data.user);
+        messageToast.success("Đăng nhập thành công!");
         if (response.data.user.role === 'admin') {
           router.replace("/admin");
         } else if (response.data.user.role === 'staff') {
@@ -33,6 +35,7 @@ function LoginPage() {
       }
 
     } catch (error) {
+      messageToast.error("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
       console.error("Login error:", error);
     }
   }
