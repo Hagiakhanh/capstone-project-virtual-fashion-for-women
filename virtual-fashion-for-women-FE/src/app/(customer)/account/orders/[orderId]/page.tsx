@@ -29,13 +29,13 @@ export default function OrderDetailPage() {
             if (response.status === 200) {
                 const data: OrderDTO = response.data
                 setOrder(data);
-                setStatusPaymentInformation(statusMap[data.transactionInformation.status]);
+                setStatusPaymentInformation(statusMap[data.transactionInformations[0]?.status]);
                 setStatusOrderInformation(statusMap[data.status]);
             } else {
                 messageToast.error("Lỗi khi lấy chi tiết đơn hàng");
             }
         } catch (error: any) {
-            messageToast.error("Lỗi khi lấy chi tiết đơn hàng: ", error);
+            messageToast.error("Lỗi khi lấy chi tiết đơn hàng: " + error.response?.data?.message);
             setOrder(undefined);
             route.back
         }
@@ -350,11 +350,11 @@ export default function OrderDetailPage() {
                         <div className="space-y-3 mb-6">
                             <div>
                                 <p className="font-medium text-black italic">Phương thức</p>
-                                <p>{order?.transactionInformation.method}</p>
+                                <p>{order?.transactionInformations[0]?.method}</p>
                             </div>
                             <div>
                                 <p className="font-medium text-black italic">Mã giao dịch</p>
-                                <p >{order?.transactionInformation.transactionCode}</p>
+                                <p >{order?.transactionInformations[0]?.transactionCode}</p>
                             </div>
                             <div>
                                 <p className="font-medium text-black italic">Trạng thái</p>
@@ -368,7 +368,7 @@ export default function OrderDetailPage() {
                             </div>
                             <div>
                                 <p className="font-medium text-black italic">Thời gian thanh toán</p>
-                                <p>{formatDate(order?.transactionInformation.updatedAt)}</p>
+                                <p>{formatDate(order?.transactionInformations[0]?.updatedAt)}</p>
                             </div>
                         </div>
                     </div>

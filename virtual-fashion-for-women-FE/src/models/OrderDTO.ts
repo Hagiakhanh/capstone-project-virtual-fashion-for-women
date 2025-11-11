@@ -17,7 +17,7 @@ export interface OrderDTO {
     shippingCode: string;
     estimatedDelivery: string | null;
     paymentUrl: string;
-    transactionInformation: TransactionInformation;
+    transactionInformations: TransactionInformation[];
     userInformation: UserInformation;
     responseOrderDetails: OrderDetailDTO[];
     responseStatusLogs: StatusLogDTO[];
@@ -36,6 +36,7 @@ export interface OrderStaffResponseDTO {
     paymentMethod: string;
     paymentDate: string | null;
     paymentStatus: 'Pending' | 'Success' | 'Failed';
+    insuranceFee: number;
     totalWithShippingMoney: number;
     shippingMoney: number;
     shippingCode: string | null;
@@ -43,4 +44,5 @@ export interface OrderStaffResponseDTO {
     amount: number; // TỔNG TIỀN HÀNG (Subtotal)
     totalQuantity: number;
     orderDetails: OrderDetailStaffResponseDTO[];
+    responseStatusLogs: StatusLogDTO[];
 }

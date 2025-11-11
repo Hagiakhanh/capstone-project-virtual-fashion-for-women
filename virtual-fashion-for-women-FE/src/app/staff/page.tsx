@@ -19,6 +19,8 @@ const ORDER_STATUSES = [
    { key: "Delivered", value: 4, label: "Đã giao hàng" },
    { key: "Completed", value: 5, label: "Hoàn tất" },
    { key: "Failed", value: 6, label: "Thất bại" },
+   { key: "Returning", value: 7, label: "Đang trả hàng" },
+   { key: "Returned", value: 8, label: "Đã trả hàng" },
 ];
 
 export default function StaffOrderPage() {
