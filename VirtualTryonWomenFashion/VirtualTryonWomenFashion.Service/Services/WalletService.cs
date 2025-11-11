@@ -92,7 +92,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     throw new Exception("Số dư trong ví không đủ để thực hiện giao dịch");
                 }
                 existingWallet.Balance -= requestUpdateRecharge.Amount;
-            }else if (type == TypeTransactionEnum.Recharge.ToString())
+            }else if (type == TypeTransactionEnum.Recharge.ToString() || type == TypeTransactionEnum.Refund.ToString())
             {
                 existingWallet.Balance += requestUpdateRecharge.Amount;
             }

@@ -375,11 +375,8 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             foreach (var cartItem in selectedCartItems)
             {
-                var responseGetVariantPriceInfo =
-                    await _productVariantService.GetVariantPriceInfoAsync(cartItem.ProductVariantId);
-
                 int productPrice =
-                    (int)Math.Ceiling((cartItem.QuantityItem * responseGetVariantPriceInfo.CurrentPrice) ?? 0);
+                    (int)Math.Ceiling((cartItem.QuantityItem * cartItem.ResponseProductVariantDto?.CurrentPrice) ?? 0);
                 totalProductPrice += productPrice;
             }
             (decimal serviceFee, decimal insuranceFree) = (0.0m, 0.0m);
