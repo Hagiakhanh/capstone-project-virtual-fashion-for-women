@@ -28,7 +28,7 @@ public static class OrderMapper
             PaymentUrl = model.PaymentUrl,
             EstimatedDelivery = model.EstimatedDelivery,
             UserInformation = model.Customer.MapToUserInformation(),
-            TransactionInformation = model.Transaction.MapToTransactionInformation(),
+            TransactionInformations = model.Transactions.Select(x=>x.MapToTransactionInformation()).ToList(),
             ResponseOrderDetails = responseOrderDetails,
             ResponseStatusLogs = model.StatusLogs.Select(sl => sl.MapToResponseStatusLog()).ToList()
         };

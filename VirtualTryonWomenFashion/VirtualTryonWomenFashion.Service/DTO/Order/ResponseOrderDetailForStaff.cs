@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Enum;
+using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.StatusLog;
 
 namespace VirtualTryonWomenFashion.Service.DTO.Order
 {
@@ -52,6 +54,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.Order
         public int TotalQuantity { get; set; }
 
         public List<OrderDetailInformation> OrderDetails { get; set; }
+        public List<ResponseStatusLog> ResponseStatusLogs { get; set; }
     }
 
     public class OrderDetailInformation

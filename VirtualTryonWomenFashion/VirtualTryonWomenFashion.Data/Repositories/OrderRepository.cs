@@ -21,7 +21,9 @@ namespace VirtualTryonWomenFashion.Data.Repositories
 
         public async Task<List<Order>> GetAllOrdersReadyForGHNUpdate()
         {
-            List<Order> orders = await _context.Orders.Where(x => x.Status == OrderStatusEnum.Packed.ToString() ||
+            List<Order> orders = await _context.Orders
+                .Include(x => x.Customer)
+                .Where(x => x.Status == OrderStatusEnum.Packed.ToString() ||
             x.Status == OrderStatusEnum.Delivering.ToString()).ToListAsync();
             return orders;
         }
@@ -30,7 +32,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
             return await _context.Orders
                 .Include(x => x.Customer)
-                .Include(x => x.Transaction)
+                .Include(x => x.Transactions.Where(t=>t.Type == TypeTransactionEnum.Purchase.ToString()))
                 .Include(x => x.OrderDetails)
                     .ThenInclude(x => x.ProductVariant)
                     .ThenInclude(x => x.Size)

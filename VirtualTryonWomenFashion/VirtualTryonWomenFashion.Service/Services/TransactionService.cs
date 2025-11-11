@@ -125,12 +125,12 @@ namespace VirtualTryonWomenFashion.Service.Services
             int userId = _currentUserService.GetUserId();
             List<Transaction> rawTransactions = await _transactionRepository.GetAll(
                 filter: t => t.UserId == userId
-                             && (t.Type == TypeTransactionEnum.Recharge.ToString() || t.Type == TypeTransactionEnum.Refund.ToString()),
+                             && t.WalletId != null,
                 pagination: paginationParameter,
                 orderBy: t =>t.OrderByDescending(x => x.UpdatedAt) 
             );
             int totalRecords = await _transactionRepository.CountAsync(t =>
-                t.UserId == userId && t.Type == TypeTransactionEnum.Recharge.ToString());
+                t.UserId == userId && t.WalletId != null);
             List<TransactionInformation> responseTransactions = new List<TransactionInformation>();
             foreach (Transaction transaction in rawTransactions)
             {

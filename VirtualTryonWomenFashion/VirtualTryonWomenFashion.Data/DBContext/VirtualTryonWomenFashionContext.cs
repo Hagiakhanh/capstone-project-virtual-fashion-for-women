@@ -93,7 +93,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
     /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=NguyenDucHung\\SQLEXPRESS;Initial Catalog=VirtualTryonWomenFashion;Persist Security Info=True;User ID=sa;Password=12345;Encrypt=True");*/
+        => optionsBuilder.UseSqlServer("Data Source=MSI;Initial Catalog=VirtualTryonWomenFashion;Persist Security Info=True;User ID=sa;Password=12345");*/
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -113,7 +113,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
     {
         modelBuilder.Entity<Aiconversation>(entity =>
         {
-            entity.HasKey(e => e.AiconversationId).HasName("PK__AIConver__6604C7D2D3192EC0");
+            entity.HasKey(e => e.AiconversationId).HasName("PK__AIConver__6604C7D2AB219014");
 
             entity.ToTable("AIConversations");
 
@@ -130,7 +130,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasKey(e => e.CartId).HasName("PK__Carts__51BCD7978010E691");
+            entity.HasKey(e => e.CartId).HasName("PK__Carts__51BCD797AD6F2571");
 
             entity.Property(e => e.CartId).HasColumnName("CartID");
             entity.Property(e => e.CreateDate).HasColumnType("datetime");
@@ -146,21 +146,21 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.HasOne(d => d.ProductVariant).WithMany(p => p.Carts)
                 .HasForeignKey(d => d.ProductVariantId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Carts__ProductVa__22751F6C");
+                .HasConstraintName("FK__Carts__ProductVa__10566F31");
 
             entity.HasOne(d => d.TryOnSlot).WithMany(p => p.Carts)
                 .HasForeignKey(d => d.TryOnSlotId)
-                .HasConstraintName("FK__Carts__TryOnSlot__236943A5");
+                .HasConstraintName("FK__Carts__TryOnSlot__114A936A");
 
             entity.HasOne(d => d.User).WithMany(p => p.Carts)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Carts__UserID__2180FB33");
+                .HasConstraintName("FK__Carts__UserID__0F624AF8");
         });
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A2BD172FF2C");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A2BFFC70FE4");
 
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.BodyPart).HasMaxLength(50);
@@ -174,7 +174,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<CategorySizeTemplate>(entity =>
         {
-            entity.HasKey(e => e.TemplateId).HasName("PK__Category__F87ADD078A04E9EC");
+            entity.HasKey(e => e.TemplateId).HasName("PK__Category__F87ADD07D1914692");
 
             entity.HasIndex(e => new { e.CategoryId, e.SizeId }, "UQ_Category_Size").IsUnique();
 
@@ -195,9 +195,9 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Characteristic>(entity =>
         {
-            entity.HasKey(e => e.CharacteristicId).HasName("PK__Characte__C0EA4DAF7D9CE95C");
+            entity.HasKey(e => e.CharacteristicId).HasName("PK__Characte__C0EA4DAF92F12DE9");
 
-            entity.HasIndex(e => e.UserId, "UQ__Characte__1788CCAD53F42BCF").IsUnique();
+            entity.HasIndex(e => e.UserId, "UQ__Characte__1788CCAD749B348F").IsUnique();
 
             entity.Property(e => e.CharacteristicId).HasColumnName("CharacteristicID");
             entity.Property(e => e.OccasionNote).HasMaxLength(255);
@@ -226,16 +226,16 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.HasOne(d => d.User).WithOne(p => p.Characteristic)
                 .HasForeignKey<Characteristic>(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Character__UserI__245D67DE");
+                .HasConstraintName("FK__Character__UserI__123EB7A3");
         });
 
         modelBuilder.Entity<Color>(entity =>
         {
-            entity.HasKey(e => e.ColorId).HasName("PK__Color__8DA7676D734DF163");
+            entity.HasKey(e => e.ColorId).HasName("PK__Color__8DA7676DFCBA5D4A");
 
             entity.ToTable("Color");
 
-            entity.HasIndex(e => e.ColorPrefix, "UQ__Color__4DAF3239BE7C0A11").IsUnique();
+            entity.HasIndex(e => e.ColorPrefix, "UQ__Color__4DAF323960653141").IsUnique();
 
             entity.Property(e => e.ColorId).HasColumnName("ColorID");
             entity.Property(e => e.ColorName).HasMaxLength(50);
@@ -247,7 +247,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Message>(entity =>
         {
-            entity.HasKey(e => e.MessageId).HasName("PK__Messages__C87C037CEEC51660");
+            entity.HasKey(e => e.MessageId).HasName("PK__Messages__C87C037CCBB471AD");
 
             entity.Property(e => e.MessageId).HasColumnName("MessageID");
             entity.Property(e => e.AiconversationId).HasColumnName("AIConversationID");
@@ -277,7 +277,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E3285EEDAAB");
+            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E325B01788F");
 
             entity.Property(e => e.NotificationId).HasColumnName("NotificationID");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
@@ -289,12 +289,12 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.HasOne(d => d.Receiver).WithMany(p => p.Notifications)
                 .HasForeignKey(d => d.ReceiverId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Notificat__Recei__2BFE89A6");
+                .HasConstraintName("FK__Notificat__Recei__19DFD96B");
         });
 
         modelBuilder.Entity<OccasionPreference>(entity =>
         {
-            entity.HasKey(e => e.OccasionPreferenceId).HasName("PK__Occasion__6C177F6D2C193397");
+            entity.HasKey(e => e.OccasionPreferenceId).HasName("PK__Occasion__6C177F6DDA435B53");
 
             entity.Property(e => e.OccasionPreferenceId).HasColumnName("OccasionPreferenceID");
             entity.Property(e => e.ImageUrl)
@@ -307,7 +307,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BAFB7434B31");
+            entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BAFA33939CA");
 
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
@@ -339,7 +339,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<OrderDetail>(entity =>
         {
-            entity.HasKey(e => e.OrderDetailId).HasName("PK__OrderDet__D3B9D30CF7B57B23");
+            entity.HasKey(e => e.OrderDetailId).HasName("PK__OrderDet__D3B9D30C20752064");
 
             entity.Property(e => e.OrderDetailId).HasColumnName("OrderDetailID");
             entity.Property(e => e.CampaignId).HasColumnName("CampaignID");
@@ -353,22 +353,22 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
             entity.HasOne(d => d.Campaign).WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.CampaignId)
-                .HasConstraintName("FK__OrderDeta__Campa__2EDAF651");
+                .HasConstraintName("FK__OrderDeta__Campa__1CBC4616");
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__OrderDeta__Order__2CF2ADDF");
+                .HasConstraintName("FK__OrderDeta__Order__1AD3FDA4");
 
             entity.HasOne(d => d.ProductVariant).WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.ProductVariantId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__OrderDeta__Produ__2DE6D218");
+                .HasConstraintName("FK__OrderDeta__Produ__1BC821DD");
         });
 
         modelBuilder.Entity<OrderRefund>(entity =>
         {
-            entity.HasKey(e => e.OrderRefundId).HasName("PK__OrderRef__9273F2410B96D868");
+            entity.HasKey(e => e.OrderRefundId).HasName("PK__OrderRef__9273F2419378AE8C");
 
             entity.ToTable("OrderRefund");
 
@@ -403,7 +403,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<OrderRefundDetail>(entity =>
         {
-            entity.HasKey(e => e.OrderRefundDetailId).HasName("PK__OrderRef__681DAAAAF28FF7C9");
+            entity.HasKey(e => e.OrderRefundDetailId).HasName("PK__OrderRef__681DAAAA4447F0DF");
 
             entity.ToTable("OrderRefundDetail");
 
@@ -425,7 +425,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<OrderRefundImage>(entity =>
         {
-            entity.HasKey(e => e.OrderRefundImageId).HasName("PK__OrderRef__10302D09E9AA2577");
+            entity.HasKey(e => e.OrderRefundImageId).HasName("PK__OrderRef__10302D09F07B9416");
 
             entity.ToTable("OrderRefundImage");
 
@@ -440,9 +440,9 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Product>(entity =>
         {
-            entity.HasKey(e => e.ProductId).HasName("PK__Products__B40CC6ED6BC50C27");
+            entity.HasKey(e => e.ProductId).HasName("PK__Products__B40CC6ED92C52034");
 
-            entity.HasIndex(e => e.ProductSlug, "UQ__Products__A8918E7078F1401C").IsUnique();
+            entity.HasIndex(e => e.ProductSlug, "UQ__Products__A8918E704847FBCC").IsUnique();
 
             entity.Property(e => e.ProductId)
                 .HasMaxLength(100)
@@ -461,7 +461,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK__Products__Catego__3D2915A8");
+                .HasConstraintName("FK__Products__Catego__2B0A656D");
 
             entity.HasMany(d => d.Tags).WithMany(p => p.Products)
                 .UsingEntity<Dictionary<string, object>>(
@@ -469,14 +469,14 @@ public partial class VirtualTryonWomenFashionContext : DbContext
                     r => r.HasOne<Tag>().WithMany()
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__ProductTa__TagID__3F115E1A"),
+                        .HasConstraintName("FK__ProductTa__TagID__2CF2ADDF"),
                     l => l.HasOne<Product>().WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__ProductTa__Produ__3E1D39E1"),
+                        .HasConstraintName("FK__ProductTa__Produ__2BFE89A6"),
                     j =>
                     {
-                        j.HasKey("ProductId", "TagId").HasName("PK__ProductT__625B0949723C05E5");
+                        j.HasKey("ProductId", "TagId").HasName("PK__ProductT__625B094916B373F9");
                         j.ToTable("ProductTags");
                         j.IndexerProperty<string>("ProductId")
                             .HasMaxLength(100)
@@ -488,7 +488,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<ProductColor>(entity =>
         {
-            entity.HasKey(e => e.ProductColorId).HasName("PK__ProductC__C5DB681ECD2BE088");
+            entity.HasKey(e => e.ProductColorId).HasName("PK__ProductC__C5DB681EE8C218D0");
 
             entity.Property(e => e.ProductColorId)
                 .HasMaxLength(120)
@@ -507,16 +507,16 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
             entity.HasOne(d => d.Color).WithMany(p => p.ProductColors)
                 .HasForeignKey(d => d.ColorId)
-                .HasConstraintName("FK__ProductCo__Color__395884C4");
+                .HasConstraintName("FK__ProductCo__Color__2739D489");
 
             entity.HasOne(d => d.Product).WithMany(p => p.ProductColors)
                 .HasForeignKey(d => d.ProductId)
-                .HasConstraintName("FK__ProductCo__Produ__3864608B");
+                .HasConstraintName("FK__ProductCo__Produ__2645B050");
         });
 
         modelBuilder.Entity<ProductImage>(entity =>
         {
-            entity.HasKey(e => e.ProductImageId).HasName("PK__ProductI__07B2B1D8DB4C9330");
+            entity.HasKey(e => e.ProductImageId).HasName("PK__ProductI__07B2B1D8D5744031");
 
             entity.Property(e => e.ProductImageId).HasColumnName("ProductImageID");
             entity.Property(e => e.ImageUrl).HasMaxLength(300);
@@ -527,7 +527,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
             entity.HasOne(d => d.ProductColor).WithMany(p => p.ProductImages)
                 .HasForeignKey(d => d.ProductColorId)
-                .HasConstraintName("FK__ProductIm__Produ__3A4CA8FD");
+                .HasConstraintName("FK__ProductIm__Produ__282DF8C2");
         });
 
         modelBuilder.Entity<ProductInSaleCampaign>(entity =>
@@ -555,7 +555,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<ProductVariant>(entity =>
         {
-            entity.HasKey(e => e.ProductVariantId).HasName("PK__ProductV__E4D6672534FFC54E");
+            entity.HasKey(e => e.ProductVariantId).HasName("PK__ProductV__E4D6672560797C21");
 
             entity.Property(e => e.ProductVariantId)
                 .HasMaxLength(140)
@@ -577,16 +577,16 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
             entity.HasOne(d => d.ProductColor).WithMany(p => p.ProductVariants)
                 .HasForeignKey(d => d.ProductColorId)
-                .HasConstraintName("FK__ProductVa__Produ__40058253");
+                .HasConstraintName("FK__ProductVa__Produ__2DE6D218");
 
             entity.HasOne(d => d.Size).WithMany(p => p.ProductVariants)
                 .HasForeignKey(d => d.SizeId)
-                .HasConstraintName("FK__ProductVa__SizeI__40F9A68C");
+                .HasConstraintName("FK__ProductVa__SizeI__2EDAF651");
         });
 
         modelBuilder.Entity<Rating>(entity =>
         {
-            entity.HasKey(e => e.RatingId).HasName("PK__Ratings__FCCDF85CEAE15339");
+            entity.HasKey(e => e.RatingId).HasName("PK__Ratings__FCCDF85CBA3BCA90");
 
             entity.Property(e => e.RatingId).HasColumnName("RatingID");
             entity.Property(e => e.CreateAt).HasColumnType("datetime");
@@ -596,17 +596,17 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.HasOne(d => d.OrderDetail).WithMany(p => p.Ratings)
                 .HasForeignKey(d => d.OrderDetailId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Ratings__OrderDe__42E1EEFE");
+                .HasConstraintName("FK__Ratings__OrderDe__30C33EC3");
 
             entity.HasOne(d => d.User).WithMany(p => p.Ratings)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Ratings__UserID__41EDCAC5");
+                .HasConstraintName("FK__Ratings__UserID__2FCF1A8A");
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Roles__8AFACE3A96CB1259");
+            entity.HasKey(e => e.RoleId).HasName("PK__Roles__8AFACE3A97663B48");
 
             entity.Property(e => e.RoleId)
                 .HasMaxLength(100)
@@ -620,7 +620,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<SaleCampaign>(entity =>
         {
-            entity.HasKey(e => e.CampaignId).HasName("PK__SaleCamp__3F5E8D79637C074F");
+            entity.HasKey(e => e.CampaignId).HasName("PK__SaleCamp__3F5E8D790B044E55");
 
             entity.Property(e => e.CampaignId).HasColumnName("CampaignID");
             entity.Property(e => e.CampaignName)
@@ -633,7 +633,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<ShopAddress>(entity =>
         {
-            entity.HasKey(e => e.ShopAddressId).HasName("PK__ShopAddr__C552529FEC8F9606");
+            entity.HasKey(e => e.ShopAddressId).HasName("PK__ShopAddr__C552529F6255E92B");
 
             entity.ToTable("ShopAddress");
 
@@ -652,7 +652,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Size>(entity =>
         {
-            entity.HasKey(e => e.SizeId).HasName("PK__Size__83BD095A9B1D6457");
+            entity.HasKey(e => e.SizeId).HasName("PK__Size__83BD095AB37076E5");
 
             entity.ToTable("Size");
 
@@ -662,7 +662,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<SkinTone>(entity =>
         {
-            entity.HasKey(e => e.SkinToneId).HasName("PK__SkinTone__9FEA0FCBBDDC4EC3");
+            entity.HasKey(e => e.SkinToneId).HasName("PK__SkinTone__9FEA0FCB865A90A1");
 
             entity.Property(e => e.SkinToneId).HasColumnName("SkinToneID");
             entity.Property(e => e.ImageUrl)
@@ -675,7 +675,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<StatusLog>(entity =>
         {
-            entity.HasKey(e => e.StatusLogId).HasName("PK__StatusLo__A1B4D0BDE23996AF");
+            entity.HasKey(e => e.StatusLogId).HasName("PK__StatusLo__A1B4D0BDC820A702");
 
             entity.Property(e => e.StatusLogId).HasColumnName("StatusLogID");
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
@@ -687,12 +687,12 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.HasOne(d => d.Order).WithMany(p => p.StatusLogs)
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__StatusLog__Order__43D61337");
+                .HasConstraintName("FK__StatusLog__Order__31B762FC");
         });
 
         modelBuilder.Entity<StyleType>(entity =>
         {
-            entity.HasKey(e => e.StyleTypeId).HasName("PK__StyleTyp__81B6F4502D360030");
+            entity.HasKey(e => e.StyleTypeId).HasName("PK__StyleTyp__81B6F450F554DB25");
 
             entity.Property(e => e.StyleTypeId).HasColumnName("StyleTypeID");
             entity.Property(e => e.ImageUrl)
@@ -705,7 +705,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<SuggestedOutfit>(entity =>
         {
-            entity.HasKey(e => e.SuggestedOutfitId).HasName("PK__Suggeste__304834102D80B27A");
+            entity.HasKey(e => e.SuggestedOutfitId).HasName("PK__Suggeste__30483410029CAB91");
 
             entity.Property(e => e.SuggestedOutfitId).HasColumnName("SuggestedOutfitID");
             entity.Property(e => e.AiconversationId).HasColumnName("AIConversationID");
@@ -730,7 +730,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
                         .HasConstraintName("FK_OutfitVariances_SuggestedOutfit"),
                     j =>
                     {
-                        j.HasKey("SuggestedOutfitId", "ProductVariantId").HasName("PK__OutfitVa__7E055262F703E592");
+                        j.HasKey("SuggestedOutfitId", "ProductVariantId").HasName("PK__OutfitVa__7E0552621FB65C2A");
                         j.ToTable("OutfitVariants");
                         j.IndexerProperty<int>("SuggestedOutfitId").HasColumnName("SuggestedOutfitID");
                         j.IndexerProperty<string>("ProductVariantId")
@@ -742,7 +742,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Tag>(entity =>
         {
-            entity.HasKey(e => e.TagId).HasName("PK__Tags__657CFA4C932E6E50");
+            entity.HasKey(e => e.TagId).HasName("PK__Tags__657CFA4CDF35CA66");
 
             entity.Property(e => e.TagId).HasColumnName("TagID");
             entity.Property(e => e.TagName)
@@ -752,9 +752,9 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<TicketChat>(entity =>
         {
-            entity.HasKey(e => e.TicketChatId).HasName("PK__TicketCh__F9115A616941FEE8");
+            entity.HasKey(e => e.TicketChatId).HasName("PK__TicketCh__F9115A6174C53033");
 
-            entity.HasIndex(e => e.Slug, "UQ__TicketCh__BC7B5FB6AC42BE58").IsUnique();
+            entity.HasIndex(e => e.Slug, "UQ__TicketCh__BC7B5FB67EC2FE23").IsUnique();
 
             entity.Property(e => e.TicketChatId).HasColumnName("TicketChatID");
             entity.Property(e => e.ClosedAt).HasColumnType("datetime");
@@ -778,11 +778,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Transaction>(entity =>
         {
-            entity.HasKey(e => e.TransactionId).HasName("PK__Transact__55433A4B22CF85B6");
-
-            entity.HasIndex(e => e.OrderId, "UQ_Transactions_OrderID")
-                .IsUnique()
-                .HasFilter("([OrderID] IS NOT NULL)");
+            entity.HasKey(e => e.TransactionId).HasName("PK__Transact__55433A4BB5D617D6");
 
             entity.HasIndex(e => e.OrderRefundId, "UQ_Transactions_OrderRefundID")
                 .IsUnique()
@@ -802,8 +798,8 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.WalletId).HasColumnName("WalletID");
 
-            entity.HasOne(d => d.Order).WithOne(p => p.Transaction)
-                .HasForeignKey<Transaction>(d => d.OrderId)
+            entity.HasOne(d => d.Order).WithMany(p => p.Transactions)
+                .HasForeignKey(d => d.OrderId)
                 .HasConstraintName("FK_Transactions_Orders");
 
             entity.HasOne(d => d.OrderRefund).WithOne(p => p.Transaction)
@@ -822,7 +818,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<TryOnSlot>(entity =>
         {
-            entity.HasKey(e => e.TryOnSlotId).HasName("PK__TryOnSlo__9581D25EB66A4AE2");
+            entity.HasKey(e => e.TryOnSlotId).HasName("PK__TryOnSlo__9581D25E2799F946");
 
             entity.Property(e => e.TryOnSlotId).HasColumnName("TryOnSlotID");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
@@ -846,14 +842,14 @@ public partial class VirtualTryonWomenFashionContext : DbContext
                     r => r.HasOne<ProductColor>().WithMany()
                         .HasForeignKey("ProductColorId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__TryOnVari__Produ__4D5F7D71"),
+                        .HasConstraintName("FK__TryOnVari__Produ__3B40CD36"),
                     l => l.HasOne<TryOnSlot>().WithMany()
                         .HasForeignKey("TryOnSlotId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__TryOnVari__TryOn__4C6B5938"),
+                        .HasConstraintName("FK__TryOnVari__TryOn__3A4CA8FD"),
                     j =>
                     {
-                        j.HasKey("TryOnSlotId", "ProductColorId").HasName("PK__TryOnVar__69DC64DF91A06A4A");
+                        j.HasKey("TryOnSlotId", "ProductColorId").HasName("PK__TryOnVar__69DC64DFBAF1B3B1");
                         j.ToTable("TryOnVariantClothes");
                         j.IndexerProperty<int>("TryOnSlotId").HasColumnName("TryOnSlotID");
                         j.IndexerProperty<string>("ProductColorId")
@@ -865,13 +861,13 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CCAC1D62D8C9");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CCAC0806F0C0");
 
             entity.HasIndex(e => e.WalletId, "UQ_Users_WalletID")
                 .IsUnique()
                 .HasFilter("([WalletID] IS NOT NULL)");
 
-            entity.HasIndex(e => e.Email, "UQ__Users__A9D10534196290F9").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Users__A9D105343A99C786").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.Address).HasMaxLength(255);
@@ -901,7 +897,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Users__RoleID__503BEA1C");
+                .HasConstraintName("FK__Users__RoleID__3E1D39E1");
 
             entity.HasOne(d => d.Wallet).WithOne(p => p.User)
                 .HasForeignKey<User>(d => d.WalletId)
@@ -910,7 +906,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<UserInteraction>(entity =>
         {
-            entity.HasKey(e => e.UserInteractionId).HasName("PK__UserInte__2CD47CC5BB97F324");
+            entity.HasKey(e => e.UserInteractionId).HasName("PK__UserInte__2CD47CC51507AEEC");
 
             entity.Property(e => e.UserInteractionId).HasColumnName("UserInteractionID");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
@@ -936,7 +932,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Wallet>(entity =>
         {
-            entity.HasKey(e => e.WalletId).HasName("PK__Wallet__84D4F92E243D3035");
+            entity.HasKey(e => e.WalletId).HasName("PK__Wallet__84D4F92EDB9C0324");
 
             entity.ToTable("Wallet");
 
@@ -951,7 +947,7 @@ public partial class VirtualTryonWomenFashionContext : DbContext
 
         modelBuilder.Entity<Wishlist>(entity =>
         {
-            entity.HasKey(e => e.WishlistId).HasName("PK__Wishlist__233189CB66F3F117");
+            entity.HasKey(e => e.WishlistId).HasName("PK__Wishlist__233189CB5107CE88");
 
             entity.Property(e => e.WishlistId).HasColumnName("WishlistID");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");

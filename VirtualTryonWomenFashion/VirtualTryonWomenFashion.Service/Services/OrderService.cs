@@ -307,14 +307,14 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             int userId = _currentUserService.GetUserId();
             List<Order> rawOrders = await _orderRepository.GetAll(
-                filter: o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)),
+                filter: o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)) && o.Transactions.Any(t=>t.Type == TypeTransactionEnum.Purchase.ToString()),
                 pagination: page,
                 orderBy: o => o.OrderByDescending(x => x.CreatedAt),
                 includes:
                 new Expression<Func<Order, object>>[]
                 {
                     o => o.Customer,
-                    o => o.Transaction,
+                    o => o.Transactions,
                     o => o.StatusLogs
                 }
             );
@@ -532,11 +532,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                 CustomerName = order.Customer.FullName,
                 CustomerPhone = order.Customer.PhoneNumber,
                 CustomerEmail = order.Customer.Email,
-                PaymentMethod = order.Transaction.Method,
-                PaymentDate = order.Transaction.UpdatedAt,
-                PaymentStatus = order.Transaction.Status,
+                PaymentMethod = order.Transactions.First().Method,
+                PaymentDate = order.Transactions.First().UpdatedAt,
+                PaymentStatus = order.Transactions.First().Status,
                 TotalWithShippingMoney = order.Amount,
                 TotalQuantity = order.OrderDetails.Sum(x => x.Quantity),
+                ResponseStatusLogs = order.StatusLogs.Select(x => x.MapToResponseStatusLog()).ToList(),
             };
 
             return new MessageModelWithData<ResponseOrderDetailForStaff>
@@ -691,7 +692,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             if (order.Status != OrderStatusEnum.Packed.ToString() &&
-                order.Status != OrderStatusEnum.Delivering.ToString())
+                order.Status != OrderStatusEnum.Delivering.ToString() &&
+                order.Status != OrderStatusEnum.Returning.ToString())
             {
                 throw new Exception($"Trạng thái hiện tại của đơn hàng là {order.Status}. Không thể cập nhật GHN");
             }
@@ -747,6 +749,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                                     }
                                     break;
                                 }
+                            case "returning":
+                            case "return_fail":
+                                {
+                                    order.Status = OrderStatusEnum.Returning.ToString();
+                                    requestCreateNotification.Title = $"Đơn hàng {order.OrderId} đang được hoàn trả lại";
+                                    requestCreateNotification.Content =
+                                         $"Đơn hàng {order.OrderId} đang được trả lại do bạn không nhận hàng.";
+                                    break;
+                                }
                             case "returned":
                                 {
                                     order.Status = OrderStatusEnum.Returned.ToString();
@@ -772,12 +783,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 }
                             };
                         }
-                        requestCreateStatusLogs.Add(new RequestCreateStatusLog()
-                        {
-                            OrderId = order.OrderId,
-                            Status = order.Status,
-                            UpdateAt = DateTime.UtcNow.AddHours(7)
-                        });
+                        
                         if (order.Status == OrderStatusEnum.Returned.ToString())
                         {
                             decimal amountRefund = (decimal)(order.Amount - order.ShippingMoney - order.InsuranceFee);
@@ -793,23 +799,22 @@ namespace VirtualTryonWomenFashion.Service.Services
                                     UserId = order.CustomerId,
                                     Status = TransactionStatusEnum.Success.ToString(),
                                     Money = amountRefund,
+                                    WalletId = order.Customer.WalletId,
                                     Method = PaymentMethodEnum.Wallet.ToString(),
                                     Type = TypeTransactionEnum.Refund.ToString(),
                                     CreatedAt = DateTime.UtcNow.AddHours(7),
                                     UpdatedAt = DateTime.UtcNow.AddHours(7),
-                                    OrderId = order.OrderId
+                                    OrderId = order.OrderId,
                                 };
                                 await _transactionService.CreateTransactionAsync(transaction);
-                                order.Status = OrderStatusEnum.Completed.ToString();
-                                requestCreateStatusLogs.Add(new RequestCreateStatusLog()
-                                {
-                                    OrderId = order.OrderId,
-                                    Status = order.Status,
-                                    UpdateAt = DateTime.UtcNow.AddHours(7)
-                                });
                             }
                         }
-
+                        requestCreateStatusLogs.Add(new RequestCreateStatusLog()
+                        {
+                            OrderId = order.OrderId,
+                            Status = order.Status,
+                            UpdateAt = DateTime.UtcNow.AddHours(7)
+                        });
                         await _orderRepository.UpdateAsync(order);
                         int result = await _unitOfWork.SaveChanges();
                         await _statusLogService.CreateStatusLog(requestCreateStatusLogs);
@@ -936,6 +941,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                         case "delivered":
                             newSystemStatus = OrderStatusEnum.Delivered.ToString();
                             break;
+                        case "returning":
+                        case "return_fail":
+                            {
+                                newSystemStatus = OrderStatusEnum.Returning.ToString();
+                                newNotification.Title = $"Đơn hàng {order.OrderId} đang được hoàn trả lại";
+                                newNotification.Content =
+                                     $"Đơn hàng {order.OrderId} đang được trả lại do bạn không nhận hàng.";
+                                break;
+                            }
                         case "returned":
                             newSystemStatus = OrderStatusEnum.Returned.ToString();
                             newNotification.Title = $"Đơn hàng {order.OrderId} đã được hoàn tiền thành công";
@@ -951,12 +965,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                         {
                             order.DeliveredAt = DateTime.UtcNow.AddHours(7);
                         }
-                        statusLogs.Add(new RequestCreateStatusLog()
-                        {
-                            OrderId = order.OrderId,
-                            Status = order.Status,
-                            UpdateAt = DateTime.UtcNow.AddHours(7)
-                        });
                         if (order.Status == OrderStatusEnum.Returned.ToString())
                         {
                             decimal amountRefund = (decimal)(order.Amount - order.ShippingMoney - order.InsuranceFee);
@@ -976,18 +984,19 @@ namespace VirtualTryonWomenFashion.Service.Services
                                     Type = TypeTransactionEnum.Refund.ToString(),
                                     CreatedAt = DateTime.UtcNow.AddHours(7),
                                     UpdatedAt = DateTime.UtcNow.AddHours(7),
-                                    OrderId = order.OrderId
+                                    OrderId = order.OrderId,
+                                    WalletId = order.Customer.WalletId.Value
                                 };
                                 requestCreateTransactions.Add(transaction);
-                                order.Status = OrderStatusEnum.Completed.ToString();
-                                statusLogs.Add(new RequestCreateStatusLog()
-                                {
-                                    OrderId = order.OrderId,
-                                    Status = order.Status,
-                                    UpdateAt = DateTime.UtcNow.AddHours(7)
-                                });
+                                
                             }
                         }
+                        statusLogs.Add(new RequestCreateStatusLog()
+                        {
+                            OrderId = order.OrderId,
+                            Status = order.Status,
+                            UpdateAt = DateTime.UtcNow.AddHours(7)
+                        });
                         await _orderRepository.UpdateAsync(order);
                         successCount++;
 
@@ -1007,13 +1016,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                         notifications.Add(newNotification);
                     }
                 }
-
+                if (requestCreateTransactions.Count > 0)
+                {
+                    await _transactionService.CreateListTransactionAsync(requestCreateTransactions);
+                }
                 if (successCount > 0)
                 {
                     await _unitOfWork.SaveChanges();
                     await _statusLogService.CreateStatusLog(statusLogs);
                     await _notificationService.CreateListNotificationAsync(notifications);
-                    await _transactionService.CreateListTransactionAsync(requestCreateTransactions);
                     await _unitOfWork.CommitTransactionAsync();
                     var notificationSendToCustomer = notifications.GroupBy(n => n.ReceiverId);
                     foreach (var item in notificationSendToCustomer)
