@@ -803,5 +803,156 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
         }
+
+        public async Task<MessageModel> UpdateAllOrderRefundStatusInGHN()
+        {
+            List<OrderRefund> orderRefunds = await _orderRefundRepository.GetAllOrderRefundReadyForGHNUpdate();
+            if(orderRefunds == null || orderRefunds.Count == 0)
+            {
+                return new MessageModel
+                {
+                    Message = "Không có đơn hàng nào để cập nhật",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+
+            var updateTasks = new List<Task<Tuple<OrderRefund, string>>>();
+            foreach (OrderRefund refund in orderRefunds)
+            {
+                // Khởi tạo một Task để lấy trạng thái GHN.
+                // Hàm này trả về một Tuple chứa Order và trạng thái mới từ GHN.
+                updateTasks.Add(GetGhnStatusForOrderRefund(refund));
+            }
+
+            try
+            {
+                // Chờ tất cả Task kết thúc.
+                await Task.WhenAll(updateTasks);
+            }
+            catch (Exception)
+            {
+            }
+
+            // Lấy cái thành công
+            var resultsFromGHN = new List<Tuple<OrderRefund, string>>();
+            var errors = new List<Exception>();
+            foreach (var task in updateTasks)
+            {
+                if (task.Status == TaskStatus.RanToCompletion)
+                {
+                    resultsFromGHN.Add(task.Result);
+                }
+                else if (task.Status == TaskStatus.Faulted)
+                {
+                    if (task.Exception is AggregateException aggEx)
+                    {
+                        errors.AddRange(aggEx.InnerExceptions);
+                    }
+                    else
+                    {
+                        errors.Add(task.Exception);
+                    }
+                }
+            }
+
+            int successCount = 0;
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                List<RequestCreateNotification> notifications = new List<RequestCreateNotification>();
+                foreach (var (orderRefund, newGhnStatus) in resultsFromGHN)
+                {
+                    string oldStatus = orderRefund.Status;
+                    string newSystemStatus = oldStatus;
+                    switch (newGhnStatus)
+                    {
+                        case "delivering":
+                            newSystemStatus = OrderRefundStatusEnum.Delivering.ToString();
+                            break;
+                        case "delivered":
+                            newSystemStatus = OrderRefundStatusEnum.Delivered.ToString();
+                            break;
+                    }
+
+                    if (!oldStatus.Equals(newSystemStatus))
+                    {
+                        orderRefund.Status = newSystemStatus;
+                        await _orderRefundRepository.UpdateAsync(orderRefund);
+                        successCount++;
+                    }
+                }
+
+                if (successCount > 0)
+                {
+                    await _unitOfWork.SaveChanges();
+                    await _unitOfWork.CommitTransactionAsync();
+                    return new MessageModel
+                    {
+                        Message = $"Đã cập nhật trạng thái cho {successCount} đơn hàng",
+                        StatusCode = StatusCodes.Status200OK
+                    };
+                }
+
+                return new MessageModel
+                {
+                    Message = "Cập nhật trạng thái cho đơn hàng thất bại",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
+        }
+
+        private async Task<Tuple<OrderRefund, string>> GetGhnStatusForOrderRefund(OrderRefund orderRefund)
+        {
+            if (string.IsNullOrEmpty(orderRefund.ShippingCode))
+            {
+                throw new ArgumentException($"Order refund ID {orderRefund.OrderRefundId} không có mã vận đơn GHN (ShippingCode).");
+            }
+
+            try
+            {
+                GhnOrderStatusRequest ghnOrderStatusRequest = new GhnOrderStatusRequest
+                {
+                    OrderCode = orderRefund.ShippingCode,
+                };
+                var options = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+
+                var jsonContent = new StringContent(
+                    JsonSerializer.Serialize(ghnOrderStatusRequest, options),
+                    Encoding.UTF8,
+                    "application/json");
+                var response = await _client.PostAsync("shiip/public-api/v2/shipping-order/detail", jsonContent);
+                if (response.IsSuccessStatusCode)
+                {
+                    var resultGHN = await response.Content.ReadAsStringAsync();
+                    GhnOrderStatusResponse responseGHNObject =
+                        JsonSerializer.Deserialize<GhnOrderStatusResponse>(resultGHN);
+                    if (responseGHNObject?.Data != null && responseGHNObject.Data.Status != null)
+                    {
+                        return new Tuple<OrderRefund, string>(orderRefund, responseGHNObject.Data.Status);
+                    }
+
+                    throw new Exception($"Không lấy được trạng thái hợp lệ từ GHN cho mã {orderRefund.ShippingCode}.");
+                }
+
+                string errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"GHN API trả về lỗi HTTP {(int)response.StatusCode} cho mã {orderRefund.ShippingCode}. Chi tiết: {errorContent}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Không thể cập nhật trạng thái GHN cho mã {orderRefund.ShippingCode}.", ex);
+            }
+        }
+
     }
 }

@@ -65,5 +65,14 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(x => x.OrderRefundImages)
                 .FirstOrDefaultAsync(x => x.OrderRefundId == orderRefundId);
         }
+
+
+        public async Task<List<OrderRefund>> GetAllOrderRefundReadyForGHNUpdate()
+        {
+            List<OrderRefund> orderRefunds = await _context.OrderRefunds.Where(x => x.Status == OrderRefundStatusEnum.Accepted.ToString() ||
+            x.Status == OrderRefundStatusEnum.Delivering.ToString()).ToListAsync();
+            return orderRefunds;
+        }
+
     }
 }

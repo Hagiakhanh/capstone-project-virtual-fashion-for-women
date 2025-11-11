@@ -154,7 +154,7 @@ builder.Services.AddHostedService<RecommendationBackgroundService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-           builder => builder.WithOrigins("http://localhost:3000", "https://onlinewomanfashion.store")
+           builder => builder.WithOrigins("http://localhost:3000", "https://capstone-project-virtual-fashion-fo.vercel.app", "https://onlinewomanfashion.store")
           .AllowAnyMethod()
           .AllowAnyHeader()
           .AllowCredentials()
@@ -192,6 +192,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.UseRouting();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();

@@ -25,6 +25,8 @@ namespace VirtualTryonWomenFashion.Service.DTO.SaleCampaign
         public string ProductID { get; set; }
         public string ProductName { get; set; }
         public string ImageUrl { get; set; }
+        public decimal SalePrice { get; set; }
+        public decimal TotalRevenue { get; set; }
         public List<ResponseVariantInSaleCampaignStatistic> ListResponseProductVariant { get; set; }
     }
 
