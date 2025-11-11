@@ -8,11 +8,13 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true, // ✅ Bỏ qua lỗi TypeScript khi build
   },
+  compress: true,
+  productionBrowserSourceMaps: false,
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
+        protocol: "https",
+        hostname: "res.cloudinary.com",
         // Bạn có thể thêm port hoặc pathname nếu cần
       },
     ],
