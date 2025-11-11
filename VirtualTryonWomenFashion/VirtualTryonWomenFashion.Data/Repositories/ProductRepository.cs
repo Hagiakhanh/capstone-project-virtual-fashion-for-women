@@ -89,7 +89,9 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(p => p.ProductColors)
                     .ThenInclude(pc => pc.ProductVariants.Where(pv => pv.Status == "Active"))
                         .ThenInclude(pv => pv.Size)
+                            .ThenInclude(s => s.CategorySizeTemplates)
                 .Where(p => p.ProductSlug == slug && p.IsDeleted != true)
+                .AsNoTracking()
                 .FirstOrDefaultAsync();
         }
 
@@ -131,6 +133,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             var query = _context.Products
                 .Include(p => p.ProductColors)
                     .ThenInclude(pc => pc.ProductVariants).ThenInclude(pv => pv.Size)
+                        .ThenInclude(s => s.CategorySizeTemplates)
                 .Include(p => p.ProductColors)
                     .ThenInclude(pc => pc.Color)
                 .Include(p => p.ProductColors)

@@ -19,7 +19,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
         // GET: api/<SaleCampaignController>
         [HttpGet]
-        public async Task<IActionResult> Get(int pageSize =3, int pageIndex=1)
+        public async Task<IActionResult> Get(int pageSize = 3, int pageIndex = 1)
         {
             try
             {
@@ -51,6 +51,23 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+        [HttpGet("{id}/statistic")]
+        public async Task<IActionResult> GetStatistic(int id, DateOnly? startDate, DateOnly? endDate)
+        {
+            try
+            {
+                var result = await _saleCampaignService.GetStatisticBySaleCampaignID(id, startDate, endDate);
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return StatusCode(400, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
 
         // POST api/<SaleCampaignController>
         [HttpPost]
@@ -59,7 +76,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             try
             {
                 var result = await _saleCampaignService.CreateSaleCampaign(model);
-                return StatusCode(result.StatusCode,result);
+                return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
             {
