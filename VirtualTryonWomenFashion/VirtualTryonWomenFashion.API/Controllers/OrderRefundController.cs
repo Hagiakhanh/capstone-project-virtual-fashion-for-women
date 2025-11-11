@@ -181,5 +181,19 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
+        [HttpPut("staff/sync-ghn-status")]
+        [Authorize(Roles = "Staff")]
+        public async Task<IActionResult> UpdateAllOrderRefundStatusInGHN()
+        {
+            try
+            {
+                MessageModel result = await _orderRefundService.UpdateAllOrderRefundStatusInGHN();
+                return StatusCode(result.StatusCode, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }
