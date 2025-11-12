@@ -72,5 +72,19 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
             return await _context.OrderDetails.Where(x => orderDetailId.Contains(x.OrderDetailId)).ToListAsync();
         }
+        
+        public async Task<List<OrderDetail>> GetOrderDetailsForSystemStatisticAsync(DateTime startDate, DateTime endDate)
+        {
+            return await _context.OrderDetails
+                .Where(od => od.Order.CreatedAt >= startDate && od.Order.CreatedAt <= endDate)
+                .Include(od => od.Order)
+                .Include(od => od.ProductVariant)
+                    .ThenInclude(pv => pv.ProductColor)
+                        .ThenInclude(pc => pc.Product)
+                            .ThenInclude(p => p.Category)
+                .Include(od => od.OrderRefundDetails)
+                    .ThenInclude(ord => ord.OrderRefund)
+                .ToListAsync();
+        }
     }
 }

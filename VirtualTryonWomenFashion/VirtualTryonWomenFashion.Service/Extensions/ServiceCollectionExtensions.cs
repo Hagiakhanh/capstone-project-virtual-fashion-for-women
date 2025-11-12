@@ -101,6 +101,7 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IOrderRefundImageService, OrderRefundImageService>();
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<ICategorySizeTemplateService, CategorySizeTemplateService>();
+            services.AddScoped<IDashboardService, DashboardService>();
 
             return services;
         }
