@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Service.DTO.SaleCampaign;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -52,6 +53,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
         [HttpGet("{id}/statistic")]
+
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetStatistic(int id, DateOnly? startDate, DateOnly? endDate)
         {
             try
@@ -71,6 +74,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // POST api/<SaleCampaignController>
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Post([FromForm] RequestCreateSaleCampaign model)
         {
             try
@@ -87,6 +91,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
         // PUT api/<SaleCampaignController>/5
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> Deactivate(int id, [FromForm] RequestUpdateSaleCampaign model)
         {
             try
@@ -102,6 +108,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // DELETE api/<SaleCampaignController>/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try
