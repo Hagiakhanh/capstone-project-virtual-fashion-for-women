@@ -248,6 +248,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Where(p => p.ProductColors.Any(pc => recommendedColors.Contains(pc.ColorId.Value)) 
                     && p.IsDeleted!= true && (p.Category.CategoryName.Contains(categoryName)|| string.IsNullOrEmpty(categoryName)))
                 .Distinct()
+                .OrderBy(p => p.ProductName)
                 .Skip((pagination.PageIndex - 1) * pagination.PageSize)
                 .Take(pagination.PageSize)
                 .ToListAsync();
