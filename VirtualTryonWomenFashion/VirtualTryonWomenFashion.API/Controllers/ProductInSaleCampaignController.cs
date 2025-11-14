@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Service.DTO.ProductInSaleCampaign;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -16,6 +17,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
         // GET: api/<SaleCampaignController>
         [HttpPost("validate")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ValidateProductInSale([FromBody] RequestCheckingProductInSaleCampaign request)
         {
             try

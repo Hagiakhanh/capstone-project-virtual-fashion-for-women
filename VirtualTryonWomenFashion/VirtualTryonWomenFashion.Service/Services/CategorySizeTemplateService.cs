@@ -22,7 +22,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public CategorySizeTemplateService(ICategorySizeTemplateRepository templateSizeRepository,
             IUnitOfWork unitOfWork,
-            ISizeRepository sizeRepository) 
+            ISizeRepository sizeRepository)
         {
             _templateSizeRepository = templateSizeRepository;
             _unitOfWork = unitOfWork;
@@ -216,7 +216,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 List<CategorySizeTemplate> templates = await _templateSizeRepository.GetAllTemplateByCategoryId(categoryId);
 
-                if (templates == null) 
+                if (templates == null)
                 {
                     throw new ArgumentNullException("Not found");
                 }
@@ -228,5 +228,111 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception("Fail");
             }
         }
+
+        public async Task<List<CategorySizeTemplate>> GetListTemplateSizeByBody(
+     int categoryId, double bust, double waist, double hips)
+        {
+            var templates = await _templateSizeRepository.GetAll(
+                null,
+                x => x.CategoryId == categoryId,
+                null,
+                includes: [x => x.Size, x => x.Category]
+            );
+
+            if (templates == null || !templates.Any())
+                return new List<CategorySizeTemplate>();
+
+            var category = templates.First().Category;
+            string bodyPart = category.BodyPart; // Thân trên / Thân dưới / Toàn thân
+
+            decimal bustDec = (decimal)bust;
+            decimal waistDec = (decimal)waist;
+            decimal hipsDec = (decimal)hips;
+
+            // ===============================
+            // 1️⃣ Tạo rule match theo BodyPart
+            // ===============================
+            Func<CategorySizeTemplate, bool> exactMatch;
+            Func<CategorySizeTemplate, decimal> deviation;
+
+            switch (bodyPart)
+            {
+                case "Thân trên": // Áo
+                    exactMatch = t =>
+                        bust >= (t.MinBust ?? double.MinValue) && bust <= (t.MaxBust ?? double.MaxValue) &&
+                        waist >= (t.MinWaist ?? double.MinValue) && waist <= (t.MaxWaist ?? double.MaxValue);
+
+                    deviation = t =>
+                        Math.Abs(bustDec - Center(t.MinBust, t.MaxBust)) +
+                        Math.Abs(waistDec - Center(t.MinWaist, t.MaxWaist));
+                    break;
+
+                case "Thân dưới": // Váy + Quần
+                    exactMatch = t =>
+                        waist >= (t.MinWaist ?? double.MinValue) && waist <= (t.MaxWaist ?? double.MaxValue) &&
+                        hips >= (t.MinHips ?? double.MinValue) && hips <= (t.MaxHips ?? double.MaxValue);
+
+                    deviation = t =>
+                        Math.Abs(waistDec - Center(t.MinWaist, t.MaxWaist)) +
+                        Math.Abs(hipsDec - Center(t.MinHips, t.MaxHips));
+                    break;
+
+                case "Toàn thân": // Đầm
+                    exactMatch = t =>
+                        bust >= (t.MinBust ?? double.MinValue) && bust <= (t.MaxBust ?? double.MaxValue) &&
+                        waist >= (t.MinWaist ?? double.MinValue) && waist <= (t.MaxWaist ?? double.MaxValue) &&
+                        hips >= (t.MinHips ?? double.MinValue) && hips <= (t.MaxHips ?? double.MaxValue);
+
+                    deviation = t =>
+                        Math.Abs(bustDec - Center(t.MinBust, t.MaxBust)) +
+                        Math.Abs(waistDec - Center(t.MinWaist, t.MaxWaist)) +
+                        Math.Abs(hipsDec - Center(t.MinHips, t.MaxHips));
+                    break;
+
+                default:
+                    return new List<CategorySizeTemplate>();
+            }
+
+            // ===============================
+            // 2️⃣ Tìm template khớp chính xác
+            // ===============================
+            var matched = templates.Where(exactMatch).ToList();
+            if (matched.Any())
+                return matched;
+
+            // ===============================
+            // 3️⃣ Không khớp → chọn size gần nhất
+            // ===============================
+            var closest = templates
+                .Select(t => new
+                {
+                    Template = t,
+                    Dev = deviation(t)
+                })
+                .OrderBy(x => x.Dev)
+                .First()
+                .Template;
+
+            return new List<CategorySizeTemplate> { closest };
+        }
+
+
+        // =====================================
+        // Helper tránh lỗi null + convert double? → decimal
+        // =====================================
+        private decimal ToDec(double? value)
+        {
+            if (value == null)
+                return 0;
+            return (decimal)value.Value;
+        }
+
+        private decimal Center(double? min, double? max)
+        {
+            decimal a = ToDec(min);
+            decimal b = ToDec(max);
+            return (a + b) / 2;
+        }
+
     }
 }
