@@ -29,7 +29,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Gửi tin nhắn thất bại");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 

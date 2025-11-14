@@ -110,15 +110,17 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     // Dictionary gom list sản phẩm theo loại
                     var groupedVariants = new Dictionary<string, List<ProductVariant>>();
-                    List<CategorySizeTemplate> getListTemplateSize = await _templateSizeService.GetListTemplateSizeByBody(currentUserStyle.Bust.Value, currentUserStyle.Waist.Value, currentUserStyle.Hips.Value);
+
 
                     foreach (var componentPlan in analysis.Components)
                     {
+                        Category selectedCategory = listCategory.Where(x => x.CategoryName.ToLower().Equals(componentPlan.Filters["itemType"].ToString().ToLower())).FirstOrDefault();
+                        List<CategorySizeTemplate> getListTemplateSize = await _templateSizeService.GetListTemplateSizeByBody(selectedCategory.CategoryId, currentUserStyle.Bust.Value, currentUserStyle.Waist.Value, currentUserStyle.Hips.Value);
+
                         if (currentUserStyle.Hips.HasValue && currentUserStyle.Bust.HasValue && currentUserStyle.Waist.HasValue)
                         {
-                            Size selectedSize = getListTemplateSize.FirstOrDefault(x => x.Category.CategoryName.ToLower()
-                            .Equals(componentPlan.Filters["itemType"].ToString().ToLower())).Size;
-                            componentPlan.Filters["size"] = selectedSize;
+                            Size selectedSize = getListTemplateSize.FirstOrDefault().Size;
+                            componentPlan.Filters["size"] = selectedSize.SizeCode;
                         }
 
                         float[] embeddedQuery = await _geminiService.GetEmbeddingAsync(componentPlan.SearchQuery);
@@ -242,6 +244,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 return null;
             }
         }

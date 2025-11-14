@@ -10,5 +10,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface ICharacteristicRepository : IGenericRepository<Characteristic>
     {
+        Task<Characteristic> GetCharacteristicByIDAsync(int id);
     }
 }
