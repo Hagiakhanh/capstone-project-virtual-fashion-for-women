@@ -1104,14 +1104,16 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
 
                 int result = await _unitOfWork.SaveChanges();
-                await _unitOfWork.CommitTransactionAsync();
-                await _redisCacheService.RemoveData("products:recommendation_data");
-
+                
                 // Sau khi cập nhật DB thành công
                 var updatedProduct = await _productRepository.GetProductByIdAsync(productId);
 
                 // Gọi hàm cập nhật embedding
                 await UpdateProductEmbeddingsAsync(updatedProduct);
+                
+                await _unitOfWork.CommitTransactionAsync();
+                await _redisCacheService.RemoveData("products:recommendation_data");
+                
                 //var productDto = _mapper.Map<ResponseProductDto>(updatedProduct);
                 return new MessageModelWithData<Product>
                 {
