@@ -89,7 +89,6 @@ public class DashboardService : IDashboardService
         }
         if (endDate.HasValue)
         {
-            // Thêm 1 ngày để bao gồm cả ngày kết thúc (ví dụ: endDate là 31/10 thì sẽ lấy đến 23:59:59)
             var inclusiveEndDate = endDate.Value.Date.AddDays(1);
             query = query.Where(od => od.Order.CreatedAt < inclusiveEndDate);
         }
@@ -114,7 +113,7 @@ public class DashboardService : IDashboardService
                 ? selection.OrderByDescending(c => c.TotalRevenue) 
                 : selection.OrderBy(c => c.TotalRevenue);
         }
-        else // Mặc định sắp xếp theo 'quantity'
+        else
         {
             selection = isDescending 
                 ? selection.OrderByDescending(c => c.TotalQuantitySold) 
