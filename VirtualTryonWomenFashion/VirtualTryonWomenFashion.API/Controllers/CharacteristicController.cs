@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.Characteristic;
 using VirtualTryonWomenFashion.Service.Helpers;
@@ -20,6 +21,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
         // GET: api/<CharacteristicController>
         [HttpGet]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> GetCurrentCharacteristicForUser()
         {
             try
@@ -35,6 +37,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // POST api/<CharacteristicController>
         [HttpPost]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Post([FromBody] RequestCreateUserCharacteristics requestModel)
         {
             try
@@ -50,6 +53,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // PUT api/<CharacteristicController>/5
         [HttpPut]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Put([FromBody] RequestCreateUserCharacteristics model)
         {
             try
@@ -62,11 +66,5 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Cập nhật phong cách cá nhân thất bại");
             }
         }
-
-        //// DELETE api/<CharacteristicController>/5
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-        //}
     }
 }

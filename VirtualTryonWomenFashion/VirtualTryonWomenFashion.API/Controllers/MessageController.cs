@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Service.DTO.AIChatModel;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -17,6 +18,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
         // POST api/<MessageController>
         [HttpPost("AIConversation")]
+        [Authorize(Roles = "Customer")]
+
         public async Task<IActionResult> SendMessageToAiConversation([FromBody] RequestCreateChatWithAI model)
         {
             try
@@ -26,7 +29,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Gửi tin nhắn thất bại");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 

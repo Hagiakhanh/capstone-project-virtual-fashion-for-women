@@ -15,5 +15,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<MessageModel> CreateCategoryTemplatesAsync(RequestCreateCategoryTemplatesModel request);
         Task<MessageModel> UpdateCategoryTemplatesAsync(int categoryId, RequestUpdateCategoryTemplatesModel request);
         Task<List<CategorySizeTemplate>> GetAllTemplateByCategoryId(int categoryId);
+        Task<List<CategorySizeTemplate>> GetListTemplateSizeByBody(int categoryId, double bust, double waist, double hips);
     }
 }

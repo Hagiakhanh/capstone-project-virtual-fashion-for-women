@@ -37,12 +37,12 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ITicketChatRepository _ticketChatRepository;
         private readonly IUserRepository _userRepository;
         private readonly IHubContext<TicketChatHub> _ticketChatHub;
-        private readonly ISizeService _sizeService;
+        private readonly ICategorySizeTemplateService _templateSizeService;
         public MessageService(IMessageRepository messageRepository, IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService, IAiconversationRepository aiconversationRepository,
             IGeminiService geminiService, ICategoryRepository categoryRepository, IVectorDbService vectorDbService,
             IProductVariantRepository productVariantRepository, ISuggestedOutfitRepository suggestedOutfitRepository,
-            ITicketChatRepository ticketChatRepository, IUserRepository userRepository, IHubContext<TicketChatHub> ticketChatHub, ISizeService sizeService)
+            ITicketChatRepository ticketChatRepository, IUserRepository userRepository, IHubContext<TicketChatHub> ticketChatHub, ICategorySizeTemplateService templateSizeService)
         {
             _messageRepository = messageRepository;
             _unitOfWork = unitOfWork;
@@ -56,7 +56,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _ticketChatRepository = ticketChatRepository;
             _userRepository = userRepository;
             _ticketChatHub = ticketChatHub;
-            _sizeService = sizeService;
+            _templateSizeService = templateSizeService;
         }
         public async Task<ResponseAIChatModelWithSuggestion> SendMessageToAIConversation(int conversationChatID, string message)
         {
@@ -111,14 +111,18 @@ namespace VirtualTryonWomenFashion.Service.Services
                     // Dictionary gom list sản phẩm theo loại
                     var groupedVariants = new Dictionary<string, List<ProductVariant>>();
 
+
                     foreach (var componentPlan in analysis.Components)
                     {
+                        Category selectedCategory = listCategory.Where(x => x.CategoryName.ToLower().Equals(componentPlan.Filters["itemType"].ToString().ToLower())).FirstOrDefault();
+                        List<CategorySizeTemplate> getListTemplateSize = await _templateSizeService.GetListTemplateSizeByBody(selectedCategory.CategoryId, currentUserStyle.Bust.Value, currentUserStyle.Waist.Value, currentUserStyle.Hips.Value);
+
                         if (currentUserStyle.Hips.HasValue && currentUserStyle.Bust.HasValue && currentUserStyle.Waist.HasValue)
                         {
-                            var size = await _sizeService.GetByBodySize(currentUserStyle.Bust.Value, currentUserStyle.Waist.Value, currentUserStyle.Hips.Value);
-                            componentPlan.Filters["size"] = size.SizeCode;
+                            Size selectedSize = getListTemplateSize.FirstOrDefault().Size;
+                            componentPlan.Filters["size"] = selectedSize.SizeCode;
                         }
-                            
+
                         float[] embeddedQuery = await _geminiService.GetEmbeddingAsync(componentPlan.SearchQuery);
 
                         // Query nhiều sản phẩm cho mỗi loại
@@ -240,6 +244,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 return null;
             }
         }

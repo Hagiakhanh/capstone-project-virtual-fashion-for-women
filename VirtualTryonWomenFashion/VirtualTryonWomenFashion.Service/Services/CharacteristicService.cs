@@ -243,7 +243,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             try
             {
                 int currentUserId = _currentUserService.GetUserId();
-                Characteristic characteristicModel = await _characteristicRepository.GetByIdAsync(id);
+                Characteristic characteristicModel = await _characteristicRepository.GetCharacteristicByIDAsync(id);
                 if (characteristicModel == null)
                 {
                     return new MessageModelWithData<Characteristic>()

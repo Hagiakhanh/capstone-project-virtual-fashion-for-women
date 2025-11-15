@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Reflection.PortableExecutable;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Models;
@@ -24,6 +25,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // GET: api/<AIConversationController>
         [HttpGet]
+        [Authorize(Roles ="Customer")]
         public async Task<IActionResult> Get()
         {
             try
@@ -39,6 +41,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // GET api/<AIConversationController>/5
         [HttpGet("{id}")]
+        [Authorize(Roles = "Customer")]
+
         public async Task<IActionResult> Get(int id)
         {
             try
@@ -52,6 +56,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
         [HttpGet("{id}/suggested-outfits")]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> GetAllSuggestions(int id, int pageSize, int pageCurrent)
         {
             try
@@ -76,6 +81,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // POST api/<AIConversationController>
         [HttpPost]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Post([FromBody] RequestCreateAIConversation requestModel)
         {
             try
@@ -91,6 +97,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         // DELETE api/<AIConversationController>/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Delete(int id)
         {
             try
