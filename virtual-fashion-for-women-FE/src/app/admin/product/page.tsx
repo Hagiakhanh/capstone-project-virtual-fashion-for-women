@@ -251,7 +251,7 @@ export default function ProductListPage() {
                                     setStatusFilter(tab.key);
                                     setPagination((prev) => ({ ...prev, CurrentPage: 1 }));
                                 }}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all cursor-pointer ${
                                     active
                                         ? 'bg-blue-600 text-white border-blue-600 shadow'
                                         : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
@@ -325,7 +325,7 @@ export default function ProductListPage() {
                         <button
                             disabled={pagination.CurrentPage === 1}
                             onClick={() => handlePageChange(pagination.CurrentPage - 1)}
-                            className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-all"
                         >
                             « Trước
                         </button>
@@ -335,7 +335,7 @@ export default function ProductListPage() {
                                 key={idx}
                                 onClick={() => typeof page === 'number' && handlePageChange(page)}
                                 disabled={page === "..."}
-                                className={`px-4 py-2 rounded-lg border transition-all ${
+                                className={`px-4 py-2 rounded-lg border transition-all cursor-pointer${
                                     pagination.CurrentPage === page
                                         ? 'bg-white-400 text-black border-blue-600'
                                         : 'bg-white hover:bg-gray-100'
@@ -348,7 +348,7 @@ export default function ProductListPage() {
                         <button
                             disabled={pagination.CurrentPage === pagination.TotalPages}
                             onClick={() => handlePageChange(pagination.CurrentPage + 1)}
-                            className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                         >
                             Sau »
                         </button>

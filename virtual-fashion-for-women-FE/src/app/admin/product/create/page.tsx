@@ -315,7 +315,7 @@ export default function CreateProductPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-3 py-2 text-sm md:px-4 md:py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 disabled:bg-gray-400"
+                            className="px-3 py-2 text-sm md:px-4 md:py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 cursor-pointer disabled:bg-gray-400"
                         >
                             {loading ? "Đang tạo..." : "Thêm Sản Phẩm"}
                         </button>
@@ -373,7 +373,7 @@ export default function CreateProductPage() {
                                 <button
                                     type="button"
                                     onClick={addColor}
-                                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer"
                                 >
                                 <Plus size={20} />
                                     Thêm màu

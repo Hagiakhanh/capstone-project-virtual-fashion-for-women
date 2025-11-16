@@ -5,7 +5,7 @@ export async function DELETE(request: Request, { params }: { params: { wishlistI
    try {
       const api = createApiInstance(request);
       const { wishlistId } = await params;
-      const responseBE = await api.get(`/wishlist/${wishlistId}`);
+      const responseBE = await api.delete(`/wishlist/${wishlistId}`);
       if (responseBE.status === 200) {
          return NextResponse.json({ message: "Xóa khỏi yêu thích thành công." }, { status: 200 });
       }
