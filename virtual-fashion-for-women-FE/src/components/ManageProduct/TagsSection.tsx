@@ -73,7 +73,7 @@ export default function TagsSection({
                                 <button
                                     type="button"
                                     onClick={() => onRemoveTag(tagId)}
-                                    className="hover:text-blue-900"
+                                    className="hover:text-blue-900 cursor-pointer"
                                 >
                                     <X size={14} />
                                 </button>
@@ -91,7 +91,7 @@ export default function TagsSection({
                 <button
                     type="button"
                     onClick={() => setShowTagDropdown(!showTagDropdown)}
-                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm cursor-pointer"
                 >
                     Chọn tag có sẵn
                 </button>
@@ -105,7 +105,7 @@ export default function TagsSection({
                                         key={tag.tagId}
                                         type="button"
                                         onClick={() => onSelectTag(tag.tagId)}
-                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm cursor-pointer"
                                     >
                                         {tag.tagName}
                                     </button>
@@ -118,7 +118,7 @@ export default function TagsSection({
                             <button
                                 type="button"
                                 onClick={() => setShowTagDropdown(false)}
-                                className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
+                                className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm cursor-pointer"
                             >
                                 Xong
                             </button>
@@ -142,7 +142,7 @@ export default function TagsSection({
                             <button
                                 type="button"
                                 onClick={() => onRemoveNewTag(index)}
-                                className="hover:text-green-900"
+                                className="hover:text-green-900 cursor-pointer"
                             >
                                 <X size={14} />
                             </button>
@@ -167,7 +167,7 @@ export default function TagsSection({
                         type="button"
                         onClick={handleAddNewTagClick}
                         disabled={!newTagInput.trim()}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                         <Plus size={20} />
                         Thêm

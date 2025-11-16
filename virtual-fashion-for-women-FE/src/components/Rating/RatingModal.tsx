@@ -142,7 +142,7 @@ export default function RatingModal({
              <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl relative">
                  <button
                      onClick={onClose}
-                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
                  >
                      <X size={24} />
                  </button>
@@ -195,7 +195,7 @@ export default function RatingModal({
                           <button
                               onClick={handleSubmit}
                               disabled={loading}
-                              className="w-full bg-red-500 text-white font-semibold py-3 rounded-lg mt-4 hover:bg-red-600 transition-all disabled:opacity-50"
+                              className="w-full bg-red-500 text-white font-semibold py-3 rounded-lg mt-4 hover:bg-red-600 transition-all cursor-pointer disabled:opacity-50"
                           >
                               {loading ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Gửi đánh giá')}
                           </button>

@@ -85,7 +85,7 @@ export default function UpdateTagsSection({
                             <button
                                 type="button"
                                 onClick={() => handleRemoveTag(index)}
-                                className="hover:opacity-80"
+                                className="hover:opacity-80 cursor-pointer"
                             >
                                 <X size={16} />
                             </button>
@@ -101,7 +101,7 @@ export default function UpdateTagsSection({
                     <button
                         type="button"
                         onClick={() => setShowTagDropdown(!showTagDropdown)}
-                        className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+                        className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm cursor-pointer"
                     >
                         Chọn tag có sẵn
                     </button>
@@ -116,7 +116,7 @@ export default function UpdateTagsSection({
                                                 key={tag.tagId}
                                                 type="button"
                                                 onClick={() => handleAddExistingTag(tag)}
-                                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm cursor-pointer"
                                             >
                                                 {tag.tagName}
                                             </button>
@@ -126,7 +126,7 @@ export default function UpdateTagsSection({
                                         <button
                                             type="button"
                                             onClick={() => setShowTagDropdown(false)}
-                                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium cursor-pointer"
                                         >
                                             Xong
                                         </button>
@@ -159,7 +159,7 @@ export default function UpdateTagsSection({
                         type="button"
                         onClick={handleAddNewTag}
                         disabled={!newTagInput.trim()}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                         <Plus size={20} />
                         Thêm

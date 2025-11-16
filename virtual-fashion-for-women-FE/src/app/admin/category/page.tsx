@@ -157,7 +157,7 @@ export default function CategoryManagementPage() {
                 <h1 className="text-3xl font-bold text-gray-800">Quản lý Danh mục</h1>
                 <button
                     onClick={handleOpenCreateModal}
-                    className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors"
+                    className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors cursor-pointer"
                 >
                     + Thêm Danh mục mới
                 </button>

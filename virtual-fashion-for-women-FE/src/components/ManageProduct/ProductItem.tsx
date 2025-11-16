@@ -70,14 +70,14 @@ export default function ProductItem({ product, onDelete }: ProductItemProps) {
                         onClick={() =>
                             router.push(`/admin/product/update/${product.productId}`)
                         }
-                        className="text-blue-600 hover:text-blue-900 transition-colors"
+                        className="text-blue-600 hover:text-blue-900 transition-colors cursor-pointer"
                         title="Sửa"
                     >
                         <Pencil className="w-5 h-5" />
                     </button>
                     <button
                         onClick={() => onDelete(product.productId)}
-                        className="text-red-600 hover:text-red-900 transition-colors"
+                        className="text-red-600 hover:text-red-900 transition-colors cursor-pointer"
                         title="Xóa"
                     >
                         <Trash2 className="w-5 h-5" />

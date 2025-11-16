@@ -372,10 +372,10 @@ export default function UpdateProductPage({ params }: UpdateProductPageProps) {
                 {/* Submit Buttons */}
                 <div className="flex gap-4 pt-4 border-t">
                      {/* ... (Submit and Cancel buttons) ... */}
-                    <button type="submit" disabled={submitting} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-semibold">
+                    <button type="submit" disabled={submitting} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 font-semibold cursor-pointer">
                         {submitting ? 'Đang cập nhật...' : 'Cập nhật sản phẩm'}
                     </button>
-                    <button type="button" onClick={() => router.back()} className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 font-semibold">
+                    <button type="button" onClick={() => router.back()} className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 font-semibold cursor-pointer">
                         Hủy
                     </button>
                 </div>

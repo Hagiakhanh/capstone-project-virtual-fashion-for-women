@@ -159,7 +159,7 @@ export default function ColorModal({
                     type="button"
                     onClick={onConfirm}
                     disabled={!isFormValid}
-                    className="w-full bg-blue-600 text-white px-4 py-2.5 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-6 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-blue-600 text-white px-4 py-2.5 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-6 font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Xong
                 </button>

@@ -41,7 +41,7 @@ export default function ProductReviewSelectionModal({
             <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl relative">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
                 >
                     <X size={24} />
                 </button>
@@ -69,7 +69,7 @@ export default function ProductReviewSelectionModal({
                                 </div>
                                 <button
                                     onClick={() => onSelectProduct(detail)}
-                                    className={`px-4 py-2 rounded-lg text-white text-sm font-medium transition-all ${
+                                    className={`px-4 py-2 rounded-lg text-white text-sm font-medium transition-all cursor-pointer${
                                         mode === 'review' 
                                         ? 'bg-red-500 hover:bg-red-600' 
                                         : 'bg-blue-500 hover:bg-blue-600'
