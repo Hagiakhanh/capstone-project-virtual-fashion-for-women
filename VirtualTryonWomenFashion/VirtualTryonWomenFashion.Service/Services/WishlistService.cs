@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
@@ -91,8 +92,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             int userId = _currentUserService.GetUserId();
             List<Wishlist> wishlists = await _wishlistRepository.GetAll(
                 pagination: page,
-                filter: x => x.UserId == userId
-                );
+                filter: x => x.UserId == userId,
+                includes: w => w.Product);
             if (wishlists == null)
             {
                 wishlists = new List<Wishlist>();
