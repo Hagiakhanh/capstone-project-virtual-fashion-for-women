@@ -29,7 +29,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
             ProductSortEnum? sortBy,
             int? categoryId);
         Task<MessageModelWithData<Product>> UpdateAsync(string productId, UpdateProductRequest request);
-        Task<ResponsePaginationModel<List<ResponseProductDto>>> SearchProductAsync(
+        Task<MessageModelWithData<Pagination<ResponseProductDto>>> SearchProductAsync(
             ProductSearchRequest request,
             PaginationParameter pagination);
         Task<MessageModel> DeleteProductAsync(string productId, bool hardDelete = false);

@@ -158,6 +158,16 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                                          p.Category.CategoryName.Contains(categoryName));
             }
 
+            if (productSort == "InSaleCampaign")
+            {
+                query = query.Where(p =>
+                    p.ProductInSaleCampaigns.Any(c =>
+                        c.Campaign.StartDate <= DateOnly.FromDateTime(DateTime.Now) &&
+                        c.Campaign.EndDate >= DateOnly.FromDateTime(DateTime.Now) &&
+                        c.Campaign.IsDeleted == false &&
+                        c.Campaign.Status == "Active"));
+            }
+
             // Sort
             query = productSort switch
             {
@@ -185,7 +195,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<int> CountSearchProductsAsync(string productName, string categoryName)
+        public async Task<int> CountSearchProductsAsync(string productName, string categoryName, string productSort)
         {
             var query = _context.Products.Where(p => p.IsDeleted != true);
 
@@ -198,7 +208,15 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 query = query.Where(p => p.Category != null &&
                                          p.Category.CategoryName.Contains(categoryName));
             }
-
+            if (productSort == "InSaleCampaign")
+            {
+                query = query.Where(p =>
+                    p.ProductInSaleCampaigns.Any(c =>
+                        c.Campaign.StartDate <= DateOnly.FromDateTime(DateTime.Now) &&
+                        c.Campaign.EndDate >= DateOnly.FromDateTime(DateTime.Now) &&
+                        c.Campaign.IsDeleted == false &&
+                        c.Campaign.Status == "Active"));
+            }
 
             return await query.CountAsync();
         }
