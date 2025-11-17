@@ -4,16 +4,17 @@ import { Input, Dropdown, Button } from 'antd';
 import logo from '../../assets/home/Logo.png';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '@/api/instance';
 import { CartItemDTO } from '@/models/CartItemDTO';
 import { useRouter } from 'next/navigation';
 import * as signalR from '@microsoft/signalr'
 import { messageToast } from '@/helpers/toastHelper';
 import { PaginationDTO } from '@/models/PaginationDTO';
-import { set } from 'lodash';
 import { ResponseNotification } from '@/models/NotificationDTO';
 import formatDate from '@/utils/formatDate';
+import { set } from 'lodash';
+import formatPrice from '@/utils/formatPrice';
 
 function HeaderComponent() {
    const router = useRouter();
@@ -31,6 +32,10 @@ function HeaderComponent() {
       TotalPages: 0,
    });
    const [notificationCount, setNotificationCount] = useState<number>(0);
+   const [searchText, setSearchText] = useState("");
+   const [showSearchBox, setShowSearchBox] = useState(false);
+   const [searchResults, setSearchResults] = useState<any[]>([]);
+   const debounceTimer = useRef<any>(null);
 
    const fetchCartTotal = async () => {
       try {
@@ -49,8 +54,11 @@ function HeaderComponent() {
          const response = await api.get('/category');
          if (response.status === 200) {
             const newItems = response.data.map((category: any) => ({
-               key: String(category.categoryId),
+               key: String(category.categoryName),
                label: <span style={{ fontSize: '1rem' }}>{category.categoryName}</span>,
+               onClick: ({ key }) => {
+                  router.push(`/products?category=${key}`);
+               }
             }));
             setMenuItems(newItems);
          } else {
@@ -120,6 +128,44 @@ function HeaderComponent() {
          console.error("Lỗi khi đánh dấu thông báo đã đọc:", error);
       }
    };
+
+   const fetchSearchResults = async (keyword: string) => {
+      if (!keyword.trim()) {
+         setSearchResults([]);
+         return;
+      }
+
+      const searchKeyword = keyword.trim();
+
+      const response = await api.get('/product/search', {
+         params: {
+            PageIndex: 1,
+            PageSize: 5,
+            ProductName: searchKeyword
+         }
+      })
+
+      if (response.status === 200) {
+         setSearchResults(response?.data);
+      } else {
+         setSearchResults([]);
+      }
+
+   };
+
+   const handleSearchChange = (e: any) => {
+      const valueSearch = e.target.value;
+      setSearchText(valueSearch);
+
+      if (debounceTimer.current) {
+         clearTimeout(debounceTimer.current);
+      }
+      debounceTimer.current = setTimeout(() => {
+         fetchSearchResults(valueSearch);
+      }, 400);
+
+      setShowSearchBox(true);
+   }
 
    useEffect(() => {
       if (user?.role === 'customer') fetchCartTotal();
@@ -260,14 +306,58 @@ function HeaderComponent() {
 
             {/* Tìm kiếm và icon */}
             <div className="flex items-center gap-6">
-               <div className="relative w-64">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFAF37]">
-                     <SearchOutlined className="text-lg" />
+               <div className='relative max-w-md'>
+                  <div className='absolute z-30 left-4 top-1/2 -translate-y-1/2 flex items-center'>
+                     <SearchOutlined className='text-xl !text-[#FFAF37]' />
                   </div>
-                  <Input
-                     placeholder="Tìm kiếm sản phẩm"
-                     className="rounded-full text-base"
+                  <Input placeholder="Tìm kiếm sản phẩm"
+                     size="middle"
+                     style={{
+                        paddingLeft: '3rem',
+                        borderRadius: '9999px',
+                        fontSize: '16px',
+                     }}
+                     value={searchText}
+                     onChange={handleSearchChange}
+                     onFocus={() => setShowSearchBox(true)}
+                     onBlur={() => setTimeout(() => setShowSearchBox(false), 200)}
+                     onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                           if (searchText.trim().length > 0) {
+                              router.push(`/search?keyword=${encodeURIComponent(searchText.trim())}`);
+                              setShowSearchBox(false);
+                              setSearchText('');
+                              setSearchResults([]);
+                           }
+                        }
+                     }}
                   />
+                  {showSearchBox && searchResults.length > 0 && (
+                     <div style={{
+                        width: '150%',
+                     }}
+                        className="absolute right-0 top-full mt-2 w-full bg-white rounded-lg shadow-lg p-2 z-40 overflow-auto">
+                        {searchResults.map((item, index) => (
+                           <div
+                              key={index}
+                              className="flex items-center gap-3 p-2 hover:bg-gray-100 cursor-pointer"
+                              onClick={() => {
+                                 router.push(`/products/${item?.productSlug}`);
+                                 setShowSearchBox(false);
+                                 setSearchText('');
+                                 setSearchResults([]);
+                              }}
+
+                           >
+                              <img src={item?.mainImageUrl} alt="" className="w-12 h-12 rounded object-cover" />
+                              <div className="flex flex-col">
+                                 <span className="font-normal text-black line-clamp-1">{item?.productName}</span>
+                                 <span className="font-semibold text-black line-clamp-1">{item?.price ? formatPrice(item?.price) : ''}đ</span>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  )}
                </div>
 
                {user?.role === 'customer' ? (

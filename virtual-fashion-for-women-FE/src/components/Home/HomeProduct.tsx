@@ -7,11 +7,13 @@ import ProductItemHome from "../Product/ProductItemHome";
 import { useEffect, useState } from "react";
 import { api } from "@/api/instance";
 import LoadingOverlay from "../Loading/LoadingOverlay";
+import { useRouter } from "next/navigation";
 
 function HomeProductSection() {
    const [activeTab, setActiveTab] = useState<number>(2);
    const [products, setProducts] = useState<any[]>([]);
    const [loadingAddToCart, setLoadingAddToCart] = useState<boolean>(false);
+   const router = useRouter();
 
    const fetchProducts = async () => {
       try {
@@ -68,7 +70,9 @@ function HomeProductSection() {
             </div>
             <div className="flex justify-center mt-8">
                <Button style={{ fontSize: '1.25rem', border: '1px solid' }}
-                  className="mt-2 min-w-[20rem] !py-4 !text-black !hover:text-black !rounded-2xl !text-lg" size="large" >
+                  className="mt-2 min-w-[20rem] !py-4 !text-black !hover:text-black !rounded-2xl !text-lg" size="large"
+                  onClick={() => router.push('/products')}
+               >
                   <div className="flex items-center gap-3">
                      <h1>Xem tất cả</h1>
                      <ArrowRightOutlined />
