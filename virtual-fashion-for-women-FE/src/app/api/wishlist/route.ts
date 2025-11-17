@@ -18,3 +18,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Thêm vào yêu thích thất bại." }, { status: 500 });
    }
 }
+
+export async function GET(request: Request) {
+   try {
+      const { searchParams } = new URL(request.url);
+
+      const pageNumber = searchParams.get("pageNumber");
+      const pageSize = searchParams.get("pageSize");
+
+      const api = createApiInstance(request);
+
+      // gọi API BE
+      const responseBE = await api.get(
+         `wishlist?PageIndex=${pageNumber}&PageSize=${pageSize}`
+      );
+
+      if (responseBE.status === 200) {
+         const dataResponse = responseBE.data?.data || [];
+         const paginationHeader = responseBE.headers["x-pagination"];
+         const pagination = paginationHeader ? JSON.parse(paginationHeader) : null;
+
+         return NextResponse.json(
+               {
+                  data: dataResponse,
+                  pagination,
+               },
+               { status: responseBE.data?.statusCode }
+         );
+      }
+   } catch (error: any) {
+      return NextResponse.json(
+         {
+            message: error?.response?.data?.message || "Lỗi không xác định",
+         },
+         { status: 400 }
+      );
+   }
+}

@@ -19,6 +19,7 @@ import formatPrice from '@/utils/formatPrice';
 import LoadingOverlay from '@/components/Loading/LoadingOverlay';
 import { useRouter } from 'next/navigation';
 import { TransactionInformation } from '@/models/TransactionInformation';
+import formatDate from '@/utils/formatDate';
 
 export default function WalletPage() {
     const router = useRouter();
@@ -76,7 +77,7 @@ export default function WalletPage() {
                 setRechargeTransactions(response.data.data);
                 setPagination((prev) => ({
                     ...prev,
-                    ...response.data.data.pagination
+                    ...response.data.pagination
                 }));
             }
         } catch (error) {
@@ -157,9 +158,22 @@ export default function WalletPage() {
         return range;
     }
 
+    const typeTransaction = (type: string) => {
+        switch (type) {
+            case 'Recharge':
+                return 'Nạp tiền';
+            case 'Refund':
+                return 'Hoàn tiền';
+            case 'Purchase':
+                return 'Mua hàng';
+            default:
+                return 'Khác';
+        }
+    }
+
     useEffect(() => {
         fetchRechargeTransactions();
-    }, []);
+    }, [pagination.CurrentPage, pagination.PageSize]);
 
     return (
         <div className="bg-gradient-to-br from-gray-50 via-white to-blue-50 py-10 px-6">
@@ -221,10 +235,10 @@ export default function WalletPage() {
                                         >
                                             <div className="flex items-center gap-4">
                                                 <div
-                                                    className={`w-11 h-11 rounded-xl flex items-center justify-center ${t.type === 'Recharge' ? 'bg-green-50' : 'bg-red-50'
+                                                    className={`w-11 h-11 rounded-xl flex items-center justify-center ${t.type === 'Recharge' || t.type === 'Refund' ? 'bg-green-50' : 'bg-red-50'
                                                         }`}
                                                 >
-                                                    {t.type === 'Recharge' ? (
+                                                    {t.type === 'Recharge' || t.type === 'Refund' ? (
                                                         <ArrowDownLeft className="w-5 h-5 text-green-600" />
                                                     ) : (
                                                         <ArrowUpRight className="w-5 h-5 text-red-600" />
@@ -232,19 +246,19 @@ export default function WalletPage() {
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-gray-800">
-                                                        {t.type === 'Recharge' ? 'Nạp tiền' : 'Rút tiền'}
+                                                        {typeTransaction(t.type)}
                                                     </p>
                                                     <p className="text-sm text-gray-500">
-                                                        {t.method} • {t.updatedAt}
+                                                        {t.method} • {formatDate(t.updatedAt)}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
                                                 <p
-                                                    className={`text-base font-semibold ${t.type === 'Recharge' ? 'text-green-600' : 'text-red-600'
+                                                    className={`text-base font-semibold ${t.type === 'Recharge' || t.type === 'Refund' ? 'text-green-600' : 'text-red-600'
                                                         }`}
                                                 >
-                                                    {t.type === 'Recharge' ? '+' : '-'}
+                                                    {t.type === 'Recharge' || t.type === 'Refund' ? '+' : '-'}
                                                     {formatPrice(t.money)}
                                                 </p>
                                                 <div className="flex items-center gap-1 justify-end mt-1">

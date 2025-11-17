@@ -454,7 +454,7 @@ export default function CheckoutForm() {
                                                         onClick={() => !isDisabled && handleAddressTabClick(tab)}
                                                         disabled={isDisabled}
                                                         className={`flex-1 py-2 text-sm font-medium transition-colors relative
-                ${currentAddressTab === tab
+                                                                ${currentAddressTab === tab
                                                                 ? 'text-red-600 font-semibold after:content-[""] after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-red-600'
                                                                 : isDisabled
                                                                     ? 'text-gray-300 cursor-not-allowed'
@@ -479,7 +479,7 @@ export default function CheckoutForm() {
                                                         key={id}
                                                         onClick={() => handleCitySelect(id, name)}
                                                         className={`p-3 cursor-pointer border-b last:border-0 transition-all
-                ${addressInformation.provinceName === name
+                                                                ${addressInformation.provinceName === name
                                                                 ? 'bg-red-50 text-red-600 font-medium'
                                                                 : 'hover:bg-gray-50'
                                                             }`}
@@ -495,7 +495,7 @@ export default function CheckoutForm() {
                                                             key={id}
                                                             onClick={() => handleDistrictSelect(id, name)}
                                                             className={`p-3 cursor-pointer border-b last:border-0 transition-all
-                  ${addressInformation.districtName === name
+                                                                    ${addressInformation.districtName === name
                                                                     ? 'bg-red-50 text-red-600 font-medium'
                                                                     : 'hover:bg-gray-50'
                                                                 }`}
@@ -514,7 +514,7 @@ export default function CheckoutForm() {
                                                             key={id}
                                                             onClick={() => handleWardSelect(name)}
                                                             className={`p-3 cursor-pointer border-b last:border-0 transition-all
-                  ${addressInformation.wardName === name
+                                                                    ${addressInformation.wardName === name
                                                                     ? 'bg-red-50 text-red-600 font-medium'
                                                                     : 'hover:bg-gray-50'
                                                                 }`}

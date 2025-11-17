@@ -205,7 +205,7 @@ export default function ColorSection({
                 <button
                     type="button"
                     onClick={onRemove}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 cursor-pointer"
                 >
                     <Trash2 size={20} />
                 </button>
@@ -386,7 +386,7 @@ export default function ColorSection({
                         <button
                             type="button"
                             onClick={onAddVariant}
-                            className="flex items-center gap-2 px-3 py-1 bg-indigo-500 text-white text-sm rounded-lg hover:bg-indigo-600"
+                            className="flex items-center gap-2 px-3 py-1 bg-indigo-500 text-white text-sm rounded-lg hover:bg-indigo-600 cursor-pointer"
                         >
                             <Plus size={16} />
                             Thêm size

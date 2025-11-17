@@ -211,7 +211,7 @@ export default function UpdateColorItem({
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-md font-semibold text-gray-700">Màu {colorIndex + 1}</h3>
-                <button type="button" onClick={onRemove} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50">
+                <button type="button" onClick={onRemove} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 cursor-pointer">
                     <Trash2 size={18} />
                 </button>
             </div>
@@ -260,7 +260,7 @@ export default function UpdateColorItem({
                             <button
                                 type="button"
                                 onClick={() => setIsColorModalOpen(true)}
-                                className="w-full px-2 py-1.5 bg-white border border-blue-500 text-blue-600 font-medium rounded-md hover:bg-blue-50 text-xs"
+                                className="w-full px-2 py-1.5 bg-white border border-blue-500 text-blue-600 font-medium rounded-md hover:bg-blue-50 text-xs cursor-pointer"
                             >
                                 {productColor.colorName ? 'Chỉnh sửa' : 'Thêm thông tin'}
                             </button>
@@ -353,7 +353,7 @@ export default function UpdateColorItem({
                         <button
                             type="button"
                             onClick={onAddVariant}
-                            className="flex items-center gap-1 px-2 py-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 text-xs font-medium"
+                            className="flex items-center gap-1 px-2 py-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 text-xs font-medium cursor-pointer"
                         >
                             <Plus size={14} />
                             Thêm size

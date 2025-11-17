@@ -71,7 +71,7 @@ export default function VariantItem({
                 <button
                     type="button"
                     onClick={onRemove}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 cursor-pointer"
                     >
                     <X size={18} />
                 </button>

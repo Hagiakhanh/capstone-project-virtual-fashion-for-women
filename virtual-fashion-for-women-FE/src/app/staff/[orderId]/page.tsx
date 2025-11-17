@@ -18,6 +18,7 @@ export default function StaffOrderDetailsPage() {
    const orderId = params.orderId as string;
    const [orderData, setOrderData] = useState<OrderStaffResponseDTO | null>(null);
    const [isSyncing, setIsSyncing] = useState<boolean>(false);
+   const [hasReturnedStatus, setHasReturnedStatus] = useState<boolean>(false);
 
    const fetchOrderDetails = async () => {
       try {
@@ -28,6 +29,10 @@ export default function StaffOrderDetailsPage() {
          if (response.status === 200) {
             console.log("Chi tiết đơn hàng:", response.data);
             setOrderData(response.data);
+            const hasReturned = response.data.responseStatusLogs.some(
+               (log: any) => log.status === "Returned" || log.status === "Returning"
+            );
+            setHasReturnedStatus(hasReturned);
          }
 
       } catch (error) {
@@ -35,15 +40,37 @@ export default function StaffOrderDetailsPage() {
       }
    }
 
+   // const getStatusText = (status: string | undefined) => {
+   //    switch (status) {
+   //       case 'Pending': return 'Chờ thanh toán';
+   //       case 'Confirmed': return 'Đã xác nhận';
+   //       case 'Packed': return 'Đã đóng gói';
+   //       case 'Delivering': return 'Đang giao';
+   //       case 'Delivered': return 'Đã giao';
+   //       case 'Completed': return 'Hoàn thành';
+   //       default: return status || 'Không rõ';
+   //    }
+   // };
    const getStatusText = (status: string | undefined) => {
       switch (status) {
-         case 'Pending': return 'Chờ thanh toán';
-         case 'Confirmed': return 'Đã xác nhận';
-         case 'Packed': return 'Đã đóng gói';
-         case 'Delivering': return 'Đang giao';
-         case 'Delivered': return 'Đã giao';
-         case 'Completed': return 'Hoàn thành';
-         default: return status || 'Không rõ';
+         case "Pending":
+            return "Chờ thanh toán";
+         case "Confirmed":
+            return "Đã xác nhận";
+         case "Packed":
+            return "Đã đóng gói";
+         case "Delivering":
+            return "Đang giao hàng";
+         case "Delivered":
+            return "Đã giao hàng";
+         case "Returning":
+            return "Đang trả hàng";
+         case "Returned":
+            return "Trả hàng thành công";
+         case "Completed":
+            return "Hoàn thành";
+         default:
+            return status || "Không rõ";
       }
    };
 
@@ -51,28 +78,36 @@ export default function StaffOrderDetailsPage() {
       fetchOrderDetails();
    }, [orderId]);
 
-   const items = [
-      {
-         title: "Chờ thanh toán",
-      },
-      {
-         title: 'Đã xác nhận',
-      },
-      {
-         title: 'Đã đóng gói',
-      },
-      {
-         title: 'Đang giao',
-      },
-      {
-         title: 'Đã giao',
-      },
-      {
-         title: 'Hoàn thành',
-      }
+   const deliverySuccessSteps = [
+      { title: "Chờ thanh toán" },
+      { title: "Đã xác nhận" },
+      { title: "Đã đóng gói" },
+      { title: "Đang giao hàng" },
+      { title: "Đã giao hàng" },
+      { title: "Hoàn thành" },
    ];
 
+   const deliveryFailedSteps = [
+      { title: "Chờ thanh toán" },
+      { title: "Đã xác nhận" },
+      { title: "Đã đóng gói" },
+      { title: "Giao hàng thất bại" },
+      { title: "Đang trả hàng" },
+      { title: "Trả hàng thành công" },
+   ];
+   const getSteps = () => {
+      if (!hasReturnedStatus) return deliverySuccessSteps;
+
+      if (hasReturnedStatus) {
+         return deliveryFailedSteps;
+      }
+
+      return deliverySuccessSteps;
+   };
+   const items = getSteps();
    const currentStatusText = getStatusText(orderData?.status);
+   console.log("Current Status Text:", currentStatusText);
+   console.log("Steps Items:", items);
    const currentStepIndex = items.findIndex(item => item.title === currentStatusText);
    const currentStep = currentStepIndex !== -1 ? currentStepIndex : 0;
 
@@ -213,9 +248,9 @@ export default function StaffOrderDetailsPage() {
                <Button onClick={handlePrepareOrder} icon={<Box size={16} />} className={`${orderData?.status == 'Confirmed' ? 'cursor-pointer' : 'opacity-50 !cursor-not-allowed'} !border-[#E5E5E5] !text-base !text-black !hover:text-black`} size="large">Đã chuẩn bị hàng</Button>
                <Button
                   onClick={handleSyncGHN}
-                  disabled={isSyncing || (orderData?.status !== 'Packed' && orderData?.status !== 'Delivering')}
+                  disabled={isSyncing || (orderData?.status !== 'Packed' && orderData?.status !== 'Delivering' && orderData?.status !== 'Returning')}
                   icon={<RefreshCcw size={16} />}
-                  className={`${orderData?.status == 'Packed' || orderData?.status == 'Delivering' ? 'cursor-pointer' : 'opacity-50 !cursor-not-allowed'} !border-[#E5E5E5] !text-base !text-black !hover:text-black`}
+                  className={`${orderData?.status == 'Packed' || orderData?.status == 'Delivering' || orderData?.status == 'Returning' ? 'cursor-pointer' : 'opacity-50 !cursor-not-allowed'} !border-[#E5E5E5] !text-base !text-black !hover:text-black`}
                   size="large"
                >
                   Đồng bộ dữ liệu GHN
@@ -328,6 +363,12 @@ export default function StaffOrderDetailsPage() {
                         <td className="py-2 font-medium text-gray-600">Phí vận chuyển</td>
                         <td className="py-2 text-gray-800">{orderData?.shippingMoney ? `${formatPrice(orderData.shippingMoney)}đ` : ''}</td>
                      </tr>
+                     {(orderData?.insuranceFee ?? 0) > 0 && (
+                        <tr className="border-b">
+                           <td className="py-2 font-medium text-gray-600">Phí bảo hiểm</td>
+                           <td className=" py-2 text-gray-800">{formatPrice(orderData?.insuranceFee ?? 0)} đ</td>
+                        </tr>
+                     )}
                      <tr>
                         <td className="py-2 font-medium text-gray-600">Tổng thanh toán</td>
                         <td className="py-2 text-gray-900 font-semibold">

@@ -40,7 +40,7 @@ export default function UpdateColorSection({
                 <button
                     type="button"
                     onClick={onAddColor}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium" // Style lại nút
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm font-medium cursor-pointer" // Style lại nút
                     >
                     <Plus size={16} /> {/* Giảm size icon */}
                     Thêm màu

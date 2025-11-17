@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, Package, MessageCircle, CreditCard, Shirt, History, BotMessageSquare, CalendarSync, Bell } from 'lucide-react';
+import { User, Package, MessageCircle, CreditCard, Shirt, History, BotMessageSquare, CalendarSync, Bell, Heart } from 'lucide-react';
 
 const navItems = [
     { name: 'Thông tin tài khoản', href: '/account', icon: User },
@@ -14,6 +14,7 @@ const navItems = [
     { name: 'Yêu cầu hỗ trợ', href: '/account/chats', icon: MessageCircle },
     { name: 'Lịch sử hỗ trợ', href: '/account/history-chats', icon: History },
     { name: 'Lịch sử thử đồ', href: '/account/try-on-history', icon: Shirt },
+    { name: 'Sản phẩm yêu thích', href: '/account/wishlist', icon: Heart },
 ];
 
 export default function CustomerSidebar() {
