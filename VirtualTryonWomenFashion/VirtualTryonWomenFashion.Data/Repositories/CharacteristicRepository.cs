@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,11 @@ namespace VirtualTryonWomenFashion.Data.Repositories
     {
         public CharacteristicRepository(VirtualTryonWomenFashionContext context) : base(context)
         {
+        }
+
+        public async Task<Characteristic> GetCharacteristicByIDAsync(int id)
+        {
+            return await _context.Characteristics.Where(x => x.CharacteristicId == id).Include(x => x.SkinTone).Include(x => x.OccasionPreference).Include(x => x.StyleType).FirstOrDefaultAsync();
         }
     }
 }

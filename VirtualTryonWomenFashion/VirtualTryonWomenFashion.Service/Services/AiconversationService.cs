@@ -43,7 +43,11 @@ namespace VirtualTryonWomenFashion.Service.Services
                 if (userCharacteristicID.HasValue)
                 {
                     MessageModelWithData<Characteristic> selectedCharacteristic = await _characteristicService.GetDetailCharacteristicByID(userCharacteristicID.Value);
-
+                    Characteristic userCharacteristic = selectedCharacteristic.Data;
+                    if (selectedCharacteristic.Data.UserId != currentUserId)
+                    {
+                        throw new ArgumentException("Bạn không có quyền để sử dụng phong cách bản thân này");
+                    }
                     if (selectedCharacteristic == null)
                     {
                         throw new ArgumentException(selectedCharacteristic.Message);
@@ -56,16 +60,34 @@ namespace VirtualTryonWomenFashion.Service.Services
                     string geminiJsonResponse = await _geminiService.CallGeminiAsync(prompt);
                     var cleanJson = JsonHelper.CleanJsonString(geminiJsonResponse);
 
-                    var analysis = JsonSerializer.Deserialize<OutfitPlanResponse>(cleanJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    OutfitPlanResponse analysis = JsonSerializer.Deserialize<OutfitPlanResponse>(cleanJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     var options = new JsonSerializerOptions
                     {
                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                         WriteIndented = true
                     };
-                    aiConversation.CurrentUserStyleJson = JsonSerializer.Serialize(analysis.UpdatedStyle, options);
+                    SuggestRequirement currentUserStyle = new SuggestRequirement()
+                    {
+                        Bust = userCharacteristic.Bust,
+                        Waist = userCharacteristic.Waist,
+                        Hips = userCharacteristic.Hips,
+                        Height = userCharacteristic.Height,
+                        Occasion =
+        !string.IsNullOrWhiteSpace(userCharacteristic.OccasionPreference?.OccasionPreferenceName)
+            ? userCharacteristic.OccasionPreference.OccasionPreferenceName
+            : analysis.UpdatedStyle?.Occasion ?? "",
+                        FashionStyle = !string.IsNullOrWhiteSpace(userCharacteristic.StyleType?.StyleTypeName)
+            ? userCharacteristic.StyleType.StyleTypeName
+            : analysis.UpdatedStyle?.FashionStyle ?? "",
+                        Weight = userCharacteristic.Weight,
+                    };
+
+                    aiConversation.CurrentUserStyleJson = JsonSerializer.Serialize(currentUserStyle, options);
+                    currentUserStyle = analysis.UpdatedStyle;
                     aiConversation.Messages.Add(new Message() { Content = analysis.ResponseText, SenderId = null, ReceiverId = currentUserId, IsAiresponse = true, CreatedAt = DateTime.UtcNow.AddHours(7) });
 
                 }
+
                 aiConversation.CreatedAt = DateTime.UtcNow.AddHours(7);
                 await _aiconversationRepository.InsertAsync(aiConversation);
                 await _unitOfWork.SaveChanges();
