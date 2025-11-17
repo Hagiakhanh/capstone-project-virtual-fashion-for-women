@@ -15,6 +15,7 @@ using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.Color;
+using VirtualTryonWomenFashion.Service.DTO.Order;
 using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
@@ -177,7 +178,13 @@ namespace VirtualTryonWomenFashion.Service.Services
                  p.ProductName.ToLower().Contains(searchTerm.Trim().ToLower()) ||
                  (p.Description != null && p.Description.ToLower().Contains(searchTerm.Trim().ToLower())))
                 &&
-                (!categoryId.HasValue || p.CategoryId == categoryId);
+                (!categoryId.HasValue || p.CategoryId == categoryId)
+                &&
+                p.ProductInSaleCampaigns.Any(c =>
+                    c.Campaign.StartDate <= DateOnly.FromDateTime(DateTime.Now) &&
+                    c.Campaign.EndDate >= DateOnly.FromDateTime(DateTime.Now) &&
+                    c.Campaign.IsDeleted == false &&
+                    c.Campaign.Status == "Active");
 
             // ===== 2️⃣ Tổng số bản ghi =====
             int totalCount = await _productRepository.CountAsync(filterExpression);
@@ -393,7 +400,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             return response;
         }
 
-        public async Task<ResponsePaginationModel<List<ResponseProductDto>>> SearchProductAsync(
+        public async Task<MessageModelWithData<Pagination<ResponseProductDto>>> SearchProductAsync(
             ProductSearchRequest request,
             PaginationParameter pagination)
         {
@@ -415,7 +422,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             var products = await _productRepository.SearchProductsWithIncludes(request.ProductName, request.CategoryName, request.ProductSort.ToString(), pagination);
 
             // Đếm tổng record (áp dụng filter nhưng bỏ phân trang)
-            var totalRecords = await _productRepository.CountSearchProductsAsync(request.ProductName, request.CategoryName);
+            var totalRecords = await _productRepository.CountSearchProductsAsync(request.ProductName, request.CategoryName, request.ProductSort.ToString());
             var totalPages = (int)Math.Ceiling((double)totalRecords / pagination.PageSize);
 
             // Nếu user đã đăng nhập -> lấy danh sách Wishlist
@@ -440,13 +447,17 @@ namespace VirtualTryonWomenFashion.Service.Services
                 return dto;
             }).ToList();
 
-
-            return new ResponsePaginationModel<List<ResponseProductDto>>(
-                statusCode: 200,
-                data: productDtos.ToList(),
-                totalRecords: totalRecords,
-                totalPages: totalPages
-            );
+            return new MessageModelWithData<Pagination<ResponseProductDto>>()
+            {
+                Message = "Lấy danh sách sản phẩm thành công",
+                StatusCode = StatusCodes.Status200OK,
+                Data = new Pagination<ResponseProductDto>(
+                    productDtos.ToList(),
+                    totalRecords,
+                    pagination.PageIndex,
+                    pagination.PageSize
+                )
+            };
         }
 
         public async Task<MessageModelWithData<Product>> CreateProductAsync(CreateProductRequest request)
