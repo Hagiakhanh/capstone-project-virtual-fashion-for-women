@@ -8,6 +8,7 @@ using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.Size;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -230,7 +231,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         }
 
         public async Task<List<CategorySizeTemplate>> GetListTemplateSizeByBody(
-     int categoryId, double bust, double waist, double hips)
+     int categoryId, double bust, double waist, double hips, double? shoulder = null)
         {
             var templates = await _templateSizeRepository.GetAll(
                 null,
@@ -248,6 +249,11 @@ namespace VirtualTryonWomenFashion.Service.Services
             decimal bustDec = (decimal)bust;
             decimal waistDec = (decimal)waist;
             decimal hipsDec = (decimal)hips;
+            decimal? shoulderDes = null;
+            if (shoulder != null)
+            {
+                shoulderDes = (decimal)shoulder.Value;
+            }
 
             // ===============================
             // 1️⃣ Tạo rule match theo BodyPart
@@ -260,11 +266,19 @@ namespace VirtualTryonWomenFashion.Service.Services
                 case "Thân trên": // Áo
                     exactMatch = t =>
                         bust >= (t.MinBust ?? double.MinValue) && bust <= (t.MaxBust ?? double.MaxValue) &&
-                        waist >= (t.MinWaist ?? double.MinValue) && waist <= (t.MaxWaist ?? double.MaxValue);
+                        waist >= (t.MinWaist ?? double.MinValue) && waist <= (t.MaxWaist ?? double.MaxValue) &&
+                        (shoulderDes == null ||
+                         (shoulderDes >= (decimal)(t.MinShoulder ?? double.MinValue) &&
+                          shoulderDes <= (decimal)(t.MaxShoulder ?? double.MaxValue))
+                        );
 
                     deviation = t =>
                         Math.Abs(bustDec - Center(t.MinBust, t.MaxBust)) +
-                        Math.Abs(waistDec - Center(t.MinWaist, t.MaxWaist));
+                        Math.Abs(waistDec - Center(t.MinWaist, t.MaxWaist)) +
+                        (shoulderDes == null
+                            ? 0
+                            : Math.Abs(shoulderDes.Value - Center(t.MinShoulder, t.MaxShoulder))
+                        );
                     break;
 
                 case "Thân dưới": // Váy + Quần
@@ -315,7 +329,6 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             return new List<CategorySizeTemplate> { closest };
         }
-
 
         // =====================================
         // Helper tránh lỗi null + convert double? → decimal

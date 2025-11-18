@@ -30,16 +30,16 @@ public class TryOnSlotController : ControllerBase
             return Ok(new MessageModelWithData<object>()
             {
                 Message = "Tạo try-on slot thành công",
-                StatusCode = StatusCodes.Status200OK,
+                StatusCode = StatusCodes.Status201Created,
                 Data = tryOnSlot
             });
         }
         catch (Exception e)
         {
-            return Ok(new MessageModelWithData<object>()
+            return BadRequest(new MessageModelWithData<object>()
             {
                 Message = "Lỗi tạo try-on slot: " + e.Message,
-                StatusCode = StatusCodes.Status200OK,
+                StatusCode = StatusCodes.Status400BadRequest,
                 Data = null
             });
         }

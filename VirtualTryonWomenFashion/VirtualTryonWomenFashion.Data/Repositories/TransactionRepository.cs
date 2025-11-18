@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using VirtualTryonWomenFashion.Data.DBContext;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.GenericRepository;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
@@ -27,7 +28,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
 
         public async Task<Transaction?> GetTransactionByOrderId(int orderId)
         {
-            return await _context.Transactions.Where(x => x.OrderId == orderId).FirstOrDefaultAsync();
+            return await _context.Transactions.Where(x => x.OrderId == orderId && x.Type == TypeTransactionEnum.Purchase.ToString()).FirstOrDefaultAsync();
         }
     }
 }

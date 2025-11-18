@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -14,8 +15,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
     {
         private readonly IProductVariantService _productVariantService;
 
-        public ProductVariantController(IProductVariantService productVariantService) 
-        { 
+        public ProductVariantController(IProductVariantService productVariantService)
+        {
             _productVariantService = productVariantService;
         }
 
@@ -103,7 +104,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 MessageModelWithData<ProductVariant> result = await _productVariantService.CreateAsync(id, request);
 
                 return StatusCode(result.StatusCode, result);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
@@ -135,6 +137,38 @@ namespace VirtualTryonWomenFashion.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
+            }
+        }
+
+        [HttpPost("recommend-size")]
+        public async Task<IActionResult> RecommendSizeAsync([FromBody] RequestFormBodyMeasure request)
+        {
+            try
+            {
+                var result = await _productVariantService.RecommendSizeAsync(request);
+
+                if (result == null)
+                    return Ok(new MessageModelWithData<object>()
+                    {
+                        StatusCode = StatusCodes.Status200OK,
+                        Message = "Không có sản phẩm size phù hợp với kích thước bạn đưa.",
+                        Data = null
+                    });
+                return Ok(new MessageModelWithData<object>()
+                {
+                    StatusCode = StatusCodes.Status200OK,
+                    Message = "Recommend size thành công.",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new MessageModelWithData<object>()
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = "Recommend size thất bại: "+ ex.Message,
+                    Data = null
+                });
             }
         }
     }
