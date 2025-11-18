@@ -215,6 +215,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                .Include(p => p.ProductColors)
                    .ThenInclude(pc => pc.ProductVariants)
                        .ThenInclude(pv => pv.Size)
+                        .ThenInclude(s => s.CategorySizeTemplates)
                .Where(p => p.ProductColors.Any(pc => pc.ProductColorId == productColorId)
                         && p.IsDeleted != true)
                .FirstOrDefaultAsync();

@@ -20,11 +20,11 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         public async Task<TryOnSlot?> GetExistingTryOnSlotAsync(int userId,string userModelImageHash, string? topProductColorId, string? bottomProductColorId)
         {
             var productColorIds = new List<string> {topProductColorId, bottomProductColorId};
-            var tryOnSlot =  await _context.TryOnSlots
+            var tryOnSlotList =  await _context.TryOnSlots
                 .AsNoTracking()
-                .Where(slot =>slot.CustomerId == userId && slot.UploadImageUrl == userModelImageHash &&  slot.ProductColors
-                    .Any(pc => productColorIds.Contains(pc.ProductColorId)))
-                .Include(to => to.ProductColors).FirstOrDefaultAsync();
+                .Where(slot =>slot.CustomerId == userId && slot.UploadImageHash == userModelImageHash)
+                .Include(to => to.ProductColors).ToListAsync();
+            var tryOnSlot = tryOnSlotList.Where(slot => slot.ProductColors.Any(pc => productColorIds.Contains(pc.ProductColorId))).FirstOrDefault();
             return tryOnSlot ??= null;
         }
 

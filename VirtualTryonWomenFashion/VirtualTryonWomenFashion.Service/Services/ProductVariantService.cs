@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore.Storage;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Color;
+using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
@@ -22,19 +24,22 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ISizeService _sizeService;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IProductInSaleCampaignService _productInSaleCampaign;
+        private readonly ICategorySizeTemplateService _categorySizeTemplateService;
 
         public ProductVariantService(
             IProductVariantRepository productVariantRepository, 
             IUnitOfWork unitOfWork,
             ISizeService sizeService,
             ICloudinaryService cloudinaryService,
-            IProductInSaleCampaignService productInSaleCampaign)
+            IProductInSaleCampaignService productInSaleCampaign,
+            ICategorySizeTemplateService categorySizeTemplateService)
         {
             _productVariantRepository = productVariantRepository;
             _unitOfWork = unitOfWork;
             _sizeService = sizeService;
             _cloudinaryService = cloudinaryService;
             _productInSaleCampaign = productInSaleCampaign;
+            _categorySizeTemplateService = categorySizeTemplateService;
         }
         
         public async Task<ProductVariant?> GetProductVariantById(string id)
@@ -335,6 +340,44 @@ namespace VirtualTryonWomenFashion.Service.Services
             if(productVariants == null || productVariants.Count() == 0) return;
             await _productVariantRepository.UpdateRangeAsync(productVariants);
             await _unitOfWork.SaveChanges();
+        }
+
+        public async Task<ResponseProductVariantDto?> RecommendSizeAsync(RequestFormBodyMeasure requestFormBodyMeasure)
+        {
+            CategorySizeTemplate recommendedSize = (await _categorySizeTemplateService.GetListTemplateSizeByBody(
+                requestFormBodyMeasure.CategoryId, requestFormBodyMeasure.Bust, requestFormBodyMeasure.Waist,
+                requestFormBodyMeasure.Hips, requestFormBodyMeasure.Shoulder)).FirstOrDefault();
+            if (recommendedSize == null) return null;
+            List<ProductVariant> productVariants = await _productVariantRepository.GetAll(
+                filter: pv => pv.ProductColorId == requestFormBodyMeasure.ProductColorId,
+                includes: pv => pv.Size
+            );
+            var recommendedProductVariant =
+                productVariants.Where(pv => pv.Size.SizeId == recommendedSize.SizeId).FirstOrDefault();
+
+            if(recommendedProductVariant == null) return null;
+            ResponseProductVariantDto responseProductVariantDto = new ResponseProductVariantDto()
+            {
+                ProductVariantId = recommendedProductVariant.ProductVariantId,
+                SizeId = recommendedProductVariant.SizeId,
+                VariantName = recommendedProductVariant.VariantName,
+                Quantity = recommendedProductVariant.Quantity,
+                ImageUrl = recommendedProductVariant.ImageUrl,
+                Status = recommendedProductVariant.Status,
+                ProductWeight = recommendedProductVariant.ProductWeight,
+                ProductLength = recommendedProductVariant.ProductLength,
+                ProductWidth = recommendedProductVariant.ProductWidth,
+                ProductHeight = recommendedProductVariant.ProductHeight,
+                ColorDto = null,
+                SizeDto = recommendedProductVariant.Size != null
+                    ? new ResponseSizeDto
+                    {
+                        SizeId = recommendedProductVariant.Size.SizeId,
+                        SizeCode = recommendedProductVariant.Size.SizeCode
+                    }
+                    : null
+            };
+            return responseProductVariantDto;
         }
     }
 }

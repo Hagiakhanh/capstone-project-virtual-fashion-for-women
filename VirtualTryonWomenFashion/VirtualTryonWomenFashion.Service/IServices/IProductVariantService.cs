@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.ProductVariant;
 using VirtualTryonWomenFashion.Service.Helpers;
 
@@ -17,5 +18,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<MessageModel> DeleteAsync(string productVariantId);
         Task<ResponseGetVariantPriceInfo> GetVariantPriceInfoAsync(string variantId);
         Task UpdateQuantityAsync(Dictionary<string, int> variantAdjustments);
+        Task<ResponseProductVariantDto?>RecommendSizeAsync(RequestFormBodyMeasure requestFormBodyMeasure);
     }
 }
