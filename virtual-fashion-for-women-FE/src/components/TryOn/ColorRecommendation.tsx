@@ -14,15 +14,19 @@ export default function ColorRecommendation({
     category?: Category[];
     selectedHexcode?: string;
     onClose: () => void;
-    onSelect: (item: { image: string; name: string; price: string }) => void;
+    onSelect: (item: {
+        productColorId: string;
+        noBgImgUrl: string;
+        productName: string;
+        categoryId: number;
+        [key: string]: any; // cho phép thêm field khác từ API
+    }) => void;
 }) {
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(
         category[0] || null
     );
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const hasFetched = useRef(false);
-    // console.log("selectedHexcode", selectedHexcode);
     const fetchColorRecommendationProduct = async () => {
         setLoading(true);
         try {
@@ -57,8 +61,7 @@ export default function ColorRecommendation({
     }
 
     useEffect(() => {
-        if (hasFetched.current) return;
-        hasFetched.current = true;
+        if (!selectedCategory || !selectedHexcode) return;
         fetchColorRecommendationProduct();
     }, [selectedCategory, selectedHexcode]);
 
@@ -90,10 +93,13 @@ export default function ColorRecommendation({
                             <button
                                 key={c.categoryId}
                                 onClick={() => setSelectedCategory(c)}
+                                disabled={loading}
                                 className={`px-4 py-1.5 rounded-full border text-sm font-medium transition ${selectedCategory?.categoryId === c.categoryId
                                     ? "bg-orange-500 text-white border-orange-500"
                                     : "bg-white border-gray-300 hover:border-orange-400 hover:text-orange-500"
-                                    }`}
+                                    }
+                                    ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                                `}
                             >
                                 {c.categoryName}
                             </button>

@@ -5,7 +5,14 @@ import formatPrice from '@/utils/formatPrice';
 import { SizeDTO } from '@/models/SizeDto';
 import { ProductVariant } from '@/models/RequestUpdateProduct';
 import { ProductVariantDTO } from '@/models/ProductVariantDTO';
-
+import { ResponseProductDTO } from '@/models/ResponseProductDTO ';
+import { Category } from '@/models/RequestCreateProduct';
+import BodyMeasurementForm from './BodyMeasurementForm';
+import { Characteristic } from '@/models/CharacteristicDTO';
+import { set } from 'lodash';
+import { api } from '@/api/instance';
+import LoadingSpinner from '../Loading/LoadingSpinner';
+import { messageToast } from '@/helpers/toastHelper';
 
 interface TryOnResultModalProps {
     isOpen: boolean;
@@ -18,7 +25,9 @@ interface TryOnResultModalProps {
     errorMessage?: string;
     onRetry?: () => void;
     tryOnProducts?: any[];
+    category?: Category[]
     onAddToCart?: (productVariantId: string, quantity: number) => void;
+    characteristicData?: Characteristic | null;
 }
 
 export default function TryOnResultModal({
@@ -31,13 +40,19 @@ export default function TryOnResultModal({
     errorMessage,
     onRetry,
     tryOnProducts = [],
-    onAddToCart
+    category = [],
+    onAddToCart,
+    characteristicData,
 }: TryOnResultModalProps) {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [showCartView, setShowCartView] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState<any>(null);
+    const [selectedProduct, setSelectedProduct] = useState<ResponseProductDTO>();
     const [selectedProductVariant, setSelectedProductVariant] = useState<ProductVariantDTO | null>(null);
     const [quantity, setQuantity] = useState(1);
+    const [showBodyMeasurementForm, setShowBodyMeasurementForm] = useState(false);
+    const [clothingType, setClothingType] = useState<Category | undefined>();
+    const [recommendedVariant, setRecommendedVariant] = useState<ProductVariantDTO | null>(null);
+
 
     if (!isOpen) return null;
 
@@ -51,20 +66,30 @@ export default function TryOnResultModal({
             document.body.removeChild(link);
         }
     };
-
     const handleAddToCartClick = () => {
         setShowCartView(true);
     };
 
+    const handleBackFromMeasurementForm = () => {
+        console.log("Back from measurement form");
+        setShowBodyMeasurementForm(false);
+        setSelectedProduct(undefined);
+        setSelectedProductVariant(null);
+        setQuantity(1);
+    }
     const handleBackToResult = () => {
         setShowCartView(false);
-        setSelectedProduct(null);
+        setSelectedProduct(undefined);
+        setShowBodyMeasurementForm(false);
         setSelectedProductVariant(null);
         setQuantity(1);
     };
 
-    const handleProductClick = (product: any) => {
+    const handleProductClick = (product: ResponseProductDTO) => {
+        const categoryName = category.find(c => c.categoryId == product.categoryId);
         setSelectedProduct(product);
+        setClothingType(categoryName);
+        setShowBodyMeasurementForm(true);
         setSelectedProductVariant(null);
         setQuantity(1);
     };
@@ -78,9 +103,43 @@ export default function TryOnResultModal({
         if (selectedProductVariant && onAddToCart) {
             onAddToCart(selectedProductVariant.productVariantId, quantity);
             // Reset sau khi thêm
-            setSelectedProduct(null);
+            setSelectedProduct(undefined);
             setSelectedProductVariant(null);
             setQuantity(1);
+        }
+    };
+
+    const handleSubmitMeasurement = async (measurements: Record<string, number>) => {
+
+        try {
+            console.log("Selected product: ", selectedProduct);
+            console.log("Submitted measurements:", measurements);
+            const payload = {
+                shoulder: measurements.shoulder || 0,
+                bust: measurements.bust || 0,
+                waist: measurements.waist || 0,
+                hips: measurements.hips || 0,
+                length: measurements.length || 0,
+                productColorId: selectedProduct?.productColors[0].productColorId || '',
+                categoryId: clothingType?.categoryId
+            }
+            const response = await api.post("/variant-recommendation", payload);
+            setRecommendedVariant(response.data);
+            if (response.data) {
+                // auto chọn vào tab size
+                const match = selectedProduct?.productColors[0].productVariants
+                    .find(v => v.sizeDto?.sizeId === response.data.sizeDto.sizeId);
+
+                if (match) {
+                    setSelectedProductVariant(match);
+                }
+            }
+            setShowBodyMeasurementForm(false);
+            setShowBodyMeasurementForm(false);
+
+        } catch (err) {
+            console.error(err);
+            messageToast.error("Không thể xác định size, vui lòng thử lại!");
         }
     };
 
@@ -176,143 +235,174 @@ export default function TryOnResultModal({
                     ) : (
                         // View giỏ hàng
                         <div className="space-y-6">
-                            {!selectedProduct ? (
-                                // Danh sách sản phẩm đã try-on
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                                        Sản phẩm đã thử ({tryOnProducts.length})
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {tryOnProducts.map((product) => (
-                                            <div
-                                                key={product.productColors[0].productColorId}
-                                                className="border-2 border-gray-200 rounded-xl p-4 hover:border-orange-400 transition-all cursor-pointer group"
-                                            >
-                                                <div className="flex gap-4">
-                                                    <img
-                                                        src={product.productColors[0].noBgImgUrl}
-                                                        alt={product.productName}
-                                                        className="w-24 h-24 object-cover rounded-lg"
-                                                    />
-                                                    <div className="flex-1">
-                                                        <h4 className="font-semibold text-gray-800 mb-1">
-                                                            {product.productName}
-                                                        </h4>
-                                                        <p className="text-sm text-gray-600 mb-2">
-                                                            Màu: {product.productColors[0].color.colorName}
-                                                        </p>
-                                                        <p className="text-lg font-bold text-orange-600 mb-3">
-                                                            {formatPrice(product.priceAtTime)} ₫
-                                                        </p>
-                                                        <button
-                                                            onClick={() => handleProductClick(product)}
-                                                            className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors text-sm font-medium"
-                                                        >
-                                                            <Plus className="w-4 h-4" />
-                                                            Chọn size
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ) : (
-                                // Chi tiết sản phẩm và chọn size
-                                <div>
-                                    <button
-                                        onClick={handleBackToResult}
-                                        className="text-orange-600 hover:text-orange-700 font-medium mb-4 flex items-center gap-2"
-                                    >
-                                        ← Quay lại
-                                    </button>
-
-                                    <div className="border-2 border-gray-200 rounded-xl p-6">
-                                        <div className="flex gap-6 mb-6">
-                                            <img
-                                                src={selectedProduct.productColors[0].noBgImgUrl}
-                                                alt={selectedProduct.productName}
-                                                className="w-32 h-32 object-cover rounded-lg"
-                                            />
-                                            <div className="flex-1">
-                                                <h4 className="text-xl font-bold text-gray-800 mb-2">
-                                                    {selectedProduct.productName}
-                                                </h4>
-                                                <p className="text-gray-600 mb-2">
-                                                    Màu: {selectedProduct.productColors[0].color.colorName}
-                                                </p>
-                                                <p className="text-2xl font-bold text-orange-600">
-                                                    {formatPrice(selectedProduct.price)} ₫
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {/* Chọn size */}
-                                        <div className="mb-6">
-                                            <h5 className="font-semibold text-gray-800 mb-3">Chọn size:</h5>
-                                            <div className="grid grid-cols-4 gap-3">
-                                                {selectedProduct.productColors[0].productVariants.map((productVariants: ProductVariantDTO) => (
-                                                    <button
-                                                        key={productVariants.sizeDto?.sizeId}
-                                                        onClick={() => handleProductVariantSelect(productVariants)}
-                                                        disabled={productVariants.quantity === 0}
-                                                        className={`px-4 py-3 rounded-lg font-medium transition-all ${selectedProductVariant?.sizeDto?.sizeId === productVariants.sizeDto?.sizeId
-                                                            ? 'bg-orange-500 text-white border-2 border-orange-500'
-                                                            : productVariants.quantity === 0
-                                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                                : 'bg-white border-2 border-gray-300 hover:border-orange-400 text-gray-800'
-                                                            }`}
+                            {showCartView && (
+                                <>
+                                    {showBodyMeasurementForm && selectedProduct ? (
+                                        // Hiển thị form đo cơ thể khi chọn sản phẩm
+                                        <BodyMeasurementForm
+                                            clothingType={clothingType}
+                                            onCancel={handleBackFromMeasurementForm}
+                                            onSubmit={handleSubmitMeasurement}
+                                            onBackToResult={handleBackFromMeasurementForm}
+                                            characteristicData={characteristicData}
+                                        />
+                                    ) : (!showBodyMeasurementForm && !selectedProduct) ? (
+                                        // Danh sách sản phẩm đã try-on
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                                                Sản phẩm đã thử ({tryOnProducts.length})
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {tryOnProducts.map((product) => (
+                                                    <div
+                                                        key={product.productColors[0].productColorId}
+                                                        className="border-2 border-gray-200 rounded-xl p-4 hover:border-orange-400 transition-all cursor-pointer group"
                                                     >
-                                                        <div>{productVariants.sizeDto?.sizeCode}</div>
-                                                        {productVariants.quantity === 0 && (
-                                                            <div className="text-xs mt-1">Hết hàng</div>
-                                                        )}
-                                                    </button>
+                                                        <div className="flex gap-4">
+                                                            <img
+                                                                src={product.productColors[0].noBgImgUrl}
+                                                                alt={product.productName}
+                                                                className="w-24 h-24 object-cover rounded-lg"
+                                                            />
+                                                            <div className="flex-1">
+                                                                <h4 className="font-semibold text-gray-800 mb-1">
+                                                                    {product.productName}
+                                                                </h4>
+                                                                <p className="text-sm text-gray-600 mb-2">
+                                                                    Màu: {product.productColors[0].color.colorName}
+                                                                </p>
+                                                                <p className="text-lg font-bold text-orange-600 mb-3">
+                                                                    {formatPrice(product.priceAtTime)} ₫
+                                                                </p>
+                                                                <button
+                                                                    onClick={() => handleProductClick(product)}
+                                                                    className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors text-sm font-medium"
+                                                                >
+                                                                    <Plus className="w-4 h-4" />
+                                                                    Chọn size
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
+                                    ) : (
+                                        <div>
+                                            <button
+                                                onClick={handleBackToResult}
+                                                className="text-orange-600 hover:text-orange-700 font-medium mb-4 flex items-center gap-2"
+                                            >
+                                                ← Quay lại
+                                            </button>
 
-                                        {/* Chọn số lượng */}
-                                        {selectedProductVariant && (
-                                            <div className="mb-6">
-                                                <h5 className="font-semibold text-gray-800 mb-3">Số lượng:</h5>
-                                                <div className="flex items-center gap-4">
-                                                    <button
-                                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                                        className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                                                    >
-                                                        <Minus className="w-4 h-4" />
-                                                    </button>
-                                                    <span className="text-xl font-semibold w-12 text-center">
-                                                        {quantity}
-                                                    </span>
-                                                    <button
-                                                        onClick={() => setQuantity(Math.min(selectedProductVariant.quantity, quantity + 1))}
-                                                        className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                                                    >
-                                                        <Plus className="w-4 h-4" />
-                                                    </button>
-                                                    <span className="text-sm text-gray-600">
-                                                        (Còn {selectedProductVariant.quantity} sản phẩm)
-                                                    </span>
+                                            <div className="border-2 border-gray-200 rounded-xl p-6">
+                                                <div className="flex gap-6 mb-6">
+                                                    <img
+                                                        src={selectedProduct?.productColors[0].noBgImgUrl}
+                                                        alt={selectedProduct?.productName}
+                                                        className="w-32 h-32 object-cover rounded-lg"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <h4 className="text-xl font-bold text-gray-800 mb-2">
+                                                            {selectedProduct?.productName}
+                                                        </h4>
+                                                        <p className="text-gray-600 mb-2">
+                                                            Màu: {selectedProduct?.productColors[0].color.colorName}
+                                                        </p>
+                                                        <p className="text-2xl font-bold text-orange-600">
+                                                            {formatPrice(selectedProduct?.price ?? 0)} ₫
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
 
-                                        {/* Nút thêm vào giỏ */}
-                                        <button
-                                            onClick={handleAddToCart}
-                                            disabled={!selectedProductVariant}
-                                            className={`w-full py-3 rounded-xl font-semibold text-lg transition-all ${selectedProductVariant
-                                                ? 'bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg'
-                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                }`}
-                                        >
-                                            {selectedProductVariant ? 'Thêm vào giỏ hàng' : 'Vui lòng chọn size'}
-                                        </button>
-                                    </div>
-                                </div>
+                                                {recommendedVariant && (
+                                                    <div className="mb-4 p-4 border border-orange-300 bg-orange-50 rounded-xl">
+                                                        <p className="text-orange-700 font-semibold">
+                                                            Gợi ý size phù hợp:{" "}
+                                                            <span className="font-bold text-orange-800">
+                                                                {recommendedVariant.sizeDto?.sizeCode}
+                                                            </span>
+                                                        </p>
+                                                        <p className="text-sm text-orange-600 mt-1 italic">
+                                                            ⚠️ Size này chỉ mang tính chất tham khảo.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                {!recommendedVariant && (
+                                                    <div className="mb-4 p-4 rounded-lg bg-gray-100 border border-gray-300 text-gray-600">
+                                                        Chúng tôi chưa thể đề xuất size chính xác. Hãy chọn size phù hợp với bạn nhé!
+                                                    </div>
+                                                )}
+                                                {/* Chọn size */}
+                                                <div className="mb-6">
+                                                    <h5 className="font-semibold text-gray-800 mb-3">Chọn size:</h5>
+                                                    <div className="flex flex-wrap gap-3 items-center">
+                                                        {selectedProduct?.productColors[0].productVariants.map((productVariants: ProductVariantDTO) => (
+                                                            <button
+                                                                key={productVariants.sizeDto?.sizeId}
+                                                                onClick={() => handleProductVariantSelect(productVariants)}
+                                                                disabled={productVariants.quantity === 0}
+                                                                className={`px-4 py-3 rounded-lg font-medium transition-all min-w-[80px] ${selectedProductVariant?.sizeDto?.sizeId === productVariants.sizeDto?.sizeId
+                                                                    ? 'bg-orange-500 text-white border-2 border-orange-500'
+                                                                    : productVariants.quantity === 0
+                                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                                        : 'bg-white border-2 border-gray-300 hover:border-orange-400 text-gray-800'
+                                                                    }`}
+                                                            >
+                                                                <div>{productVariants.sizeDto?.sizeCode}</div>
+                                                                {productVariants.quantity === 0 && (
+                                                                    <div className="text-xs mt-1">Hết hàng</div>
+                                                                )}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Chọn số lượng */}
+                                                {selectedProductVariant && (
+                                                    <div className="mb-6">
+                                                        <h5 className="font-semibold text-gray-800 mb-3">Số lượng:</h5>
+                                                        <div className="flex items-center gap-4">
+                                                            <button
+                                                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                                                className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                                            >
+                                                                <Minus className="w-4 h-4" />
+                                                            </button>
+                                                            <span className="text-xl font-semibold w-12 text-center">
+                                                                {quantity}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => setQuantity(Math.min(selectedProductVariant.quantity, quantity + 1))}
+                                                                className="w-10 h-10 rounded-lg border-2 border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                                            >
+                                                                <Plus className="w-4 h-4" />
+                                                            </button>
+                                                            <span className="text-sm text-gray-600">
+                                                                (Còn {selectedProductVariant.quantity} sản phẩm)
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Nút thêm vào giỏ */}
+                                                <button
+                                                    onClick={handleAddToCart}
+                                                    disabled={!selectedProductVariant}
+                                                    className={`w-full py-3 rounded-xl font-semibold text-lg transition-all ${selectedProductVariant
+                                                        ? 'bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg'
+                                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                        }`}
+                                                >
+                                                    {selectedProductVariant ? 'Thêm vào giỏ hàng' : 'Vui lòng chọn size'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
+
                         </div>
                     )}
                 </div>
@@ -363,7 +453,7 @@ export default function TryOnResultModal({
                         onClick={() => {
                             onClose();
                             setShowCartView(false);
-                            setSelectedProduct(null);
+                            setSelectedProduct(undefined);
                             setSelectedProductVariant(null);
                             setQuantity(1);
                         }}
