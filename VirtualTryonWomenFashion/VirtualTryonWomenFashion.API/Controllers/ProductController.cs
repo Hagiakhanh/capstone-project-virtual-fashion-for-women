@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Globalization;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.Models;
@@ -88,10 +89,28 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         [HttpGet("search")]
         [AllowAnonymous]
-        public async Task<ActionResult<List<ResponseProductDto>>> Search([FromQuery] PaginationParameter pagination, [FromQuery] ProductSearchRequest request)
+        public async Task<IActionResult> Search([FromQuery] PaginationParameter pagination, [FromQuery] ProductSearchRequest request)
         {
-            var result = await _productService.SearchProductAsync(request, pagination);
-            return StatusCode(result.StatusCode, result);
+            try
+            {
+                MessageModelWithData<Pagination<ResponseProductDto>> result = await _productService.SearchProductAsync(request, pagination);
+
+                // Metadata cho client (Next.js)
+                var metadata = new
+                {
+                    result.Data.TotalCount,
+                    result.Data.PageSize,
+                    result.Data.CurrentPage,
+                    result.Data.TotalPages
+                };
+                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Đã xảy ra lỗi khi lấy danh sách sản phẩm", Error = ex.Message });
+            }
         }
 
         [HttpPost]
