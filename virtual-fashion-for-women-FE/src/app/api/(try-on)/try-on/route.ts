@@ -7,8 +7,9 @@ export async function POST(request: Request) {
         console.log("Request Body:", reqBody);
         const api = createApiInstance(request);
         const responseBE = await api.post(`/try-on-slot/create-try-on-slot`, reqBody);
+        console.log("Response from BE:", responseBE);
         if (responseBE.status === 200) {
-            return NextResponse.json(responseBE.data?.data, { status: 200 });
+            return NextResponse.json(responseBE.data?.data, { status: 201 });
         }
         return NextResponse.json("Tạo không thành công", { status: 400 });
     } catch (error: any) {
