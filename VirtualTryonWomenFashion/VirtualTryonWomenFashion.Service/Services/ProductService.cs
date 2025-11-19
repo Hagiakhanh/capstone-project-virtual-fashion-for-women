@@ -1690,7 +1690,24 @@ namespace VirtualTryonWomenFashion.Service.Services
             var product = await _productRepository.GetProductByProductColorIdAsync(productColorId);
             if (product == null)
                 return null;
-
+            foreach (var pc in product.ProductColors)
+            {
+                pc.ProductVariants = pc.ProductVariants
+                    .Where(pv => pv.Size != null)
+                    .OrderBy(pv =>
+                    {
+                        var tpl = pv.Size.CategorySizeTemplates
+                            .FirstOrDefault(t => t.CategoryId == product.CategoryId);
+                        return tpl?.MaxBust ?? 0;
+                    })
+                    .ThenBy(pv =>
+                    {
+                        var tpl = pv.Size.CategorySizeTemplates
+                            .FirstOrDefault(t => t.CategoryId == product.CategoryId);
+                        return tpl?.MaxWaist ?? 0;
+                    })
+                    .ToList();
+            }
             return await this.MapToResponseProductDto(product);
         }
 

@@ -414,8 +414,7 @@ public class PaymentService : IPaymentService
 
                     await _orderService.UpdatePaymentUrlAsync(null, responseOrder.OrderId);
                     // Xóa các item trong giỏ hàng tương ứng với đơn hàng đã thanh toán
-                    List<ResponseOrderDetail> listResponseOrderDetail =
-                        await _orderDetailService.GetOrderDetailsByOrderIdAsync(responseOrder.OrderId);
+                    List<ResponseOrderDetail> listResponseOrderDetail =  responseOrder.ResponseOrderDetails;
 
                     List<string> productVariantIds = listResponseOrderDetail
                         .Where(od => od.ResponseProductVariantDto != null) // tránh null
@@ -464,8 +463,7 @@ public class PaymentService : IPaymentService
                 await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Failed.ToString(), responseOrder.OrderId);
                 await _orderService.UpdatePaymentUrlAsync(null, responseOrder.OrderId);
                 // Trả lại số lượng sản phẩm về kho 
-                List<ResponseOrderDetail> listResponseOrderDetail =
-                    await _orderDetailService.GetOrderDetailsByOrderIdAsync(responseOrder.OrderId);
+                List<ResponseOrderDetail> listResponseOrderDetail = responseOrder.ResponseOrderDetails;
 
                 List<string> productVariantIds = listResponseOrderDetail
                     .Where(od => od.ResponseProductVariantDto != null) // tránh null
