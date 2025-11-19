@@ -114,10 +114,22 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateProduct([FromForm]CreateProductRequest request)
         {
-            var result = await _productService.CreateProductAsyncWithValidation(request);
-            return StatusCode(result.StatusCode, result);
+            try
+            {
+                var result = await _productService.CreateProductAsyncWithValidation(request);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch(InvalidOperationException e)
+            {
+                return StatusCode(400, e.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpGet("by-variant/{variantId}")]
@@ -149,6 +161,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpPut("{productId}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateAsync(string productId, [FromForm] UpdateProductRequest request)
         {
             try
@@ -164,6 +177,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpDelete("{productId}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(string productId)
         {
             try

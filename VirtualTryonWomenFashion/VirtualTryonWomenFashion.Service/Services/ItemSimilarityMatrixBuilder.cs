@@ -42,15 +42,6 @@ public class ItemSimilarityMatrixBuilder : IItemSimilarityMatrixBuilder
         _logger = logger;
     }
 
-    // public bool IsCacheValid()
-    // {
-    //     //return _cache.Any() && DateTime.Now - _lastUpdate < CacheValidity;
-    //     lock (_cacheLock)
-    //     {
-    //         return _cache.Any() && DateTime.Now - _lastUpdate < CacheValidity;
-    //     }
-    // }
-
     public Dictionary<string, Dictionary<string, double>> GetCachedMatrix()
     {
         //return _cache.ToDictionary(x => x.Key, x => x.Value);

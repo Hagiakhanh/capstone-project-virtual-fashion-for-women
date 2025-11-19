@@ -1149,6 +1149,10 @@ namespace VirtualTryonWomenFashion.Service.Services
             product.ProductName = request.ProductName ?? product.ProductName;
             product.Description = request.Description ?? product.Description;
             product.CategoryId = request.CategoryId ?? product.CategoryId;
+            if (request.ProductName != null)
+            {
+                product.ProductSlug = await GenerateProductSlug(request.ProductName, product.ProductId);
+            }
 
             if (request.MainImageUrl != null)
                 product.MainImageUrl = await _cloudinaryService.UploadImageAsync(request.MainImageUrl);
