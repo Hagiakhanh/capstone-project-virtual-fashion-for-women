@@ -178,13 +178,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                  p.ProductName.ToLower().Contains(searchTerm.Trim().ToLower()) ||
                  (p.Description != null && p.Description.ToLower().Contains(searchTerm.Trim().ToLower())))
                 &&
-                (!categoryId.HasValue || p.CategoryId == categoryId)
-                &&
-                p.ProductInSaleCampaigns.Any(c =>
-                    c.Campaign.StartDate <= DateOnly.FromDateTime(DateTime.Now) &&
-                    c.Campaign.EndDate >= DateOnly.FromDateTime(DateTime.Now) &&
-                    c.Campaign.IsDeleted == false &&
-                    c.Campaign.Status == "Active");
+                (!categoryId.HasValue || p.CategoryId == categoryId);
 
             // ===== 2️⃣ Tổng số bản ghi =====
             int totalCount = await _productRepository.CountAsync(filterExpression);
