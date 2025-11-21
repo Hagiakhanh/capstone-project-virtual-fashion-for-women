@@ -12,5 +12,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     {
         public Task<List<Category>> GetAllCategories();
         Task<List<string>> GetSlugsAsync(string baseSlug);
+        Task<Category> GetCategoryById(int id);
     }
 }

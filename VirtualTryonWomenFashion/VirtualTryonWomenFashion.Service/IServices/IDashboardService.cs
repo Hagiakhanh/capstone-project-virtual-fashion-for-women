@@ -5,8 +5,5 @@ namespace VirtualTryonWomenFashion.Service.IServices;
 
 public interface IDashboardService
 {
-    Task<ResponseSystemStatistic> GetSystemWideStatistic(
-        DateOnly? startDate,
-        DateOnly? endDate,
-        StatisticGroupingEnum? grouping);
+    Task<ResponseBasicSystemIndicator> GetBasicSystemIndicators();
 }

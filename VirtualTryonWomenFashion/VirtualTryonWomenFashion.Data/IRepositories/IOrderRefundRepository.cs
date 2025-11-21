@@ -14,5 +14,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
         public Task<List<OrderRefund>> GetListOrderRefundForCustomer(string? status, int pageIndex, int pageSize, int userId);
         public Task<OrderRefund> GetOrderRefundById(int orderRefundId);
         public Task<List<OrderRefund>> GetAllOrderRefundReadyForGHNUpdate();
+        Task<List<OrderRefund>> GetAllOrderRefundsForBasicStatisticAsync();
     }
 }
