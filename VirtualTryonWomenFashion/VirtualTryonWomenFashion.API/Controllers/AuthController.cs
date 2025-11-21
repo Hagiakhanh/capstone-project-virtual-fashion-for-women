@@ -83,5 +83,35 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
+        [HttpPost("staff/register")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RegisterStaffAccount(RequestCreateAccount requestCreateAccount)
+        {
+            try
+            {
+                MessageModel result = await _userService.CreateStaffAccount(requestCreateAccount);
+                return StatusCode(result.StatusCode, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut("staff/{staffId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateStatusStaffForAdmin(int staffId)
+        {
+            try
+            {
+                MessageModel result = await _userService.UpdateStatusStaffForAdmin(staffId);
+                return StatusCode(result.StatusCode, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }
