@@ -100,11 +100,11 @@ export default function AdminSidebar({
           </Link>
           <Link
             onClick={handleLinkClick}
-            href="/admin/customers"
-            className={`${baseLinkClasses} ${isActive("/admin/customers") ? activeLinkClasses : inactiveLinkClasses}`}
+            href="/admin/staffs"
+            className={`${baseLinkClasses} ${isActive("/admin/staffs") ? activeLinkClasses : inactiveLinkClasses}`}
           >
             <Users className="w-5 h-5 mr-3" />
-            Customers
+            Quản lý nhân viên
           </Link>
           <Link
             onClick={handleLinkClick}
