@@ -2,17 +2,22 @@ import axios from "axios";
 import https from 'https';
 import { NextRequest } from 'next/server';
 import { GetAccessToken } from "./user/AuthenticationAPI";
+export const getCurrentDomainUrl = (path: string = '') => {
+  if (typeof window === 'undefined') return '';
 
+  const baseUrl = window.location.origin; 
+  return `${baseUrl}${path}`;
+};
 const apiToken = axios.create({
-  baseURL: 'https://localhost:7105/api',
+  baseURL: getCurrentDomainUrl("/api"),
 });
 
 apiToken.interceptors.request.use(
   (config) => {
-    const accessToken = GetAccessToken();
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
+    // const accessToken = GetAccessToken();
+    // if (accessToken) {
+    //   config.headers.Authorization = `Bearer ${accessToken}`;
+    // }
     return config;
   },
   (error) => Promise.reject(error)
