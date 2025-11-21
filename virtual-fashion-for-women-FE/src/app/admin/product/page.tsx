@@ -13,7 +13,6 @@ import { Category } from '@/types/category';
 const statusTabs = [
     { key: 'all', label: 'Tất cả', icon: null },
     { key: 'active', label: 'Đang hoạt động', icon: CheckCircle },
-    { key: 'deleted', label: 'Đã xóa', icon: XCircle },
 ];
 
 export interface Product {
@@ -141,10 +140,6 @@ export default function ProductListPage() {
         return range;
     }
 
-    // useEffect(() => {
-    //     fetchProducts();
-    // }, [pagination.CurrentPage, pagination.PageSize, statusFilter, submittedSearchTerm]);
-
     // Cập nhật: Thêm fetchCategories khi component mount
     useEffect(() => {
         fetchCategories();
@@ -163,17 +158,6 @@ export default function ProductListPage() {
                 {/* Header */}
                 <h1 className="text-3xl font-semibold text-gray-800 mb-6">Quản lý sản phẩm</h1>
                 <div className="flex justify-between items-center gap-4 mb-4">
-                    {/* <div className="relative w-1/3"> 
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                            type="text"
-                            placeholder="Tìm kiếm theo ID sản phẩm, tên sản phẩm, mô tả..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div> */}
                     <div className="flex items-center gap-4 flex-wrap">
                         {/* Search Bar */}
                         <div className="relative" style={{ minWidth: '300px' }}>
@@ -197,7 +181,7 @@ export default function ProductListPage() {
                                     setSelectedCategory(e.target.value);
                                     setPagination((prev) => ({ ...prev, CurrentPage: 1 })); // Reset trang
                                 }}
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none cursor-pointer"
                                 style={{ minWidth: '200px' }}
                             >
                                 <option value="">Tất cả danh mục</option>
@@ -218,7 +202,7 @@ export default function ProductListPage() {
                                     setSortBy(Number(e.target.value));
                                     setPagination((prev) => ({ ...prev, CurrentPage: 1 })); // Reset trang
                                 }}
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none cursor-pointer"
                                 style={{ minWidth: '200px' }}
                             >
                                 {sortOptions.map((opt) => (
@@ -232,7 +216,7 @@ export default function ProductListPage() {
 
                     <button
                         onClick={() => router.push('/admin/product/create')}
-                        className="px-6 py-2.5 bg-green-500 border border-gray-300 rounded-lg hover:bg-green-600 font-medium flex items-center gap-2 transition-all"
+                        className="px-6 py-2.5 bg-green-500 border border-gray-300 rounded-lg hover:bg-green-600 font-medium flex items-center gap-2 transition-all cursor-pointer"
                     >
                         <Package className="w-4 h-4" />
                         Thêm sản phẩm mới
@@ -240,7 +224,7 @@ export default function ProductListPage() {
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="flex flex-wrap gap-3 mb-6">
+                {/* <div className="flex flex-wrap gap-3 mb-6">
                     {statusTabs.map((tab) => {
                         const Icon = tab.icon;
                         const active = statusFilter === tab.key;
@@ -262,7 +246,7 @@ export default function ProductListPage() {
                             </button>
                         );
                     })}
-                </div>
+                </div> */}
 
                 {/* Products Table */}
                 <div className="flex-1 mb-6">
@@ -337,7 +321,7 @@ export default function ProductListPage() {
                                 disabled={page === "..."}
                                 className={`px-4 py-2 rounded-lg border transition-all cursor-pointer${
                                     pagination.CurrentPage === page
-                                        ? 'bg-white-400 text-black border-blue-600'
+                                        ? 'bg-blue-600 text-black border-blue-600'
                                         : 'bg-white hover:bg-gray-100'
                                 } ${page === "..." ? 'cursor-default opacity-70' : ''}`}
                             >

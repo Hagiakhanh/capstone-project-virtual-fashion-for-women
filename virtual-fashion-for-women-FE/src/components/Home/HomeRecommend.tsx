@@ -23,7 +23,7 @@ function HomeRecommendSection() {
          // Gọi API route của Next.js, không phân trang, dùng topN
          const response = await api.get('/recommendation', {
                params: {
-                  topN: 8 // Lấy 8 sản phẩm
+                  topN: 6 // Lấy 6 sản phẩm
                }
          });
          if (response.status === 200) {
