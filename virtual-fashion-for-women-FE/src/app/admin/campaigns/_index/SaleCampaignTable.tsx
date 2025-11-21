@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Table, Tag, Image, Space, Button } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
-import { apiToken } from "@/api/instance";
+import {  apiToken } from "@/api/instance";
 import { ChartAreaIcon, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 
