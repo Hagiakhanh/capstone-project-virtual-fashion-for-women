@@ -4,9 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
@@ -229,7 +231,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
                 return user.MapToUserInformation();
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -264,6 +267,112 @@ namespace VirtualTryonWomenFashion.Service.Services
                 filter: x => x.RoleId == customerRole.RoleId
                 );
             return staffUser ??= new List<User>();
+        }
+
+        public async Task<MessageModel> CreateStaffAccount(RequestCreateAccount requestCreateAccount)
+        {
+            User checkUser = await _userRepository.GetUserByEmail(requestCreateAccount.Email);
+            if (checkUser != null)
+            {
+                throw new Exception("Email already in use");
+            }
+
+            if (requestCreateAccount.Password != requestCreateAccount.ConfirmPassword)
+            {
+                throw new Exception("Password and confirm password not the same");
+            }
+
+            Role staffRole = await _roleRepository.GetRoleByRoleName("Staff");
+            User newStaff = new User
+            {
+                RoleId = staffRole.RoleId,
+                FullName = requestCreateAccount.FullName,
+                Email = requestCreateAccount.Email,
+                Password = PasswordUtils.HashPassword(requestCreateAccount.Password),
+                IsActive = true,
+                IsEmailConfirm = true,
+                CreatedDate = DateTime.UtcNow.AddHours(7),
+            };
+
+            await _userRepository.InsertAsync(newStaff);
+            int result = await _unitOfWork.SaveChanges();
+            if (result > 0)
+            {
+                return new MessageModel
+                {
+                    Message = "Tạo tài khoản nhân viên thành công",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+            return new MessageModel
+            {
+                Message = "Tạo tài khoản nhân viên thất bại",
+                StatusCode = StatusCodes.Status400BadRequest
+            };
+
+        }
+
+        public async Task<Pagination<ResponseStaffInformation>> GetAllStaffForAdmin(PaginationParameter page, bool? isActive)
+        {
+            Role staffRole = await _roleRepository.GetRoleByRoleName("Staff");
+
+            Expression<Func<User, bool>> filter = user =>
+                                                    user.RoleId == staffRole.RoleId &&
+                                                    (!isActive.HasValue || user.IsActive == isActive.Value);
+
+            List<User> staffUsers = await _userRepository.GetAll(
+                                        pagination: page,
+                                        filter: filter,
+                                        includes: x => x.Role
+                                    );
+            int staffCount = await _userRepository.CountAsync(filter: filter);
+
+            List<ResponseStaffInformation> staffList = staffUsers.Select(staff => new ResponseStaffInformation
+            {
+                UserId = staff.UserId,
+                FullName = staff.FullName,
+                Email = staff.Email,
+                RoleName = staff.Role.RoleDescVn,
+                IsActive = staff.IsActive.Value,
+            }).ToList();
+
+            Pagination<ResponseStaffInformation> result = new Pagination<ResponseStaffInformation>(staffList ?? new List<ResponseStaffInformation>(), staffCount, page.PageIndex, page.PageSize);
+
+            return result;
+        }
+
+        public async Task<MessageModel> UpdateStatusStaffForAdmin(int staffId)
+        {
+            User staff = await _userRepository.GetUserById(staffId);
+            if (staff == null)
+            {
+                throw new Exception("Tài khoản không tồn tại");
+            }
+            if (staff.Role.RoleId != "Staff")
+            {
+                throw new Exception($"Tài khoản hiện tại có role là {staff.Role.RoleDescVn}, không thay đổi");
+            }
+            bool currentStatus = staff.IsActive.Value;
+
+            staff.IsActive = !currentStatus;
+
+            await _userRepository.UpdateAsync(staff);
+            int result = await _unitOfWork.SaveChanges();
+            if (result > 0)
+            {
+                return new MessageModel
+                {
+                    Message = $"Thay đổi trạng thái thành công từ {currentStatus} sang {staff.IsActive}",
+                    StatusCode = StatusCodes.Status200OK,
+                };
+            }
+
+            return new MessageModel
+            {
+                Message = $"Thay đổi trạng thái Không thành công",
+                StatusCode = StatusCodes.Status500InternalServerError,
+            };
+
         }
     }
 }
