@@ -15,7 +15,10 @@ export async function GET(request: Request) {
         pageIndex: parseInt(pageIndex),
       },
     });
-    return responseBE;
+    const dataResponse = responseBE.data;
+    return NextResponse.json(dataResponse, {
+      status: dataResponse.data?.statusCode,
+    });
   } catch (error: any) {
     console.error("Error fetching sale campaign:", error.message);
     return NextResponse.json(
