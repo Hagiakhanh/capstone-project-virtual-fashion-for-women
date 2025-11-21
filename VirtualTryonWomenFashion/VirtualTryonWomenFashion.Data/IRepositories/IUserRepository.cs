@@ -12,5 +12,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     {
         public Task<User> GetUserByEmail(string email);
         public Task<User> GetUserById(int userId);
+        Task<int> GetTotalUsersByRoleAsync(string roleId);
     }
 }

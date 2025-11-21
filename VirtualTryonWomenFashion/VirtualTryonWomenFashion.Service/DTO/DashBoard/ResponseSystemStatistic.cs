@@ -2,54 +2,20 @@ using VirtualTryonWomenFashion.Service.DTO.SaleCampaign;
 
 namespace VirtualTryonWomenFashion.Service.DTO.DashBoard;
 
-public class ResponseRevenueByTime
+public class ResponseBasicSystemIndicator
 {
-    /// Kỳ thống kê (Vd: "2025-11-12", "Tuần 46/2025", "Tháng 11/2025", "2025")
-    public string Period { get; set; }
-    /// Doanh thu ròng của kỳ đó
-    public decimal NetRevenue { get; set; }
-    /// Dùng để sắp xếp (ẩn đi khi trả về JSON nếu muốn)
-    public DateTime SortableDate { get; set; }
-}
+    // Tổng quan đơn hàng
+    public int TotalProcessingOrders { get; set; } // Đơn hàng đang được xử lý (pending, confirmed, shipping)
+    public int TotalRefundOrders { get; set; }     // Đơn hàng đang yêu cầu hoặc đang tiến hành hoàn tiền
+    public int TotalCompletedOrders { get; set; }  // Tổng đơn hàng đã hoàn thành
+    public int TotalRefundsCompleted { get; set; } // Tổng đơn hàng đã hoàn tiền xong
 
-public class ResponseSystemStatistic
-{
-    public decimal TotalGrossRevenue { get; set; } // Tổng doanh thu gộp
+    // Tổng quan người dùng
+    public int TotalCustomers { get; set; }        // Tổng số lượng khách hàng
+    public int TotalStaffs { get; set; }           // Tổng số lượng nhân viên
+
+    // Tổng quan tài chính
+    public decimal TotalGrossRevenue { get; set; } // Tổng tiền hàng (trước hoàn tiền)
     public decimal TotalRefundAmount { get; set; } // Tổng tiền đã hoàn
-    public int TotalOrders { get; set; }           // Tổng số đơn hàng (đã Completed)
-    public int TotalRefunds { get; set; }          // Tổng số đơn hàng có hoàn tiền (đã Completed)
-    // --- Số liệu cũ (đã tính ròng) ---
-    public decimal TotalNetRevenue { get; set; }     // Doanh thu ròng (Gross - Refund)
-    public int TotalNetSoldQuantity { get; set; }  // Số lượng bán ròng (Sold - Refunded)
-    public decimal AverageRevenuePerDate { get; set; }
-    // --- Thống kê chi tiết ---
-    public List<ResponseCategoryStatistic> TopCategories { get; set; }
-    public List<ResponseProductStatistic> TopProducts { get; set; }
-    public List<ResponseRevenueByTime> RevenueByPeriod { get; set; }
-}
-
-public class ResponseCategoryStatistic
-{
-    public int CategoryId { get; set; }
-    public string CategoryName { get; set; }
-    public int TotalSoldQuantity { get; set; }
-    public decimal TotalRevenue { get; set; }
-}
-
-public class ResponseProductStatistic
-{
-    public string ProductID { get; set; }
-    public string ProductName { get; set; }
-    public string ImageUrl { get; set; }
-    public int TotalSoldQuantity { get; set; }
-    public decimal TotalRevenue { get; set; }
-    public List<ResponseVariantStatistic> ListResponseVariant { get; set; }
-}
-
-public class ResponseVariantStatistic
-{
-    public string ProductVariantId { get; set; }
-    public string ProductVariantName { get; set; }
-    public int SoldQuantity { get; set; }
-    public string ImageUrl { get; set; }
+    public decimal TotalNetRevenue { get; set; }   // Tổng doanh thu thuần (TotalGrossRevenue - TotalRefundAmount)
 }

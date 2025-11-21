@@ -15,12 +15,12 @@ public class DashboardController : ControllerBase
         _dashboardService = dashboardService;
     }
     
-    [HttpGet("statistic")]
-    public async Task<IActionResult> GetStatistic(DateOnly? startDate, DateOnly? endDate, [FromQuery] StatisticGroupingEnum? grouping)
+    [HttpGet("overview")]
+    public async Task<IActionResult> GetStatistic()
     {
         try
         {
-            var result = await _dashboardService.GetSystemWideStatistic(startDate, endDate, grouping);
+            var result = await _dashboardService.GetBasicSystemIndicators();
             return Ok(result);
         }
         catch (ArgumentException ex)
