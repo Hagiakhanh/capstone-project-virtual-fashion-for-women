@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 import { GetAccessToken } from "./user/AuthenticationAPI";
 
 const apiToken = axios.create({
-  baseURL: 'https://localhost:7105/api',
+  baseURL: process.env.API_URL,
 });
 
 apiToken.interceptors.request.use(
