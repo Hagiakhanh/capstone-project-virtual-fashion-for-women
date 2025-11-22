@@ -1,6 +1,6 @@
 import { ColorDTO } from "./ColorDTO";
 import { ProductVariantDTO } from "./ProductVariantDTO";
-import { ResponseProductImageDTO } from "./ResponseProductImageDTO ";
+import { ResponseProductImageDTO } from "./ResponseProductImageDTO";
 
 export interface ResponseProductColorDTO {
     productColorId: string;

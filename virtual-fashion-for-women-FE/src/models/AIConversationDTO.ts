@@ -1,4 +1,4 @@
-export interface AIConversationDTO {
+export type AIConversationDTO ={
   aiconversationId: number;
   userId: number;
   currentUserStyleJson: string | null;
@@ -11,7 +11,7 @@ export interface AIConversationDTO {
 }
 
 // Nếu có dữ liệu message
-export interface ChatMessageItem {
+export type ChatMessageItem ={
   id?: number;
   isBot: boolean;
   message: string;
@@ -20,7 +20,7 @@ export interface ChatMessageItem {
 }
 
 // Nếu có dữ liệu outfit gợi ý
-export interface SuggestedOutfitDTO {
+export type SuggestedOutfitDTO ={
   id?: number;
   title?: string;
   description?: string;
@@ -28,7 +28,7 @@ export interface SuggestedOutfitDTO {
 }
 
 // Nếu API trả về thông tin user kèm theo
-export interface UserDTO {
+export type UserDTO ={
   userId: number;
   name?: string;
   email?: string;

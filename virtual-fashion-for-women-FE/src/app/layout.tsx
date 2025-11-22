@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Frank_Ruhl_Libre } from "next/font/google";
+import {  Inter } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import { Spin } from "antd";
@@ -8,18 +8,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { defaultToastContainerProps } from "@/helpers/toastHelper";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const frankRuhlLibre = Frank_Ruhl_Libre({
-  variable: "--font-frank-ruhl-libre",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -36,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${frankRuhlLibre.variable} antialiased`}
+        className={`${inter.variable} antialiased`}
       >
         <AuthProvider>
           <Suspense fallback={<Spin />}>{children}</Suspense>

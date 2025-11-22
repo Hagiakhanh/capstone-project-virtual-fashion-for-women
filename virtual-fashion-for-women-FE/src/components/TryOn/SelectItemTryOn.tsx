@@ -4,7 +4,7 @@ import { X, Search } from "lucide-react";
 import { Category } from "@/models/RequestCreateProduct";
 import { api } from "@/api/instance";
 import LoadingSpinner from "../Loading/LoadingSpinner";
-import { ResponseProductDTO } from "@/models/ResponseProductDTO ";
+import { ResponseProductDTO } from "@/models/ResponseProductDTO";
 
 export default function SelectItemTryOn({
     category = [],

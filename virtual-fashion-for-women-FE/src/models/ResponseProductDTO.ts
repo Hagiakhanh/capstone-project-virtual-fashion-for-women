@@ -1,5 +1,5 @@
 import { TagDto } from "./RequestUpdateProduct";
-import { ResponseProductColorDTO } from "./ResponseProductColorDTO ";
+import { ResponseProductColorDTO } from "./ResponseProductColorDTO";
 
 export interface ResponseProductDTO {
     productId: string;
