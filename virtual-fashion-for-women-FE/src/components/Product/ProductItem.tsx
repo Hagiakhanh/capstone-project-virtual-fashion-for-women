@@ -8,15 +8,18 @@ import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
-// Cập nhật kiểu của onWishlistSuccess để nhận hai tham số: productId (string) và newStatus (boolean)
-function ProductItem({ product, onWishlistSuccess, setLoading }: 
-    { 
-        product?: any, 
-        onWishlistSuccess: (productId: string, newStatus: boolean) => void, // ĐÃ SỬA: Thêm tham số
-        setLoading: (loading: boolean) => void 
-    }) {
-    
-    // Khởi tạo wishlist từ prop, dùng || false cho an toàn
+function ProductItem({
+    product,
+    onWishlistSuccess,
+    setLoading,
+    disabled = false
+}: {
+    product?: any,
+    onWishlistSuccess: (productId: string, newStatus: boolean) => void,
+    setLoading: (loading: boolean) => void,
+    disabled?: boolean
+}) {
+
     const [wishlist, setWishlist] = useState<boolean>(product?.isInWishlist || false);
     const [selectedHex, setSelectedHex] = useState<string | null>(null);
     const [imageForColor, setImageForColor] = useState<string | null>(null);
@@ -35,8 +38,13 @@ function ProductItem({ product, onWishlistSuccess, setLoading }:
     const handleChooseColor = (e: React.MouseEvent, colorItem: any) => {
         e.preventDefault();
         e.stopPropagation();
+
         setSelectedHex(colorItem.hexCode);
-        const colorObj = product?.productColors?.find((x: any) => x.productColorId === colorItem.productColorId);
+
+        const colorObj = product?.productColors?.find(
+            (x: any) => x.productColorId === colorItem.productColorId
+        );
+
         setImageForColor(colorObj?.productImagesDto[0]?.imageUrl || null);
 
         const sizeList = colorObj?.productVariants?.map((v: any) => ({
@@ -44,46 +52,40 @@ function ProductItem({ product, onWishlistSuccess, setLoading }:
             sizeCode: v.sizeDto.sizeCode,
             productVariantId: v.productVariantId
         })) || [];
+
         setSizesForColor(sizeList);
     };
 
-    // ĐÃ SỬA LOGIC ONWISHLIST SUCCESS Ở ĐÂY
     const handleToggleWishlist = async (e: React.MouseEvent, productId: string) => {
         e.preventDefault();
         e.stopPropagation();
 
         if (!user) {
-            messageToast.error('Vui lòng đăng nhập để thêm vào danh sách yêu thích');
-            router.push("/login");
+            messageToast.error('Vui lòng đăng nhập');
+            router.push('/login');
             return;
         }
 
-        const currentStatus = wishlist;
-        let newStatus = currentStatus;
+        let newStatus = wishlist;
 
         try {
-            if (!currentStatus) {
-                // Thêm vào Wishlist
-                const response = await api.post('/wishlist', { productId });
-                if (response.status === 200) {
+            if (!wishlist) {
+                const res = await api.post('/wishlist', { productId });
+                if (res.status === 200) {
                     newStatus = true;
-                    setWishlist(newStatus); // Cập nhật state nội bộ
-                    messageToast.success("Thêm vào yêu thích thành công.");
+                    messageToast.success('Đã thêm vào yêu thích');
                 }
             } else {
-                // Xóa khỏi Wishlist
-                const response = await api.delete(`/wishlist/product/${productId}`);
-                if (response.status === 200) {
+                const res = await api.delete(`/wishlist/product/${productId}`);
+                if (res.status === 200) {
                     newStatus = false;
-                    setWishlist(newStatus); // Cập nhật state nội bộ
-                    messageToast.success("Xóa khỏi yêu thích thành công.");
+                    messageToast.success('Đã xóa khỏi yêu thích');
                 }
             }
-            // Truyền productId và trạng thái MỚI ra component cha
-            onWishlistSuccess(productId, newStatus); 
-        } catch (error) {
-            console.error("Lỗi khi thêm/xóa sản phẩm vào danh sách yêu thích:", error);
-            messageToast.error("Thao tác thất bại.");
+            setWishlist(newStatus);
+            onWishlistSuccess(productId, newStatus);
+        } catch {
+            messageToast.error('Thao tác thất bại');
         }
     };
 
@@ -93,31 +95,35 @@ function ProductItem({ product, onWishlistSuccess, setLoading }:
     };
 
     const handleAddToCart = async (productVariantId: string) => {
-        if (user?.role === 'guest' || !user) {
-            messageToast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
-            router.push("/login");
+        if (!user || user.role === 'guest') {
+            messageToast.error('Vui lòng đăng nhập');
+            router.push('/login');
             return;
         }
+        if (disabled) {
+            messageToast.info('Chương trình đã kết thúc');
+            return;
+        }
+
         try {
             setLoading(true);
-            const payload = {
-                productVariantId: productVariantId,
-                quantity: 1,
-            };
-            const response = await api.post('/cartItem', payload);
-            if (response.status === 201) {
-                messageToast.success('Thêm vào giỏ hàng thành công');
-                window.dispatchEvent(new Event("cart-updated"));
+            const res = await api.post('/cartItem', {
+                productVariantId,
+                quantity: 1
+            });
+
+            if (res.status === 201) {
+                messageToast.success('Đã thêm vào giỏ hàng');
+                window.dispatchEvent(new Event('cart-updated'));
             }
         } catch (error: any) {
             messageToast.error(error?.response?.data?.message);
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     useEffect(() => {
-        // Đồng bộ state nội bộ với prop khi prop thay đổi
         setWishlist(product?.isInWishlist || false);
     }, [product?.isInWishlist]);
 
@@ -129,123 +135,91 @@ function ProductItem({ product, onWishlistSuccess, setLoading }:
         }
     }, [product]);
 
-    // Giá hiển thị: Ưu tiên priceAtTime (giá sale) nếu có
     const displayPrice = product?.priceAtTime || product?.price;
-    const originalPrice = product?.price;
     const hasDiscount = product?.percentDiscount > 0 && product?.priceAtTime < product?.price;
 
     return (
         <Link href={`/products/${product.productSlug}`}>
-            <div className="p-[1rem] relative rounded-2xl bg-[#f3f3f3] cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
-                {/* Hình ảnh */}
+            <div className="p-4 bg-[#f3f3f3] rounded-2xl hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
+
                 <div
-                    className="flex justify-center aspect-[3/4] overflow-hidden relative"
+                    className="relative aspect-[3/4]"
                     onMouseLeave={() => setShowSize(false)}
                 >
                     <img
-                        src={imageForColor ? imageForColor : product?.mainImageUrl}
+                        src={imageForColor || product?.mainImageUrl}
                         alt={product?.productName}
-                        className="w-full h-auto object-cover rounded-2xl"
+                        className="w-full h-full object-cover rounded-2xl"
                     />
-
-                    {/* Badge Sale (Thêm từ bản sửa trước) */}
-                    {hasDiscount && (
-                        <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full z-30">
-                            -{product.percentDiscount}%
-                        </div>
-                    )}
 
                     {/* Wishlist */}
                     <div
                         onClick={(e) => handleToggleWishlist(e, product?.productId)}
-                        className="absolute z-30 top-0 right-0 m-2 p-2 rounded-full bg-white text-xl shadow-md transition hover:scale-110"
+                        className="absolute top-2 right-2 bg-white p-2 rounded-full z-30"
                     >
                         {wishlist ? <HeartFilled style={{ color: 'red' }} /> : <HeartOutlined />}
                     </div>
 
-                    {/* Nút + */}
+                    {/* Nút + (hover để hiện size) */}
                     {!showSize && (
                         <div
                             onMouseEnter={() => selectedHex && setShowSize(true)}
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                if (!selectedHex) {
-                                    messageToast.info("Vui lòng chọn màu sắc trước.");
-                                    return;
-                                }
+                                if (!selectedHex)
+                                    messageToast.info("Chọn màu trước");
                             }}
-                            className={`absolute bottom-2 right-2 rounded-full p-2 shadow-md transition z-30 
-                                ${selectedHex
-                                    ? 'bg-white hover:bg-black hover:text-white cursor-pointer'
-                                    : 'bg-gray-300 cursor-not-allowed pointer-events-none'}`}
+                            className={`absolute bottom-2 right-2 p-2 rounded-full z-30 
+                            ${selectedHex ? 'bg-white hover:bg-black hover:text-white cursor-pointer'
+                                    : 'bg-gray-300 cursor-not-allowed'}`}
                         >
                             <PlusOutlined />
                         </div>
                     )}
 
                     {showSize && (
-                        <div
-                            onMouseLeave={() => setShowSize(false)}
-                            className="absolute bottom-0 left-0 right-0 bg-white/90 py-2 flex justify-center gap-2 rounded-b-2xl z-40 shadow-xl"
-                        >
-                            {sizesForColor.length > 0 ? (
-                                sizesForColor.map((sizeItem) => (
-                                    <button
-                                        key={sizeItem.sizeId}
-                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleChooseSize(sizeItem); }}
-                                        className="border border-black rounded-md px-3 py-1 text-sm hover:bg-black hover:text-white transition"
-                                    >
-                                        {sizeItem.sizeCode}
-                                    </button>
-                                ))
-                            ) : (
-                                <span className="text-sm text-gray-500">Hết hàng</span>
-                            )}
+                        <div className="absolute bottom-0 w-full bg-white/90 py-2 flex justify-center gap-2 rounded-b-2xl">
+                            {sizesForColor.map(size => (
+                                <button
+                                    key={size.sizeId}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleChooseSize(size);
+                                    }}
+                                    className="border px-3 py-1 rounded hover:bg-black hover:text-white"
+                                >
+                                    {size.sizeCode}
+                                </button>
+                            ))}
                         </div>
                     )}
                 </div>
 
-                {/* Nội dung */}
-                <div className="flex flex-col mt-5">
-                    <div className="line-clamp-1">
-                        <h2 className="text-lg font-normal">{product?.productName}</h2>
-                    </div>
+                <h2 className="mt-3 line-clamp-1">{product?.productName}</h2>
 
-                    {/* Khối màu */}
-                    {allColors.length > 0 && (
+                <div className="flex gap-2 mt-2">
+                    {allColors.map((color:any)  => (
                         <div
-                            className="flex gap-2 mt-2 mb-1"
-                            onClick={(e) => e.preventDefault()}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onTouchStart={(e) => e.stopPropagation()}
-                        >
-                            {allColors.map((item: any) => {
-                                const isSelected = selectedHex === item.hexCode;
-                                return (
-                                    <div
-                                        key={item.productColorId}
-                                        onClick={(e) => handleChooseColor(e, item)}
-                                        className={`${isSelected ? 'border-2 border-black ' : ''} w-5 h-5 rounded-full shadow-sm cursor-pointer transition-all`}
-                                        style={{ backgroundColor: item.hexCode }}
-                                    ></div>
-                                )
-                            })}
-                        </div>
-                    )}
+                            key={color.productColorId}
+                            onClick={(e) => handleChooseColor(e, color)}
+                            className={`w-5 h-5 rounded-full cursor-pointer 
+                            ${selectedHex === color.hexCode ? 'border-2 border-black' : ''}`}
+                            style={{ background: color.hexCode }}
+                        />
+                    ))}
+                </div>
 
-                    <div className="mt-2 flex items-center gap-2">
-                        {/* Giá */}
-                        <span className="font-bold text-lg text-red-600">
-                             {displayPrice ? `${formatPrice(displayPrice)}đ` : '0đ'}
+                <div className="mt-2 flex gap-2 items-center">
+                    <span className="text-red-600 font-bold">
+                        {formatPrice(displayPrice)}đ
+                    </span>
+                    {hasDiscount && (
+                        <span className="line-through text-gray-500 text-sm">
+                            {formatPrice(product?.price)}đ
                         </span>
-                        {/* Giá gốc (nếu có giảm giá) */}
-                        {hasDiscount && (
-                            <span className="text-sm text-gray-500 line-through">
-                                {originalPrice ? `${formatPrice(originalPrice)}đ` : ''}
-                            </span>
-                        )}
-                    </div>
+                    )}
                 </div>
             </div>
         </Link>

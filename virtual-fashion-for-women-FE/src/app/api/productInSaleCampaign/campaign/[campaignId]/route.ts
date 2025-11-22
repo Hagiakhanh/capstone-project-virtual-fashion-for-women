@@ -8,8 +8,17 @@ export async function GET(
   try {
     const { campaignId } = await params;
     const api = createApiInstance(request);
+    const { searchParams } = new URL(request.url);
+    const PageIndex = searchParams.get("pageIndex") || 1;
+    const PageSize = searchParams.get("pageSize") || 1;
     const responseBE = await api.get(
-      `/productinsalecampaign/campaign/${parseInt(campaignId)}`
+      `/productinsalecampaign/campaign/${parseInt(campaignId)}`,
+      {
+        params: {
+          PageIndex: PageIndex,
+          PageSize: PageSize,
+        },
+      }
     );
     const dataResponse = responseBE.data;
     return NextResponse.json(dataResponse, {
