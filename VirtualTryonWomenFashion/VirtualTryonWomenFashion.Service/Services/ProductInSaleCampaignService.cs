@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
@@ -235,5 +236,42 @@ namespace VirtualTryonWomenFashion.Service.Services
                 return false;
             }
         }
+
+        public async Task<ResponsePaginationModel<List<ResponseGetProductInSaleCampaign>>> GetListProductBasedCampaignIDPagination(int campaignId, PaginationParameter paginationParameter)
+        {
+            try
+            {
+                List<ResponseGetProductInSaleCampaign> listResult = new();
+
+                List<ProductInSaleCampaign> productInListSaleCampaign =
+                    await _repository.GetDetailProductInSaleCampaignPagination(campaignId, paginationParameter);
+
+                foreach (var item in productInListSaleCampaign)
+                {
+                    ResponseGetProductInSaleCampaign mappedModel = item.MapToResponseGetProductInSaleCampaign();
+                    listResult.Add(mappedModel);
+                }
+
+                int totalRecords = await _repository.CountAsync(x=>x.CampaignId==campaignId);
+
+                int totalPages = (int)Math.Ceiling((double)totalRecords / paginationParameter.PageSize);
+
+                return new ResponsePaginationModel<List<ResponseGetProductInSaleCampaign>>(
+                    statusCode: 200,
+                    data: listResult,
+                    totalRecords: totalRecords,
+                    totalPages: totalPages
+                );
+            }
+            catch (Exception ex)
+            {
+                return new ResponsePaginationModel<List<ResponseGetProductInSaleCampaign>>(
+                    statusCode: 500,
+                    data: new List<ResponseGetProductInSaleCampaign>(),
+                    message: ex.Message
+                );
+            }
+        }
+
     }
 }
