@@ -11,30 +11,27 @@ export const HomeSaleCampaign = () => {
   const fetchListActiveCampaign = async () => {
     try {
       // 1. Gửi request đến API
-      const response = await apiToken.get("/salecampaign"); 
+      const response = await apiToken.get("/salecampaign/active"); 
       const dataResponse = response.data;
 
       if (dataResponse && Array.isArray(dataResponse.data)) {
         setListActiveCampaign(dataResponse.data);
       } else if (Array.isArray(dataResponse)) {
-        // Trường hợp API trả về mảng trực tiếp
         setListActiveCampaign(dataResponse); 
       }
 
     } catch (error) {
       console.error("Error fetching sale campaigns:", error);
-      setListActiveCampaign([]); // Đặt về mảng rỗng nếu có lỗi
+      setListActiveCampaign([]); 
     } finally {
-      setIsLoading(false); // Kết thúc trạng thái loading
+      setIsLoading(false); 
     }
   }
 
-  // 3. Sử dụng useEffect đúng cách để chỉ gọi API một lần
   useEffect(() => {
     fetchListActiveCampaign();
-  }, []) // Dependency array rỗng đảm bảo chỉ chạy một lần khi component mount
+  }, []) 
 
-  // 4. Render Loading hoặc danh sách chiến dịch
   
   if (isLoading) {
     return (
