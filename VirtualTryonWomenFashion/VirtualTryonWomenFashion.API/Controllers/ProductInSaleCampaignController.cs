@@ -45,5 +45,24 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpGet("campaign/{campaignId}")]
+        public async Task<IActionResult> GetListProductInSaleCampaign(int campaignId, int pageSize, int pageIndex)
+        {
+            try
+            {
+                PaginationParameter paginationParameter = new PaginationParameter
+                {
+                    PageIndex = pageIndex,
+                    PageSize = pageSize,
+                };
+                var listOfExistingProductInCampaign = await _productInSaleCampaignService.GetListProductBasedCampaignIDPagination(campaignId, paginationParameter);
+                return Ok(listOfExistingProductInCampaign);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }

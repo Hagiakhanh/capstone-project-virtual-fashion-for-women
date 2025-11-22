@@ -636,6 +636,20 @@ namespace VirtualTryonWomenFashion.Service.Services
             };
         }
 
+        public async Task<List<ResponseGetShortSaleCampaignDetail>> GetAllActiveSaleCampaign()
+        {
+            try
+            {
+                List<SaleCampaign> listSaleCampaign = await _saleCampaignRepository.GetAll(null, x => x.IsDeleted == false && x.Status.Equals(SaleCampaignStatusEnum.Active.ToString()), null, []);
+                List<ResponseGetShortSaleCampaignDetail> listMapper = _mapper.Map<List<ResponseGetShortSaleCampaignDetail>>(listSaleCampaign);
+                return listMapper;
+
+            }
+            catch (Exception ex)
+            {
+                return [];
+            }
+        }
     }
 
 }
