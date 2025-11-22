@@ -71,10 +71,10 @@ export default function AdminHeader({
 
       <div className="flex items-center space-x-4 md:space-x-6">
         {/* Notification Icon */}
-        <button className="relative">
+        {/* <button className="relative">
           <Bell className="w-6 h-6 text-gray-600" />
           <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
+        </button> */}
 
         <div className="relative">
           <button onClick={toggleDropdown} className="cursor-pointer">

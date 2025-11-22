@@ -72,15 +72,15 @@ export default function AdminSidebar({
             className={`${baseLinkClasses} ${isActive("/admin/dashboard") ? activeLinkClasses : inactiveLinkClasses}`}
           >
             <Home className="w-5 h-5 mr-3" />
-            Dashboard
+            Thống kê
           </Link>
           <Link
             onClick={handleLinkClick}
             href="/admin/category"
-            className={`${baseLinkClasses} ${isActive("/admin/product") ? activeLinkClasses : inactiveLinkClasses}`}
+            className={`${baseLinkClasses} ${isActive("/admin/category") ? activeLinkClasses : inactiveLinkClasses}`}
           >
             <Package className="w-5 h-5 mr-3" />
-            Category
+            Danh mục
           </Link>
           <Link
             onClick={handleLinkClick}
@@ -88,7 +88,7 @@ export default function AdminSidebar({
             className={`${baseLinkClasses} ${isActive("/admin/size") ? activeLinkClasses : inactiveLinkClasses}`}
           >
             <Package className="w-5 h-5 mr-3" />
-            Size
+            Kích cỡ
           </Link>
           <Link
             onClick={handleLinkClick}
@@ -96,7 +96,7 @@ export default function AdminSidebar({
             className={`${baseLinkClasses} ${isActive("/admin/product") ? activeLinkClasses : inactiveLinkClasses}`}
           >
             <Package className="w-5 h-5 mr-3" />
-            Product
+            Sản phẩm
           </Link>
           <Link
             onClick={handleLinkClick}
