@@ -12,8 +12,8 @@ function HomeIntroSection() {
    return (
       <div>
          <div className="max-w-[80%] mx-auto pt-35 relative">
-            <h1 className="text-7xl w-[80%] mx-auto font-semibold text-center leading-relaxed from-[#FFAF37] to-[#996921] bg-gradient-to-r bg-clip-text text-transparent">
-               Gợi ý bộ đồ theo đặc điểm và yêu cầu của bạn
+            <h1 className="text-6xl w-[80%] mx-auto font-semibold text-center leading-relaxed from-[#FFAF37] to-[#996921] bg-gradient-to-r bg-clip-text text-transparent">
+               Gợi ý trang phục theo phong cách <br/>với trợ lý ảo
             </h1>
             <div className="flex justify-center">
                <Link href={"/recommendation"} style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundImage: 'linear-gradient(to right, #FFAF37, #996921)', border: 'none' }} 
