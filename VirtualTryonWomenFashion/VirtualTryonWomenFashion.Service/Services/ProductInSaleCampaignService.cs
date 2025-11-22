@@ -243,7 +243,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 List<ResponseGetProductInSaleCampaign> listResult = new();
 
-                List<ProductInSaleCampaign> productInListSaleCampaign =
+                    List<ProductInSaleCampaign> productInListSaleCampaign =
                     await _repository.GetDetailProductInSaleCampaignPagination(campaignId, paginationParameter);
 
                 foreach (var item in productInListSaleCampaign)

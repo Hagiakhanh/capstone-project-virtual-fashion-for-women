@@ -29,7 +29,10 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(x => x.Product)
                     .ThenInclude(p => p.ProductColors)
                         .ThenInclude(pc => pc.ProductImages)
-                .Include(x => x.Product).ThenInclude(p => p.Category)
+                .Include(x => x.Product).ThenInclude(p => p.Category).Include(x => x.Product)
+                    .ThenInclude(p => p.ProductColors).ThenInclude(c => c.Color)
+                    .Include(x => x.Product)
+                    .ThenInclude(p => p.ProductColors).ThenInclude(c => c.ProductVariants).ThenInclude(s => s.Size)
                 .ToListAsync();
 
             return productInSaleCampaigns;
@@ -49,11 +52,15 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                     .ThenInclude(p => p.ProductColors)
                         .ThenInclude(pc => pc.ProductImages)
                 .Include(x => x.Product)
-                    .ThenInclude(p => p.Category);
+                    .ThenInclude(p => p.Category)
+                .Include(x => x.Product)
+                    .ThenInclude(p => p.ProductColors).ThenInclude(c=>c.Color)
+                .Include(x => x.Product)
+                    .ThenInclude(p => p.ProductColors).ThenInclude(c => c.ProductVariants).ThenInclude(s=>s.Size);
 
             var result = await query
                 .OrderBy(x => x.SalePrice)
-                .Skip(paginationParameter.PageIndex * paginationParameter.PageSize)
+                .Skip((paginationParameter.PageIndex-1) * paginationParameter.PageSize)
                 .Take(paginationParameter.PageSize)
                 .ToListAsync();
 
