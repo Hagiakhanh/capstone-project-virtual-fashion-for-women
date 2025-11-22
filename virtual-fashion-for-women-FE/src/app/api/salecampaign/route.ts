@@ -29,15 +29,22 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   try {
-    const payload = await request.json();
+    const formData = await request.formData(); // Lấy FormData từ request
     const api = createApiInstance(request);
-    const responseBE = await api.post("/saleCampaign", payload);
+    const responseBE = await api.post("/saleCampaign", formData);
 
     const dataResponse = responseBE.data;
     return NextResponse.json(dataResponse, {
       status: responseBE.data?.statusCode,
     });
   } catch (error: any) {
-    return NextResponse.json(error.response.data.message, { status: 400 });
+   return NextResponse.json(
+      {
+        message:
+          error.response?.data?.message || error.message || "Có lỗi xảy ra",
+        details: error.response?.data,
+      },
+      { status: error.response?.status || 400 }
+    );
   }
 }
