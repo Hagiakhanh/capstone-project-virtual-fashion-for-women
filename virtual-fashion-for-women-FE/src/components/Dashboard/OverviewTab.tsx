@@ -143,8 +143,7 @@ export default function OverviewTab() {
     }
 
     return (
-        <div className="space-y-6"> {/* Giảm space-y-8 thành space-y-6 */}
-            {/* 1. Các Chỉ số Tổng quan */}
+        <div className="space-y-6">
             <h2 className="text-xl font-sans text-gray-800">Tổng quan hệ thống của bạn</h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-5 font-sans">
