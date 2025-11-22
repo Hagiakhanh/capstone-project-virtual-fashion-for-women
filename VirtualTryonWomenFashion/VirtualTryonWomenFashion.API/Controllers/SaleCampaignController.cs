@@ -19,7 +19,22 @@ namespace VirtualTryonWomenFashion.API.Controllers
             _saleCampaignService = saleCampaignService;
         }
         // GET: api/<SaleCampaignController>
+        [HttpGet("active")]
+        public async Task<IActionResult> GetAllActiveCampaign()
+        {
+            try
+            {
+                var listForSaleCampaignForAdmin = await _saleCampaignService.GetAllActiveSaleCampaign();
+                return Ok(listForSaleCampaignForAdmin);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Get(int pageSize = 3, int pageIndex = 1)
         {
             try
