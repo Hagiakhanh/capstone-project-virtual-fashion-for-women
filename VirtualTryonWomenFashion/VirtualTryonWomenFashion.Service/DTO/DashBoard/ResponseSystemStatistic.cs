@@ -19,3 +19,25 @@ public class ResponseBasicSystemIndicator
     public decimal TotalRefundAmount { get; set; } // Tổng tiền đã hoàn
     public decimal TotalNetRevenue { get; set; }   // Tổng doanh thu thuần (TotalGrossRevenue - TotalRefundAmount)
 }
+
+public class RevenueResult
+{
+    public string Label { get; set; } // "2025-01" hoặc "01/01/2025"
+    public decimal TotalRevenue { get; set; }
+}
+
+public class RevenueFilterRequest
+{
+    public int? Year { get; set; }            // Chỉ truyền Year => group theo tháng
+    public int? Month { get; set; }           // Chỉ truyền Month => gợi ý group theo ngày
+    public DateTime? StartDate { get; set; }  // Khoảng ngày 
+    public DateTime? EndDate { get; set; }    // Khoảng ngày
+}
+
+public class CategorySalesPieDto
+{
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; }
+    public int TotalSold { get; set; }
+    public double Percentage { get; set; }  // % trên tổng số lượng đã bán
+}

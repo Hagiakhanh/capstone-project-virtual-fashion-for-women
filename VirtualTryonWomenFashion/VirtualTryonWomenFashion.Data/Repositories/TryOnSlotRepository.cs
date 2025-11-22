@@ -46,5 +46,130 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(to => to.ProductColors).FirstOrDefaultAsync();
             return tryOnSlot != null;
         }
+
+        public async Task<List<TopTryOnProductDto>> GetTopTryOnProductsAsync(
+            DateTime start, DateTime end, int limit)
+        {
+            var query =
+                from slot in _context.TryOnSlots
+                where slot.CreatedAt >= start
+                   && slot.CreatedAt <= end
+                   && !slot.IsDeleted
+                from pc in slot.ProductColors
+                let product = pc.Product
+                select new
+                {
+                    product.ProductId,
+                    product.ProductName,
+                    product.MainImageUrl
+                };
+
+            var result = await query
+                .GroupBy(x => new { x.ProductId, x.ProductName, x.MainImageUrl })
+                .Select(g => new TopTryOnProductDto
+                {
+                    ProductId = g.Key.ProductId,
+                    ProductName = g.Key.ProductName,
+                    MainImageUrl = g.Key.MainImageUrl,
+                    TotalTryOn = g.Count() // COUNT EVERY ROW
+                })
+                .OrderByDescending(x => x.TotalTryOn)
+                .Take(limit)
+                .ToListAsync();
+
+            return result;
+        }
+
+        public async Task<List<TryOnChartPointDto>> GetTryOnTimelineAsync(
+            string productId, DateTime start, DateTime end)
+        {
+            var totalHours = (end - start).TotalHours;
+
+            var query =
+                from slot in _context.TryOnSlots
+                where slot.CreatedAt >= start
+                   && slot.CreatedAt <= end
+                   && !slot.IsDeleted
+                from pc in slot.ProductColors
+                where pc.ProductId == productId
+                select slot.CreatedAt;
+
+            // ================= CASE 1: <= 24h =====================
+            if (totalHours <= 24)
+            {
+                var grouped = await query
+                    .Select(dt => new
+                    {
+                        dt.Year,
+                        dt.Month,
+                        dt.Day,
+                        Block = dt.Hour / 2   // block 2 giờ
+                    })
+                    .GroupBy(x => new { x.Year, x.Month, x.Day, x.Block })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        g.Key.Month,
+                        g.Key.Day,
+                        g.Key.Block,
+                        Count = g.Count()
+                    })
+                    .OrderBy(x => x.Year)
+                    .ThenBy(x => x.Month)
+                    .ThenBy(x => x.Day)
+                    .ThenBy(x => x.Block)
+                    .ToListAsync();
+
+                return grouped.Select(g => new TryOnChartPointDto
+                {
+                    Time = new DateTime(g.Year, g.Month, g.Day)
+                                .AddHours(g.Block * 2),
+                    Count = g.Count
+                }).ToList();
+            }
+
+            // ================= CASE 2: > 24h — group theo ngày =====================
+            var groupedDays = await query
+                .Select(dt => new
+                {
+                    dt.Year,
+                    dt.Month,
+                    dt.Day
+                })
+                .GroupBy(x => new { x.Year, x.Month, x.Day })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    g.Key.Day,
+                    Count = g.Count()
+                })
+                .OrderBy(x => x.Year)
+                .ThenBy(x => x.Month)
+                .ThenBy(x => x.Day)
+                .ToListAsync();
+
+            return groupedDays.Select(g => new TryOnChartPointDto
+            {
+                Time = new DateTime(g.Year, g.Month, g.Day),
+                Count = g.Count
+            }).ToList();
+        }
+
     }
+
+    public class TopTryOnProductDto
+    {
+        public string ProductId { get; set; }
+        public string ProductName { get; set; }
+        public string MainImageUrl { get; set; }
+        public int TotalTryOn { get; set; }
+    }
+
+    public class TryOnChartPointDto
+    {
+        public DateTime Time { get; set; }
+        public int Count { get; set; }
+    }
+
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -31,34 +32,6 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             return await _context.Transactions.Where(x => x.OrderId == orderId && x.Type == TypeTransactionEnum.Purchase.ToString()).FirstOrDefaultAsync();
         }
 
-        /*public async Task<decimal> GetTotalTransactionAmounts(string transactionType)
-        {
-            var successStatus = TransactionStatusEnum.Success.ToString();
-            var orderCompletedStatus = OrderStatusEnum.Completed.ToString();
-            var refundCompletedStatus = OrderRefundStatusEnum.Completed.ToString();
-
-            var query = _context.Transactions
-                .Where(t => t.Type == transactionType && t.Status == successStatus);
-
-            if (transactionType == TypeTransactionEnum.Purchase.ToString())
-            {
-                query = query.Where(t =>
-                    t.OrderId.HasValue &&
-                    t.Order != null &&
-                    t.Order.Status == orderCompletedStatus
-                );
-            }
-            else if (transactionType == TypeTransactionEnum.Refund.ToString())
-            {
-                query = query.Where(t =>
-                    t.OrderRefundId.HasValue &&
-                    t.OrderRefund != null &&
-                    t.OrderRefund.Status == refundCompletedStatus
-                );
-            }
-
-            return await query.SumAsync(t => t.Money.HasValue ? t.Money.Value : 0);
-        }*/
         public async Task<decimal> GetTotalTransactionAmounts(string transactionType)
 
         {
@@ -66,6 +39,17 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Where(t => t.Type == transactionType && t.Status == "Success")
                 .SumAsync(t => t.Money.HasValue ? t.Money.Value : 0);
 
+        }
+
+        public async Task<List<Transaction>> GetTransactionsInRangeAsync(
+            DateTime startDate, DateTime endDate)
+        {
+            return await _context.Transactions
+            .Where(t =>
+                t.CreatedAt >= startDate &&
+                t.CreatedAt <= endDate &&
+                t.Status == TransactionStatusEnum.Success.ToString())
+            .ToListAsync();
         }
     }
 }
