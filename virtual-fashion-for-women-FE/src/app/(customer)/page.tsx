@@ -1,6 +1,7 @@
 import HomeIntroSection from "@/components/Home/HomeIntro";
 import HomeProductSection from "@/components/Home/HomeProduct";
 import HomeRecommendSection from "@/components/Home/HomeRecommend";
+import { HomeSaleCampaign } from "@/components/Home/HomeSaleCampaign";
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
         <HomeIntroSection />
         <HomeProductSection />
         <HomeRecommendSection />
+        <HomeSaleCampaign/>
       </div>
     </>
   );

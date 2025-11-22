@@ -1,5 +1,5 @@
-import { ResponseProductColorDTO } from "./ResponseProductColorDTO ";
-import { ResponseProductDTO } from "./ResponseProductDTO ";
+import { ResponseProductColorDTO } from "./ResponseProductColorDTO";
+import { ResponseProductDTO } from "./ResponseProductDTO";
 
 export interface TryOnDTO {
     tryOnSlotId: number;

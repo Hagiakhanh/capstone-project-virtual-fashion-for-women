@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { messageToast } from '@/helpers/toastHelper'
 import { api } from '@/api/instance'
-import { ResponseProductColorDTO } from '@/models/ResponseProductColorDTO '
+import { ResponseProductColorDTO } from '@/models/ResponseProductColorDTO'
 
 // 👉 DYNAMIC IMPORT: đảm bảo @snap/camera-kit chỉ load trên client
 const loadCameraKit = async () => {

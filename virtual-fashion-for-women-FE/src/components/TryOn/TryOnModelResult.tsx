@@ -5,7 +5,7 @@ import formatPrice from '@/utils/formatPrice';
 import { SizeDTO } from '@/models/SizeDto';
 import { ProductVariant } from '@/models/RequestUpdateProduct';
 import { ProductVariantDTO } from '@/models/ProductVariantDTO';
-import { ResponseProductDTO } from '@/models/ResponseProductDTO ';
+import { ResponseProductDTO } from '@/models/ResponseProductDTO';
 import { Category } from '@/models/RequestCreateProduct';
 import BodyMeasurementForm from './BodyMeasurementForm';
 import { Characteristic } from '@/models/CharacteristicDTO';

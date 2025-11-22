@@ -352,10 +352,10 @@ export function ChatMessageStage({
         >
           <h2
             className={`${
-              isSuggestedMode ? "text-4xl" : "text-6xl"
+              isSuggestedMode ? "text-4xl" : "text-5xl"
             } w-full mx-auto font-semibold text-center leading-relaxed from-[#FFAF37] to-[#996921] bg-gradient-to-r bg-clip-text text-transparent`}
           >
-            Mô tả nhu cầu của bạn
+            Mô tả phong cách của bạn
           </h2>
 
           {/* 💬 Danh sách tin nhắn */}
