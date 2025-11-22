@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using VirtualTryonWomenFashion.Data.Commons;
+using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.User;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -30,7 +34,8 @@ namespace VirtualTryonWomenFashion.API.Controllers
                     StatusCode = StatusCodes.Status200OK,
                     Data = userInformation
                 });
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(new MessageModelWithData<object>()
                 {
@@ -42,7 +47,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpPut("{userId}")]
-        public async Task<IActionResult> UpdateUserInformationAsync([FromRoute]int userId, [FromBody]RequestUpdateUser requestUpdateUser)
+        public async Task<IActionResult> UpdateUserInformationAsync([FromRoute] int userId, [FromBody] RequestUpdateUser requestUpdateUser)
         {
             try
             {
@@ -64,5 +69,33 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 });
             }
         }
+
+        [HttpGet("staffs")]
+        public async Task<IActionResult> GetStaffList([FromQuery] PaginationParameter page, bool? isActive)
+        {
+            try
+            {
+                Pagination<ResponseStaffInformation> staffList = await _userService.GetAllStaffForAdmin(page, isActive);
+                var metadata = new
+                {
+                    staffList.TotalCount,   
+                    staffList.PageSize,
+                    staffList.CurrentPage,
+                    staffList.TotalPages
+                };
+                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+                return Ok(new MessageModelWithData<object>()
+                {
+                    Message = "Danh sách nhân viên",
+                    StatusCode = StatusCodes.Status200OK,
+                    Data = staffList
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }

@@ -30,5 +30,10 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Category> GetCategoryById(int id)
+        {
+            return await _context.Categories.Include(c => c.Products).Where(c => c.CategoryId == id).FirstOrDefaultAsync();
+        }
+
     }
 }

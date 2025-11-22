@@ -155,7 +155,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             try
             {
-                var size = await _sizeRepository.GetByIdAsync(sizeId);
+                var size = await _sizeRepository.GetSizeById(sizeId);
                 if (size == null)
                 {
                     return new MessageModel
@@ -164,7 +164,17 @@ namespace VirtualTryonWomenFashion.Service.Services
                         StatusCode = StatusCodes.Status404NotFound
                     };
                 }
-                    
+
+                bool isUsed = size.ProductVariants != null && size.ProductVariants.Any();
+                if (isUsed)
+                {
+                    return new MessageModel
+                    {
+                        Message = "Không thể xóa size vì đang được sử dụng trong sản phẩm",
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
+                }
+
                 await _sizeRepository.Delete(size);
 
                 var result = await _unitOfWork.SaveChanges();

@@ -13,5 +13,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
         public Task<Order?> GetOrderByOrderID(int orderID);
         public Task<List<Order>> GetOrdersByStatus(string status);
         public Task<List<Order>> GetAllOrdersReadyForGHNUpdate();
+        Task<List<Order>> GetAllOrdersForBasicStatisticAsync();
     }
 }

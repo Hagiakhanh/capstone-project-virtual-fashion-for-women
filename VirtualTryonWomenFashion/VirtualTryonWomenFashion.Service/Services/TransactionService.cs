@@ -163,5 +163,46 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception($"Lỗi khi tạo list transaction: {ex.Message}");
             }
         }
+
+        public async Task<Pagination<ResponseTransactionAdmin>> GetAllTransactions(
+            string? type,
+            string? status,
+            string? method,
+            DateTime? startDate,
+            DateTime? endDate,
+            PaginationParameter pagination)
+        {
+            Expression<Func<Transaction, bool>>? filter = null;
+
+            // Xây dựng filter động
+            filter = t =>
+                (string.IsNullOrEmpty(type) || t.Type == type) &&
+                (string.IsNullOrEmpty(method) || t.Method == method) &&
+                (string.IsNullOrEmpty(status) || t.Status == status) &&
+                (!startDate.HasValue || t.CreatedAt >= startDate.Value) &&
+                (!endDate.HasValue || t.CreatedAt <= endDate.Value);
+
+            
+            // Gọi repository
+            List<Transaction> rawResult = await _transactionRepository.GetAll(
+                pagination: pagination,
+                filter: filter,
+                orderBy: q => q.OrderByDescending(t => t.CreatedAt),
+                includes: t => t.User
+            ); 
+            
+            int totalRecords = await _transactionRepository.CountAsync(filter);
+
+            List<ResponseTransactionAdmin> responseTransactions = new List<ResponseTransactionAdmin>();
+            foreach (Transaction transaction in rawResult)
+            {
+                responseTransactions.Add(transaction.MapToResponseTransactionAdmin());
+            }
+
+            return new Pagination<ResponseTransactionAdmin>(responseTransactions, totalRecords,
+                pagination.PageIndex, pagination.PageSize);
+
+        }
+
     }
 }

@@ -74,5 +74,12 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             return orderRefunds;
         }
 
+        public async Task<List<OrderRefund>> GetAllOrderRefundsForBasicStatisticAsync()
+        {
+            return await _context.OrderRefunds
+                .Select(o => new OrderRefund { OrderRefundId = o.OrderRefundId, Status = o.Status })
+                .ToListAsync();
+        }
+
     }
 }

@@ -10,5 +10,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
 {
     public interface ISizeRepository : IGenericRepository<Size>
     {
+        Task<Size> GetSizeById(int id);
     }
 }

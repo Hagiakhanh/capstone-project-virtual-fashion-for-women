@@ -1479,55 +1479,63 @@ namespace VirtualTryonWomenFashion.Service.Services
                 ? string.Join(", ", productTags.Select(t => t.TagName))
                 : "Không có thẻ gắn";
 
+            var embeddingTasks = new List<Task>();
+
             foreach (var productColor in product.ProductColors)
             {
                 foreach (var variant in productColor.ProductVariants)
                 {
-                    var textParts = new List<string>
+                    var colorCopy = productColor;
+                    var variantCopy = variant;
+                    embeddingTasks.Add(Task.Run(async () =>
                     {
-                        $"Tên sản phẩm: {product.ProductName}",
-                        $"Mô tả: {product.Description}",
-                        $"Danh mục: {category.CategoryName}",
-                        $"Có thể mặc: {category.BodyPart}",
-                        $"Tag: {tagsText}",
-                        $"Màu sắc: {productColor.Color?.ColorName ?? "Không rõ"}",
-                        $"Mã màu: {productColor.Color?.ColorPrefix ?? ""} ({productColor.Color?.HexCode ?? ""})",
-                        $"Size: {variant.Size?.SizeCode ?? "Free size"}",
-                        $"Giá: {product.Price} VND"
-                    };
+                        var textParts = new List<string>
+                        {
+                            $"Tên sản phẩm: {product.ProductName}",
+                            $"Mô tả: {product.Description}",
+                            $"Danh mục: {category.CategoryName}",
+                            $"Có thể mặc: {category.BodyPart}",
+                            $"Tag: {tagsText}",
+                            $"Màu sắc: {productColor.Color?.ColorName ?? "Không rõ"}",
+                            $"Mã màu: {productColor.Color?.ColorPrefix ?? ""} ({productColor.Color?.HexCode ?? ""})",
+                            $"Size: {variant.Size?.SizeCode ?? "Free size"}",
+                            $"Giá: {product.Price} VND"
+                        };
 
-                    string textToEmbed = string.Join(". ", textParts);
-                    float[] vector = await _geminiService.GetEmbeddingAsync(textToEmbed);
+                            string textToEmbed = string.Join(". ", textParts);
+                            float[] vector = await _geminiService.GetEmbeddingAsync(textToEmbed);
 
-                    var metadata = new Dictionary<string, string>
-                    {
-                        { "productId", product.ProductId },
-                        { "productName", product.ProductName },
-                        { "productSlug", product.ProductSlug },
-                        { "categoryId", category.CategoryId.ToString() },
-                        { "categoryName", category.CategoryName },
-                        { "itemType", category.CategoryName },
-                        { "bodyPart", category.BodyPart },
-                        { "tags", tagsText ?? "" },
-                        { "productColorId", productColor.ProductColorId },
-                        { "colorId", productColor.ColorId?.ToString() ?? "" },
-                        { "colorName", productColor.Color?.ColorName ?? "" },
-                        { "colorPrefix", productColor.Color?.ColorPrefix ?? "" },
-                        { "hexCode", productColor.Color?.HexCode ?? "" },
-                        { "productVariantId", variant.ProductVariantId },
-                        { "variantName", variant.VariantName },
-                        { "sizeId", variant.SizeId?.ToString() ?? "" },
-                        { "sizeCode", variant.Size?.SizeCode ?? "" },
-                        { "price", product.Price?.ToString() ?? "" },
-                        { "imageUrl", variant.ImageUrl ?? "" },
-                        { "noBgImageUrl", productColor.NoBgImgUrl ?? "" },
-                        { "createdAt", product.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss") }
-                    };
+                            var metadata = new Dictionary<string, string>
+                        {
+                            { "productId", product.ProductId },
+                            { "productName", product.ProductName },
+                            { "productSlug", product.ProductSlug },
+                            { "categoryId", category.CategoryId.ToString() },
+                            { "categoryName", category.CategoryName },
+                            { "itemType", category.CategoryName },
+                            { "bodyPart", category.BodyPart },
+                            { "tags", tagsText ?? "" },
+                            { "productColorId", productColor.ProductColorId },
+                            { "colorId", productColor.ColorId?.ToString() ?? "" },
+                            { "colorName", productColor.Color?.ColorName ?? "" },
+                            { "colorPrefix", productColor.Color?.ColorPrefix ?? "" },
+                            { "hexCode", productColor.Color?.HexCode ?? "" },
+                            { "productVariantId", variant.ProductVariantId },
+                            { "variantName", variant.VariantName },
+                            { "sizeId", variant.SizeId?.ToString() ?? "" },
+                            { "sizeCode", variant.Size?.SizeCode ?? "" },
+                            { "price", product.Price?.ToString() ?? "" },
+                            { "imageUrl", variant.ImageUrl ?? "" },
+                            { "noBgImageUrl", productColor.NoBgImgUrl ?? "" },
+                            { "createdAt", product.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss") }
+                        };
 
-                    // Upsert vector (cập nhật nếu đã có, thêm nếu chưa)
-                    await _vectorDbService.UpsertAsync(variant.ProductVariantId, vector, metadata);
+                        // Upsert vector (cập nhật nếu đã có, thêm nếu chưa)
+                        await _vectorDbService.UpsertAsync(variant.ProductVariantId, vector, metadata);
+                    }));
                 }
             }
+            await Task.WhenAll(embeddingTasks);
         }
 
         public async Task<MessageModel> DeleteProductAsync(string productId, bool hardDelete = false)

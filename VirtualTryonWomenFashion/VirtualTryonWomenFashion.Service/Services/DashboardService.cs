@@ -2,6 +2,8 @@ using System.Data.SqlTypes;
 using System.Globalization;
 using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
+using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
 using VirtualTryonWomenFashion.Service.DTO.DashBoard;
 using VirtualTryonWomenFashion.Service.DTO.SaleCampaign;
@@ -12,244 +14,89 @@ namespace VirtualTryonWomenFashion.Service.Services;
 public class DashboardService : IDashboardService
 {
     private readonly IOrderDetailRepository _orderDetailRepository;
+    private readonly IOrderRepository _orderRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IOrderRefundRepository _orderRefundRepository;
+    private readonly ITransactionRepository _transactionRepository;
 
-    public DashboardService(IOrderDetailRepository orderDetailRepository)
+    public DashboardService(IOrderDetailRepository orderDetailRepository,
+        IOrderRepository orderRepository,
+        IUserRepository userRepository,
+        IOrderRefundRepository orderRefundRepository,
+        ITransactionRepository transactionRepository)
     {
         _orderDetailRepository = orderDetailRepository;
+        _orderRepository = orderRepository;
+        _userRepository = userRepository;
+        _orderRefundRepository = orderRefundRepository;
+        _transactionRepository = transactionRepository;
     }
-    
-    public async Task<ResponseSystemStatistic> GetSystemWideStatistic(
-        DateOnly? startDate, 
-        DateOnly? endDate,
-        StatisticGroupingEnum? grouping) // Thêm tham số grouping
+
+    public async Task<ResponseBasicSystemIndicator> GetBasicSystemIndicators()
     {
-        // --- 1. Xử lý ngày (đã sửa lỗi SqlDateTime) ---
-        if (startDate.HasValue && endDate.HasValue && endDate.Value < startDate.Value)
+        var allOrders = await _orderRepository.GetAllOrdersForBasicStatisticAsync();
+        var allOrderRefunds = await _orderRefundRepository.GetAllOrderRefundsForBasicStatisticAsync();
+
+        var processingStatuses = new[]
         {
-            throw new ArgumentException("Ngày kết thúc không được nhỏ hơn ngày bắt đầu.");
-        }
-        
-        DateTime actualStart = startDate?.ToDateTime(TimeOnly.MinValue) ?? (DateTime)System.Data.SqlTypes.SqlDateTime.MinValue;
-        DateTime actualEnd = endDate?.ToDateTime(TimeOnly.MaxValue) ?? DateTime.UtcNow;
-        
-        var allOrderDetails = await _orderDetailRepository.GetOrderDetailsForSystemStatisticAsync(actualStart, actualEnd);
+            OrderStatusEnum.Pending.ToString(),
+            OrderStatusEnum.Confirmed.ToString(),
+            OrderStatusEnum.Packed.ToString(),
+            OrderStatusEnum.Delivering.ToString(),
+            OrderStatusEnum.Delivered.ToString()
+        };
+        int totalProcessingOrders = allOrders.Count(o => processingStatuses.Contains(o.Status));
 
-        if (allOrderDetails == null || !allOrderDetails.Any())
+        // Đơn hàng hoàn tiền/trả hàng
+        var activeRefundStatuses = new[]
         {
-            // Trả về rỗng (cập nhật DTO mới)
-            return new ResponseSystemStatistic
-            {
-                TotalGrossRevenue = 0, TotalRefundAmount = 0, TotalOrders = 0, TotalRefunds = 0,
-                TotalNetRevenue = 0, TotalNetSoldQuantity = 0, AverageRevenuePerDate = 0,
-                TopCategories = new List<ResponseCategoryStatistic>(),
-                TopProducts = new List<ResponseProductStatistic>(),
-                RevenueByPeriod = new List<ResponseRevenueByTime>()
-            };
-        }
+            OrderRefundStatusEnum.Pending.ToString(),
+            OrderRefundStatusEnum.Accepted.ToString(),
+            OrderRefundStatusEnum.Delivering.ToString(),
+            OrderRefundStatusEnum.Delivered.ToString(),
+        };
 
-        // --- 2. Định nghĩa hàm nhóm thời gian ---
-        // (Dùng để nhóm doanh thu theo Tuần/Tháng/Năm)
-        Func<DateTime, (string Period, DateTime SortableDate)> groupingFunc;
-        
-        switch (grouping)
+        /*var refundingOrderStatuses = new[]
         {
-            case StatisticGroupingEnum.Week:
-                groupingFunc = dt => {
-                    // Lấy năm và tuần theo chuẩn ISO (quan trọng cho các ngày cuối/đầu năm)
-                    int isoYear = ISOWeek.GetYear(dt);
-                    int isoWeekNum = ISOWeek.GetWeekOfYear(dt);
-                    // Dùng ToDateTime để lấy ngày Thứ Hai của tuần ISO đó
-                    DateTime firstDayOfWeek = ISOWeek.ToDateTime(isoYear, isoWeekNum, DayOfWeek.Monday);
-            
-                    return ($"Tuần {isoWeekNum}/{isoYear}", firstDayOfWeek);
-                };
-                break;
-            case StatisticGroupingEnum.Month:
-                groupingFunc = dt => (dt.ToString("MM/yyyy"), new DateTime(dt.Year, dt.Month, 1));
-                break;
-            case StatisticGroupingEnum.Year:
-                groupingFunc = dt => (dt.Year.ToString(), new DateTime(dt.Year, 1, 1));
-                break;
-            case StatisticGroupingEnum.Day:
-            default:
-                groupingFunc = dt => (dt.ToString("yyyy-MM-dd"), dt.Date);
-                break;
-        }
+            OrderStatusEnum.Returning.ToString(),
+            OrderStatusEnum.Returned.ToString(),
+        };*/
+        //int totalProcessRefundOrders = allOrderRefunds.Count(o => activeRefundStatuses.Contains(o.Status));
+        //int totalReturnOrders = allOrders.Count(o => refundingOrderStatuses.Contains(o.Status));
+        int totalRefundOrders = allOrderRefunds.Count(o => activeRefundStatuses.Contains(o.Status));
 
-        // --- 3. Xử lý dữ liệu (Tính toán) ---
-        var validStatus = new[] { OrderStatusEnum.Completed.ToString() };
+        // Tổng đơn hàng đã hoàn thành (thu tiền thành công)
+        int totalCompletedOrders = allOrders.Count(o =>
+            o.Status == OrderStatusEnum.Completed.ToString());
 
-        // Dùng Dictionary để tổng hợp (đã cập nhật)
-        var revenueByPeriod = new Dictionary<string, (decimal NetRevenue, DateTime SortableDate)>();
-        var productStats = new Dictionary<string, (ResponseProductStatistic Stat, Dictionary<string, ResponseVariantStatistic> Variants)>();
-        var categoryStats = new Dictionary<int, ResponseCategoryStatistic>();
+        int totalRefundsCompleted = allOrderRefunds.Count(o =>
+            o.Status == OrderRefundStatusEnum.Completed.ToString());
 
-        // Biến tổng hợp mới
-        decimal totalGrossRevenue = 0;
-        decimal totalRefundAmountAgg = 0; // Tổng tiền refund
-        decimal totalNetRevenue = 0;
-        int totalNetSoldQuantity = 0;
-        
-        // Dùng HashSet để đếm số đơn hàng duy nhất
-        var completedOrderIds = new HashSet<int>();
-        var refundedOrderIds = new HashSet<int>(); // Đơn hàng có refund (đã completed)
+        // 1b. Tính toán Doanh thu và Hoàn tiền (chỉ tính trên OrderDetail)
+        decimal totalGrossRevenue = await _transactionRepository.GetTotalTransactionAmounts(TypeTransactionEnum.Purchase.ToString());
+        decimal totalRefundAmount = await _transactionRepository.GetTotalTransactionAmounts(TypeTransactionEnum.Refund.ToString());
 
-        var validOrderDetails = allOrderDetails.Where(od => validStatus.Contains(od.Order.Status));
+        // Tổng doanh thu thuần
+        decimal totalNetRevenue = totalGrossRevenue - totalRefundAmount;
 
-        foreach (var od in validOrderDetails)
+        // --- 2. Thống kê Người dùng ---
+        int totalCustomers = await _userRepository.GetTotalUsersByRoleAsync("Customer");
+        int totalStaffs = await _userRepository.GetTotalUsersByRoleAsync("Staff");
+
+        // --- 3. Trả về kết quả ---
+        return new ResponseBasicSystemIndicator
         {
-            // --- Tính toán Doanh thu/Refund ---
-            decimal grossRevenue = od.Quantity * od.PriceAtTime;
-            int grossQuantity = od.Quantity;
+            TotalProcessingOrders = totalProcessingOrders,
+            TotalRefundOrders = totalRefundOrders, // Tổng đơn hàng đang ở trạng thái Trả hàng/Hoàn tiền
+            TotalCompletedOrders = totalCompletedOrders, // Tổng số đơn hàng đã Completed
+            TotalRefundsCompleted = totalRefundsCompleted, // Tổng số đơn hàng đã hoàn tiền thành công
 
-            decimal totalRefundAmountOnDetail = od.OrderRefundDetails
-                .Where(ord => ord.OrderRefund.Status == OrderRefundStatusEnum.Completed.ToString())
-                .Sum(ord => ord.Quantity * ord.RefundPriceAtTime);
-            
-            int totalRefundQuantityOnDetail = od.OrderRefundDetails
-                .Where(ord => ord.OrderRefund.Status == OrderRefundStatusEnum.Completed.ToString())
-                .Sum(ord => ord.Quantity);
+            TotalCustomers = totalCustomers,
+            TotalStaffs = totalStaffs,
 
-            decimal netRevenue = grossRevenue - totalRefundAmountOnDetail;
-            int netQuantity = grossQuantity - totalRefundQuantityOnDetail;
-            netQuantity = Math.Max(0, netQuantity);
-            
-            // --- Cập nhật biến tổng ---
-            totalGrossRevenue += grossRevenue;
-            totalRefundAmountAgg += totalRefundAmountOnDetail;
-            totalNetRevenue += netRevenue;
-            totalNetSoldQuantity += netQuantity;
-
-            // Đếm số đơn hàng
-            completedOrderIds.Add(od.OrderId);
-            if (totalRefundAmountOnDetail > 0)
-            {
-                refundedOrderIds.Add(od.OrderId);
-            }
-
-            // --- Cập nhật doanh thu theo kỳ (Tuần/Tháng/Năm) ---
-            var groupKey = groupingFunc(od.Order.CreatedAt);
-            if (!revenueByPeriod.ContainsKey(groupKey.Period))
-            {
-                revenueByPeriod[groupKey.Period] = (0, groupKey.SortableDate);
-            }
-            // Cộng dồn doanh thu ròng
-            revenueByPeriod[groupKey.Period] = (
-                revenueByPeriod[groupKey.Period].NetRevenue + netRevenue, 
-                groupKey.SortableDate
-            );
-
-            // --- Thống kê Product/Category (chỉ khi có bán ròng) ---
-            if (netQuantity > 0)
-            {
-                var product = od.ProductVariant.ProductColor.Product;
-                var category = product.Category;
-                var variant = od.ProductVariant;
-
-                // Cập nhật Product Stats
-                if (!productStats.ContainsKey(product.ProductId))
-                {
-                    productStats[product.ProductId] = (
-                        new ResponseProductStatistic {
-                            ProductID = product.ProductId,
-                            ProductName = product.ProductName,
-                            ImageUrl = product.MainImageUrl,
-                            TotalRevenue = 0, TotalSoldQuantity = 0,
-                            ListResponseVariant = new List<ResponseVariantStatistic>()
-                        },
-                        new Dictionary<string, ResponseVariantStatistic>()
-                    );
-                }
-                var currentProductStat = productStats[product.ProductId];
-                currentProductStat.Stat.TotalRevenue += netRevenue;
-                currentProductStat.Stat.TotalSoldQuantity += netQuantity;
-
-                // Cập nhật Variant Stats
-                if (!currentProductStat.Variants.ContainsKey(variant.ProductVariantId))
-                {
-                    currentProductStat.Variants[variant.ProductVariantId] = new ResponseVariantStatistic {
-                        ProductVariantId = variant.ProductVariantId,
-                        ProductVariantName = variant.VariantName,
-                        ImageUrl = variant.ImageUrl,
-                        SoldQuantity = 0
-                    };
-                }
-                currentProductStat.Variants[variant.ProductVariantId].SoldQuantity += netQuantity;
-
-                // Cập nhật Category Stats
-                if (category != null) 
-                {
-                    if (!categoryStats.ContainsKey(category.CategoryId))
-                    {
-                        categoryStats[category.CategoryId] = new ResponseCategoryStatistic {
-                            CategoryId = category.CategoryId,
-                            CategoryName = category.CategoryName,
-                            TotalRevenue = 0, TotalSoldQuantity = 0
-                        };
-                    }
-                    categoryStats[category.CategoryId].TotalRevenue += netRevenue;
-                    categoryStats[category.CategoryId].TotalSoldQuantity += netQuantity;
-                }
-            }
-        }
-
-        // --- 4. Hoàn thiện kết quả ---
-        
-        // Tính số ngày (dùng cho doanh thu trung bình)
-        int totalDays = 1;
-        if (startDate.HasValue && endDate.HasValue) {
-            totalDays = (endDate.Value.DayNumber - startDate.Value.DayNumber) + 1;
-        } 
-        else if (revenueByPeriod.Any()) {
-            var minDate = revenueByPeriod.Values.Min(v => v.SortableDate);
-            var maxDate = revenueByPeriod.Values.Max(v => v.SortableDate);
-            // Cần điều chỉnh logic maxDate cho đúng, tùy theo cách nhóm
-            // Tạm thời vẫn dùng logic cũ cho đơn giản
-            totalDays = (DateOnly.FromDateTime(actualEnd).DayNumber - DateOnly.FromDateTime(minDate).DayNumber) + 1;
-        }
-        
-        decimal avgRevenue = totalDays > 0 ? totalNetRevenue / totalDays : totalNetRevenue;
-
-        // Chuyển đổi Dictionaries sang Lists
-        var finalProductList = productStats.Values.Select(ps => {
-                ps.Stat.ListResponseVariant = ps.Variants.Values.OrderByDescending(v => v.SoldQuantity).ToList();
-                return ps.Stat;
-            })
-            .OrderByDescending(p => p.TotalSoldQuantity)
-            .ToList();
-
-        var finalCategoryList = categoryStats.Values
-            .OrderByDescending(c => c.TotalSoldQuantity)
-            .ToList();
-
-        // Chuyển đổi Doanh thu theo kỳ
-        var finalRevenueByPeriod = revenueByPeriod
-            .Select(kvp => new ResponseRevenueByTime { 
-                Period = kvp.Key, 
-                NetRevenue = kvp.Value.NetRevenue, 
-                SortableDate = kvp.Value.SortableDate 
-            })
-            .OrderBy(r => r.SortableDate)
-            .ToList();
-
-        // --- 5. Trả về kết quả (đầy đủ) ---
-        return new ResponseSystemStatistic
-        {
-            // Số liệu mới
             TotalGrossRevenue = totalGrossRevenue,
-            TotalRefundAmount = totalRefundAmountAgg,
-            TotalOrders = completedOrderIds.Count,
-            TotalRefunds = refundedOrderIds.Count,
-
-            // Số liệu ròng
-            TotalNetRevenue = totalNetRevenue,
-            TotalNetSoldQuantity = totalNetSoldQuantity,
-            AverageRevenuePerDate = Math.Round(avgRevenue, 0),
-
-            // Danh sách chi tiết
-            TopCategories = finalCategoryList,
-            TopProducts = finalProductList,
-            RevenueByPeriod = finalRevenueByPeriod
+            TotalRefundAmount = totalRefundAmount,
+            TotalNetRevenue = Math.Round(totalNetRevenue, 2)
         };
     }
 }
