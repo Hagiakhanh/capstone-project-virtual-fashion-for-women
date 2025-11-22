@@ -9,6 +9,8 @@ import { Pagination } from 'antd';
 import ProductItem from '@/components/Product/ProductItem';
 import formatDate from "@/utils/formatDate";
 import CampaignCountdown from '@/components/SaleCampaign/SaleCampaignCountDown';
+import ProductItemSkeleton from '@/components/Product/ProductItemSkeleton';
+import SaleCampaignSkeleton from './_index/SkeletonSaleCampaign';
 const PAGE_SIZE = 20;
 
 export default function SaleCampaignDetail () {
@@ -125,7 +127,18 @@ export default function SaleCampaignDetail () {
     }
     
     if (isLoading && !campaignData && listProduct.length === 0) {
-        return <div className="container mx-auto px-4 my-10 text-center text-xl text-gray-600">Đang tải chi tiết chiến dịch...</div>;
+          return (
+            <div className="container mx-auto px-4 my-10">
+              <SaleCampaignSkeleton />
+        
+              {/* Skeleton cho danh sách sản phẩm */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+                {Array.from({ length: PAGE_SIZE }).map((_, index) => (
+                  <ProductItemSkeleton key={index} />
+                ))}
+              </div>
+            </div>
+          );;
     }
 
     if (!campaignData) {
@@ -158,9 +171,11 @@ export default function SaleCampaignDetail () {
             <h2 className="text-3xl font-bold mb-6">Sản phẩm áp dụng</h2>
             
             {isLoading && listProduct.length === 0 ? (
-                <div className="text-center py-10 text-xl text-gray-600">
-                    <p>Đang tải danh sách sản phẩm...</p>
-                </div>
+                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+                 {Array.from({ length: PAGE_SIZE }).map((_, index) => (
+                   <ProductItemSkeleton key={index} />
+                 ))}
+               </div>
             ) : listProduct.length > 0 ? (
                 <>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
