@@ -19,6 +19,8 @@ using VirtualTryonWomenFashion.Service.DTO.Wallet;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Hubs;
 using VirtualTryonWomenFashion.Service.IServices;
+using VirtualTryonWomenFashion.Service.DTO.Mail;
+using System.Globalization;
 
 namespace VirtualTryonWomenFashion.Service.Services;
 
@@ -36,6 +38,7 @@ public class PaymentService : IPaymentService
     private readonly IHubContext<NotificationHub> _notificationHub;
     private readonly IUserService _userService;
     private readonly IWalletService _walletService;
+    private readonly IMailService _mailService;
 
     public PaymentService(
         IConfiguration configuration,
@@ -49,7 +52,8 @@ public class PaymentService : IPaymentService
         INotificationService notificationService,
         IHubContext<NotificationHub> notificationHub,
         IUserService userService,
-        IWalletService walletService
+        IWalletService walletService,
+        IMailService mailService 
     )
     {
         _configuration = configuration;
@@ -64,6 +68,7 @@ public class PaymentService : IPaymentService
         _notificationHub = notificationHub;
         _userService = userService;
         _walletService = walletService;
+        _mailService = mailService;
     }
 
     public async Task<string> CreatePaymentUrlInMomoAsync(Order order)
@@ -578,6 +583,7 @@ public class PaymentService : IPaymentService
         {
             int userId = _currentUserService.GetUserId();
             Order order = await _orderService.CreateOrderAsync(requestCreateOrder);
+            var currentUser = await _userService.GetUserInformationAsync(); 
             ResponseWallet userWallet = await _walletService.GetWalletAsync(userId);
             Transaction transaction = new Transaction()
             {
@@ -606,6 +612,12 @@ public class PaymentService : IPaymentService
                 await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(),order.OrderId);
             }
             await _unitOfWork.CommitTransactionAsync();
+            await _mailService.sendEmailAsync(new MailRequest
+            {
+                ToEmail = currentUser.Email,
+                Subject = $"[Women Fashion] Đơn hàng ORD-{order.OrderId} đã được đặt thành công",
+                Body = MailContent.OrderSuccessEmail(order.ReceiverName, "ORD-" + order.OrderId, order.CreatedAt.ToString("HH:mm dd/MM/yyyy"), order.Amount.Value.ToString("#,0", new CultureInfo("vi-VN")) +" đ", order.ReceiverAddress)
+            });
             return true;
         }catch (Exception ex)
         {
@@ -623,7 +635,9 @@ public class PaymentService : IPaymentService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
+            
             Order order = await _orderService.CreateOrderAsync(requestCreateOrder);
+            var currentUser = await _userService.GetUserInformationAsync();
             string paymentUrl = "";
             if (PaymentMethodEnum.Momo.ToString() == requestCreateOrder.PaymentMethod)
             {
@@ -640,6 +654,12 @@ public class PaymentService : IPaymentService
 
             if (!string.IsNullOrEmpty(paymentUrl)) await _orderService.UpdatePaymentUrlAsync(paymentUrl, order.OrderId);
             await _unitOfWork.CommitTransactionAsync();
+            await _mailService.sendEmailAsync(new MailRequest
+            {
+                ToEmail = currentUser.Email,
+                Subject = $"[Women Fashion] Đơn hàng ORD-{order.OrderId} đã được đặt thành công",
+                Body = MailContent.OrderSuccessEmail(order.ReceiverName, "ORD-" + order.OrderId, order.CreatedAt.ToString("HH:mm dd/MM/yyyy"), order.Amount.Value.ToString("#,0", new CultureInfo("vi-VN")) + " đ", order.ReceiverAddress)
+            });
             return paymentUrl;
         }
         catch (Exception ex)
