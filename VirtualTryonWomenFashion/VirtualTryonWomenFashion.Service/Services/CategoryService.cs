@@ -219,13 +219,23 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             try
             {
-                var category = await _categoryRepository.GetByIdAsync(categoryId);
+                var category = await _categoryRepository.GetCategoryById(categoryId);
                 if (category == null)
                     return new MessageModel
                     {
                         Message = "Không tìm thấy category",
                         StatusCode = StatusCodes.Status404NotFound
                     };
+
+                bool isUsed = category.Products != null && category.Products.Any();
+                if (isUsed)
+                {
+                    return new MessageModel
+                    {
+                        Message = "Không thể xóa category vì đang được sử dụng trong sản phẩm",
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
+                }
 
                 await _categoryRepository.Delete(category);
 

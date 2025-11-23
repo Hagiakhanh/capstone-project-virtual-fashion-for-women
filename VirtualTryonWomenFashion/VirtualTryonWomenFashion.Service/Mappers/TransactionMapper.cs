@@ -22,5 +22,23 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 UpdatedAt = transaction.UpdatedAt
             };
         }
+
+        public static ResponseTransactionAdmin MapToResponseTransactionAdmin(this Transaction transaction)
+        {
+            if (transaction == null)
+                return null;
+
+            return new ResponseTransactionAdmin
+            {
+                TransactionId = transaction.TransactionId,
+                UserName = transaction.User?.FullName ?? "Unknown",
+                Status = transaction.Status,
+                Money = transaction.Money,
+                Method = transaction.Method,
+                Type = transaction.Type,
+                CreatedAt = transaction.CreatedAt
+            };
+        }
+
     }
 }

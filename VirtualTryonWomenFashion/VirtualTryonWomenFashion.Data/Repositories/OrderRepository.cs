@@ -56,5 +56,12 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .ToListAsync();
             return orders ??= new List<Order>();
         }
+
+        public async Task<List<Order>> GetAllOrdersForBasicStatisticAsync()
+        {
+            return await _context.Orders
+                .Select(o => new Order { OrderId = o.OrderId, Status = o.Status })
+                .ToListAsync();
+        }
     }
 }

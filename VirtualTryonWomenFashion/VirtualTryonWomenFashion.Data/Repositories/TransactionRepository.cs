@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -29,6 +30,26 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         public async Task<Transaction?> GetTransactionByOrderId(int orderId)
         {
             return await _context.Transactions.Where(x => x.OrderId == orderId && x.Type == TypeTransactionEnum.Purchase.ToString()).FirstOrDefaultAsync();
+        }
+
+        public async Task<decimal> GetTotalTransactionAmounts(string transactionType)
+
+        {
+            return await _context.Transactions
+                .Where(t => t.Type == transactionType && t.Status == "Success")
+                .SumAsync(t => t.Money.HasValue ? t.Money.Value : 0);
+
+        }
+
+        public async Task<List<Transaction>> GetTransactionsInRangeAsync(
+            DateTime startDate, DateTime endDate)
+        {
+            return await _context.Transactions
+            .Where(t =>
+                t.CreatedAt >= startDate &&
+                t.CreatedAt <= endDate &&
+                t.Status == TransactionStatusEnum.Success.ToString())
+            .ToListAsync();
         }
     }
 }

@@ -26,5 +26,11 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
             return await _context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.UserId == userId);
         }
+
+        public async Task<int> GetTotalUsersByRoleAsync(string roleId)
+        {
+            return await _context.Users
+                .CountAsync(u => u.RoleId == roleId && (u.IsActive ?? true));
+        }
     }
 }

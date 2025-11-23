@@ -12,5 +12,8 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     {
         public Task<Transaction?> GetTransactionByThirdPartyId(string thirdPartyId);
         public Task<Transaction?> GetTransactionByOrderId(int orderId);
+        Task<decimal> GetTotalTransactionAmounts(string transactionType);
+        Task<List<Transaction>> GetTransactionsInRangeAsync(
+            DateTime startDate, DateTime endDate);
     }
 }

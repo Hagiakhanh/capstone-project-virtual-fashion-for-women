@@ -93,4 +93,45 @@ public class TransactionController : ControllerBase
             });
         }
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAllTransaction([FromQuery] string? type,
+            [FromQuery] string? status,
+            [FromQuery] string? method,
+            [FromQuery] DateTime? startDate,
+            [FromQuery] DateTime? endDate,
+            [FromQuery] PaginationParameter pagination)
+    {
+        try
+        {
+            Pagination<ResponseTransactionAdmin> result =
+                await _transactionService.GetAllTransactions(type, status, method, startDate, endDate, pagination);
+            var metadata = new
+            {
+                result.TotalCount,
+                result.PageSize,
+                result.CurrentPage,
+                result.TotalPages,
+                result.HasNext,
+                result.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+            return Ok(new MessageModelWithData<object>()
+            {
+                Message = "Lấy lịch sử giao dịch thành công",
+                StatusCode = 200,
+                Data = result
+            });
+        }
+        catch (Exception ex)
+        {
+            return Ok(new MessageModelWithData<object>()
+            {
+                Message = "Lấy lịch sử giao dịch thất bại: " + ex.Message,
+                StatusCode = 200,
+                Data = null
+            });
+        }
+    }
 }
