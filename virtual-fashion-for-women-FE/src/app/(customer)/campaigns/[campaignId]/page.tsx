@@ -21,22 +21,26 @@ export default function SaleCampaignDetail () {
     const [listProduct, setListProduct] = useState<ProductInSaleDTO[]>([]);
     const [totalProducts, setTotalProducts] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [loadingCampaign, setLoadingCampaign] = useState<boolean>(true);
+const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
     const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
     const [isCampaignExpired, setIsCampaignExpired] = useState<boolean>(false);
 
     // 2. Hàm gọi API chi tiết chiến dịch
     const fetchCampaignDetail = useCallback(async () => {
         if (!campaignId) return;
-
+    
+        setLoadingCampaign(true);
         try {
             const response = await apiToken.get(`/salecampaign/${campaignId}`);
-            if (response.data && response.data.data) {
-                setCampaignData(response.data.data);
+            if (response.data) {
+                setCampaignData(response.data);
             }
         } catch (error) {
             console.error("Error fetching campaign details:", error);
             setCampaignData(null);
+        } finally {
+            setLoadingCampaign(false);
         }
     }, [campaignId]);
 
@@ -44,7 +48,7 @@ export default function SaleCampaignDetail () {
     const fetchListProduct = useCallback(async (pageIndex: number) => {
         if (!campaignId) return;
 
-        setIsLoading(true);
+        setLoadingProducts(true);
         try {
             // Cập nhật API endpoint để thêm pagination
             const response = await apiToken.get("productInSaleCampaign/campaign/"+campaignId, {
@@ -67,7 +71,7 @@ export default function SaleCampaignDetail () {
             setListProduct([]);
             setTotalProducts(0);
         } finally {
-            setIsLoading(false);
+            setLoadingProducts(false);
         }
     }, [campaignId]);
     useEffect(() => {
@@ -87,7 +91,7 @@ export default function SaleCampaignDetail () {
       
         return () => clearInterval(interval);
       }, [campaignData]);
-    // Gọi API chi tiết và sản phẩm khi component mount hoặc campaignId/page thay đổi
+
     useEffect(() => {
         if (campaignId) {
             fetchCampaignDetail();
@@ -119,76 +123,68 @@ export default function SaleCampaignDetail () {
     };
 
     const handlePageChange = (page: number) => {
-        setCurrentPage(page);
+    setLoadingProducts(true);
+    setCurrentPage(page);
     };
 
     if (!campaignId) {
         return <div className="container mx-auto px-4 my-10 text-center text-red-500">Thiếu ID chiến dịch.</div>;
     }
-    
-    if (isLoading && !campaignData && listProduct.length === 0) {
-          return (
-            <div className="container mx-auto px-4 my-10">
-              <SaleCampaignSkeleton />
-        
-              {/* Skeleton cho danh sách sản phẩm */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-                {Array.from({ length: PAGE_SIZE }).map((_, index) => (
-                  <ProductItemSkeleton key={index} />
-                ))}
-              </div>
-            </div>
-          );;
-    }
 
-    if (!campaignData) {
+    if (!loadingCampaign && !campaignData) {
         return <div className="container mx-auto px-4 my-10 text-center text-red-500">Không tìm thấy chiến dịch.</div>;
     }
 
     return (
         <div className="container mx-auto px-4 my-10">
-            {/* Banner và Tiêu đề Chiến dịch (Sử dụng dữ liệu từ campaignData) */}
-            <div className="mb-8">
-                <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden rounded-xl shadow-lg">
-                    <img
-                        src={campaignData.imageUrl}
-                        alt={campaignData.campaignName}
-                        className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6 text-white">
-                        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2">{campaignData.campaignName}</h1>
-                        <p className="text-md sm:text-lg">
-                            Thời gian: {formatDate(campaignData.startDate)} - {formatDate(campaignData.endDate)}
-                        </p>
-                        <CampaignCountdown endDate={campaignData.endDate} />
+
+            {/* ================= CAMPAIGN SECTION ================= */}
+            {loadingCampaign ? (
+                <SaleCampaignSkeleton />
+            ) : (
+                <div className="mb-8">
+                    <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden rounded-xl shadow-lg">
+                        <img
+                            src={campaignData!.imageUrl}
+                            alt={campaignData!.campaignName}
+                            className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-6 text-white">
+                            <h1 className="text-4xl sm:text-5xl font-extrabold mb-2">
+                                {campaignData!.campaignName}
+                            </h1>
+                            <p>
+                                Thời gian: {formatDate(campaignData!.startDate)} - {formatDate(campaignData!.endDate)}
+                            </p>
+                            <CampaignCountdown endDate={campaignData!.endDate} />
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             <hr className="mb-8" />
 
-            {/* Danh sách Sản phẩm */}
+            {/* ================= PRODUCT SECTION ================= */}
             <h2 className="text-3xl font-bold mb-6">Sản phẩm áp dụng</h2>
-            
-            {isLoading && listProduct.length === 0 ? (
-                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-                 {Array.from({ length: PAGE_SIZE }).map((_, index) => (
-                   <ProductItemSkeleton key={index} />
-                 ))}
-               </div>
+
+            {loadingProducts ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                        <ProductItemSkeleton key={i} />
+                    ))}
+                </div>
             ) : listProduct.length > 0 ? (
                 <>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-                        {listProduct.map((item) => {
-                            // Chuẩn hóa dữ liệu cho ProductItemHome
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                        {listProduct.map(item => {
                             const productWithSale = {
                                 ...item.product,
                                 percentDiscount: item.percentDiscount,
                                 salePrice: item.salePrice,
                                 priceAtTime: item.salePrice,
-                                price: item.product.price, 
+                                price: item.product.price,
                                 productId: item.productId,
-                                isInWishlist: item.product.isInWishlist || false, 
+                                isInWishlist: item.product.isInWishlist || false,
                             };
 
                             return (
@@ -196,37 +192,35 @@ export default function SaleCampaignDetail () {
                                     <ProductItem
                                         product={productWithSale}
                                         onWishlistSuccess={handleWishlistSuccess}
-                                        setLoading={(loading: boolean) => handleSetLoading(loading, item.productId)} 
+                                        setLoading={(loading) => handleSetLoading(loading, item.productId)}
                                     />
-                                    
-                                    {/* Loading overlay cho từng sản phẩm */}
+
                                     {loadingProductId === item.productId && (
-                                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-2xl z-50">
-                                             <span className="text-lg font-semibold text-gray-800">Đang tải...</span>
+                                        <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-xl z-20">
+                                            <span className="font-semibold">Đang tải...</span>
                                         </div>
                                     )}
                                 </div>
                             );
                         })}
                     </div>
-                    
-                    {/* Pagination */}
+
                     {totalProducts > PAGE_SIZE && (
-                        <div className="flex justify-center mt-12">
-                            <Pagination 
+                        <div className="flex justify-center mt-10">
+                            <Pagination
                                 current={currentPage}
-                                pageSize={PAGE_SIZE}
                                 total={totalProducts}
+                                pageSize={PAGE_SIZE}
                                 onChange={handlePageChange}
-                                showSizeChanger={false} // Ẩn chọn pageSize
+                                showSizeChanger={false}
                             />
                         </div>
                     )}
                 </>
             ) : (
-                <div className="text-center py-10 text-xl text-gray-500">
-                    <p>Hiện không có sản phẩm nào áp dụng cho chiến dịch này.</p>
-                </div>
+                <p className="text-center text-gray-500 text-lg">
+                    Không có sản phẩm trong chiến dịch này.
+                </p>
             )}
         </div>
     );
