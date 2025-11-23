@@ -30,7 +30,6 @@ export default function BasicInfoSection({
                     </label>
                     <input
                         type="text"
-                        required
                         value={formData.productName}
                         onChange={(e) => onUpdate("productName", e.target.value)}
                         //className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -48,7 +47,6 @@ export default function BasicInfoSection({
                         Mô tả *
                     </label>
                     <textarea
-                        required
                         value={formData.description}
                         onChange={(e) => onUpdate("description", e.target.value)}
                         rows={4}

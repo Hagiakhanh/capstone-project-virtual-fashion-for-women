@@ -6,7 +6,7 @@ import { LayoutDashboard, ShoppingBag, Brain } from 'lucide-react';
 
 import OverviewTab from "./OverviewTab";
 import ProductsTab from "./ProductsTab";
-// import AITab from "./AITab";
+import AITab from "./AITab";
 
 interface Tab {
     id: 'overview' | 'products' | 'ai';
@@ -29,8 +29,8 @@ export default function Dashboard() {
                 return <OverviewTab />;
             case 'products':
                 return <ProductsTab />;
-            // case 'ai':
-            //     return <AITab />;
+            case 'ai':
+                return <AITab />;
             default:
                 return <OverviewTab />; 
         }

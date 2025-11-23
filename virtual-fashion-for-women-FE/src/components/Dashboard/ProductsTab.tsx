@@ -233,7 +233,7 @@ const ProductsTab = () => {
         // Format cho Revenue (Label: "YYYY-MM" hoặc "dd/MM/yyyy")
         if (label.includes('-')) {
             const [y, m] = label.split('-');
-            return `Tháng ${parseInt(m)}/${y}`;
+            return `${parseInt(m)}/${y}`;
         }
         return label; // Giữ nguyên "dd/MM/yyyy"
     };
@@ -278,7 +278,7 @@ const ProductsTab = () => {
                 <div className="mb-4">
                     <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                         <Package className="w-7 h-7" />
-                        Thống kê Sản Phẩm
+                        Sản Phẩm
                     </h1>
                 </div>
 
@@ -294,7 +294,7 @@ const ProductsTab = () => {
                             </h2>
                             <div className="flex gap-2 items-center">
                                 <select 
-                                    className="text-sm border rounded px-2 py-1"
+                                    className="text-sm border rounded px-2 py-1 cursor-pointer"
                                     value={timeFilter}
                                     onChange={(e) => setTimeFilter(e.target.value)}
                                 >
@@ -430,7 +430,7 @@ const ProductsTab = () => {
                             </h2>
                             <div className="flex items-center gap-2 mb-3">
                                 <select 
-                                    className="text-sm border rounded px-2 py-1"
+                                    className="text-sm border rounded px-2 py-1 cursor-pointer"
                                     value={tryOnFilter}
                                     onChange={(e) => setTryOnFilter(e.target.value)}
                                 >
@@ -472,11 +472,23 @@ const ProductsTab = () => {
                                 <div 
                                     key={product.productId}
                                     onClick={() => handleSelectProduct(product)}
-                                    className={`flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer transition ${
+                                    className={`flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer transition max-h-[280px] ${
                                         selectedProduct?.productId === product.productId ? 'bg-blue-50 border-2 border-blue-300' : 'border border-gray-200'
                                     }`}
                                 >
-                                    <div className="text-lg font-bold text-gray-400 w-6">{idx + 1}</div>
+                                    <div
+                                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
+                                        idx === 0
+                                            ? 'bg-yellow-100 text-yellow-700'
+                                            : idx === 1
+                                            ? 'bg-gray-100 text-gray-700'
+                                            : idx === 2
+                                            ? 'bg-orange-100 text-orange-700'
+                                            : 'bg-blue-50 text-blue-700'
+                                        }`}
+                                    >
+                                        {idx + 1}
+                                    </div>
                                     <img src={product.mainImageUrl || 'https://via.placeholder.com/60'} alt={product.productName} className="w-12 h-12 object-cover rounded" />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-gray-800 truncate">{product.productName}</p>
@@ -515,7 +527,7 @@ const ProductsTab = () => {
                                 <LineChart data={tryOnTimeline}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="time" tick={{fontSize: 10}} tickFormatter={formatDateTimeline} />
-                                    <YAxis domain={[0, 'dataMax + 1']} tickCount={5} allowDecimals={false}tick={{fontSize: 11}} />
+                                    <YAxis domain={[0, 'dataMax + 1']} tickCount={5} allowDecimals={false} tick={{fontSize: 11}} />
                                     <Tooltip labelFormatter={formatDateTimeline} />
                                     <Line type="monotone" dataKey="count" name="Lượt Try-On" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} />
                                 </LineChart>
