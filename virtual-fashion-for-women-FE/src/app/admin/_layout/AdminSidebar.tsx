@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // 1. Import hook usePathname
-import { Home, ShoppingCart, Package, Users, LineChart, X, BadgePercent } from "lucide-react";
+import { Home, ShoppingCart, Package, Users, LineChart, X, BadgePercent, LayoutGrid, Ruler } from "lucide-react";
 
 // Interface cho props
 interface SidebarProps {
@@ -79,7 +79,7 @@ export default function AdminSidebar({
             href="/admin/category"
             className={`${baseLinkClasses} ${isActive("/admin/category") ? activeLinkClasses : inactiveLinkClasses}`}
           >
-            <Package className="w-5 h-5 mr-3" />
+            <LayoutGrid className="w-5 h-5 mr-3" />
             Danh mục
           </Link>
           <Link
@@ -87,7 +87,7 @@ export default function AdminSidebar({
             href="/admin/size"
             className={`${baseLinkClasses} ${isActive("/admin/size") ? activeLinkClasses : inactiveLinkClasses}`}
           >
-            <Package className="w-5 h-5 mr-3" />
+            <Ruler className="w-5 h-5 mr-3" />
             Kích cỡ
           </Link>
           <Link
