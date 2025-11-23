@@ -52,10 +52,23 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
-        // GET api/<SaleCampaignController>/5
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
+        {
+            try
+            {
+                var result = await _saleCampaignService.GetActiveSaleCampaignByID(id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        // GET api/<SaleCampaignController>/5
+        [HttpGet("{id}/detail")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetDetailProductListInSaleCampaign(int id)
         {
             try
             {
