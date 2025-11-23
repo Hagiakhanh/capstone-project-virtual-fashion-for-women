@@ -105,4 +105,59 @@ public class DashboardController : ControllerBase
             return StatusCode(500, ex.Message);
         }
     }
+
+    [HttpGet("ai-overview")]
+    public async Task<IActionResult> GetAIStatistic()
+    {
+        try
+        {
+            var result = await _dashboardService.GetAIDashboardStatsAsync();
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return StatusCode(400, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpGet("conversation-chart")]
+    public async Task<IActionResult> GetConversationChart([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+    {
+        try
+        {
+            var data = await _dashboardService.GetConversationChartAsync(startDate, endDate);
+            return Ok(data);
+        }
+        catch (ArgumentException ex)
+        {
+            return StatusCode(400, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpGet("top-suggest-product")]
+    public async Task<IActionResult> GetTopSuggestProductsAsync([FromQuery] DateTime start, [FromQuery] DateTime end, [FromQuery] int top)
+    {
+        try
+        {
+            var result = await _dashboardService.GetTopSuggestedProductsAsync(start, end, top);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return StatusCode(400, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
 }

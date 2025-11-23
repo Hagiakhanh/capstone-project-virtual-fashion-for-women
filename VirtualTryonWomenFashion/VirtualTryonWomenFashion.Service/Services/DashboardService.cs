@@ -20,6 +20,9 @@ public class DashboardService : IDashboardService
     private readonly ITransactionRepository _transactionRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly ITryOnSlotRepository _tryOnSlotRepository;
+    private readonly IAiconversationRepository _aiConversationRepository;
+    private readonly ISuggestedOutfitRepository _suggestedOutfitRepository;
+    private readonly IProductRepository _productRepository;
 
     public DashboardService(IOrderDetailRepository orderDetailRepository,
         IOrderRepository orderRepository,
@@ -27,7 +30,10 @@ public class DashboardService : IDashboardService
         IOrderRefundRepository orderRefundRepository,
         ITransactionRepository transactionRepository,
         ICategoryRepository categoryRepository,
-        ITryOnSlotRepository tryOnSlotRepository)
+        ITryOnSlotRepository tryOnSlotRepository,
+        IAiconversationRepository aiconversationRepository,
+        ISuggestedOutfitRepository suggestedOutfitRepository,
+        IProductRepository productRepository)
     {
         _orderDetailRepository = orderDetailRepository;
         _orderRepository = orderRepository;
@@ -36,6 +42,9 @@ public class DashboardService : IDashboardService
         _transactionRepository = transactionRepository;
         _categoryRepository = categoryRepository;
         _tryOnSlotRepository = tryOnSlotRepository;
+        _aiConversationRepository = aiconversationRepository;
+        _suggestedOutfitRepository = suggestedOutfitRepository;
+        _productRepository = productRepository;
     }
 
     public async Task<ResponseBasicSystemIndicator> GetBasicSystemIndicators()
@@ -296,5 +305,59 @@ public class DashboardService : IDashboardService
 
         return await _tryOnSlotRepository.GetTryOnTimelineAsync(productId, s, e);
     }
+
+    public async Task<AiDashboardStatsDto> GetAIDashboardStatsAsync()
+    {
+        var totalConversations = await _aiConversationRepository.GetTotalConversationsAsync();
+        var totalSuggestedItems = await _suggestedOutfitRepository.GetTotalSuggestedItemsAsync();
+        var totalUsersUsedAI = await _aiConversationRepository.GetTotalUsersUsedAIAsync();
+
+        return new AiDashboardStatsDto
+        {
+            TotalConversations = totalConversations,
+            TotalSuggestedItems = totalSuggestedItems,
+            TotalUsersUsedAI = totalUsersUsedAI
+        };
+    }
+
+    public async Task<List<AiConversationChartDto>> GetConversationChartAsync(DateTime startDate, DateTime endDate)
+    {
+        return await _aiConversationRepository.GetConversationChartAsync(startDate, endDate);
+    }
+
+    public async Task<List<TopSuggestedProductResponse>> GetTopSuggestedProductsAsync(
+        DateTime start,
+        DateTime end,
+        int top)
+    {
+        var raw = await _suggestedOutfitRepository.GetTopSuggestedProductsAsync(start, end, top);
+
+        if (!raw.Any()) return new List<TopSuggestedProductResponse>();
+
+        var ids = raw.Select(x => x.ProductId).ToList();
+
+        var products = await _productRepository.GetAll(
+            filter: p => ids.Contains(p.ProductId),
+            includes: p => p.Category
+        );
+
+        var result = raw
+            .Join(products,
+                  s => s.ProductId,
+                  p => p.ProductId,
+                  (s, p) => new TopSuggestedProductResponse
+                  {
+                      ProductId = p.ProductId,
+                      ProductName = p.ProductName,
+                      MainImageUrl = p.MainImageUrl,
+                      CategoryName = p.Category?.CategoryName,
+                      SuggestCount = s.SuggestCount
+                  })
+            .OrderByDescending(x => x.SuggestCount)
+            .ToList();
+
+        return result;
+    }
+
 
 }
