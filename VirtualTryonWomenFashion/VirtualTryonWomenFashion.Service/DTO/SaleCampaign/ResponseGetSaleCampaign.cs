@@ -33,6 +33,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.SaleCampaign
         public int CampaignId { get; set; }
 
         public string CampaignName { get; set; }
+        public string Description { get; set; }
 
         public DateOnly? StartDate { get; set; }
 
