@@ -5,8 +5,8 @@ import React, { useState } from "react";
 import { LayoutDashboard, ShoppingBag, Brain } from 'lucide-react'; 
 
 import OverviewTab from "./OverviewTab";
-// import ProductsTab from "./ProductsTab";
-// import AITab from "./AITab";
+import ProductsTab from "./ProductsTab";
+import AITab from "./AITab";
 
 interface Tab {
     id: 'overview' | 'products' | 'ai';
@@ -27,10 +27,10 @@ export default function Dashboard() {
         switch (activeTab) {
             case 'overview':
                 return <OverviewTab />;
-            // case 'products':
-            //     return <ProductsTab />;
-            // case 'ai':
-            //     return <AITab />;
+            case 'products':
+                return <ProductsTab />;
+            case 'ai':
+                return <AITab />;
             default:
                 return <OverviewTab />; 
         }
@@ -41,7 +41,7 @@ export default function Dashboard() {
             <div className="mx-auto flex-1 flex flex-col"> 
                 <div className="flex items-center justify-between mb-2">
                     {/* Header */}
-                    <h1 className="text-3xl uppercase font-sans font-bold text-black">Dashboard</h1>
+                    <h1 className="text-3xl uppercase font-sans font-bold text-black">Thống kê</h1>
 
                     {/* Filter tabs */}
                     <div className="flex flex-wrap gap-3 font-sans">

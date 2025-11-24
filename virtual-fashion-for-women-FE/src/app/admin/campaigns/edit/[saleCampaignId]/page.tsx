@@ -55,7 +55,7 @@ export default function EditSaleCampaignPage() {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const res = await apiToken.get(`/salecampaign/${saleCampaignId}`);
+        const res = await apiToken.get(`/salecampaign/${saleCampaignId}/detail`);
         const data = res.data.data;
         setCampaignImage(data.imageUrl);
         form.setFieldsValue({

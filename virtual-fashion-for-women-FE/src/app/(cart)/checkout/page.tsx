@@ -285,7 +285,7 @@ export default function CheckoutForm() {
             if (matchedProvinceEntry) {
                 const [provinceId, provinceName] = matchedProvinceEntry;
                 const districtsData = await fetchDistrictData(provinceId);
-                if (data.districtName === "Thủ Đức") data.districtName = "Thành phố Thủ Đức";
+                //if (data.districtName === "Thủ Đức") messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực Thủ Đức. Vui lòng chọn địa chỉ khác.");
                 const matchedDistrictEntry = Object.entries(districtsData).find(
                     ([, name]) => name.toLowerCase().includes(data.districtName.toLowerCase())
                 );

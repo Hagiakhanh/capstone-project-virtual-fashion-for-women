@@ -14,7 +14,7 @@ import ColorRecommendation from '@/components/TryOn/ColorRecommendation';
 import { set } from 'lodash';
 import LoadingSpinner from '@/components/Loading/LoadingSpinner';
 import LoadingOverlay from '@/components/Loading/LoadingOverlay';
-import { ResponseProductDTO } from '@/models/ResponseProductDTO ';
+import { ResponseProductDTO } from '@/models/ResponseProductDTO';
 import Item from 'antd/es/list/Item';
 import { Characteristic } from '@/models/CharacteristicDTO';
 

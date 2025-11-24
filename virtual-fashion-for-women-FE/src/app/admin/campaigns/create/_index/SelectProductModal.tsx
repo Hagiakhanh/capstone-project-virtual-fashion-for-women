@@ -74,7 +74,7 @@ export default function SelectProductModal({
         isValid: true,
       }));
 
-      setTotal(res.data.totalCount || allProducts.length);
+      setTotal(res.data.pagination.totalCount || allProducts.length);
 
       // ✅ Kiểm tra hợp lệ qua API validate
       const checkRes = await apiToken.post(`/productInSaleCampaign/validate`, {
