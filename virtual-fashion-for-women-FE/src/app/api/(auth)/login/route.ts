@@ -17,6 +17,8 @@ export async function POST(request: Request) {
          const user: User = {
             id: decodedToken.UserID,
             role: decodedToken.role.toLowerCase(),
+            email: decodedToken.email,
+            name: decodedToken.name,
          };
 
          const nextResponse = NextResponse.json({
