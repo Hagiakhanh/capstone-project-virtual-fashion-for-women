@@ -189,7 +189,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 new Claim(ClaimTypes.Role, user.Role.RoleId.ToString()),
                 new Claim("UserID", user.UserId.ToString()),
-                new Claim("role", user.Role.RoleId)
+                new Claim("role", user.Role.RoleId),
+                new Claim("email", user.Email),
+                new Claim("name", user.FullName),
             };
             var accessToken = GenerateJwtToken.AccessToken(claimList, _configuration);
             return new JwtSecurityTokenHandler().WriteToken(accessToken);

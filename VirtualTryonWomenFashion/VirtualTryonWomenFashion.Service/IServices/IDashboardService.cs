@@ -13,4 +13,10 @@ public interface IDashboardService
         DateTime? start, DateTime? end, int limit);
     Task<List<TryOnChartPointDto>> GetTryOnTimelineAsync(
         string productId, DateTime? start, DateTime? end);
+    Task<AiDashboardStatsDto> GetAIDashboardStatsAsync();
+    Task<List<AiConversationChartDto>> GetConversationChartAsync(DateTime startDate, DateTime endDate);
+    Task<List<TopSuggestedProductResponse>> GetTopSuggestedProductsAsync(
+        DateTime start,
+        DateTime end,
+        int top);
 }

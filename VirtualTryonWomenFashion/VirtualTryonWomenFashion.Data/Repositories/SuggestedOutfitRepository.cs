@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -54,5 +55,44 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 return false;
             }
         }
+
+        public async Task<int> GetTotalSuggestedItemsAsync()
+        {
+            return await _context.SuggestedOutfits
+                .Where(x => !x.IsDeleted)
+                .SelectMany(x => x.ProductVariants)
+                .CountAsync();
+        }
+
+        public async Task<List<TopSuggestedProductDto>> GetTopSuggestedProductsAsync(
+            DateTime start,
+            DateTime end,
+            int top)
+        {
+            var query = _context.SuggestedOutfits
+                .Where(x => !x.IsDeleted &&
+                            x.CreatedAt >= start &&
+                            x.CreatedAt <= end)
+                .SelectMany(x => x.ProductVariants)
+                .Where(pv => pv.ProductColor.Product != null)
+                .GroupBy(pv => pv.ProductColor.ProductId)
+                .Select(g => new TopSuggestedProductDto
+                {
+                    ProductId = g.Key,
+                    SuggestCount = g.Count()
+                })
+                .OrderByDescending(x => x.SuggestCount)
+                .Take(top);
+
+            return await query.ToListAsync();
+        }
+
     }
+
+    public class TopSuggestedProductDto
+    {
+        public string ProductId { get; set; }
+        public int SuggestCount { get; set; }
+    }
+
 }
