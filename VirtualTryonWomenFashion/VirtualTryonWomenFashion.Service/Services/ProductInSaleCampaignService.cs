@@ -5,10 +5,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
+using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductInSaleCampaign;
 using VirtualTryonWomenFashion.Service.DTO.SaleCampaign;
 using VirtualTryonWomenFashion.Service.Helpers;
@@ -22,12 +25,16 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IProductInSaleCampaignRepository _repository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public ProductInSaleCampaignService(IProductInSaleCampaignRepository productInSaleCampaignRepository, IUnitOfWork unitOfWork, IMapper mapper)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IWishlistRepository _wishlistRepository;
+        public ProductInSaleCampaignService(IProductInSaleCampaignRepository productInSaleCampaignRepository, IUnitOfWork unitOfWork, IMapper mapper,
+            IHttpContextAccessor httpContextAccessor, IWishlistRepository wishlistRepository)
         {
             _repository = productInSaleCampaignRepository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-
+            _httpContextAccessor = httpContextAccessor;
+            _wishlistRepository = wishlistRepository;
         }
 
 
@@ -136,7 +143,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 return null;
             }
         }
-        
+
         // Đặt hàm này trong cùng service với hàm cũ
 
         public async Task<Dictionary<string, decimal>> GetPricesOfProductsInActiveCampaignAsync(List<string> productIds)
@@ -149,10 +156,10 @@ namespace VirtualTryonWomenFashion.Service.Services
             try
             {
                 var allProductsInCampaign = await _repository.GetAll(
-                    null, 
-                    x => productIds.Contains(x.ProductId) && 
-                    x.Campaign.Status.Equals(SaleCampaignStatusEnum.Active.ToString()), 
-                    x => x.OrderBy(x => x.Campaign.StartDate), 
+                    null,
+                    x => productIds.Contains(x.ProductId) &&
+                    x.Campaign.Status.Equals(SaleCampaignStatusEnum.Active.ToString()),
+                    x => x.OrderBy(x => x.Campaign.StartDate),
                     includes: x => x.Campaign
                 );
 
@@ -170,9 +177,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     .Where(campaign => campaign.SalePrice.HasValue)
                     .ToDictionary(
                         campaign => campaign.ProductId,
-                        campaign => campaign.SalePrice.Value 
+                        campaign => campaign.SalePrice.Value
                     );
-        
+
                 return resultDictionary;
             }
             catch (Exception)
@@ -235,5 +242,65 @@ namespace VirtualTryonWomenFashion.Service.Services
                 return false;
             }
         }
+
+        public async Task<ResponsePaginationModel<List<ResponseGetProductInSaleCampaign>>> GetListProductBasedCampaignIDPagination(int campaignId, PaginationParameter paginationParameter)
+        {
+            try
+            {
+                List<ResponseGetProductInSaleCampaign> listResult = new();
+
+                List<ProductInSaleCampaign> productInListSaleCampaign =
+                await _repository.GetDetailProductInSaleCampaignPagination(campaignId, paginationParameter);
+                int? userId = null;
+
+                // Lấy HttpContext
+                var httpContext = _httpContextAccessor.HttpContext;
+
+                if (httpContext != null && httpContext.User.Identity != null && httpContext.User.Identity.IsAuthenticated)
+                {
+                    var userIdClaim = httpContext.User.FindFirst("UserID")?.Value;
+                    if (int.TryParse(userIdClaim, out int parsedId))
+                    {
+                        userId = parsedId;
+                    }
+                }
+
+                HashSet<string> userWishlistProductIds = new HashSet<string>();
+                if (userId.HasValue && userId.Value > 0)
+                {
+                    userWishlistProductIds = (await _wishlistRepository
+                        .GetUserWishlistProductIdsAsync(userId.Value))
+                        .ToHashSet();
+                }
+
+
+                foreach (var item in productInListSaleCampaign)
+                {
+                    ResponseGetProductInSaleCampaign mappedModel = item.MapToResponseGetProductInSaleCampaign();
+                    mappedModel.Product.IsInWishlist = userWishlistProductIds.Contains(item.ProductId);
+                    listResult.Add(mappedModel);
+                }
+
+                int totalRecords = await _repository.CountAsync(x => x.CampaignId == campaignId);
+
+                int totalPages = (int)Math.Ceiling((double)totalRecords / paginationParameter.PageSize);
+
+                return new ResponsePaginationModel<List<ResponseGetProductInSaleCampaign>>(
+                    statusCode: 200,
+                    data: listResult,
+                    totalRecords: totalRecords,
+                    totalPages: totalPages
+                );
+            }
+            catch (Exception ex)
+            {
+                return new ResponsePaginationModel<List<ResponseGetProductInSaleCampaign>>(
+                    statusCode: 500,
+                    data: new List<ResponseGetProductInSaleCampaign>(),
+                    message: ex.Message
+                );
+            }
+        }
+
     }
 }

@@ -636,6 +636,38 @@ namespace VirtualTryonWomenFashion.Service.Services
             };
         }
 
-    }
+        public async Task<List<ResponseGetShortSaleCampaignDetail>> GetAllActiveSaleCampaign()
+        {
+            try
+            {
+                List<SaleCampaign> listSaleCampaign = await _saleCampaignRepository.GetAll(null, x => x.IsDeleted == false && x.Status.Equals(SaleCampaignStatusEnum.Active.ToString()), null, []);
+                List<ResponseGetShortSaleCampaignDetail> listMapper = _mapper.Map<List<ResponseGetShortSaleCampaignDetail>>(listSaleCampaign);
+                return listMapper;
 
+            }
+            catch (Exception ex)
+            {
+                return [];
+            }
+        }
+
+        public async Task<ResponseGetShortSaleCampaignDetail> GetActiveSaleCampaignByID(int saleCampaignID)
+        {
+            try
+            {
+                List<SaleCampaign> saleCampaign = await _saleCampaignRepository.GetAll(null, x => (x.IsDeleted == false && x.CampaignId == saleCampaignID && x.Status.Equals(SaleCampaignStatusEnum.Active.ToString())), null, []);
+                if (saleCampaign.Count == 0)
+                {
+                    return null;
+                }
+                ResponseGetShortSaleCampaignDetail mapperResponse = _mapper.Map<ResponseGetShortSaleCampaignDetail>(saleCampaign.FirstOrDefault());
+                return mapperResponse;
+
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+    }
 }

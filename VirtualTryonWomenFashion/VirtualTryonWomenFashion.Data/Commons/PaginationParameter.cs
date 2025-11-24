@@ -22,7 +22,7 @@ namespace VirtualTryonWomenFashion.Data.Commons
             }
             set
             {
-                _pageSize = (value > maxPageSize) ? maxPageSize : value;
+                _pageSize = (value > maxPageSize) ? maxPageSize : value>0 ?value: 1;
             }
         }
     }
