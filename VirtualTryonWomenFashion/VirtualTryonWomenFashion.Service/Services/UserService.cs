@@ -154,7 +154,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _userRepository.InsertAsync(newUser);
 
                 //Gọi service để gửi email
-                await _mailService.sendEmailAsync(new MailRequest
+                _mailService.sendEmailAsync(new MailRequest
                 {
                     ToEmail = newUser.Email,
                     Subject = "[Women Fashion] Xác nhận tài khoản",
