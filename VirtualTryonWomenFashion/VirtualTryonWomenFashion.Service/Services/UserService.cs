@@ -32,6 +32,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICurrentUserService _currentUserService;
         private readonly IRedisCacheService _redisCacheService;
         private readonly IWalletService _walletService;
+        private readonly string _baseUrl;
 
         public UserService(
             IUserRepository userRepository,
@@ -52,6 +53,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _currentUserService = currentUserService;
             _redisCacheService = redisCacheService;
             _walletService = walletService;
+            _baseUrl = configuration["Frontend:Production"];
         }
 
         public async Task<MessageModel> ConfirmAccount(RequestConfirmAccount requestConfirmAccount)
@@ -156,7 +158,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     ToEmail = newUser.Email,
                     Subject = "[Women Fashion] Xác nhận tài khoản",
-                    Body = MailContent.ConfirmAccountEmail(newUser.FullName, newUser.EmailConfirmToken, newUser.Email)
+                    Body = MailContent.ConfirmAccountEmail(newUser.FullName, newUser.EmailConfirmToken, newUser.Email, _baseUrl)
                 });
 
                 int result = await _unitOfWork.SaveChanges();

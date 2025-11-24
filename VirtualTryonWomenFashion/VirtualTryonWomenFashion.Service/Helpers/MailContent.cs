@@ -9,19 +9,11 @@ namespace VirtualTryonWomenFashion.Service.Helpers
 {
     public static class MailContent
     {
-        private static string _baseUrl;
-        static MailContent()
-        {
-            var configuration = new ConfigurationBuilder()
-           .AddJsonFile("appsettings.json")
-           .Build();
-
-            _baseUrl = configuration["Frontend:Production"];
-        }
-        public static string ConfirmAccountEmail(string fullName, string tokenConfirm, string email)
+       
+        public static string ConfirmAccountEmail(string fullName, string tokenConfirm, string email, string baseUrl)
         {
             
-            string url = _baseUrl+"/confirm-email?token="
+            string url = baseUrl + "/confirm-email?token="
                  + Uri.EscapeDataString(tokenConfirm)
                  + "&email=" + Uri.EscapeDataString(email);
 

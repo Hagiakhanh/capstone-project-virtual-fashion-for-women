@@ -612,7 +612,7 @@ public class PaymentService : IPaymentService
                 await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(),order.OrderId);
             }
             await _unitOfWork.CommitTransactionAsync();
-            await _mailService.sendEmailAsync(new MailRequest
+            _mailService.sendEmailAsync(new MailRequest
             {
                 ToEmail = currentUser.Email,
                 Subject = $"[Women Fashion] Đơn hàng ORD-{order.OrderId} đã được đặt thành công",
@@ -654,7 +654,7 @@ public class PaymentService : IPaymentService
 
             if (!string.IsNullOrEmpty(paymentUrl)) await _orderService.UpdatePaymentUrlAsync(paymentUrl, order.OrderId);
             await _unitOfWork.CommitTransactionAsync();
-            await _mailService.sendEmailAsync(new MailRequest
+            _mailService.sendEmailAsync(new MailRequest
             {
                 ToEmail = currentUser.Email,
                 Subject = $"[Women Fashion] Đơn hàng ORD-{order.OrderId} đã được đặt thành công",
