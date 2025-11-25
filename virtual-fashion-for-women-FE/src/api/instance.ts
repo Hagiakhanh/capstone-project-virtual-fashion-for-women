@@ -28,23 +28,33 @@ const api = axios.create({
 });
 
 const createApiInstance = (request: Request) => {
-  // Phải bỏ cái này khi deploy lên server có SSL
-  // Vì nó chỉ dùng để test trên localhost thôi
   const agent = new https.Agent({
     rejectUnauthorized: false
   });
 
-  const token = (request as NextRequest).cookies.get('token')?.value;
+  const nextReq = request as NextRequest;
+  const token = nextReq.cookies.get('token')?.value;
+
+  // Lấy IP client từ header
+  const clientIp =
+    nextReq.headers.get('cf-connecting-ip') ||   // Cloudflare
+    nextReq.headers.get('x-real-ip') ||          // Nginx / proxy
+    nextReq.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+    '';
+
+  console.log('👉 Client IP from Next.js:', clientIp);
 
   const api = axios.create({
     baseURL: process.env.API_URL,
     httpsAgent: process.env.NODE_ENV === 'production' ? undefined : agent,
     headers: {
       Authorization: token ? `Bearer ${token}` : '',
+      'X-Client-IP': clientIp,   // gửi IP client
     },
-  })
+  });
 
   return api;
 }
+
 
 export { apiToken, api, createApiInstance };
