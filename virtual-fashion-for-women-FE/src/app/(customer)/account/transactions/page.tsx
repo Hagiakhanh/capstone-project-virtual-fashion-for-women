@@ -38,7 +38,6 @@ export default function TransactionPage() {
             }
             const response = await api.get('/transaction/transaction-history', { params: payloadPagination });
             if (response.status === 200) {
-                console.log(response.data);
                 setTransactions(response.data.data);
                 setPagination((prev) => ({
                     ...prev,
