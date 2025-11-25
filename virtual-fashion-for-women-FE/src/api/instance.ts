@@ -32,12 +32,17 @@ const createApiInstance = (request: Request) => {
     rejectUnauthorized: false
   });
 
-  const token = (request as NextRequest).cookies.get('token')?.value;
+  const nextReq = request as NextRequest;
+  const token = nextReq.cookies.get('token')?.value;
 
-  // Lấy IP client từ request
-  const clientIp = (request as NextRequest).headers.get('x-real-ip') 
-                  || (request as NextRequest).headers.get('x-forwarded-for')
-                  || '';
+  // Lấy IP client từ header
+  const clientIp =
+    nextReq.headers.get('cf-connecting-ip') ||   // Cloudflare
+    nextReq.headers.get('x-real-ip') ||          // Nginx / proxy
+    nextReq.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+    '';
+
+  console.log('👉 Client IP from Next.js:', clientIp);
 
   const api = axios.create({
     baseURL: process.env.API_URL,
