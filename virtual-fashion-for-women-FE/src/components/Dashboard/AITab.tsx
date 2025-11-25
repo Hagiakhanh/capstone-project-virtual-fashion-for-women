@@ -172,8 +172,8 @@ const AIDashboard = () => {
             <div className="mx-auto">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">AI</h1>
-                    <p className="text-gray-600">Tổng quan về hệ thống AI và các cuộc trò chuyện.</p>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Trò chuyện với AI</h1>
+                    <p className="text-gray-600">Tổng quan về các cuộc trò chuyện với AI.</p>
                 </div>
 
                 {/* Stats Cards */}

@@ -56,7 +56,7 @@ export default function AdminSidebar({
         }`}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-700">
-          <span className="text-2xl font-bold">My Shop</span>
+          <span className="text-2xl font-bold">Chào Mừng Admin</span>
           <button
             onClick={toggleSidebar}
             className="md:hidden text-gray-300 hover:text-white"

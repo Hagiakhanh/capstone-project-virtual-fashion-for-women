@@ -17,7 +17,7 @@ interface Tab {
 const tabs: Tab[] = [
     { id: 'overview', name: 'Tổng quan', icon: LayoutDashboard },
     { id: 'products', name: 'Sản Phẩm', icon: ShoppingBag },
-    { id: 'ai', name: 'Trí tuệ nhân tạo', icon: Brain },
+    { id: 'ai', name: 'Trò chuyện với AI', icon: Brain },
 ];
 
 export default function Dashboard() {
