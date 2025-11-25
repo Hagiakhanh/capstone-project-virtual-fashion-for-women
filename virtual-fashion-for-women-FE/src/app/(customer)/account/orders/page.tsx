@@ -97,7 +97,7 @@ export default function OrderManagement() {
                 <h1 className="text-3xl font-semibold text-gray-800 mb-6">Đơn hàng của bạn</h1>
 
                 {/* Filter tabs */}
-                <div className="flex gap-2 mb-4 flex-nowrap items-center">
+                <div className="flex gap-1.5 mb-4 overflow-hidden">
                     {statusTabs.map((tab) => {
                         const Icon = tab.icon;
                         const active = statusFilter === tab.key;
@@ -108,13 +108,13 @@ export default function OrderManagement() {
                                     setStatusFilter(tab.key);
                                     setPagination((prev) => ({ ...prev, CurrentPage: 1 }));
                                 }}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-all ${active
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border transition-all flex-shrink-0 ${active
                                     ? 'bg-black text-white border-black shadow'
                                     : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
                                     }`}
                             >
-                                {Icon && <Icon size={18} />}
-                                <span className="text-sm font-medium">{tab.label}</span>
+                                {Icon && <Icon size={16} />}
+                                <span className="text-sm font-medium whitespace-nowrap">{tab.label}</span>
                             </button>
                         );
                     })}
