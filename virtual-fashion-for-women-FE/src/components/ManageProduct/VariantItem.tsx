@@ -156,7 +156,7 @@ export default function VariantItem({
                     </label>
                     <input
                         type="number"
-                        step="0.1"
+                        step="0.01"
                         min="0.1"
                         max="10"
                         value={variant.productWeight}
@@ -173,7 +173,7 @@ export default function VariantItem({
                     </label>
                     <input
                         type="number"
-                        step="0.1"
+                        step="0.01"
                         min="0.1"
                         max="100"
                         value={variant.productLength}
@@ -213,7 +213,7 @@ export default function VariantItem({
                     </label>
                     <input
                         type="number"
-                        step="0.1"
+                        step="0.01"
                         min="0.1"
                         max="100"
                         value={variant.productWidth}
@@ -230,7 +230,7 @@ export default function VariantItem({
                     </label>
                     <input
                         type="number"
-                        step="0.1"
+                        step="0.01"
                         min="0.1"
                         max="100"
                         value={variant.productHeight}
