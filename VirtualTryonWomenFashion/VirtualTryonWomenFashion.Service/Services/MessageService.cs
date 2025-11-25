@@ -115,12 +115,17 @@ namespace VirtualTryonWomenFashion.Service.Services
                     foreach (var componentPlan in analysis.Components)
                     {
                         Category selectedCategory = listCategory.Where(x => x.CategoryName.ToLower().Equals(componentPlan.Filters["itemType"].ToString().ToLower())).FirstOrDefault();
-
+                        if (componentPlan.Filters.ContainsKey("itemType"))
+                        {
+                            componentPlan.Filters.Remove("itemType");
+                            componentPlan.Filters.Add("categoryId", selectedCategory.CategoryId.ToString());
+                        }
                         if (currentUserStyle.Hips.HasValue && currentUserStyle.Bust.HasValue && currentUserStyle.Waist.HasValue)
                         {
                         List<CategorySizeTemplate> getListTemplateSize = await _templateSizeService.GetListTemplateSizeByBody(selectedCategory.CategoryId, currentUserStyle.Bust.Value, currentUserStyle.Waist.Value, currentUserStyle.Hips.Value);
                             Size selectedSize = getListTemplateSize.FirstOrDefault().Size;
                             componentPlan.Filters["size"] = selectedSize.SizeCode;
+
                         }
 
                         float[] embeddedQuery = await _geminiService.GetEmbeddingAsync(componentPlan.SearchQuery);
