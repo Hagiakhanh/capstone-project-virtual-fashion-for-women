@@ -1700,10 +1700,11 @@ namespace VirtualTryonWomenFashion.Service.Services
             // Nếu có variant → xóa vector trong Pinecone
             if (variantIds.Any())
             {
-                await _vectorDbService.DeleteAsync(filter: new Dictionary<string, object>
+                /*await _vectorDbService.DeleteAsync(filter: new Dictionary<string, object>
                 {
                     { "productVariantId", product.ProductId }
-                });
+                });*/
+                await _vectorDbService.DeleteAsync(ids: variantIds);
             }
 
             var imageUrlsToDelete = new List<string>();
