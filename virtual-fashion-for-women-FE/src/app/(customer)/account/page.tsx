@@ -111,37 +111,41 @@ export default function AccountPage() {
     }, [editedUser.address]);
 
     return (
-        <div className="bg-white shadow-lg rounded-2xl p-8">
-            <h1 className="text-2xl font-semibold mb-4 text-gray-800">
+        <div className="bg-white lg:shadow-lg rounded-2xl lg:p-8 p-4">
+            <h1 className="text-xl lg:text-2xl font-semibold mb-4 lg:mb-6 text-gray-800">
                 Thông tin tài khoản
             </h1>
             {loading ? <LoadingSpinner size={50} /> : (
                 !isEditing ? (
                     <>
-                        <div className="space-y-4">
-                            <div className="flex justify-between border-b pb-3">
+                        <div className="space-y-3 lg:space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:justify-between border-b pb-3 gap-1 sm:gap-0">
                                 <span className="font-medium text-gray-700">Họ và tên:</span>
-                                <span className="text-gray-900">{user.fullName}</span>
+                                <span className="text-gray-900 sm:text-right">{user.fullName}</span>
                             </div>
 
-                            <div className="flex justify-between border-b pb-3">
+                            <div className="flex flex-col sm:flex-row sm:justify-between border-b pb-3 gap-1 sm:gap-0">
                                 <span className="font-medium text-gray-700">Email:</span>
-                                <span className="text-gray-900">{user.email}</span>
+                                <span className="text-gray-900 sm:text-right break-all">{user.email}</span>
                             </div>
 
-                            <div className="flex justify-between border-b pb-3">
+                            <div className="flex flex-col sm:flex-row sm:justify-between border-b pb-3 gap-1 sm:gap-0">
                                 <span className="font-medium text-gray-700">Số điện thoại:</span>
-                                <span className="text-gray-900">{user.phoneNumber}</span>
+                                <span className="text-gray-900 sm:text-right">{user.phoneNumber}</span>
                             </div>
 
-                            <div className="flex justify-between border-b pb-3">
+                            <div className="flex flex-col sm:flex-row sm:justify-between border-b pb-3 gap-1 sm:gap-0">
                                 <span className="font-medium text-gray-700">Địa chỉ:</span>
-                                <span className="text-gray-900">{user.address}</span>
+                                <span className="text-gray-900 sm:text-right">{user.address}</span>
                             </div>
                         </div>
 
                         <div className="mt-6 text-right">
-                            <Button type="primary" onClick={() => setIsEditing(true)}>
+                            <Button
+                                type="primary"
+                                onClick={() => setIsEditing(true)}
+                                className="w-full sm:w-auto"
+                            >
                                 Chỉnh sửa
                             </Button>
                         </div>
@@ -156,6 +160,7 @@ export default function AccountPage() {
                                 <Input
                                     value={editedUser.fullName}
                                     onChange={(e) => handleChange("fullName", e.target.value)}
+                                    className="w-full"
                                 />
                             </div>
                             <div>
@@ -165,6 +170,7 @@ export default function AccountPage() {
                                 <Input
                                     value={editedUser.phoneNumber}
                                     onChange={(e) => handleChange("phoneNumber", e.target.value)}
+                                    className="w-full"
                                 />
                             </div>
 
@@ -176,7 +182,7 @@ export default function AccountPage() {
                                     <Input
                                         value={editedUser.address}
                                         onChange={(e) => handleChange("address", e.target.value)}
-                                        className="!rounded-xl !py-2.5 !px-4 focus:!border-blue-500 focus:!ring-blue-200"
+                                        className="!rounded-xl !py-2.5 !px-4 focus:!border-blue-500 focus:!ring-blue-200 w-full"
                                         placeholder="Nhập địa chỉ của bạn..."
                                     />
                                     {isLoadingSuggestions && (
@@ -210,9 +216,18 @@ export default function AccountPage() {
 
                         </div>
 
-                        <div className="mt-6 flex justify-end space-x-3">
-                            <Button onClick={handleCancel}>Hủy</Button>
-                            <Button type="primary" onClick={handleSave}>
+                        <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-3">
+                            <Button
+                                onClick={handleCancel}
+                                className="w-full sm:w-auto"
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="primary"
+                                onClick={handleSave}
+                                className="w-full sm:w-auto"
+                            >
                                 Lưu thay đổi
                             </Button>
                         </div>

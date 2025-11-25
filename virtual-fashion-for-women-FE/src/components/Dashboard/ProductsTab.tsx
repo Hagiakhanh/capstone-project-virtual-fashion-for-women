@@ -57,6 +57,10 @@ const ProductsTab = () => {
     const [tryOnTimeline, setTryOnTimeline] = useState<TryOnChartPointDto[]>([]);
     const [isTimelineLoading, setIsTimelineLoading] = useState(false);
 
+    const [tryOnError, setTryOnError] = useState("");
+    const [timeRangeError, setTimeRangeError] = useState("");
+
+
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];  
 
     const formatDateLocal = (date: Date) => {
@@ -271,6 +275,9 @@ const ProductsTab = () => {
         return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
     };
 
+    const getNowUTC7 = () =>
+        new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+
     return (
         <div className="w-full bg-gray-50 p-4 overflow-auto">
             <div className="mx-auto">
@@ -331,7 +338,26 @@ const ProductsTab = () => {
                                 <>
                                     <DatePicker 
                                         selected={startDateRange}
-                                        onChange={setStartDateRange}
+                                        onChange={(date) => {
+                                            if (!date) return;
+
+                                            // Lấy giờ hiện tại theo UTC+7
+                                            const nowUTC7 = getNowUTC7();
+                                            setTimeRangeError("");
+
+                                            if (date > nowUTC7) {
+                                                setTimeRangeError("Không được chọn ngày trong tương lai.");
+                                                return;
+                                            }
+
+                                            if (endDateRange && date > endDateRange) {
+                                                setTimeRangeError("Ngày bắt đầu không được sau ngày kết thúc.");
+                                                return;
+                                            }
+
+                                            setStartDateRange(date);
+                                            //setStartDateRange
+                                        }}
                                         dateFormat="dd/MM/yyyy"
                                         placeholderText="Ngày bắt đầu"
                                         className="text-sm border rounded px-2 py-1 w-28 text-center"
@@ -339,7 +365,25 @@ const ProductsTab = () => {
                                     <span className="text-sm">-</span>
                                     <DatePicker 
                                         selected={endDateRange} 
-                                        onChange={setEndDateRange}
+                                        onChange={(date) => {
+                                            if (!date) return;
+
+                                            const nowUTC7 = getNowUTC7();
+                                            setTimeRangeError("");
+
+                                            if (date > nowUTC7) {
+                                                setTimeRangeError("Không được chọn ngày trong tương lai.");
+                                                return;
+                                            }
+
+                                            if (startDateRange && date < startDateRange) {
+                                                setTimeRangeError("Ngày kết thúc không được trước ngày bắt đầu!");
+                                                return;
+                                            }
+
+                                            setEndDateRange(date);
+                                            //setEndDateRange
+                                        }}
                                         dateFormat="dd/MM/yyyy"
                                         placeholderText="Ngày kết thúc"
                                         className="text-sm border rounded px-2 py-1 w-28 text-center"
@@ -348,6 +392,7 @@ const ProductsTab = () => {
                                 )}
                             </div>
                         </div>
+                        {timeRangeError && (<p className="text-red-500 text-xs mt-1">{timeRangeError}</p>)}
                         <ResponsiveContainer width="100%" height={240}>
                             {isRevenueLoading ? (
                                 <div className="h-full flex items-center justify-center text-gray-400">
@@ -444,7 +489,27 @@ const ProductsTab = () => {
                                     <div className="flex items-center gap-1">
                                     <DatePicker 
                                         selected={tryOnStartDate} 
-                                        onChange={setTryOnStartDate} 
+                                        onChange={(date) => {
+                                            if (!date) return;
+
+                                            const nowUTC7 = getNowUTC7();
+
+                                            // Reset lỗi trước
+                                            setTryOnError("");
+
+                                            if (date > nowUTC7) {
+                                                setTryOnError("Không được chọn ngày trong tương lai.");
+                                                return;
+                                            }
+
+                                            if (tryOnEndDate && date > tryOnEndDate) {
+                                                setTryOnError("Ngày bắt đầu không được sau ngày kết thúc.");
+                                                return;
+                                            }
+
+                                            setTryOnStartDate(date);
+                                            //setTryOnStartDate
+                                        }} 
                                         dateFormat="dd/MM/yyyy"
                                         placeholderText="Ngày bắt đầu"
                                         className="text-sm border rounded px-2 py-1 w-28 text-center"
@@ -452,7 +517,26 @@ const ProductsTab = () => {
                                     <span className="text-sm">_</span>
                                     <DatePicker 
                                         selected={tryOnEndDate} 
-                                        onChange={setTryOnEndDate} 
+                                        onChange={(date) => {
+                                            if (!date) return;
+
+                                            const nowUTC7 = getNowUTC7();
+
+                                            setTryOnError("");
+
+                                            if (date > nowUTC7) {
+                                                setTryOnError("Không được chọn ngày trong tương lai.");
+                                                return;
+                                            }
+
+                                            if (tryOnStartDate && date < tryOnStartDate) {
+                                                setTryOnError("Ngày kết thúc không được trước ngày bắt đầu.");
+                                                return;
+                                            }
+
+                                            setTryOnEndDate(date);
+                                            //setTryOnEndDate
+                                        } }
                                         dateFormat="dd/MM/yyyy"
                                         placeholderText="Ngày kết thúc"
                                         className="text-sm border rounded px-2 py-1 w-28 text-center"
@@ -461,6 +545,7 @@ const ProductsTab = () => {
                                 )}
                             </div>
                         </div>
+                        {tryOnError && ( <p className="text-red-500 text-xs mt-1">{tryOnError}</p>)}
 
                         <div className="space-y-2 h-[280px] overflow-y-auto">
                             {isTopTryOnLoading ? (

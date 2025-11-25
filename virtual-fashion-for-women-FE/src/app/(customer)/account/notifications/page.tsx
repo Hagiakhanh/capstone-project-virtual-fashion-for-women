@@ -94,6 +94,7 @@ export default function NotificationPage() {
             setPagination((prev) => ({ ...prev, CurrentPage: newPage }));
         }
     };
+
     function getPageNumbers(totalPages: number, currentPage: number, delta = 2): (number | string)[] {
         const range: (number | string)[] = [];
         const left = Math.max(2, currentPage - delta);
@@ -123,12 +124,13 @@ export default function NotificationPage() {
     }, [pagination.CurrentPage, pagination.PageSize]);
 
     return (
-        <>
-            <div className="mb-6 flex items-center justify-between">
+        <div className="w-full">
+            {/* Header - Responsive */}
+            <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                 <div>
-                    <h1 className="text-3xl font-semibold text-gray-800 mb-6">Thông báo</h1>
+                    <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-2">Thông báo</h1>
                     {!loading && unReadCount > 0 && (
-                        <p className="text-gray-600 mt-1">
+                        <p className="text-sm md:text-base text-gray-600">
                             Bạn có <span className="font-semibold">{unReadCount}</span> thông báo chưa đọc
                         </p>
                     )}
@@ -139,32 +141,36 @@ export default function NotificationPage() {
                         type="primary"
                         onClick={markAllAsRead}
                         icon={<CheckOutlined />}
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+                        size="middle"
                     >
-                        Đánh dấu tất cả đã đọc
+                        <span className="hidden sm:inline">Đánh dấu tất cả đã đọc</span>
+                        <span className="sm:hidden">Đọc tất cả</span>
                     </Button>
                 )}
             </div>
 
             {/* Loading */}
             {loading ? (
-                <LoadingSpinner size={50} />
+                <div className="flex justify-center py-12">
+                    <LoadingSpinner size={50} />
+                </div>
             ) : notifications.length === 0 ? (
-                <Card className="text-center py-16 border-0 shadow-sm">
+                <Card className="text-center py-12 md:py-16 border-0 shadow-sm">
                     <Empty
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
                         description={
                             <div className="text-gray-500">
-                                <p className="font-medium">Chưa có thông báo</p>
-                                <p className="text-sm mt-1">Chúng tôi sẽ gửi khi có cập nhật mới</p>
+                                <p className="font-medium text-sm md:text-base">Chưa có thông báo</p>
+                                <p className="text-xs md:text-sm mt-1">Chúng tôi sẽ gửi khi có cập nhật mới</p>
                             </div>
                         }
                     />
                 </Card>
             ) : (
                 <>
-                    {/* Danh sách thông báo */}
-                    <div className="space-y-5 mb-10">
+                    {/* Danh sách thông báo - Responsive */}
+                    <div className="space-y-3 md:space-y-5 mb-6 md:mb-10">
                         {notifications.map((n) => {
                             const isUnread = !n.isRead;
 
@@ -172,35 +178,37 @@ export default function NotificationPage() {
                                 <Card
                                     key={n.notificationId}
                                     onClick={() => markAsRead(n.notificationId)}
-                                    className={`cursor-pointer border transition-all rounded-xl px-5 py-4 hover:shadow-md
+                                    className={`cursor-pointer border transition-all rounded-xl px-3 py-3 md:px-5 md:py-4 hover:shadow-md
                                         ${isUnread
                                             ? 'border-blue-400 bg-white hover:border-blue-500'
                                             : 'border-gray-200 bg-gray-100 hover:bg-gray-200'
                                         }`}
                                 >
-                                    <div className="flex gap-4">
+                                    <div className="flex gap-3 md:gap-4">
                                         {/* Dấu chấm chưa đọc */}
                                         {isUnread ? (
-                                            <div className="flex-shrink-0 w-2.5 h-2.5 bg-blue-500 rounded-full mt-2"></div>
+                                            <div className="flex-shrink-0 w-2 h-2 md:w-2.5 md:h-2.5 bg-blue-500 rounded-full mt-1.5 md:mt-2"></div>
                                         ) : (
-                                            <div className="w-2.5"></div>
+                                            <div className="w-2 md:w-2.5"></div>
                                         )}
 
                                         {/* Nội dung */}
                                         <div className="flex-1 min-w-0">
                                             <h3
-                                                className={`text-base font-semibold leading-snug ${isUnread ? 'text-gray-900' : 'text-gray-800'
+                                                className={`text-sm md:text-base font-semibold leading-snug ${isUnread ? 'text-gray-900' : 'text-gray-800'
                                                     }`}
                                             >
                                                 {n.title}
                                             </h3>
                                             <p
-                                                className={`mt-1 text-sm leading-relaxed ${isUnread ? 'text-gray-700' : 'text-gray-700'
+                                                className={`mt-1 text-xs md:text-sm leading-relaxed ${isUnread ? 'text-gray-700' : 'text-gray-700'
                                                     }`}
                                             >
                                                 {n.content}
                                             </p>
-                                            <p className="mt-2 text-xs text-gray-500">{formatDate(n.createdAt)}</p>
+                                            <p className="mt-1.5 md:mt-2 text-[10px] md:text-xs text-gray-500">
+                                                {formatDate(n.createdAt)}
+                                            </p>
                                         </div>
                                     </div>
                                 </Card>
@@ -208,23 +216,24 @@ export default function NotificationPage() {
                         })}
                     </div>
 
-                    {/* Phân trang */}
-                    <div className="flex justify-center items-center gap-3">
+                    {/* Phân trang - Responsive */}
+                    <div className="flex justify-center items-center gap-1.5 md:gap-3 flex-wrap px-2">
                         {/* Nút trước */}
                         <button
                             disabled={pagination.CurrentPage === 1}
                             onClick={() => handlePageChange(pagination.CurrentPage - 1)}
-                            className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            className="px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                         >
-                            « Trước
+                            <span className="hidden sm:inline">« Trước</span>
+                            <span className="sm:hidden">«</span>
                         </button>
 
-                        {getPageNumbers(pagination.TotalPages, pagination.CurrentPage).map((page, idx) => (
+                        {getPageNumbers(pagination.TotalPages, pagination.CurrentPage, window.innerWidth < 640 ? 1 : 2).map((page, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => typeof page === 'number' && handlePageChange(page)}
                                 disabled={page === "..."}
-                                className={`px-4 py-2 rounded-lg border transition-all ${pagination.CurrentPage === page
+                                className={`px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg border transition-all min-w-[32px] md:min-w-[40px] ${pagination.CurrentPage === page
                                     ? 'bg-black text-white border-black'
                                     : 'bg-white hover:bg-gray-100'
                                     } ${page === "..." ? 'cursor-default opacity-70' : ''}`}
@@ -237,13 +246,14 @@ export default function NotificationPage() {
                         <button
                             disabled={pagination.CurrentPage === pagination.TotalPages}
                             onClick={() => handlePageChange(pagination.CurrentPage + 1)}
-                            className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            className="px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                         >
-                            Sau »
+                            <span className="hidden sm:inline">Sau »</span>
+                            <span className="sm:hidden">»</span>
                         </button>
                     </div>
                 </>
             )}
-        </>
+        </div>
     );
 }
