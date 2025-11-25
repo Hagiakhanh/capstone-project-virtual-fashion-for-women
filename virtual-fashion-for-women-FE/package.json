@@ -12,6 +12,7 @@
   "dependencies": {
     "@ant-design/plots": "^2.6.6",
     "@microsoft/signalr": "^9.0.6",
+    "@react-oauth/google": "^0.12.2",
     "@snap/camera-kit": "^1.11.0",
     "antd": "^5.26.7",
     "axios": "^1.13.2",

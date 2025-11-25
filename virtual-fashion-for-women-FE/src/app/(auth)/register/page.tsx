@@ -11,11 +11,14 @@ import { typeRegister } from '@/types/auth';
 import { api } from '@/api/instance';
 import { useState } from 'react';
 import { messageToast } from '@/helpers/toastHelper';
+import { GoogleLogin } from '@react-oauth/google';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RegisterPage() {
    const router = useRouter();
    const [form] = Form.useForm();
    const [loading, setLoading] = useState<boolean>(false);
+     const { loginSuccess } = useAuth();
 
    const handleRegister = async (values: typeRegister) => {
       setLoading(true);
@@ -30,6 +33,28 @@ export default function RegisterPage() {
          console.error("Register error:", error);
          messageToast.error("Đăng ký thất bại! Vui lòng thử lại.");
          setLoading(false);
+      }
+   }
+
+   const handleLoginWithGoogle = async (credential: any) => {
+      try {
+         const payload = { credential: credential };
+         const response = await api.post('/login/google', payload);
+         if (response.status === 200) {
+            loginSuccess(response.data.user);
+            messageToast.success("Đăng nhập thành công!");
+            if (response.data.user.role === 'admin') {
+               router.replace("/admin");
+            } else if (response.data.user.role === 'staff') {
+               router.replace("/staff");
+            } else if (response.data.user.role === 'customer') {
+               router.replace("/");
+            }
+         } else {
+
+         }
+      } catch (error) {
+         console.error("Login with Google error:", error);
       }
    }
 
@@ -132,9 +157,16 @@ export default function RegisterPage() {
                   <div className="flex-grow border-t border-gray-300"></div>
                </div>
                <div>
-                  <Button icon={<img src={googleIcon.src} alt="Google" className="w-6 h-6" />} style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FFFFFF' }} className="mt-5 w-full !py-6 !text-black !hover:text-black !border-black" shape="round" size="large">
+                  <GoogleLogin
+                     onSuccess={credentialResponse => {
+                        handleLoginWithGoogle(credentialResponse?.credential)
+                     }}
+                     onError={() => {
+                        console.log('Login Failed');
+                     }} />
+                  {/* <Button icon={<img src={googleIcon.src} alt="Google" className="w-6 h-6" />} style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FFFFFF' }} className="mt-5 w-full !py-6 !text-black !hover:text-black !border-black" shape="round" size="large">
                      Đăng ký với Google
-                  </Button>
+                  </Button> */}
                </div>
             </div>
          </div>
