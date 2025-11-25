@@ -36,9 +36,9 @@ export default function TransactionPage() {
                 statusFilter: statusFilter,
                 isDescesing: isNewest
             }
-            const response = await api.get('/transaction', { params: payloadPagination });
+            const response = await api.get('/transaction/transaction-history', { params: payloadPagination });
             if (response.status === 200) {
-
+                console.log(response.data);
                 setTransactions(response.data.data);
                 setPagination((prev) => ({
                     ...prev,
@@ -78,7 +78,7 @@ export default function TransactionPage() {
     }
 
     return (
-        <div className="max-w-6xl mb-6 ml-0 mr-auto">
+        <div className="max-w-6xl w-full ml-0 mr-auto">
             <h1 className="text-3xl font-semibold text-gray-800 mb-6">Lịch sử giao dịch</h1>
             <TransactionFilter
                 status={statusFilter}
