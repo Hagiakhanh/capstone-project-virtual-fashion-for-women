@@ -35,7 +35,6 @@ export default function OrderManagement() {
     });
     const [loading, setLoading] = useState(false);
 
-
     const fetchOrders = async () => {
         try {
             setLoading(true);
@@ -59,12 +58,12 @@ export default function OrderManagement() {
         }
     }
 
-
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= pagination.TotalPages) {
             setPagination((prev) => ({ ...prev, CurrentPage: newPage }));
         }
     };
+
     function getPageNumbers(totalPages: number, currentPage: number, delta = 2): (number | string)[] {
         const range: (number | string)[] = [];
         const left = Math.max(2, currentPage - delta);
@@ -85,51 +84,56 @@ export default function OrderManagement() {
         return range;
     }
 
-
     useEffect(() => {
         fetchOrders();
     }, [pagination.CurrentPage, pagination.PageSize, statusFilter]);
 
     return (
-        <div className="bg-gradient-to-br">
+        <div className="bg-gradient-to-br w-full">
             <div className="max-w-7xl mx-auto flex-1 flex flex-col">
-                {/* Header */}
-                <h1 className="text-3xl font-semibold text-gray-800 mb-6">Đơn hàng của bạn</h1>
+                {/* Header - Responsive */}
+                <h1 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">
+                    Đơn hàng của bạn
+                </h1>
 
-                {/* Filter tabs */}
-                <div className="flex gap-1.5 mb-4 overflow-hidden">
-                    {statusTabs.map((tab) => {
-                        const Icon = tab.icon;
-                        const active = statusFilter === tab.key;
-                        return (
-                            <button
-                                key={tab.key}
-                                onClick={() => {
-                                    setStatusFilter(tab.key);
-                                    setPagination((prev) => ({ ...prev, CurrentPage: 1 }));
-                                }}
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border transition-all flex-shrink-0 ${active
-                                    ? 'bg-black text-white border-black shadow'
-                                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
-                                    }`}
-                            >
-                                {Icon && <Icon size={16} />}
-                                <span className="text-sm font-medium whitespace-nowrap">{tab.label}</span>
-                            </button>
-                        );
-                    })}
+                {/* Filter tabs - Horizontal scroll on mobile */}
+                <div className="mb-4 -mx-4 px-4 md:mx-0 md:px-0 overflow-hidden">
+                    <div className="flex gap-1.5 md:gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        {statusTabs.map((tab) => {
+                            const Icon = tab.icon;
+                            const active = statusFilter === tab.key;
+                            return (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => {
+                                        setStatusFilter(tab.key);
+                                        setPagination((prev) => ({ ...prev, CurrentPage: 1 }));
+                                    }}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-2 md:px-2.5 md:py-1.5 rounded-full border transition-all flex-shrink-0 ${active
+                                        ? 'bg-black text-white border-black shadow'
+                                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100 active:scale-95'
+                                        }`}
+                                >
+                                    {Icon && <Icon size={16} className="shrink-0" />}
+                                    <span className="text-xs md:text-sm font-medium whitespace-nowrap">
+                                        {tab.label}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
-                {/* Orders List - Fixed height container */}
+                {/* Orders List - Responsive */}
                 <div className="flex-1 mb-6">
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                         {loading ? (
-                            <div className="py-20">
+                            <div className="py-12 md:py-20">
                                 <LoadingSpinner size={50} />
                             </div>
                         ) : (
                             orders.length === 0 ? (
-                                <div className="text-center p-12 bg-white rounded-2xl shadow text-gray-500">
+                                <div className="text-center p-8 md:p-12 bg-white rounded-xl md:rounded-2xl shadow text-gray-500 text-sm md:text-base">
                                     Không có đơn hàng
                                 </div>
                             ) : (
@@ -139,40 +143,48 @@ export default function OrderManagement() {
                     </div>
                 </div>
 
-                <div className="flex justify-center items-center gap-3">
-                    {/* Nút trước */}
-                    <button
-                        disabled={pagination.CurrentPage === 1}
-                        onClick={() => handlePageChange(pagination.CurrentPage - 1)}
-                        className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    >
-                        « Trước
-                    </button>
-
-                    {getPageNumbers(pagination.TotalPages, pagination.CurrentPage).map((page, idx) => (
+                {/* Pagination - Responsive */}
+                {pagination.TotalPages > 1 && (
+                    <div className="flex justify-center items-center gap-1.5 md:gap-3 flex-wrap px-2">
+                        {/* Nút trước */}
                         <button
-                            key={idx}
-                            onClick={() => typeof page === 'number' && handlePageChange(page)}
-                            disabled={page === "..."}
-                            className={`px-4 py-2 rounded-lg border transition-all ${pagination.CurrentPage === page
-                                ? 'bg-black text-white border-black'
-                                : 'bg-white hover:bg-gray-100'
-                                } ${page === "..." ? 'cursor-default opacity-70' : ''}`}
+                            disabled={pagination.CurrentPage === 1}
+                            onClick={() => handlePageChange(pagination.CurrentPage - 1)}
+                            className="px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                         >
-                            {page}
+                            <span className="hidden sm:inline">« Trước</span>
+                            <span className="sm:hidden">«</span>
                         </button>
-                    ))}
 
-                    {/* Nút sau */}
-                    <button
-                        disabled={pagination.CurrentPage === pagination.TotalPages}
-                        onClick={() => handlePageChange(pagination.CurrentPage + 1)}
-                        className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    >
-                        Sau »
-                    </button>
-                </div>
+                        {getPageNumbers(
+                            pagination.TotalPages,
+                            pagination.CurrentPage,
+                            typeof window !== 'undefined' && window.innerWidth < 640 ? 1 : 2
+                        ).map((page, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => typeof page === 'number' && handlePageChange(page)}
+                                disabled={page === "..."}
+                                className={`px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg border transition-all min-w-[32px] md:min-w-[40px] ${pagination.CurrentPage === page
+                                    ? 'bg-black text-white border-black'
+                                    : 'bg-white hover:bg-gray-100'
+                                    } ${page === "..." ? 'cursor-default opacity-70' : ''}`}
+                            >
+                                {page}
+                            </button>
+                        ))}
 
+                        {/* Nút sau */}
+                        <button
+                            disabled={pagination.CurrentPage === pagination.TotalPages}
+                            onClick={() => handlePageChange(pagination.CurrentPage + 1)}
+                            className="px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            <span className="hidden sm:inline">Sau »</span>
+                            <span className="sm:hidden">»</span>
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
