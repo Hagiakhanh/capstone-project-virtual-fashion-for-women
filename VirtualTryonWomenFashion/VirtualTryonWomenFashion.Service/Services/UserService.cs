@@ -32,6 +32,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICurrentUserService _currentUserService;
         private readonly IRedisCacheService _redisCacheService;
         private readonly IWalletService _walletService;
+        private readonly string _baseUrl;
 
         public UserService(
             IUserRepository userRepository,
@@ -52,6 +53,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _currentUserService = currentUserService;
             _redisCacheService = redisCacheService;
             _walletService = walletService;
+            _baseUrl = configuration["Frontend:Production"];
         }
 
         public async Task<MessageModel> ConfirmAccount(RequestConfirmAccount requestConfirmAccount)
@@ -152,11 +154,11 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _userRepository.InsertAsync(newUser);
 
                 //Gọi service để gửi email
-                await _mailService.sendEmailAsync(new MailRequest
+                _mailService.sendEmailAsync(new MailRequest
                 {
                     ToEmail = newUser.Email,
                     Subject = "[Women Fashion] Xác nhận tài khoản",
-                    Body = MailContent.ConfirmAccountEmail(newUser.FullName, newUser.EmailConfirmToken, newUser.Email)
+                    Body = MailContent.ConfirmAccountEmail(newUser.FullName, newUser.EmailConfirmToken, newUser.Email, _baseUrl)
                 });
 
                 int result = await _unitOfWork.SaveChanges();
@@ -189,7 +191,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 new Claim(ClaimTypes.Role, user.Role.RoleId.ToString()),
                 new Claim("UserID", user.UserId.ToString()),
-                new Claim("role", user.Role.RoleId)
+                new Claim("role", user.Role.RoleId),
+                new Claim("email", user.Email),
+                new Claim("name", user.FullName),
             };
             var accessToken = GenerateJwtToken.AccessToken(claimList, _configuration);
             return new JwtSecurityTokenHandler().WriteToken(accessToken);

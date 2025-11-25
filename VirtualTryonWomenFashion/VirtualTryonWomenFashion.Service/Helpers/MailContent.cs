@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,9 +9,11 @@ namespace VirtualTryonWomenFashion.Service.Helpers
 {
     public static class MailContent
     {
-        public static string ConfirmAccountEmail(string fullName, string tokenConfirm, string email)
+       
+        public static string ConfirmAccountEmail(string fullName, string tokenConfirm, string email, string baseUrl)
         {
-            string url = "http://localhost:3000/confirm-email?token="
+            
+            string url = baseUrl + "/confirm-email?token="
                  + Uri.EscapeDataString(tokenConfirm)
                  + "&email=" + Uri.EscapeDataString(email);
 
