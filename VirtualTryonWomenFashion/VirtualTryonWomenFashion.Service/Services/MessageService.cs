@@ -115,7 +115,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     foreach (var componentPlan in analysis.Components)
                     {
                         Category selectedCategory = listCategory.Where(x => x.CategoryName.ToLower().Equals(componentPlan.Filters["itemType"].ToString().ToLower())).FirstOrDefault();
-                        if (componentPlan.Filters.ContainsKey("itemType"))
+                        if (componentPlan.Filters.ContainsKey("itemType")&& selectedCategory!=null)
                         {
                             componentPlan.Filters.Remove("itemType");
                             componentPlan.Filters.Add("categoryId", selectedCategory.CategoryId.ToString());
