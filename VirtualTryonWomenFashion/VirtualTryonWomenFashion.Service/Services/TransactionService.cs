@@ -180,7 +180,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 (string.IsNullOrEmpty(method) || t.Method == method) &&
                 (string.IsNullOrEmpty(status) || t.Status == status) &&
                 (!startDate.HasValue || t.CreatedAt >= startDate.Value) &&
-                (!endDate.HasValue || t.CreatedAt <= endDate.Value);
+                (!endDate.HasValue || t.CreatedAt < endDate.Value.AddDays(1));
 
             
             // Gọi repository
