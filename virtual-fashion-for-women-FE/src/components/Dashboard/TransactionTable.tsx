@@ -39,6 +39,7 @@ export default function TransactionTable({
     onApplyFilter,
     onPageChange,
 }: TransactionTableProps) {
+    const [dateError, setDateError] = useState("");
     
     // Khởi tạo trạng thái filter nội bộ
     const [currentFilters, setCurrentFilters] = useState(filterParams);
@@ -46,10 +47,41 @@ export default function TransactionTable({
     // Xử lý thay đổi input
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         const { name, value } = e.target;
-        setCurrentFilters(prev => ({
-            ...prev,
+        // setCurrentFilters(prev => ({
+        //     ...prev,
+        //     [name]: value,
+        // }));
+        const newFilters = {
+            ...currentFilters,
             [name]: value,
-        }));
+        };
+
+        const now = new Date(
+            new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })
+        );
+
+        if (name === "startDate" || name === "endDate") {
+            const selected = new Date(value);
+
+            if (selected > now) {
+                setDateError("Ngày không được chọn trong tương lai");
+                return;
+            }
+        }
+
+        // Validate
+        if (newFilters.startDate && newFilters.endDate) {
+            const start = new Date(newFilters.startDate);
+            const end = new Date(newFilters.endDate);
+
+            if (start > end) {
+                setDateError("Ngày bắt đầu phải trước ngày kết thúc");
+            } else {
+                setDateError("");
+            }
+        }
+
+        setCurrentFilters(newFilters);
     };
 
     // Xử lý áp dụng filter
@@ -226,6 +258,7 @@ export default function TransactionTable({
                 >
                     Áp Dụng
                 </button>
+                {dateError && <p className="text-red-500 text-sm">{dateError}</p>}
             </form>
 
             {/* Bảng Hiển thị Dữ liệu */}

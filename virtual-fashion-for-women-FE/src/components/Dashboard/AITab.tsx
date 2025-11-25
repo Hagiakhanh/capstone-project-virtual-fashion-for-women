@@ -141,27 +141,62 @@ const AIDashboard = () => {
         </div>
     );
 
-    const DateRangeSelector = ({ dateRange, setDateRange, label = "Khoảng thời gian" }: any) => (
-        <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700 hidden sm:inline">{label}:</span>
+    const getNowUTC7 = () => { return new Date(
+        new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+    };
+
+    const formatToDateInput = (d: Date) =>
+        d.toISOString().split("T")[0];
+
+    const DateRangeSelector = ({ dateRange, setDateRange, label = "Khoảng thời gian" }: any) => {
+        const now = formatToDateInput(getNowUTC7());
+        const [error, setError] = useState("");
+
+        useEffect(() => {
+            if (dateRange.startDate && dateRange.endDate) {
+                if (dateRange.startDate > dateRange.endDate) {
+                    setError("Ngày bắt đầu không được sau ngày kết thúc.");
+                } else {
+                    setError("");
+                }
+            }
+        }, [dateRange.startDate, dateRange.endDate]);
+
+        const handleStartChange = (value: string) => {
+            if (value > now) value = now;
+            setDateRange((prev: any) => ({ ...prev, startDate: value }));
+        };
+
+        const handleEndChange = (value: string) => {
+            if (value > now) value = now;
+            setDateRange((prev: any) => ({ ...prev, endDate: value }));
+        };
+
+        return (
+            <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700 hidden sm:inline">{label}:</span>
+                </div>
+                <input
+                    type="date"
+                    value={dateRange.startDate}
+                    max={now}
+                    onChange={(e) => handleStartChange(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-34"
+                />
+                <span className="text-gray-500 text-xs">-</span>
+                <input
+                    type="date"
+                    value={dateRange.endDate}
+                    max={now}
+                    onChange={(e) => handleEndChange(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-34"
+                />
+                {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
             </div>
-            <input
-                type="date"
-                value={dateRange.startDate}
-                onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-34 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <span className="text-gray-500 text-xs">-</span>
-            <input
-                type="date"
-                value={dateRange.endDate}
-                onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-34 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-        </div>
-    );
+        );
+    };
 
     const CHART_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
 
