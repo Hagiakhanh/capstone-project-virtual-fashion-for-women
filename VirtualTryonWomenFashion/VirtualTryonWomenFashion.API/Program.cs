@@ -101,17 +101,21 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    // Chính sách chống spam: 20 request / 1 giây / IP
     options.AddPolicy("StrictPerSecond", context =>
-        RateLimitPartition.GetSlidingWindowLimiter(
-            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            _ => new SlidingWindowRateLimiterOptions
+    {
+        // Ưu tiên lấy IP từ header do frontend gửi
+        var clientIp = context.Request.Headers["X-Client-IP"].FirstOrDefault()
+                       ?? context.Connection.RemoteIpAddress?.ToString()
+                       ?? "unknown";
+        return RateLimitPartition.GetSlidingWindowLimiter(clientIp, _ =>
+            new SlidingWindowRateLimiterOptions
             {
-                PermitLimit = 20,
+                PermitLimit = 20,         
                 Window = TimeSpan.FromSeconds(1),
                 SegmentsPerWindow = 5,
                 QueueLimit = 0
-            }));
+            });
+    });
 
     options.OnRejected = async (context, token) =>
     {
@@ -122,6 +126,7 @@ builder.Services.AddRateLimiter(options =>
             "{\"message\":\"Bạn đang gửi request quá nhanh, vui lòng thử lại sau.\"}");
     };
 });
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -218,7 +223,16 @@ app.Use(async (context, next) =>
     }
     await next();
 });
+app.Use(async (context, next) =>
+{
+    var clientIp = context.Request.Headers["X-Client-IP"].FirstOrDefault()
+                   ?? context.Connection.RemoteIpAddress?.ToString()
+                   ?? "unknown";
 
+    Console.WriteLine($"Request received from IP: {clientIp}, Path: {context.Request.Path}");
+
+    await next();
+});
 app.UseRouting();
 app.UseCors("AllowAll");
 app.UseRateLimiter();
