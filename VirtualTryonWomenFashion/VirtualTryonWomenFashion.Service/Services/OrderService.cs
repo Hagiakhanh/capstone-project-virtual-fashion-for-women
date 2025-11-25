@@ -298,7 +298,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public async Task<List<Order>> GetOrdersByStatusAsync(string status)
         {
-            var orders = await _orderRepository.GetOrdersByStatus(OrderStatusEnum.Pending.ToString());
+            var orders = await _orderRepository.GetOrdersByStatus(status);
             return orders;
         }
 

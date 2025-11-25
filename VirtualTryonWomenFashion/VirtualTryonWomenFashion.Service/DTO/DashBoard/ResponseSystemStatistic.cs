@@ -41,3 +41,19 @@ public class CategorySalesPieDto
     public int TotalSold { get; set; }
     public double Percentage { get; set; }  // % trên tổng số lượng đã bán
 }
+
+public class AiDashboardStatsDto
+{
+    public int TotalConversations { get; set; }
+    public int TotalSuggestedItems { get; set; }
+    public int TotalUsersUsedAI { get; set; }
+}
+
+public class TopSuggestedProductResponse
+{
+    public string ProductId { get; set; }
+    public string ProductName { get; set; }
+    public string MainImageUrl { get; set; }
+    public string CategoryName { get; set; }
+    public int SuggestCount { get; set; }
+}
