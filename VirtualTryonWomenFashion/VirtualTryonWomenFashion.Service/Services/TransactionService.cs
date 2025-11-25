@@ -174,13 +174,37 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             Expression<Func<Transaction, bool>>? filter = null;
 
+            if (startDate.HasValue && endDate.HasValue && startDate >= endDate)
+            {
+                throw new ArgumentException("Start date must be before end date");
+            }
+
+            // 1. Không cho phép ngày ở tương lai
+            DateTime now = DateTime.Now.AddHours(+7);
+
+            if (startDate.HasValue && startDate.Value > now)
+            {
+                startDate = now;
+            }
+
+            if (endDate.HasValue && endDate.Value > now)
+            {
+                endDate = now;
+            }
+
+            // 2. Bao gồm toàn bộ ngày endDate
+            if (endDate.HasValue)
+            {
+                endDate = endDate.Value.Date.AddDays(1); // dùng < endDate để bao hết ngày
+            }
+
             // Xây dựng filter động
             filter = t =>
                 (string.IsNullOrEmpty(type) || t.Type == type) &&
                 (string.IsNullOrEmpty(method) || t.Method == method) &&
                 (string.IsNullOrEmpty(status) || t.Status == status) &&
                 (!startDate.HasValue || t.CreatedAt >= startDate.Value) &&
-                (!endDate.HasValue || t.CreatedAt < endDate.Value.AddDays(1));
+                (!endDate.HasValue || t.CreatedAt < endDate.Value);
 
             
             // Gọi repository
