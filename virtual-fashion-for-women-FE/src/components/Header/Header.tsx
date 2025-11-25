@@ -1,6 +1,6 @@
 'use client';
-import { SearchOutlined, UserOutlined, ShoppingCartOutlined, DownOutlined, BellOutlined, WalletOutlined } from '@ant-design/icons';
-import { Input, Dropdown, Button } from 'antd';
+import { SearchOutlined, UserOutlined, ShoppingCartOutlined, DownOutlined, BellOutlined, WalletOutlined, MenuOutlined, CloseOutlined } from '@ant-design/icons';
+import { Input, Dropdown, Button, Drawer } from 'antd';
 import logo from '../../assets/home/Logo.png';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +13,6 @@ import { messageToast } from '@/helpers/toastHelper';
 import { PaginationDTO } from '@/models/PaginationDTO';
 import { ResponseNotification } from '@/models/NotificationDTO';
 import formatDate from '@/utils/formatDate';
-import { set } from 'lodash';
 import formatPrice from '@/utils/formatPrice';
 
 function HeaderComponent() {
@@ -36,6 +35,7 @@ function HeaderComponent() {
    const [showSearchBox, setShowSearchBox] = useState(false);
    const [searchResults, setSearchResults] = useState<any[]>([]);
    const debounceTimer = useRef<any>(null);
+   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
    const fetchCartTotal = async () => {
       try {
@@ -56,8 +56,9 @@ function HeaderComponent() {
             const newItems = response.data.map((category: any) => ({
                key: String(category.categoryName),
                label: <span style={{ fontSize: '1rem' }}>{category.categoryName}</span>,
-               onClick: ({ key }) => {
+               onClick: ({ key }: any) => {
                   router.push(`/products?category=${key}`);
+                  setMobileMenuOpen(false);
                }
             }));
             setMenuItems(newItems);
@@ -79,11 +80,6 @@ function HeaderComponent() {
          const response = await api.get(`/notification`, { params: payloadPagination });
          if (response.status === 200) {
             setNotifications(response.data.data);
-            console.log("Notifications fetched:", response.data.data);
-            // setPagination((prev) => ({
-            //    ...prev,
-            //    ...response.data.pagination
-            // }));
          }
       } catch (error: any) {
          console.error("Lỗi khi lấy thông báo:", error);
@@ -93,7 +89,6 @@ function HeaderComponent() {
    const fetchUnreadNotificationCount = async () => {
       try {
          const response = await api.get('/notification/unread-count');
-
          if (response.status === 200) {
             setNotificationCount(response.data.data);
          }
@@ -105,6 +100,7 @@ function HeaderComponent() {
    const handleLogout = async () => {
       try {
          await logout();
+         setMobileMenuOpen(false);
       } catch (err) {
          console.error('Lỗi khi đăng xuất:', err);
       }
@@ -136,7 +132,6 @@ function HeaderComponent() {
       }
 
       const searchKeyword = keyword.trim();
-
       const response = await api.get('/product/search', {
          params: {
             PageIndex: 1,
@@ -150,7 +145,6 @@ function HeaderComponent() {
       } else {
          setSearchResults([]);
       }
-
    };
 
    const handleSearchChange = (e: any) => {
@@ -196,8 +190,6 @@ function HeaderComponent() {
 
       const startConnection = async () => {
          try {
-            console.log("User in hub connection:", user);
-            console.log("Connection: ", connection)
             await connection.start().then(() => {
                console.log('SignalR connected successfully!')
             }).catch((err) => {
@@ -280,17 +272,95 @@ function HeaderComponent() {
       },
    };
 
-
    return (
       <header className="bg-[#FAE3B6] border-b border-[#e5c28b]">
-         <div className="flex items-center justify-between px-10 w-full">
-            {/* Logo */}
-            <div className="flex items-center cursor-pointer" onClick={() => router.push('/')}>
+         <div className="flex items-center justify-between px-4 md:px-10 w-full py-2 md:py-0">
+            {/* Mobile: Logo + Search + Hamburger */}
+            <div className="flex items-center gap-3 w-full md:hidden">
+               {/* Logo */}
+               <div className="flex items-center cursor-pointer flex-shrink-0" onClick={() => router.push('/')}>
+                  <img src={logo.src} alt="Logo" className="w-12 h-12 object-contain" />
+               </div>
+
+               {/* Search Box */}
+               <div className='flex-1 relative'>
+                  <Input
+                     placeholder="Tìm kiếm sản phẩm"
+                     size="middle"
+                     className="!pr-10"
+                     style={{
+                        paddingLeft: '0.75rem',
+                        borderRadius: '9999px',
+                        fontSize: '14px',
+                     }}
+                     value={searchText}
+                     onChange={handleSearchChange}
+                     onFocus={() => setShowSearchBox(true)}
+                     onBlur={() => setTimeout(() => setShowSearchBox(false), 200)}
+                     onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                           if (searchText.trim().length > 0) {
+                              router.push(`/search?keyword=${encodeURIComponent(searchText.trim())}`);
+                              setShowSearchBox(false);
+                              setSearchText('');
+                              setSearchResults([]);
+                           }
+                        }
+                     }}
+                  />
+                  <div
+                     className='absolute z-30 right-2 top-1/2 -translate-y-1/2 flex items-center cursor-pointer'
+                     onClick={() => {
+                        if (searchText.trim().length > 0) {
+                           router.push(`/search?keyword=${encodeURIComponent(searchText.trim())}`);
+                           setShowSearchBox(false);
+                           setSearchText('');
+                           setSearchResults([]);
+                        }
+                     }}
+                  >
+                     <SearchOutlined className='text-lg !text-[#FFAF37]' />
+                  </div>
+
+                  {showSearchBox && searchResults.length > 0 && (
+                     <div
+                        className="absolute left-0 right-0 top-full mt-2 bg-white rounded-lg shadow-lg p-2 z-50 overflow-auto max-h-96">
+                        {searchResults.map((item, index) => (
+                           <div
+                              key={index}
+                              className="flex items-center gap-3 p-2 hover:bg-gray-100 cursor-pointer rounded-lg"
+                              onClick={() => {
+                                 router.push(`/products/${item?.productSlug}`);
+                                 setShowSearchBox(false);
+                                 setSearchText('');
+                                 setSearchResults([]);
+                              }}
+                           >
+                              <img src={item?.mainImageUrl} alt="" className="w-12 h-12 rounded object-cover flex-shrink-0" />
+                              <div className="flex flex-col flex-1 min-w-0">
+                                 <span className="font-normal text-black text-sm line-clamp-1">{item?.productName}</span>
+                                 <span className="font-semibold text-black text-sm">{item?.price ? formatPrice(item?.price) : ''}đ</span>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  )}
+               </div>
+
+               {/* Hamburger Menu */}
+               <MenuOutlined
+                  className="text-2xl cursor-pointer flex-shrink-0"
+                  onClick={() => setMobileMenuOpen(true)}
+               />
+            </div>
+
+            {/* Desktop: Logo */}
+            <div className="hidden md:flex items-center cursor-pointer" onClick={() => router.push('/')}>
                <img src={logo.src} alt="Logo" className="w-20 object-contain" />
             </div>
 
-            {/* Menu trung tâm */}
-            <ul className="flex gap-10 text-xl font-normal cursor-pointer">
+            {/* Desktop Menu */}
+            <ul className="hidden lg:flex gap-10 text-xl font-normal cursor-pointer">
                <Link href="/" className="flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100">Trang chủ</Link>
                <Link href="/try-on" className="flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100">Phòng thử đồ</Link>
                <li onClick={() => router.push("/recommendation")} className="flex items-center border-b-3 border-transparent hover:border-b-3 hover:border-black transition-all duration-100">Phối đồ thông minh</li>
@@ -304,8 +374,9 @@ function HeaderComponent() {
                </li>
             </ul>
 
-            {/* Tìm kiếm và icon */}
-            <div className="flex items-center gap-6">
+            {/* Desktop: Search + Icons */}
+            <div className="hidden md:flex items-center gap-6">
+               {/* Desktop Search */}
                <div className='relative max-w-md'>
                   <div className='absolute z-30 left-4 top-1/2 -translate-y-1/2 flex items-center'>
                      <SearchOutlined className='text-xl !text-[#FFAF37]' />
@@ -333,10 +404,8 @@ function HeaderComponent() {
                      }}
                   />
                   {showSearchBox && searchResults.length > 0 && (
-                     <div style={{
-                        width: '150%',
-                     }}
-                        className="absolute right-0 top-full mt-2 w-full bg-white rounded-lg shadow-lg p-2 z-40 overflow-auto">
+                     <div style={{ width: '150%' }}
+                        className="absolute right-0 top-full mt-2 w-full bg-white rounded-lg shadow-lg p-2 z-40 overflow-auto max-h-96">
                         {searchResults.map((item, index) => (
                            <div
                               key={index}
@@ -347,7 +416,6 @@ function HeaderComponent() {
                                  setSearchText('');
                                  setSearchResults([]);
                               }}
-
                            >
                               <img src={item?.mainImageUrl} alt="" className="w-12 h-12 rounded object-cover" />
                               <div className="flex flex-col">
@@ -362,7 +430,7 @@ function HeaderComponent() {
 
                {user?.role === 'customer' ? (
                   <div className="flex items-center gap-4">
-
+                     {/* Desktop User Dropdown */}
                      <Dropdown
                         trigger={['hover']}
                         placement="bottomRight"
@@ -384,6 +452,7 @@ function HeaderComponent() {
                         <UserOutlined className="text-2xl cursor-pointer" />
                      </Dropdown>
 
+                     {/* Cart */}
                      <div
                         className="relative cursor-pointer"
                         onClick={() => router.push('/cart')}
@@ -395,6 +464,7 @@ function HeaderComponent() {
                            </span>
                         )}
                      </div>
+
                      {/* Wallet */}
                      <div
                         className="relative cursor-pointer"
@@ -402,6 +472,8 @@ function HeaderComponent() {
                      >
                         <WalletOutlined className="text-2xl" />
                      </div>
+
+                     {/* Notifications */}
                      <Dropdown
                         trigger={['click']}
                         placement="bottomRight"
@@ -438,6 +510,169 @@ function HeaderComponent() {
                )}
             </div>
          </div>
+
+         {/* Mobile Menu Drawer */}
+         <Drawer
+            title={
+               <div className="flex items-center gap-3">
+                  <img src={logo.src} alt="Logo" className="w-12 object-contain" />
+                  <span className="text-lg font-semibold">Women Fashion</span>
+               </div>
+            }
+            placement="right"
+            onClose={() => setMobileMenuOpen(false)}
+            open={mobileMenuOpen}
+            width={280}
+         >
+            <div className="flex flex-col gap-4 h-full">
+               {/* User Section - if logged in */}
+               {user?.role === 'customer' && (
+                  <div className="pb-4 border-b border-gray-200">
+                     <div
+                        className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                        onClick={() => {
+                           router.push('/account');
+                           setMobileMenuOpen(false);
+                        }}
+                     >
+                        <UserOutlined className="text-xl" />
+                        <span className="text-base">Tài khoản của tôi</span>
+                     </div>
+                     <div
+                        className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                        onClick={() => {
+                           router.push('/wallet');
+                           setMobileMenuOpen(false);
+                        }}
+                     >
+                        <WalletOutlined className="text-xl" />
+                        <span className="text-base">Ví của tôi</span>
+                     </div>
+                     <div
+                        className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                        onClick={() => {
+                           router.push('/cart');
+                           setMobileMenuOpen(false);
+                        }}
+                     >
+                        <ShoppingCartOutlined className="text-xl" />
+                        <div className="flex items-center justify-between flex-1">
+                           <span className="text-base">Giỏ hàng</span>
+                           {cartCount > 0 && (
+                              <span className="bg-red-600 text-white text-xs font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center">
+                                 {cartCount > 99 ? '99+' : cartCount}
+                              </span>
+                           )}
+                        </div>
+                     </div>
+                     <div
+                        className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                        onClick={() => {
+                           router.push('/account/notifications');
+                           setMobileMenuOpen(false);
+                        }}
+                     >
+                        <BellOutlined className="text-xl" />
+                        <div className="flex items-center justify-between flex-1">
+                           <span className="text-base">Thông báo</span>
+                           {notificationCount > 0 && (
+                              <span className="bg-red-600 text-white text-xs font-bold rounded-full min-w-[20px] h-[20px] flex items-center justify-center">
+                                 {notificationCount > 99 ? '99+' : notificationCount}
+                              </span>
+                           )}
+                        </div>
+                     </div>
+                  </div>
+               )}
+
+               {/* Menu Items */}
+               <div
+                  className="text-base p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                  onClick={() => {
+                     router.push('/');
+                     setMobileMenuOpen(false)
+                  }}
+               >
+                  Trang chủ
+               </div>
+               <div
+                  className="text-base p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                  onClick={() => {
+                     router.push('/try-on');
+                     setMobileMenuOpen(false)
+                  }}
+               >
+                  Phòng thử đồ
+               </div>
+               <div
+                  className="text-base p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                  onClick={() => {
+                     router.push('/recommendation');
+                     setMobileMenuOpen(false);
+                  }}
+               >
+                  Phối đồ thông minh
+               </div>
+
+               {/* Categories */}
+               <div className="border-t border-gray-200 pt-4">
+                  {/* <div className="text-sm font-semibold mb-2 px-3 text-gray-500">DANH MỤC SẢN PHẨM</div>
+                  {menuItems.map((item: any) => (
+                     <div
+                        key={item.key}
+                        className="text-base p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                        onClick={() => item.onClick({ key: item.key })}
+                     >
+                        {item.label}
+                     </div>
+                  ))} */}
+                  <Dropdown menu={{ items: menuItems }} placement="bottom">
+                     <span className="text-base font-semibold mb-2 px-3 text-gray-500">
+                        Danh mục sản phẩm
+                        <DownOutlined className="text-base p-3 hover:bg-gray-50 rounded-lg cursor-pointer" />
+                     </span>
+                  </Dropdown>
+               </div>
+
+               {/* Login/Logout Section at Bottom */}
+               <div className="mt-auto pt-4 border-t border-gray-200">
+                  {user?.role === 'customer' ? (
+                     <Button
+                        danger
+                        block
+                        onClick={handleLogout}
+                        className="!text-base"
+                     >
+                        Đăng xuất
+                     </Button>
+                  ) : (
+                     <div className="flex flex-col gap-3">
+                        <Button
+                           block
+                           className="!py-2 !text-base !border-black !text-black hover:!text-black"
+                           style={{ borderWidth: '2px' }}
+                           onClick={() => {
+                              router.push('/login');
+                              setMobileMenuOpen(false);
+                           }}
+                        >
+                           Đăng nhập
+                        </Button>
+                        <Button
+                           block
+                           className="!py-2 !text-base !bg-[#FFAF37] !border-none !text-black hover:!text-black"
+                           onClick={() => {
+                              router.push('/register');
+                              setMobileMenuOpen(false);
+                           }}
+                        >
+                           Đăng ký
+                        </Button>
+                     </div>
+                  )}
+               </div>
+            </div>
+         </Drawer>
       </header>
    );
 }
