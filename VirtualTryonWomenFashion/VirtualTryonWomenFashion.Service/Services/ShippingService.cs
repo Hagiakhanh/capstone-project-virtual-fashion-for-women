@@ -84,7 +84,7 @@ public class ShippingService : IShippingService
                 districtName = "Thành Phố Thủ Đức";
             }
             HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Add("Token", _tokenProduction);
+            client.DefaultRequestHeaders.Add("Token", _token);
 
             var requestBody = new
             {
@@ -94,7 +94,7 @@ public class ShippingService : IShippingService
             var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync(
-                $"{_ghnProductURL}shiip/public-api/master-data/district",
+                $"{_ghnDevURL}shiip/public-api/master-data/district",
                 content
             );
 
@@ -146,7 +146,7 @@ public class ShippingService : IShippingService
         {
             HttpClient client = new HttpClient();
 
-            client.DefaultRequestHeaders.Add("Token", _tokenProduction);
+            client.DefaultRequestHeaders.Add("Token", _token);
 
             var requestBody = new
             {
@@ -156,7 +156,7 @@ public class ShippingService : IShippingService
             var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync(
-                $"{_ghnProductURL}shiip/public-api/master-data/ward",
+                $"{_ghnDevURL}shiip/public-api/master-data/ward",
                 content
             );
 
@@ -293,7 +293,7 @@ public class ShippingService : IShippingService
             Dictionary<int, string> districtName = new Dictionary<int, string>();
 
             var clientProduct = new HttpClient();
-            clientProduct.DefaultRequestHeaders.Add("Token", _tokenProduction);
+            clientProduct.DefaultRequestHeaders.Add("Token", _token);
 
             var requestBody = new
             {
@@ -303,7 +303,7 @@ public class ShippingService : IShippingService
             var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
 
             var response = await clientProduct.PostAsync(
-                $"{_ghnProductURL}shiip/public-api/master-data/district",
+                $"{_ghnDevURL}shiip/public-api/master-data/district",
                 content
             );
 
@@ -323,10 +323,11 @@ public class ShippingService : IShippingService
                 string districtNameJson = district.GetProperty("DistrictName").GetString();
                 int status = district.GetProperty("Status").GetInt32();
 
-                if (status == 1)
+                districtName.Add(districtId, districtNameJson);
+                /*if (status == 1)
                 {
                     districtName.Add(districtId, districtNameJson);
-                }
+                }*/
             }
             return districtName;
         }
@@ -344,7 +345,7 @@ public class ShippingService : IShippingService
             Dictionary<string, string> wardName = new Dictionary<string, string>();
 
             var clientProduct = new HttpClient();
-            clientProduct.DefaultRequestHeaders.Add("Token", _tokenProduction);
+            clientProduct.DefaultRequestHeaders.Add("Token", _token);
 
             var requestBody = new
             {
@@ -354,7 +355,7 @@ public class ShippingService : IShippingService
             var content = new StringContent(jsonRequestBody, System.Text.Encoding.UTF8, "application/json");
 
             var response = await clientProduct.PostAsync(
-                $"{_ghnProductURL}shiip/public-api/master-data/ward",
+                $"{_ghnDevURL}shiip/public-api/master-data/ward",
                 content
             );
 
@@ -373,11 +374,11 @@ public class ShippingService : IShippingService
                 string wardCode = ward.GetProperty("WardCode").ToString();
                 string wardNameJson = ward.GetProperty("WardName").GetString();
                 int status = ward.GetProperty("Status").GetInt32();
-
-                if (status == 1)
+                wardName.Add(wardCode, wardNameJson);
+                /*if (status == 1)
                 {
                     wardName.Add(wardCode, wardNameJson);
-                }
+                }*/
             }
             return wardName;
         }
