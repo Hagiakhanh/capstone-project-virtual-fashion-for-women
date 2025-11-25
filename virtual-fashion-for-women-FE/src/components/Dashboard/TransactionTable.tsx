@@ -61,7 +61,7 @@ export default function TransactionTable({
         );
 
         if (name === "startDate" || name === "endDate") {
-            const selected = new Date(value);
+            const selected = new Date(`${value}T00:00:00+07:00`);
 
             if (selected > now) {
                 setDateError("Ngày không được chọn trong tương lai");
