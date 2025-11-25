@@ -2,6 +2,7 @@
 using Azure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,6 +52,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IColorRecommendationSerivce _colorRecommendationSerivce;
         private readonly IUserInteractionService _userInteractionService;
         private readonly IRedisCacheService _redisCacheService;
+        private const string CACHE_KEY_RECOMMENDATION_PRODUCTS = "products:recommendation_data";
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             ICloudinaryService cloudinaryService,
@@ -530,7 +532,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 //var productDto = _mapper.Map<ResponseProductDto>(product);
                 
                 //await _redisCacheService.RemoveData(ProductCacheKey);
-                await _redisCacheService.RemoveData("products:recommendation_data");
+                await _redisCacheService.RemoveData(CACHE_KEY_RECOMMENDATION_PRODUCTS);
                 return new MessageModelWithData<Product>
                 {
                     Message = "Tạo sản phẩm thành công",
@@ -1031,6 +1033,12 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (request.ProductColor == null || !request.ProductColor.Any())
                 return (false, "Sản phẩm phải có ít nhất một màu");
 
+            var category = _categoryRepository.GetById(request.CategoryId);
+            if (category == null)
+            {
+                return (false, "Không tìm thấy category");
+            }
+
             // validate Price 
             if (request.Price <= 0) return (false, "Giá sản phẩm phải lớn hơn 0");
 
@@ -1082,19 +1090,90 @@ namespace VirtualTryonWomenFashion.Service.Services
             return await CreateProductAsync(request);
         }
 
+        private async Task<(bool IsValid, string ErrorMessage)> ValidateUpdateProductRequest(UpdateProductRequest request)
+        {
+            if (request.ProductName != null && string.IsNullOrWhiteSpace(request.ProductName))
+                return (false, "Tên sản phẩm không được là chuỗi rỗng");
+
+            if (request.Price.HasValue && request.Price.Value <= 0)
+                return (false, "Giá sản phẩm phải lớn hơn 0");
+
+            if (request.CategoryId.HasValue)
+            {
+                var category = await _categoryRepository.GetByIdAsync(request.CategoryId.Value);
+                if (category == null)
+                {
+                    return (false, "Không tìm thấy Category với CategoryId đã cung cấp");
+                }
+            }
+
+            if (request.ProductColor != null && request.ProductColor.Any())
+            {
+                foreach (var colorRequest in request.ProductColor)
+                {
+                    if (colorRequest.ColorId <= 0 && string.IsNullOrWhiteSpace(colorRequest.ProductColorId))
+                    {
+                        if (string.IsNullOrWhiteSpace(colorRequest.ColorName) ||
+                            string.IsNullOrWhiteSpace(colorRequest.ColorPrefix) ||
+                            string.IsNullOrWhiteSpace(colorRequest.HexCode))
+                        {
+                            return (false, "Thông tin màu (ColorId, Tên màu, Prefix, HexCode) không đầy đủ để thêm màu mới.");
+                        }
+                    }
+
+                    if (colorRequest.Variants != null && colorRequest.Variants.Any())
+                    {
+                        foreach (var variant in colorRequest.Variants)
+                        {
+                            if (string.IsNullOrWhiteSpace(variant.ProductVariantId))
+                            {
+                                if (variant.SizeId <= 0)
+                                    return (false, "Thông tin size (SizeId) không đầy đủ cho biến thể mới.");
+                            }
+
+                            if (variant.Quantity.HasValue && variant.Quantity < 0)
+                                return (false, "Số lượng không được âm");
+                            if (variant.ClothesLength.HasValue && variant.ClothesLength <= 0)
+                                return (false, "Độ dài đồ phải lớn hơn 0");
+                            if (variant.ProductWidth.HasValue && variant.ProductWidth <= 0)
+                                return (false, "Rộng gói phải lớn hơn 0");
+                            if (variant.ProductLength.HasValue && variant.ProductLength <= 0)
+                                return (false, "Dài gói phải lớn hơn 0");
+                            if (variant.ProductWeight.HasValue && variant.ProductWeight <= 0)
+                                return (false, "Nặng gói phải lớn hơn 0");
+                            if (variant.ProductHeight.HasValue && variant.ProductHeight <= 0)
+                                return (false, "Cao gói phải lớn hơn 0");
+                        }
+                    }
+                }
+            }
+
+            return (true, string.Empty);
+        }
+
         public async Task<MessageModelWithData<Product>> UpdateAsync(string productId, UpdateProductRequest request)
         {
+            var product = await _productRepository.GetByIdAsync(productId);
+            if (product == null)
+                return new MessageModelWithData<Product>
+                {
+                    Message = $"Không tìm thấy Product",
+                    StatusCode = StatusCodes.Status404NotFound
+                };
+
+            var validation = await ValidateUpdateProductRequest(request);
+            if (!validation.IsValid)
+            {
+                return new MessageModelWithData<Product>
+                {
+                    Message = $"Dữ liệu không hợp lệ: {validation.ErrorMessage}",
+                    StatusCode = StatusCodes.Status400BadRequest
+                };
+            }
+
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                var product = await _productRepository.GetByIdAsync(productId);
-                if (product == null)
-                    return new MessageModelWithData<Product>
-                    {
-                        Message = $"Không tìm thấy Product",
-                        StatusCode = StatusCodes.Status404NotFound
-                    };
-
                 await UpdateProductFieldsAsync(product, request);
 
                 await UpdateProductTagsAsync(product, request.Tags);
@@ -1117,7 +1196,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await UpdateProductEmbeddingsAsync(updatedProduct);
                 
                 await _unitOfWork.CommitTransactionAsync();
-                await _redisCacheService.RemoveData("products:recommendation_data");
+                await _redisCacheService.RemoveData(CACHE_KEY_RECOMMENDATION_PRODUCTS);
                 
                 //var productDto = _mapper.Map<ResponseProductDto>(updatedProduct);
                 return new MessageModelWithData<Product>
@@ -1570,7 +1649,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 var result = await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
-                await _redisCacheService.RemoveData("products:recommendation_data");
+                await _redisCacheService.RemoveData(CACHE_KEY_RECOMMENDATION_PRODUCTS);
 
                 if (result > 0)
                 {
@@ -1621,10 +1700,11 @@ namespace VirtualTryonWomenFashion.Service.Services
             // Nếu có variant → xóa vector trong Pinecone
             if (variantIds.Any())
             {
-                await _vectorDbService.DeleteAsync(filter: new Dictionary<string, object>
+                /*await _vectorDbService.DeleteAsync(filter: new Dictionary<string, object>
                 {
                     { "productVariantId", product.ProductId }
-                });
+                });*/
+                await _vectorDbService.DeleteAsync(ids: variantIds);
             }
 
             var imageUrlsToDelete = new List<string>();

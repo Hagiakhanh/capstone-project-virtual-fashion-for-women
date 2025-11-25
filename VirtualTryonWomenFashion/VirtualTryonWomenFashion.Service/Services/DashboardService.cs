@@ -162,6 +162,24 @@ public class DashboardService : IDashboardService
     {
         DateTime start, end;
 
+        if (filter.StartDate.HasValue && filter.EndDate.HasValue && filter.StartDate >= filter.EndDate)
+        {
+            throw new ArgumentException("Start date must be before end date");
+        }
+
+        // 1. Không cho phép ngày ở tương lai
+        DateTime now = DateTime.Now.AddHours(+7);
+
+        if (filter.StartDate.HasValue && filter.StartDate.Value > now)
+        {
+            start = now;
+        }
+
+        if (filter.EndDate.HasValue && filter.EndDate.Value > now)
+        {
+            end = now;
+        }
+
         // ===== CASE 1: NĂM =====
         if (filter.Year.HasValue &&
             !filter.Month.HasValue &&
@@ -291,8 +309,31 @@ public class DashboardService : IDashboardService
     public async Task<List<TopTryOnProductDto>> GetTopTryOnProductsAsync(
         DateTime? start, DateTime? end, int limit)
     {
+        if (start.HasValue && end.HasValue && start >= end)
+        {
+            throw new ArgumentException("Start date must be before end date");
+        }
+
+        // 1. Không cho phép ngày ở tương lai
+        DateTime now = DateTime.Now.AddHours(+7);
+
+        if (start.HasValue && start.Value > now)
+        {
+            start = now;
+        }
+
+        if (end.HasValue && end.Value > now)
+        {
+            end = now;
+        }
+
+        // 2. Bao gồm toàn bộ ngày endDate
+        if (end.HasValue)
+        {
+            end = end.Value.Date.AddDays(1).AddSeconds(-1); // dùng < endDate để bao hết ngày
+        }
         DateTime s = start ?? DateTime.UtcNow.AddHours(+7).AddDays(-7); // mặc định 7 ngày gần nhất
-        DateTime e = end ?? DateTime.UtcNow.AddHours(+7);
+        DateTime e = end ?? DateTime.UtcNow.AddDays(1).AddSeconds(-1).AddHours(+7);
 
         return await _tryOnSlotRepository.GetTopTryOnProductsAsync(s, e, limit);
     }
@@ -300,8 +341,31 @@ public class DashboardService : IDashboardService
     public async Task<List<TryOnChartPointDto>> GetTryOnTimelineAsync(
         string productId, DateTime? start, DateTime? end)
     {
-        DateTime s = start ?? DateTime.UtcNow.AddHours(+7).AddDays(-7);
-        DateTime e = end ?? DateTime.UtcNow.AddHours(+7);
+        if (start.HasValue && end.HasValue && start >= end)
+        {
+            throw new ArgumentException("Start date must be before end date");
+        }
+
+        // 1. Không cho phép ngày ở tương lai
+        DateTime now = DateTime.Now.AddHours(+7);
+
+        if (start.HasValue && start.Value > now)
+        {
+            start = now;
+        }
+
+        if (end.HasValue && end.Value > now)
+        {
+            end = now;
+        }
+
+        // 2. Bao gồm toàn bộ ngày endDate
+        if (end.HasValue)
+        {
+            end = end.Value.Date.AddDays(1).AddSeconds(-1); // dùng < endDate để bao hết ngày
+        }
+        DateTime s = start ?? DateTime.UtcNow.AddHours(+7).AddDays(-7); // mặc định 7 ngày gần nhất
+        DateTime e = end ?? DateTime.UtcNow.AddDays(1).AddSeconds(-1).AddHours(+7);
 
         return await _tryOnSlotRepository.GetTryOnTimelineAsync(productId, s, e);
     }
@@ -322,7 +386,25 @@ public class DashboardService : IDashboardService
 
     public async Task<List<AiConversationChartDto>> GetConversationChartAsync(DateTime startDate, DateTime endDate)
     {
-        return await _aiConversationRepository.GetConversationChartAsync(startDate, endDate);
+        if (startDate >= endDate)
+        {
+            throw new ArgumentException("Start date must be before end date");
+        }
+
+        // 1. Không cho phép ngày ở tương lai
+        DateTime now = DateTime.Now.AddHours(+7);
+
+        if (startDate > now)
+        {
+            startDate = now;
+        }
+
+        if (endDate > now)
+        {
+            endDate = now;
+        }
+
+        return await _aiConversationRepository.GetConversationChartAsync(startDate, endDate.Date.AddDays(1).AddSeconds(-1));
     }
 
     public async Task<List<TopSuggestedProductResponse>> GetTopSuggestedProductsAsync(
@@ -330,7 +412,25 @@ public class DashboardService : IDashboardService
         DateTime end,
         int top)
     {
-        var raw = await _suggestedOutfitRepository.GetTopSuggestedProductsAsync(start, end, top);
+        if (start >= end)
+        {
+            throw new ArgumentException("Start date must be before end date");
+        }
+
+        // 1. Không cho phép ngày ở tương lai
+        DateTime now = DateTime.Now.AddHours(+7);
+
+        if (start > now)
+        {
+            start = now;
+        }
+
+        if (end > now)
+        {
+            end = now;
+        }
+
+        var raw = await _suggestedOutfitRepository.GetTopSuggestedProductsAsync(start, end.Date.AddDays(1).AddSeconds(-1), top);
 
         if (!raw.Any()) return new List<TopSuggestedProductResponse>();
 

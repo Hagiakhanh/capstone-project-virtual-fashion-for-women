@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,8 @@ namespace VirtualTryonWomenFashion.Service.Services
     public class RedisCacheService : IRedisCacheService
     {
         private readonly IDistributedCache _cache;
-        
+        private readonly string? _prefix;
+
         // ✅ 2. Tạo một cấu hình (options) static cho Serializer
         private static readonly JsonSerializerOptions _serializerOptions = new()
         {
@@ -21,14 +23,15 @@ namespace VirtualTryonWomenFashion.Service.Services
             ReferenceHandler = ReferenceHandler.Preserve
         };
 
-        public RedisCacheService(IDistributedCache cache)
+        public RedisCacheService(IDistributedCache cache, IConfiguration config)
         {
             _cache = cache;
+            _prefix = config["RedisPrefix"];
         }
 
         public async Task<T?> GetData<T>(string key)
         {
-            var data = await _cache.GetStringAsync(key);
+            var data = await _cache.GetStringAsync(_prefix+key);
             if (data == null)
             {
                 return default(T?);
@@ -42,12 +45,12 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 AbsoluteExpirationRelativeToNow = expiryTime
             };
-            await _cache?.SetStringAsync(key, JsonSerializer.Serialize(value, _serializerOptions), option);
+            await _cache?.SetStringAsync(_prefix+key, JsonSerializer.Serialize(value, _serializerOptions), option);
         }
         
         public async Task RemoveData(string key)
         {
-            await _cache.RemoveAsync(key);
+            await _cache.RemoveAsync(_prefix + key);
         }
     }
 }
