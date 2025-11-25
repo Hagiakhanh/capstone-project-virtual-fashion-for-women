@@ -28,23 +28,28 @@ const api = axios.create({
 });
 
 const createApiInstance = (request: Request) => {
-  // Phải bỏ cái này khi deploy lên server có SSL
-  // Vì nó chỉ dùng để test trên localhost thôi
   const agent = new https.Agent({
     rejectUnauthorized: false
   });
 
   const token = (request as NextRequest).cookies.get('token')?.value;
 
+  // Lấy IP client từ request
+  const clientIp = (request as NextRequest).headers.get('x-real-ip') 
+                  || (request as NextRequest).headers.get('x-forwarded-for')
+                  || '';
+
   const api = axios.create({
     baseURL: process.env.API_URL,
     httpsAgent: process.env.NODE_ENV === 'production' ? undefined : agent,
     headers: {
       Authorization: token ? `Bearer ${token}` : '',
+      'X-Client-IP': clientIp,   // gửi IP client
     },
-  })
+  });
 
   return api;
 }
+
 
 export { apiToken, api, createApiInstance };
