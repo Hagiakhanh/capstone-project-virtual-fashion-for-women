@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import {  Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import { Spin } from "antd";
@@ -7,6 +7,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { defaultToastContainerProps } from "@/helpers/toastHelper";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { Providers } from "@/contexts/GoogleProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,9 +29,11 @@ export default function RootLayout({
       <body
         className={`${inter.variable} antialiased`}
       >
-        <AuthProvider>
-          <Suspense fallback={<Spin />}>{children}</Suspense>
-        </AuthProvider>
+        <Providers>
+          <AuthProvider>
+            <Suspense fallback={<Spin />}>{children}</Suspense>
+          </AuthProvider>
+        </Providers>
         <ToastContainer {...defaultToastContainerProps} />
       </body>
     </html>
