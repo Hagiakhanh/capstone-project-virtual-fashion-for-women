@@ -182,7 +182,15 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHostedService<SaleCampaignWorkerService>();
 builder.Services.AddHostedService<PaymentWorkerService>();
 builder.Services.AddHostedService<GhnSyncStatusService>();
-builder.Services.AddHostedService<RecommendationBackgroundService>();
+//builder.Services.AddHostedService<RecommendationBackgroundService>();
+
+// Register Background Service as injectable singleton
+builder.Services.AddSingleton<RecommendationBackgroundService>();
+
+// Run it as hosted background worker
+builder.Services.AddHostedService(provider =>
+    provider.GetRequiredService<RecommendationBackgroundService>());
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",

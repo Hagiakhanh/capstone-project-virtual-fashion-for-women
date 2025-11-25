@@ -2,6 +2,7 @@
 using Azure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,6 +52,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IColorRecommendationSerivce _colorRecommendationSerivce;
         private readonly IUserInteractionService _userInteractionService;
         private readonly IRedisCacheService _redisCacheService;
+        private const string CACHE_KEY_RECOMMENDATION_PRODUCTS = "products:recommendation_data";
 
         public ProductService(IUnitOfWork unitOfWork, IProductRepository productRepository,
             ICloudinaryService cloudinaryService,
@@ -530,7 +532,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 //var productDto = _mapper.Map<ResponseProductDto>(product);
                 
                 //await _redisCacheService.RemoveData(ProductCacheKey);
-                await _redisCacheService.RemoveData("products:recommendation_data");
+                await _redisCacheService.RemoveData(CACHE_KEY_RECOMMENDATION_PRODUCTS);
                 return new MessageModelWithData<Product>
                 {
                     Message = "Tạo sản phẩm thành công",
@@ -1194,7 +1196,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await UpdateProductEmbeddingsAsync(updatedProduct);
                 
                 await _unitOfWork.CommitTransactionAsync();
-                await _redisCacheService.RemoveData("products:recommendation_data");
+                await _redisCacheService.RemoveData(CACHE_KEY_RECOMMENDATION_PRODUCTS);
                 
                 //var productDto = _mapper.Map<ResponseProductDto>(updatedProduct);
                 return new MessageModelWithData<Product>
@@ -1647,7 +1649,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 var result = await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
-                await _redisCacheService.RemoveData("products:recommendation_data");
+                await _redisCacheService.RemoveData(CACHE_KEY_RECOMMENDATION_PRODUCTS);
 
                 if (result > 0)
                 {
