@@ -1,22 +1,23 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
-using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using VirtualTryonWomenFashion.Data.DBContext;
 using VirtualTryonWomenFashion.Service.Extensions;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.Helpers.CloudinaryConfig;
+using VirtualTryonWomenFashion.Service.Hubs;
 using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Services;
 using VirtualTryonWomenFashion.Service.Utils;
 using VirtualTryonWomenFashion.Service.Workers;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json.Serialization;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using VirtualTryonWomenFashion.Service.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options =>
@@ -34,6 +35,7 @@ builder.Services.AddDbContext<VirtualTryonWomenFashionContext>(options =>
             }
         );
 });
+
 builder.Services.AddStackExchangeRedisCache(option =>
 {
     option.Configuration = builder.Configuration.GetConnectionString("RedisCloud");
@@ -95,12 +97,42 @@ builder.Services.AddControllers()
             return new BadRequestObjectResult(errorResponse);
         };
     });
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("StrictPerSecond", context =>
+    {
+        // Ưu tiên lấy IP từ header do frontend gửi
+        var clientIp = context.Request.Headers["X-Client-IP"].FirstOrDefault()
+                       ?? context.Connection.RemoteIpAddress?.ToString()
+                       ?? "unknown";
+        return RateLimitPartition.GetSlidingWindowLimiter(clientIp, _ =>
+            new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 20,         
+                Window = TimeSpan.FromSeconds(1),
+                SegmentsPerWindow = 5,
+                QueueLimit = 0
+            });
+    });
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        context.HttpContext.Response.ContentType = "application/json";
+
+        await context.HttpContext.Response.WriteAsync(
+            "{\"message\":\"Bạn đang gửi request quá nhanh, vui lòng thử lại sau.\"}");
+    };
+});
 
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+
 }).AddJwtBearer(options =>
 {
     options.RequireHttpsMetadata = false;
@@ -191,15 +223,25 @@ app.Use(async (context, next) =>
     }
     await next();
 });
+app.Use(async (context, next) =>
+{
+    var clientIp = context.Request.Headers["X-Client-IP"].FirstOrDefault()
+                   ?? context.Connection.RemoteIpAddress?.ToString()
+                   ?? "unknown";
 
+    Console.WriteLine($"Request received from IP: {clientIp}, Path: {context.Request.Path}");
+
+    await next();
+});
 app.UseRouting();
 app.UseCors("AllowAll");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
 
 app.MapHub<TicketChatHub>("/chathub");
 app.MapHub<NotificationHub>("/notificationhub");
-app.MapControllers();
+app.MapControllers().RequireRateLimiting("StrictPerSecond"); ;
 
 app.Run();
