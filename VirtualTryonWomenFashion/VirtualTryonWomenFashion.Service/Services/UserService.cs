@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Google.Apis.Auth;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -376,6 +377,85 @@ namespace VirtualTryonWomenFashion.Service.Services
                 Message = $"Thay đổi trạng thái Không thành công",
                 StatusCode = StatusCodes.Status500InternalServerError,
             };
+
+        }
+
+        public async Task<MessageModelWithData<string>> LoginByGoogle(RequestLoginGoogle requestLoginGoogle)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            string clientId = _configuration["GoogleCredential:ClientId"];
+            var settings = new GoogleJsonWebSignature.ValidationSettings()
+            {
+                Audience = new List<string> { clientId }
+            };
+            var payload = await GoogleJsonWebSignature.ValidateAsync(requestLoginGoogle.credential, settings);
+
+            if (payload == null)
+            {
+                throw new Exception("Credential không hợp lệ");
+            }
+
+            User existUser = await _userRepository.GetUserByEmail(payload.Email);
+            //Nếu đã tồn tại user trong hệ thống 
+            if (existUser != null)
+            {
+                if (existUser.IsActive == false)
+                {
+                    throw new Exception("Tài khoản bị vô hiệu hóa");
+                }
+                var accessToken = GenerateAccessToken(existUser);
+                return new MessageModelWithData<string>
+                {
+                    Message = "Đăng nhập thành công",
+                    StatusCode = StatusCodes.Status200OK,
+                    Data = accessToken
+                };
+            }
+            else
+            {
+                // Nếu chưa tồn tại user
+                try
+                {
+                    Wallet userWallet = await _walletService.CreateWalletAsync();
+                    Role customerRole = await _roleRepository.GetRoleByRoleName("Customer");
+                    User newUser = new User
+                    {
+                        RoleId = customerRole.RoleId,
+                        WalletId = userWallet.WalletId,
+                        FullName = payload.Name,
+                        Email = payload.Email,
+                        Password = "",
+                        IsActive = true,
+                        IsEmailConfirm = true,
+                        CreatedDate = DateTime.UtcNow.AddHours(7),
+                    };
+
+                    await _userRepository.InsertAsync(newUser);
+                    int result = await _unitOfWork.SaveChanges();
+                    if (result > 0)
+                    {
+                        await _unitOfWork.CommitTransactionAsync();
+                        var accessToken = GenerateAccessToken(newUser);
+                        return new MessageModelWithData<string>
+                        {
+                            Message = "Tạo tài khoản thành công",
+                            StatusCode = StatusCodes.Status200OK,
+                            Data = accessToken
+                        };
+                    }
+
+                    return new MessageModelWithData<string>
+                    {
+                        Message = "Đăng nhập google thất bại",
+                        StatusCode = StatusCodes.Status500InternalServerError,
+                    };
+                }
+                catch (Exception ex)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    throw;
+                }
+            }
 
         }
     }

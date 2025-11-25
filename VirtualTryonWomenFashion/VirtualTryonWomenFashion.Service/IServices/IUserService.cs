@@ -23,5 +23,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModel> CreateStaffAccount(RequestCreateAccount requestCreateAccount);
         public Task<Pagination<ResponseStaffInformation>> GetAllStaffForAdmin(PaginationParameter page, bool? isActive);
         public Task<MessageModel> UpdateStatusStaffForAdmin(int staffId);
+        public Task<MessageModelWithData<string>> LoginByGoogle(RequestLoginGoogle requestLoginGoogle);
     }
 }

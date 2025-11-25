@@ -113,5 +113,19 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
+        [HttpPost("login-google")]
+        public async Task<IActionResult> LoginWithGoogle(RequestLoginGoogle requestLoginGoogle)
+        {
+            try
+            {
+                MessageModelWithData<string> result = await _userService.LoginByGoogle(requestLoginGoogle);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }
