@@ -38,6 +38,8 @@ using VirtualTryonWomenFashion.Service.DTO.StatusLog;
 using VirtualTryonWomenFashion.Service.Hubs;
 using VirtualTryonWomenFashion.Service.DTO.OrderRefund;
 using VirtualTryonWomenFashion.Service.DTO.Wallet;
+using System.Globalization;
+using VirtualTryonWomenFashion.Service.DTO.Mail;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -60,6 +62,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IOrderRefundRepository _orderRefundRepository;
         private readonly IWalletService _walletService;
         private readonly ITransactionService _transactionService;
+        private readonly IMailService _mailService;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -78,7 +81,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             IUserService userService,
             IOrderRefundRepository orderRefundRepository,
             IWalletService walletService,
-            ITransactionService transactionService
+            ITransactionService transactionService,
+            IMailService mailService
         )
         {
             _orderDetailService = orderDetailService;
@@ -98,6 +102,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _orderRefundRepository = orderRefundRepository;
             _walletService = walletService;
             _transactionService = transactionService;
+            _mailService = mailService;
         }
 
         public async Task<Order> CreateOrderAsync(RequestCreateOrder requestCreateOrder)
@@ -405,6 +410,15 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _orderRepository.UpdateRangeAsync(successfulOrders);
             await _unitOfWork.SaveChanges();
             await _statusLogService.CreateStatusLog(statusLogs);
+            foreach(var order in successfulOrders)
+            {
+                _mailService.sendEmailAsync(new MailRequest
+                {
+                    ToEmail = order.Customer.Email,
+                    Subject = $"[Women Fashion] Đơn hàng ORD-{order.OrderId} đã được đặt thành công",
+                    Body = MailContent.OrderSuccessEmail(order.ReceiverName, "ORD-" + order.OrderId, order.CreatedAt.ToString("HH:mm dd/MM/yyyy"), order.Amount.Value.ToString("#,0", new CultureInfo("vi-VN")) + " đ", order.ReceiverAddress)
+                });
+            }
             List<User> staffUsers = await _userService.GetAllStaff();
             if (staffUsers.Count > 0)
             {
