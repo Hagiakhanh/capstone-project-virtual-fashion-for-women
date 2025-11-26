@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -177,6 +178,36 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpPut("complete/{orderId}")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> UpdateOrderCompleteForCustomer(int orderId)
+        {
+            try
+            {
+                MessageModel result = await _orderService.UpdateOrderCompleteForCustomer(orderId);
+                return StatusCode(result.StatusCode, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("{orderId}/can-complete")]
+        public async Task<IActionResult> CanRequestOrderComplete(int orderId)
+        {
+            try
+            {
+                MessageModelWithData<bool> result = await _orderService.CanRequestOrderComplete(orderId);
+                return StatusCode(result.StatusCode, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
 
     }
 }

@@ -182,6 +182,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHostedService<SaleCampaignWorkerService>();
 builder.Services.AddHostedService<PaymentWorkerService>();
 builder.Services.AddHostedService<GhnSyncStatusService>();
+builder.Services.AddHostedService<OrderCompleteWorkerService>();
 //builder.Services.AddHostedService<RecommendationBackgroundService>();
 
 // Register Background Service as injectable singleton
