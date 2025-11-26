@@ -286,7 +286,7 @@ export default function VirtualTryOnPage() {
                         await Promise.all(
                             productColorIds.map(id => fetchProductColor(id, categoryRes.data))
                         );
-
+                        sessionStorage.removeItem("productColor");
                     } catch (e) {
                         console.error("❌ Lỗi parse sessionStorage productColor:", e);
                     }

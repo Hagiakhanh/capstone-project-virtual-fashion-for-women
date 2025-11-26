@@ -56,7 +56,7 @@ function ProductDetailsPage() {
             );
             setLensID(selectedColorVariant?.lensId);
             if (selectedColorVariant?.lensId) {
-               QRCode.toDataURL(`https://0d6aa97beb9a.ngrok-free.app/ar-try-on/${selectedColorVariant.lensId}`).then(setLinkToArTryOn);
+               QRCode.toDataURL(`${window.location.origin}/ar-try-on/${selectedColorVariant.lensId}`).then(setLinkToArTryOn);
             }
             setSelectedColorVariant(selectedColorVariant || null);
             setColorImages(selectedColorVariant?.productImagesDto || [])
@@ -77,7 +77,7 @@ function ProductDetailsPage() {
       );
       setLensID(selectedColorVariant?.lensId);
       if (selectedColorVariant?.lensId) {
-         QRCode.toDataURL(`https://0d6aa97beb9a.ngrok-free.app/ar-try-on`).then(setLinkToArTryOn);
+         QRCode.toDataURL(`${window.location.origin}/ar-try-on`).then(setLinkToArTryOn);
       }
       setSelectedColorVariant(selectedColorVariant || null);
       setColorImages(selectedColorVariant?.productImagesDto || [])
