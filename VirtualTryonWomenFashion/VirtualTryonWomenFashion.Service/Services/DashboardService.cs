@@ -314,6 +314,11 @@ public class DashboardService : IDashboardService
             throw new ArgumentException("Start date must be before end date");
         }
 
+        if (limit <= 0)
+        {
+            throw new ArgumentException("Limit phải lớn hơn 0");
+        }
+
         // 1. Không cho phép ngày ở tương lai
         DateTime now = DateTime.Now.AddHours(+7);
 
@@ -341,6 +346,12 @@ public class DashboardService : IDashboardService
     public async Task<List<TryOnChartPointDto>> GetTryOnTimelineAsync(
         string productId, DateTime? start, DateTime? end)
     {
+        var product = _productRepository.GetByIdAsync(productId);
+        if (product == null)
+        {
+            throw new ArgumentException("Sản phẩm không tồn tại");
+        }
+
         if (start.HasValue && end.HasValue && start >= end)
         {
             throw new ArgumentException("Start date must be before end date");
@@ -412,6 +423,11 @@ public class DashboardService : IDashboardService
         DateTime end,
         int top)
     {
+        if(top <= 0)
+        {
+            throw new ArgumentException("Top phải lớn hơn 0");
+        }
+
         if (start >= end)
         {
             throw new ArgumentException("Start date must be before end date");
