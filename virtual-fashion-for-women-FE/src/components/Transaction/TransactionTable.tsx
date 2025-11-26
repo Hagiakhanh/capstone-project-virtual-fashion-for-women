@@ -35,7 +35,7 @@ export default function TransactionTable({ transactions, loading }: Props) {
     };
 
     return (
-        <div className="max-w-6xl mx-auto mb-6">
+        <div className="max-w-6xl w-full mx-auto mb-6">
             {/* Khi đang loading */}
             {loading ? (
                 <div className="py-20">
@@ -52,12 +52,12 @@ export default function TransactionTable({ transactions, loading }: Props) {
                         <table className="w-full">
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-200">
-                                    <th className="px-6 py-4 text-left base font-semibold text-gray-700">Transaction code</th>
-                                    <th className="px-6 py-4 text-left base font-semibold text-gray-700">Order ID</th>
-                                    <th className="px-6 py-4 text-left base font-semibold text-gray-700">Số tiền</th>
-                                    <th className="px-6 py-4 text-left base font-semibold text-gray-700">Phương thức</th>
-                                    <th className="px-6 py-4 text-left base font-semibold text-gray-700">Trạng thái</th>
-                                    <th className="px-6 py-4 text-left base font-semibold text-gray-700">Ngày tạo</th>
+                                    <th className="px-4 py-4 text-left base font-semibold text-gray-700">Transaction code</th>
+                                    <th className="px-4 py-4 text-left base font-semibold text-gray-700">Order ID</th>
+                                    <th className="px-4 py-4 text-left base font-semibold text-gray-700">Số tiền</th>
+                                    <th className="px-4 py-4 text-left base font-semibold text-gray-700">Phương thức</th>
+                                    <th className="px-4 py-4 text-left base font-semibold text-gray-700">Trạng thái</th>
+                                    <th className="px-4 py-4 text-left base font-semibold text-gray-700">Ngày tạo</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
