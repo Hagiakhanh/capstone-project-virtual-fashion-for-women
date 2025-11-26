@@ -85,9 +85,26 @@ export const SelectSizeModal: React.FC<SelectSizeModalProps> = ({
           />
           <Flex vertical justify="center">
             <Text strong>Màu: {productColor?.color?.colorName}</Text>
-            <Text type="warning" className="text-lg font-semibold">
-              {product.priceAtTime || product.price} ₫
-            </Text>
+
+            {product.priceAtTime ? (
+              // Nếu có giá chiến dịch
+              <div className="flex items-center gap-2">
+                <Text type="warning" className="text-lg font-semibold">
+                  {product.priceAtTime} ₫
+                </Text>
+                <Text
+                  type="secondary"
+                  className="text-lg font-semibold line-through text-red-500"
+                >
+                  {product.price} ₫
+                </Text>
+              </div>
+            ) : (
+              // Nếu không có giá chiến dịch, chỉ hiển thị giá gốc
+              <Text type="warning" className="text-lg font-semibold">
+                {product.price} ₫
+              </Text>
+            )}
           </Flex>
         </Flex>
 
