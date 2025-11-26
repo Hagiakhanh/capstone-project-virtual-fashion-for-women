@@ -46,6 +46,7 @@ export function ChatMessageStage({
   const [selectedOutfits, setSelectedOutfits] = useState<
     Record<string, { productVariantId: string; quantity: number }>
   >({});
+  
   useEffect(() => {
     if (isAutoScroll) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -69,6 +70,7 @@ export function ChatMessageStage({
       }
     }
   }, [suggestedOutfit]);
+  
   useEffect(() => {
     const storedSuggestion = sessionStorage.getItem("selectedSuggestion");
     if (storedSuggestion) {
@@ -92,7 +94,6 @@ export function ChatMessageStage({
       } catch (error) {
         console.error("❌ Lỗi khi parse suggestion:", error);
       } finally {
-        // 🧹 Xóa để tránh hiển thị lại lần sau
         sessionStorage.removeItem("selectedSuggestion");
       }
     }
@@ -109,7 +110,7 @@ export function ChatMessageStage({
       messageToast.error(error.response?.data?.message);
     }
   };
-  // 📦 Lấy dữ liệu hội thoại ban đầu
+  
   const handleGetAIConversation = async () => {
     if (!conversationID) return;
     try {
@@ -139,7 +140,6 @@ export function ChatMessageStage({
     setToNextState(1);
   }, [conversationID]);
 
-  // 💬 Gửi tin nhắn
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !conversationID) return;
 
@@ -223,6 +223,7 @@ export function ChatMessageStage({
       )
     );
   };
+  
   const handleAddToCartAction = async (
     selectedOutfits: Record<
       string,
@@ -266,25 +267,28 @@ export function ChatMessageStage({
   return (
     <div
       className={`${
-        isSuggestedMode ? "md:w-2/3" : "md:w-1/2"
-      } mx-auto p-4 mb-4`}
+        isSuggestedMode ? "w-full md:w-2/3" : "w-full md:w-1/2"
+      } mx-auto p-2 sm:p-4 mb-4`}
     >
       <Flex
-        className={`mt-4 mx-auto ${
-          isSuggestedMode ? "md:flex-row" : "md:justify-center"
-        } flex-col`}
+        className={`mt-2 sm:mt-4 mx-auto ${
+          isSuggestedMode ? "flex-col md:flex-row" : "flex-col md:justify-center"
+        } gap-2 md:gap-0`}
       >
+        {/* 🎨 PHẦN GỢI Ý TRANG PHỤC */}
         {isSuggestedMode && (
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            className="md:w-full bg-white rounded-2xl rounded-r-none shadow-lg p-4"
+            className="w-full md:w-full bg-white rounded-2xl md:rounded-r-none shadow-lg p-3 sm:p-4"
           >
-            <h2 className="text-4xl w-[80%] mx-auto font-semibold text-center leading-relaxed from-[#FFAF37] to-[#996921] bg-gradient-to-r bg-clip-text text-transparent mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl w-[90%] sm:w-[80%] mx-auto font-semibold text-center leading-relaxed from-[#FFAF37] to-[#996921] bg-gradient-to-r bg-clip-text text-transparent mb-3 sm:mb-4">
               ✨ Gợi ý trang phục
             </h2>
-            <div className="flex flex-wrap justify-center gap-6 overflow-y-auto max-h-[650px] pr-2">
+            
+            {/* Grid sản phẩm - responsive */}
+            <div className="flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-6 overflow-y-auto max-h-[400px] sm:max-h-[500px] md:max-h-[650px] pr-2">
               {suggestedOutfit.map((outfit, index) => (
                 <div
                   key={index}
@@ -293,6 +297,7 @@ export function ChatMessageStage({
                   <OutfitCard
                     name={outfit.name}
                     imageUrl={outfit.ImageUrl}
+                    className="w-full h-full"
                     onSelect={async () => {
                       await fetchProductColor(outfit.ProductColorId);
                       setIsVariantPopupVisible(true);
@@ -309,7 +314,9 @@ export function ChatMessageStage({
                 selectingProduct={selectedOutfits}
               />
             </div>
-            <div className="flex justify-center flex-col">
+            
+            {/* Buttons - responsive */}
+            <div className="flex flex-col gap-2 mt-3 sm:mt-4">
               <AntButtonCommon
                 icon={<PlusOutlined />}
                 label="Thêm giỏ hàng"
@@ -317,12 +324,12 @@ export function ChatMessageStage({
                 onClick={() => {
                   handleAddToCartAction(selectedOutfits);
                 }}
+                className="w-full text-sm sm:text-base"
               />
               <AntButtonCommon
                 colorType="secondary"
                 onClick={() => {
                   router.push("/try-on");
-                  // console.log('productDetail', productDetail);
                   sessionStorage.setItem(
                     "productColor",
                     JSON.stringify(
@@ -332,6 +339,7 @@ export function ChatMessageStage({
                     )
                   );
                 }}
+                className="w-full text-sm sm:text-base"
               >
                 <span className="mr-2">✨</span>
                 Thử đồ ảo ngay
@@ -340,25 +348,26 @@ export function ChatMessageStage({
           </motion.div>
         )}
 
+        {/* 💬 PHẦN CHAT */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className={`${
             isSuggestedMode
-              ? "md:w-[600px] rounded-r-2xl rounded-l-none"
-              : "md:w-full rounded-2xl"
-          } bg-white shadow-lg p-4 pb-4`}
+              ? "w-full md:w-[600px] rounded-2xl md:rounded-r-2xl md:rounded-l-none"
+              : "w-full md:w-full rounded-2xl"
+          } bg-white shadow-lg p-3 sm:p-4 pb-3 sm:pb-4`}
         >
           <h2
             className={`${
-              isSuggestedMode ? "text-4xl" : "text-5xl"
-            } w-full mx-auto font-semibold text-center leading-relaxed from-[#FFAF37] to-[#996921] bg-gradient-to-r bg-clip-text text-transparent`}
+              isSuggestedMode ? "text-2xl sm:text-3xl md:text-4xl" : "text-3xl sm:text-4xl md:text-5xl"
+            } w-full mx-auto font-semibold text-center leading-relaxed from-[#FFAF37] to-[#996921] bg-gradient-to-r bg-clip-text text-transparent mb-3 sm:mb-4`}
           >
             Mô tả phong cách của bạn
           </h2>
 
-          {/* 💬 Danh sách tin nhắn */}
+          {/* 💬 Danh sách tin nhắn - responsive height */}
           <div
             ref={chatContainerRef}
             onScroll={() => {
@@ -368,7 +377,7 @@ export function ChatMessageStage({
                 el.scrollHeight - el.scrollTop - el.clientHeight < 100;
               setIsAutoScroll(isAtBottom);
             }}
-            className="border border-solid h-[550px] rounded-lg overflow-y-scroll w-[90%] mx-auto px-4 pt-4 pb-2"
+            className="border border-solid h-[400px] sm:h-[500px] md:h-[550px] rounded-lg overflow-y-scroll w-full sm:w-[95%] md:w-[90%] mx-auto px-3 sm:px-4 pt-3 sm:pt-4 pb-2"
           >
             <AnimatePresence>
               {messages.map((item, index) => (
@@ -400,8 +409,8 @@ export function ChatMessageStage({
             <div ref={messagesEndRef} />
           </div>
 
-          {/* ✍️ Ô nhập chat */}
-          <div className="w-[90%] mx-auto mt-4">
+          {/* ✍️ Ô nhập chat - responsive width */}
+          <div className="w-full sm:w-[95%] md:w-[90%] mx-auto mt-3 sm:mt-4">
             <InputChatBoxComponent onSend={handleSendMessage} />
           </div>
         </motion.div>

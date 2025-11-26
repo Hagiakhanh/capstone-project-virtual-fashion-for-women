@@ -44,6 +44,12 @@ export default function TransactionTable({
     // Khởi tạo trạng thái filter nội bộ
     const [currentFilters, setCurrentFilters] = useState(filterParams);
 
+    const getVietnameseLabel = (value: string, category: keyof typeof filterOptions): string => {
+        if (!value) return '';
+        const option = filterOptions[category].find(opt => opt.value === value);
+        return option ? option.label : value;
+    };
+
     // Xử lý thay đổi input
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -61,7 +67,7 @@ export default function TransactionTable({
         );
 
         if (name === "startDate" || name === "endDate") {
-            const selected = new Date(value);
+            const selected = new Date(`${value}T00:00:00+07:00`);
 
             if (selected > now) {
                 setDateError("Ngày không được chọn trong tương lai");
@@ -101,7 +107,7 @@ export default function TransactionTable({
 
         return (
             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${color}`}>
-                {status}
+                {getVietnameseLabel(status, 'statuses')}
             </span>
         );
     };
@@ -286,8 +292,8 @@ export default function TransactionTable({
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-sans text-gray-800">{t.transactionId}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-sans text-gray-800">{t.userName}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-sans text-green-700">{formatPrice(t.money)}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-sans text-gray-800">{t.type}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-sans text-gray-800">{t.method}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-sans text-gray-800">{getVietnameseLabel(t.type, 'types')}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-sans text-gray-800">{getVietnameseLabel(t.method, 'methods')}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-sans text-gray-800"><StatusBadge status={t.status} /></td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-sans text-gray-800">{new Date(t.createdAt).toLocaleString('vi-VN')}</td>
                                 </tr>
