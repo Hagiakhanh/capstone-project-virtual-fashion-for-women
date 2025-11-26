@@ -120,17 +120,12 @@ export default function VirtualTryOnPage() {
 
     const handleTryOn = async () => {
         if (!userImage) {
-            alert('Vui lòng tải lên ảnh của bạn!');
+            messageToast.error('Vui lòng tải lên ảnh của bạn!');
             return;
         }
 
         if (!imageValidation.isValid) {
-            alert('Ảnh của bạn không hợp lệ. Vui lòng tải lên ảnh khác.');
-            return;
-        }
-
-        if (!selectedTop) {
-            alert('Vui lòng chọn áo!');
+            messageToast.error('Ảnh của bạn không hợp lệ. Vui lòng tải lên ảnh khác.');
             return;
         }
 
@@ -312,7 +307,7 @@ export default function VirtualTryOnPage() {
     const bottomCategories = category.filter(
         (c) => c.bodyPart === 'Thân dưới'
     );
-    const canTryOn = userImage && imageValidation.isValid === true && selectedTop;
+    const canTryOn = userImage && imageValidation.isValid === true;
 
     return (
         <>
