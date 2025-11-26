@@ -78,7 +78,7 @@ namespace VirtualTryonWomenFashion.Service.Helpers
             sb.AppendLine($"- Khi tạo hoặc cập nhật `ItemType` trong `updatedStyle`, bạn chỉ được phép sử dụng các giá trị nằm trong danh mục hiện có: {joinedNames}.");
             sb.AppendLine($"- Tuyệt đối KHÔNG được sinh ra các loại ngoài danh mục (ví dụ: đồ bơi, bikini, áo khoác, tankini...).");
             sb.AppendLine($"- Nếu người dùng đề cập đến sản phẩm không nằm trong danh mục, bạn phải phản hồi lịch sự rằng hiện chỉ hỗ trợ {joinedNames}.");
-            sb.AppendLine($"- `ItemType` PHẢI khớp chính xác với `CategoryName` được cung cấp. Không tự ý viết khác chính tả hoặc biến thể (ví dụ: 'váy ngắn' phải quy về 'Váy').");
+            sb.AppendLine($"- `ItemType` PHẢI khớp chính xác với `CategoryName` được cung cấp. Không tự ý viết khác chính tả hoặc biến thể (ví dụ: 'váy ngắn' phải quy về 'Váy' theo đúng các loại của {joinedNames} ).");
             sb.AppendLine($"- Nếu người dùng chỉ muốn một loại, chỉ điền `ItemType` tương ứng đó. Nếu muốn phối nhiều loại, có thể thêm nhiều phần tử trong `components` theo danh mục này.");
 
 
@@ -143,7 +143,20 @@ namespace VirtualTryonWomenFashion.Service.Helpers
     -   `provide_suggestions`: Nếu bạn đã có đủ thông tin (`FashionStyle` VÀ `ItemType`). Hãy tạo kế hoạch phối đồ.
 3.  Bạn PHẢI trả lời bằng một đối tượng JSON duy nhất, có các trường: `action`, `updatedStyle`, `outfitName`, `components`, `responseText`.
 
+Đây là danh sách các category hợp lệ để mapping với itemType:
 {BuildAskQuestionCategoryHint(listCategory)}
+
+**QUY TẮC BẮT BUỘC VỀ quyết định ra loại ItemType nào (HARD RULE):**
+- Nếu người dùng yêu cầu một sản phẩm KHÔNG tồn tại trong danh sách category được cung cấp, bạn TUYỆT ĐỐI KHÔNG được:
+  - Tự tạo ItemType mới
+  - Đoán gần đúng
+  - Cố suy diễn sang category khác
+
+- Trong trường hợp này, bạn PHẢI:
+  1. Set `ItemType = null`
+  2. action = ""ask_question""
+  3. responseText phải lịch sự thông báo sản phẩm đó không có trong hệ thống và đề nghị người dùng chọn lại từ danh sách hợp lệ.
+
 QUY TẮC PHONG CÁCH VÀ NGỮ CẢNH (LOGIC RULES)
 - `FashionStyle` và `Occasion` phải phù hợp với nhau. Không được tạo các tổ hợp phi lý như 'đi biển công sở', 'thể thao dự tiệc', 'dạo phố văn phòng'.
 - Khi hỏi về `FashionStyle`, chỉ được gợi ý trong phạm vi các phong cách hợp lệ (ví dụ: công sở, dạo phố, đi biển, dự tiệc...). 
