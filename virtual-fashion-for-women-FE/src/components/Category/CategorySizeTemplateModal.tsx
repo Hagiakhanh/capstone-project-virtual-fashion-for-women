@@ -224,7 +224,6 @@ export default function CategorySizeTemplateModal({
     if (!isOpen) return null;
 
     return (
-        // Backdrop
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex justify-center items-center">
         {/* Modal Content */}
             <div className="bg-white rounded-lg shadow-xl z-50 w-full max-w-4xl max-h-[90vh] flex flex-col">
@@ -246,6 +245,7 @@ export default function CategorySizeTemplateModal({
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
+                                    {/* Hàng 1: Tiêu đề lớn (Vai, Ngực, Eo, Mông) */}
                                     <tr>
                                         <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">Size</th>
                                         {showShoulder && <th colSpan={2} className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Vai</th>}
@@ -253,6 +253,7 @@ export default function CategorySizeTemplateModal({
                                         {showWaist && <th colSpan={2} className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Eo</th>}
                                         {showHips && <th colSpan={2} className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Mông</th>}
                                     </tr>
+                                    {/* Hàng 2: Tiêu đề nhỏ (Min, Max) */}
                                     <tr>
                                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-50 z-10"></th>
                                         {showShoulder && <>
@@ -280,7 +281,7 @@ export default function CategorySizeTemplateModal({
                                             
                                             {/* --- VAI --- */}
                                             {showShoulder && <>
-                                                <td>
+                                                <td className="text-right px-3 py-2">
                                                     <input 
                                                         type="number" 
                                                         min="0" 
@@ -293,10 +294,10 @@ export default function CategorySizeTemplateModal({
                                                         onChange={e => 
                                                             handleInputChange(template.sizeId, 'minShoulder', e.target.value)
                                                         } 
-                                                        className="w-20 form-input rounded-md shadow-sm" 
+                                                        className="w-24 form-input rounded-md shadow-sm text-center" 
                                                     />
                                                 </td>
-                                                <td>
+                                                <td className="text-right px-3 py-2">
                                                     <input 
                                                         type="number" 
                                                         min="0" 
@@ -307,13 +308,13 @@ export default function CategorySizeTemplateModal({
                                                             ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()
                                                         } 
                                                         onChange={e => handleInputChange(template.sizeId, 'maxShoulder', e.target.value)} 
-                                                        className="w-20 form-input rounded-md shadow-sm" 
+                                                        className="w-24 form-input rounded-md shadow-sm text-center" 
                                                     />
                                                 </td>
                                             </>}
                                             {/* --- NGỰC --- */}
                                             {showBust && <>
-                                                <td>
+                                                <td className="text-right px-3 py-2">
                                                     <input 
                                                         type="number" 
                                                         min="0" 
@@ -324,10 +325,10 @@ export default function CategorySizeTemplateModal({
                                                             ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()
                                                         } 
                                                         onChange={e => handleInputChange(template.sizeId, 'minBust', e.target.value)} 
-                                                        className="w-20 form-input rounded-md shadow-sm" 
+                                                        className="w-24 form-input rounded-md shadow-sm text-center" 
                                                     />
                                                 </td>
-                                                <td>
+                                                <td className="text-right px-3 py-2">
                                                     <input 
                                                         type="number" 
                                                         min="0" 
@@ -338,13 +339,13 @@ export default function CategorySizeTemplateModal({
                                                             ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()
                                                         } 
                                                         onChange={e => handleInputChange(template.sizeId, 'maxBust', e.target.value)} 
-                                                        className="w-20 form-input rounded-md shadow-sm" 
+                                                        className="w-24 form-input rounded-md shadow-sm text-center" 
                                                     />
                                                 </td>
                                             </>}
                                             {/* --- EO --- */}
                                             {showWaist && <>
-                                                <td>
+                                                <td className="text-right px-3 py-2">
                                                     <input 
                                                         type="number" 
                                                         min="0" 
@@ -355,10 +356,10 @@ export default function CategorySizeTemplateModal({
                                                             ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()
                                                         } 
                                                         onChange={e => handleInputChange(template.sizeId, 'minWaist', e.target.value)} 
-                                                        className="w-20 form-input rounded-md shadow-sm" 
+                                                        className="w-24 form-input rounded-md shadow-sm text-center" 
                                                     />
                                                 </td>
-                                                <td>
+                                                <td className="text-right px-3 py-2">
                                                     <input 
                                                         type="number" 
                                                         min="0" 
@@ -369,13 +370,13 @@ export default function CategorySizeTemplateModal({
                                                             ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()
                                                         } 
                                                         onChange={e => handleInputChange(template.sizeId, 'maxWaist', e.target.value)} 
-                                                        className="w-20 form-input rounded-md shadow-sm" 
+                                                        className="w-24 form-input rounded-md shadow-sm text-center" 
                                                     />
                                                 </td>
                                             </>}
                                             {/* --- MÔNG --- */}
                                             {showHips && <>
-                                                <td>
+                                                <td className="text-right px-3 py-2">
                                                     <input 
                                                         type="number" 
                                                         min="0" 
@@ -386,10 +387,10 @@ export default function CategorySizeTemplateModal({
                                                             ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()
                                                         }
                                                         onChange={e => handleInputChange(template.sizeId, 'minHips', e.target.value)} 
-                                                        className="w-20 form-input rounded-md shadow-sm" 
+                                                        className="w-24 form-input rounded-md shadow-sm text-center" 
                                                     />
                                                 </td>
-                                                <td>
+                                                <td className="text-right px-3 py-2">
                                                     <input 
                                                         type="number" 
                                                         min="0" 
@@ -400,7 +401,7 @@ export default function CategorySizeTemplateModal({
                                                             ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()
                                                         }
                                                         onChange={e => handleInputChange(template.sizeId, 'maxHips', e.target.value)} 
-                                                        className="w-20 form-input rounded-md shadow-sm" 
+                                                        className="w-24 form-input rounded-md shadow-sm text-center" 
                                                     />
                                                 </td>
                                             </>}
