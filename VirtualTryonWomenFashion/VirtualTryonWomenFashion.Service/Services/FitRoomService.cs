@@ -124,7 +124,7 @@ public class FitRoomService : IFitRoomService
                 bottomStream = await DownloadImageFromUrl(tryOnModel.BottomImage.NoBgImgUrl);
                 var bottomContent = new StreamContent(bottomStream);
                 bottomContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-                formData.Add(bottomContent, "lower_cloth_image", "bottom.jpg");
+                formData.Add(bottomContent, "cloth_image", "bottom.jpg");
                 formData.Add(new StringContent("lower"), "cloth_type");
             }
 
