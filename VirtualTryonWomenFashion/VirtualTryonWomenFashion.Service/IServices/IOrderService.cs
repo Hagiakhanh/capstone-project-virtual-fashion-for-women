@@ -29,5 +29,8 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModelWithData<GhnOrderSyncResponse>> UpdateOrderStatusInGHNByCode(int orderId);
         public Task<MessageModel> UpdateAllOrderStatusInGHN();
         public Task<MessageModelWithData<bool>> CanRequestOrderRefund(int orderId);
+        public Task<MessageModel> UpdateOrderCompleteForCustomer(int orderId);
+        public Task<MessageModelWithData<bool>> CanRequestOrderComplete(int orderId);
+        public Task UpdateOrderCompleteAll();
     }
 }
