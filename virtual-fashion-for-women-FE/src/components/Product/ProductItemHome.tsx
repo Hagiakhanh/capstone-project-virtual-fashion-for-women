@@ -102,6 +102,8 @@ function ProductItemHome({ product, onWishlistSuccess, setLoading }: { product?:
       }
    }, [product]);
 
+   const displayPrice = product?.priceAtTime || product?.price;
+   const hasDiscount = product?.priceAtTime < product?.price;
 
    return (
       <Link href={`/products/${product.productSlug}`}>
@@ -189,8 +191,19 @@ function ProductItemHome({ product, onWishlistSuccess, setLoading }: { product?:
                   </div>
                )}
 
-               <div className="mt-2">
+               {/* <div className="mt-2">
                   <span className="font-bold text-lg">{product?.price ? `${formatPrice(product?.price)}đ` : '0đ'}</span>
+               </div> */}
+
+               <div className="mt-2 flex gap-2 items-center">
+                  <span className={`${hasDiscount == true ? 'text-red-600' : 'text-black'} font-bold`}>
+                     {formatPrice(displayPrice)}đ
+                  </span>
+                  {hasDiscount && (
+                     <span className="line-through text-gray-500 text-sm">
+                        {formatPrice(product?.price)}đ
+                     </span>
+                  )}
                </div>
             </div>
          </div>

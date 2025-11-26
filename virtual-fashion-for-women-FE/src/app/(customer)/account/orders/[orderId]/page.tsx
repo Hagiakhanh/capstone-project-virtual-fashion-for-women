@@ -22,6 +22,8 @@ export default function OrderDetailPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [form] = Form.useForm();
     const [checkCanRefund, setCheckCanRefund] = useState<boolean>(false);
+    const [showConfirmCompleteModal, setShowConfirmCompleteModal] = useState(false);
+    const [checkCanComplete, setCheckCanComplete] = useState<boolean>(false);
 
     const fetchOrderDetails = async (orderId: number) => {
         try {
@@ -51,6 +53,21 @@ export default function OrderDetailPage() {
             }
         } catch (error) {
             console.log("Lỗi khi kiểm tra hoàn hàng: ", error);
+            setCheckCanRefund(false);
+        }
+    }
+
+    const fetchCheckCanComplete = async (orderId: number) => {
+        try {
+            const response = await api.get(`/order/can-complete/${orderId}`);
+            if (response.status === 200) {
+                setCheckCanComplete(true);
+            } else {
+                setCheckCanComplete(false);
+            }
+        } catch (error) {
+            console.log("Lỗi khi kiểm tra hoàn hàng: ", error);
+            setCheckCanComplete(false);
         }
     }
 
@@ -58,6 +75,7 @@ export default function OrderDetailPage() {
         if (orderId) {
             fetchOrderDetails(orderId);
             fetchCheckCanRefund(orderId);
+            fetchCheckCanComplete(orderId);
         }
     }, [orderId]);
 
@@ -107,6 +125,22 @@ export default function OrderDetailPage() {
         }
     }
 
+    const handleCompleteOrder = async () => {
+        try {
+            const response = await api.put(`/order/complete/${orderId}`);
+            if (response.status === 200) {
+                messageToast.success("Đơn hàng đã được hoàn tất.");
+                fetchOrderDetails(orderId);
+                fetchCheckCanRefund(orderId);
+                fetchCheckCanComplete(orderId);
+            }
+
+        } catch (error) {
+            console.log("Lỗi khi hoàn tất đơn hàng: ", error);
+            messageToast.error("Lỗi khi hoàn tất đơn hàng.");
+        }
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-4">
             <div className="max-w-6xl mx-auto">
@@ -142,10 +176,23 @@ export default function OrderDetailPage() {
                                 <Button
                                     type="primary"
                                     size="large"
-                                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                    className="!bg-red-500 !hover:bg-red-600 !text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
                                     onClick={() => setShowRefundModal(true)}
                                 >
                                     Yêu cầu hoàn hàng
+                                </Button>
+                            )
+                        }
+
+                        {
+                            checkCanComplete == true && (
+                                <Button
+                                    type="default"
+                                    size="large"
+                                    className="!border-green-500 !text-green-600 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                    onClick={() => setShowConfirmCompleteModal(true)}
+                                >
+                                    Nhận hàng
                                 </Button>
                             )
                         }
@@ -159,6 +206,38 @@ export default function OrderDetailPage() {
                             Quay lại
                         </button>
                     </div>
+
+                    <Modal
+                        title={<span className="font-semibold text-xl">Xác nhận đã nhận hàng</span>}
+                        open={showConfirmCompleteModal}
+                        onCancel={() => setShowConfirmCompleteModal(false)}
+                        footer={null}
+                        centered
+                    >
+                        <p className="text-base text-gray-700 mb-4">
+                            Sau khi xác nhận đã nhận hàng, bạn sẽ <b>không thể tạo yêu cầu hoàn hàng</b> cho đơn này nữa.
+                            Bạn có chắc chắn muốn tiếp tục không?
+                        </p>
+
+                        <div className="flex justify-end gap-3 mt-6">
+                            <Button
+                                onClick={() => setShowConfirmCompleteModal(false)}
+                            >
+                                Hủy
+                            </Button>
+
+                            <Button
+                                type="primary"
+                                className="!bg-green-600 !text-white"
+                                onClick={async () => {
+                                    await handleCompleteOrder();
+                                    setShowConfirmCompleteModal(false);
+                                }}
+                            >
+                                Xác nhận
+                            </Button>
+                        </div>
+                    </Modal>
 
                     <Modal
                         title={<span className="font-semibold text-xl">Tạo yêu cầu hoàn hàng</span>}
