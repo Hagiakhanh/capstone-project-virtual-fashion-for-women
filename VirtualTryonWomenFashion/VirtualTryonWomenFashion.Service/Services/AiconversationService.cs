@@ -172,7 +172,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             try
             {
                 int currentUserId = _currentUserService.GetUserId();
-                List<Aiconversation> listConversation = await _aiconversationRepository.GetAll(null, x => x.UserId == currentUserId);
+                List<Aiconversation> listConversation = await _aiconversationRepository.GetAll(null, x => x.UserId == currentUserId, x => x.OrderByDescending(x => x.CreatedAt), []);
                 return listConversation;
             }
             catch (Exception ex)

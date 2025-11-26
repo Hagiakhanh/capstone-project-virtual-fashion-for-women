@@ -195,7 +195,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             try
             {
                 int totalRecords = _saleCampaignRepository.Count(x => x.IsDeleted == false);
-                List<SaleCampaign> listSaleCampaign = await _saleCampaignRepository.GetAll(paginationParameter, x => x.IsDeleted == false, null, []);
+                List<SaleCampaign> listSaleCampaign = await _saleCampaignRepository.GetAll(paginationParameter, x => x.IsDeleted == false, x=>x.OrderByDescending(x=>x.CampaignId), []);
                 int totalPages = (int)Math.Ceiling((decimal)totalRecords / paginationParameter.PageSize);
                 List<ResponseGetShortSaleCampaignDetail> listMapper = _mapper.Map<List<ResponseGetShortSaleCampaignDetail>>(listSaleCampaign);
                 return new ResponsePaginationModel<List<ResponseGetShortSaleCampaignDetail>>(StatusCodes.Status200OK, listMapper, totalRecords, totalPages);
