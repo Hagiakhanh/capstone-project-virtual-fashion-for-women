@@ -307,7 +307,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             int userId = _currentUserService.GetUserId();
             List<Order> rawOrders = await _orderRepository.GetAll(
-                filter: o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)) && o.Transactions.Any(t=>t.Type == TypeTransactionEnum.Purchase.ToString()),
+                filter: o => o.CustomerId == userId && (o.Status == orderStatus || string.IsNullOrEmpty(orderStatus)) && o.Transactions.Any(t => t.Type == TypeTransactionEnum.Purchase.ToString()),
                 pagination: page,
                 orderBy: o => o.OrderByDescending(x => x.CreatedAt),
                 includes:
@@ -783,7 +783,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 }
                             };
                         }
-                        
+
                         if (order.Status == OrderStatusEnum.Returned.ToString())
                         {
                             decimal amountRefund = (decimal)(order.Amount - order.ShippingMoney - order.InsuranceFee);
@@ -988,7 +988,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                                     WalletId = order.Customer.WalletId.Value
                                 };
                                 requestCreateTransactions.Add(transaction);
-                                
+
                             }
                         }
                         statusLogs.Add(new RequestCreateStatusLog()
@@ -1142,6 +1142,110 @@ namespace VirtualTryonWomenFashion.Service.Services
                 Data = false
             };
 
+        }
+
+        public async Task<MessageModel> UpdateOrderCompleteForCustomer(int orderId)
+        {
+            int userId = _currentUserService.GetUserId();
+            Order order = await _orderRepository.GetOrderByOrderID(orderId);
+            if (order == null)
+            {
+                throw new Exception("Không tồn tại đơn hàng");
+            }
+            if (order.Status != OrderStatusEnum.Delivered.ToString())
+            {
+                throw new Exception($"Trạng thái hiện tại là {order.Status}, không thể cập nhật");
+            }
+            if (userId != order.CustomerId)
+            {
+                throw new Exception("Bạn không có quyền cập nhật đơn hàng này");
+            }
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                order.Status = OrderStatusEnum.Completed.ToString();
+                await _orderRepository.UpdateAsync(order);
+                int result = await _unitOfWork.SaveChanges();
+
+                RequestCreateNotification requestCreateNotification = new RequestCreateNotification()
+                {
+                    Title = $"Đơn hàng {order.OrderId} đã được hoàn thành",
+                    Content = $"Đơn hàng {order.OrderId} của bạn đã hoàn thành. Bạn có thể đánh giá sản phẩm",
+                    ReceiverId = order.CustomerId
+
+                };
+                await _notificationService.CreateNotificationAsync(requestCreateNotification);
+                /*await _notificationHub.Clients.Group(order.CustomerId.ToString())
+                            .SendAsync("ReceiveNotification", requestCreateNotification.Title);*/
+
+                await _unitOfWork.CommitTransactionAsync();
+                if (result > 0)
+                {
+                    return new MessageModel
+                    {
+                        Message = "Cập nhật trạng thái thành công",
+                        StatusCode = StatusCodes.Status200OK
+                    };
+                }
+
+                return new MessageModel
+                {
+                    Message = "Cập nhật trạng thái thất bại",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
+
+        }
+
+        public async Task<MessageModelWithData<bool>> CanRequestOrderComplete(int orderId)
+        {
+            Order order = await _orderRepository.GetOrderByOrderID(orderId);
+            if (order == null)
+            {
+                throw new Exception("Không tồn tại đơn hàng");
+            }
+            if (order.Status != OrderStatusEnum.Delivered.ToString())
+            {
+                throw new Exception($"Trạng thái hiện tại là {order.Status}, không thể hoàn tất");
+            }
+            return new MessageModelWithData<bool>
+            {
+                Message = "Có thể hoàn tất đơn hàng",
+                StatusCode = StatusCodes.Status200OK,
+                Data = true
+            };
+
+        }
+
+        public async Task UpdateOrderCompleteAll()
+        {
+            Expression<Func<Order, bool>> filterExpression = x => x.Status == OrderStatusEnum.Delivered.ToString()
+                                            && x.DeliveredAt != null                            
+                                            && DateTime.UtcNow.AddHours(7) > x.DeliveredAt.Value.AddDays(2);
+
+            List<Order> listOrder = await _orderRepository.GetAll(
+                    filter: filterExpression
+                );
+
+            if (listOrder == null || listOrder.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var order in listOrder)
+            {
+                order.Status = OrderStatusEnum.Completed.ToString();
+            }
+
+            await _orderRepository.UpdateRangeAsync(listOrder);
+            int result = await _unitOfWork.SaveChanges();
         }
     }
 }
