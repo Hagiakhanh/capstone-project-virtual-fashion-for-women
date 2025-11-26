@@ -5,8 +5,12 @@ import { Card, DatePicker, Spin, Row, Col, Statistic } from "antd";
 import { useParams } from "next/navigation";
 import { Line, Column } from "@ant-design/plots";
 import dayjs from "dayjs";
-import { apiToken } from "@/api/instance";
-import { DollarOutlined, ShoppingCartOutlined } from "@ant-design/icons";
+import { api, apiToken } from "@/api/instance";
+import {
+  DollarOutlined,
+  ShoppingCartOutlined,
+  TrophyOutlined,
+} from "@ant-design/icons";
 import formatPrice from "@/utils/formatPrice";
 import { messageToast } from "@/helpers/toastHelper";
 import { Table, Image } from "antd";
@@ -61,7 +65,7 @@ export default function CampaignStatisticPage() {
     const fetchCampaignDetail = async () => {
       try {
         const res = await apiToken.get(`/salecampaign/${id}`);
-        const campaign = res.data.data;
+        const campaign = res.data;
         const start = dayjs(campaign.startDate);
         const end = dayjs(campaign.endDate);
         setCampaignDate({ startDate: start, endDate: end });
@@ -85,7 +89,7 @@ export default function CampaignStatisticPage() {
       setLoading(true);
       const [start, end] = range!;
 
-      const res = await apiToken.get(`/salecampaign/${id}/statistic`, {
+      const res = await api.get(`/salecampaign/${id}/statistic`, {
         params: {
           startDate: start.format("YYYY-MM-DD"),
           endDate: end.format("YYYY-MM-DD"),
@@ -104,18 +108,18 @@ export default function CampaignStatisticPage() {
       // 2. Map dữ liệu cho Bảng và Biểu đồ Hiệu suất sản phẩm (SỬ DỤNG TRƯỜNG totalRevenue MỚI)
       const mappedProducts: ProductStatistic[] =
         data.listProductInCampaign?.map((p: any) => {
-          
           // Lấy giá bán từ trường salePrice của sản phẩm cha
-          const productSalePrice = p.salePrice || 0; 
+          const productSalePrice = p.salePrice || 0;
 
           // Tính toán doanh thu cho từng variant: soldQuantity * salePrice
-          const variants: ProductVariant[] = p.listResponseProductVariant?.map((v: any) => ({
-            key: v.productVariantId,
-            name: v.productVariantName,
-            soldQuantity: v.soldQuantity,
-            revenue: (v.soldQuantity || 0) * productSalePrice, 
-            imageUrl: v.imageUrl,
-          })) || [];
+          const variants: ProductVariant[] =
+            p.listResponseProductVariant?.map((v: any) => ({
+              key: v.productVariantId,
+              name: v.productVariantName,
+              soldQuantity: v.soldQuantity,
+              revenue: (v.soldQuantity || 0) * productSalePrice,
+              imageUrl: v.imageUrl,
+            })) || [];
 
           return {
             key: p.productID,
@@ -208,7 +212,7 @@ export default function CampaignStatisticPage() {
       align: "right" as const,
     },
     {
-      title: "Doanh thu (₫)", 
+      title: "Doanh thu (₫)",
       dataIndex: "revenue",
       key: "revenue",
       align: "right" as const,
@@ -284,9 +288,10 @@ export default function CampaignStatisticPage() {
           <Col xs={24} md={12} lg={8}>
             <Card>
               <Statistic
-                title="Trung bình doanh thu/ngày"
-                value={avgRevenue}
-                formatter={(val) => val.toLocaleString() + " ₫"}
+                title="Tổng sản phẩm trong chiến dịch"
+                value={productData.length}
+                valueStyle={{ color: "#3f8600" }}
+                prefix={<TrophyOutlined />}
               />
             </Card>
           </Col>
@@ -316,14 +321,9 @@ export default function CampaignStatisticPage() {
 
         {/* Chart */}
         <Row gutter={[16, 16]}>
-          <Col span={24} md={16}>
+          <Col span={24} md={24}>
             <Card title="Doanh thu chiến dịch theo ngày">
               <Line {...revenueConfig} height={300} />
-            </Card>
-          </Col>
-          <Col span={24} md={8}>
-            <Card title="Hiệu suất bán theo sản phẩm">
-              <Column {...productConfig} height={300} />
             </Card>
           </Col>
         </Row>

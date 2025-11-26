@@ -32,7 +32,7 @@ export default function SelectProductModal({
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [pageIndex, setPageIndex] = useState(1);
   const [pageSize] = useState(8);
   const [total, setTotal] = useState(0);
@@ -61,7 +61,8 @@ export default function SelectProductModal({
       });
       if (selectedCategory !== "all")
         queryParams.append("categoryId", selectedCategory);
-      if (search.trim()) queryParams.append("searchTerm", search.trim());
+      if (debouncedSearch.trim())
+        queryParams.append("searchTerm", debouncedSearch.trim());
 
       const res = await api.get(`/product?${queryParams.toString()}`);
       if (res.status !== 200) throw new Error("Không thể tải danh sách sản phẩm");
@@ -74,7 +75,7 @@ export default function SelectProductModal({
         isValid: true,
       }));
 
-      setTotal(res.data.pagination.totalCount || allProducts.length);
+      setTotal(res.data.pagination.TotalCount || allProducts.length);
 
       // ✅ Kiểm tra hợp lệ qua API validate
       const checkRes = await apiToken.post(`/productInSaleCampaign/validate`, {
@@ -101,7 +102,17 @@ export default function SelectProductModal({
 
   useEffect(() => {
     fetchProducts();
-  }, [pageIndex, selectedCategory, search, campaignDate]);
+  }, [pageIndex, selectedCategory, debouncedSearch, campaignDate]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500); // ⏱️ 500ms debounce
+  
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [search]);
 
   return (
     <div
