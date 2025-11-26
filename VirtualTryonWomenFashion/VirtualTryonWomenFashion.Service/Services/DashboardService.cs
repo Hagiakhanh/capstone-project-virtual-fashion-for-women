@@ -346,7 +346,7 @@ public class DashboardService : IDashboardService
     public async Task<List<TryOnChartPointDto>> GetTryOnTimelineAsync(
         string productId, DateTime? start, DateTime? end)
     {
-        var product = _productRepository.GetByIdAsync(productId);
+        var product = await _productRepository.GetByIdAsync(productId);
         if (product == null)
         {
             throw new ArgumentException("Sản phẩm không tồn tại");
