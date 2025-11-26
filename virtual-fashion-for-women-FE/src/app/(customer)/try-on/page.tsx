@@ -517,7 +517,7 @@ export default function VirtualTryOnPage() {
                     <SelectItemTryOn
                         category={modalType === 'top' ? topCategories : bottomCategories}
                         onClose={() => setShowModal(false)}
-                        onSelect={(item: any) => {
+                        onSelect={async (item: any) => {
                             console.log("Item selected from SelectItemTryOn:", item);
                             const fullBodyCategoryIds = category
                                 .filter((c) => c.bodyPart === 'Toàn thân')
@@ -529,7 +529,7 @@ export default function VirtualTryOnPage() {
                                 setSelectedBottom(null);
                             }
                             setIsDress(isDressItem);
-                            fetchProductColor(item.productColorId, category);
+                            await fetchProductColor(item.productColorId, category);
                             setShowModal(false);
                             sessionStorage.removeItem("productColor");
                         }}
