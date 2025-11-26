@@ -234,7 +234,10 @@ function ProductDetailsPage() {
 
    }, [chooseProduct.colorId, chooseProduct.sizeCode, productDetail]);
 
-   console.log('chooseProduct', chooseProduct);
+   // console.log('chooseProduct', chooseProduct);
+
+   const displayPrice = productDetail?.priceAtTime || productDetail?.price;
+   const hasDiscount = productDetail?.priceAtTime < productDetail?.price;
 
    return (
       <>
@@ -277,9 +280,21 @@ function ProductDetailsPage() {
                   <p className="line-clamp-2 text-lg font-normal mt-3 text-gray-600">
                      MSP: {chooseProduct.productVariant ? chooseProduct.productVariant?.productVariantId : selectedColorVariant?.productColorId}
                   </p>
-                  <p className="text-2xl font-bold mt-3">
+                  {/* <p className="text-2xl font-bold mt-3">
                      {formatPrice(Number(productDetail?.price))}đ
-                  </p>
+                  </p> */}
+
+                  <div className="mt-2 flex gap-2 items-center">
+                     <span className={`${hasDiscount == true ? 'text-red-600' : 'text-black'} font-bold text-2xl`}>
+                        {formatPrice(Number(displayPrice))}đ
+                     </span>
+                     {hasDiscount && (
+                        <span className="line-through text-gray-500 text-sm">
+                           {formatPrice(Number(productDetail?.price))}đ
+                        </span>
+                     )}
+                  </div>
+
                   <div className="flex mt-3 gap-5">
                      <span className="font-bold text-xl">Màu sắc:</span>
                      <span className="font-normal text-xl">{productColor.find(color => color.colorId === selectedColorVariant?.colorId)?.colorName}</span>
@@ -440,8 +455,8 @@ function ProductDetailsPage() {
          <PolicyInProductDetail />
 
          {productDetail && (
-          <ProductRatings productId={productDetail?.productId} />
-        )}
+            <ProductRatings productId={productDetail?.productId} />
+         )}
       </>
    );
 }
