@@ -53,6 +53,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
             var orders = await _context.Orders
                 .Where(o => o.Status == status)
                 .Include(o => o.OrderDetails)
+                .Include(o=>o.Customer)
                 .ToListAsync();
             return orders ??= new List<Order>();
         }

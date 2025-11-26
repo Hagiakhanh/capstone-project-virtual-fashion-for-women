@@ -430,6 +430,12 @@ public class PaymentService : IPaymentService
                     // Cập nhật trạng thái đơn hàng thành "Confirmed"
                     await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(),
                         responseOrder.OrderId);
+                    _mailService.sendEmailAsync(new MailRequest
+                    {
+                        ToEmail = responseOrder.UserInformation.Email,
+                        Subject = $"[Women Fashion] Đơn hàng ORD-{responseOrder.OrderId} đã được đặt thành công",
+                        Body = MailContent.OrderSuccessEmail(responseOrder.ReceiverName, "ORD-" + responseOrder.OrderId, responseOrder.CreatedAt.ToString("HH:mm dd/MM/yyyy"), responseOrder.Amount.Value.ToString("#,0", new CultureInfo("vi-VN")) + " đ", responseOrder.ReceiverAddress)
+                    });
                 }
                 else if (transaction.Type == TypeTransactionEnum.Recharge.ToString())
                 {
@@ -654,12 +660,6 @@ public class PaymentService : IPaymentService
 
             if (!string.IsNullOrEmpty(paymentUrl)) await _orderService.UpdatePaymentUrlAsync(paymentUrl, order.OrderId);
             await _unitOfWork.CommitTransactionAsync();
-            _mailService.sendEmailAsync(new MailRequest
-            {
-                ToEmail = currentUser.Email,
-                Subject = $"[Women Fashion] Đơn hàng ORD-{order.OrderId} đã được đặt thành công",
-                Body = MailContent.OrderSuccessEmail(order.ReceiverName, "ORD-" + order.OrderId, order.CreatedAt.ToString("HH:mm dd/MM/yyyy"), order.Amount.Value.ToString("#,0", new CultureInfo("vi-VN")) + " đ", order.ReceiverAddress)
-            });
             return paymentUrl;
         }
         catch (Exception ex)
