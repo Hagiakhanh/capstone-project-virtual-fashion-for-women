@@ -86,8 +86,8 @@ export const SelectSizeModal: React.FC<SelectSizeModalProps> = ({
           <Flex vertical justify="center">
             <Text strong>Màu: {productColor?.color?.colorName}</Text>
 
-            {product.priceAtTime ? (
-              // Nếu có giá chiến dịch
+            {product.priceAtTime && product.priceAtTime < product.price ? (
+              // Có giảm giá
               <div className="flex items-center gap-2">
                 <Text type="warning" className="text-lg font-semibold">
                   {product.priceAtTime} ₫
@@ -100,7 +100,7 @@ export const SelectSizeModal: React.FC<SelectSizeModalProps> = ({
                 </Text>
               </div>
             ) : (
-              // Nếu không có giá chiến dịch, chỉ hiển thị giá gốc
+              // Không giảm hoặc 2 giá bằng nhau
               <Text type="warning" className="text-lg font-semibold">
                 {product.price} ₫
               </Text>
