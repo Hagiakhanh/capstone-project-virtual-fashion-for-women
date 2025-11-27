@@ -189,7 +189,7 @@ export default function StaffOrderPage() {
                   <Filter className="w-4 h-4" /> Filters
                </button> */}
                <button className="bg-black text-white rounded-lg px-5 py-2 hover:bg-gray-800">
-                  Apply
+                  Áp dụng
                </button>
                <Button
                   onClick={handleSyncAllGHNOrders}
