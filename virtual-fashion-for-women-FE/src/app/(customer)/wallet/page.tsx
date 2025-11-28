@@ -206,13 +206,13 @@ export default function WalletPage() {
                                     <Plus className="w-4 h-4" /> Nạp tiền
                                 </div>
                             </button>
-                            <button
+                            {/* <button
                                 className="flex-1 bg-white/20 backdrop-blur-md text-white py-3 rounded-xl font-medium hover:bg-white/30 transition-all"
                             >
                                 <div className="flex items-center justify-center gap-2">
                                     <ArrowUpRight className="w-4 h-4" /> Rút tiền
                                 </div>
-                            </button>
+                            </button> */}
                         </div>
                     </div>
                 </div>
