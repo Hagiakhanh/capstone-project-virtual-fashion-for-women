@@ -101,7 +101,7 @@ export default function AdminHeader({
                 className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                Logout
+                Đăng xuất
               </button>
             </div>
           )}

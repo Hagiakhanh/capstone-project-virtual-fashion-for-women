@@ -12,6 +12,7 @@ import { OrderDetailStaffResponseDTO } from "@/models/OrderDetailDTO";
 import formatPrice from "@/utils/formatPrice";
 import { messageToast } from "@/helpers/toastHelper";
 import { GhnStatusDTO } from "@/models/GhnDTO";
+import statusMap from "@/helpers/statusMapper";
 
 export default function StaffOrderDetailsPage() {
    const params = useParams();
@@ -244,7 +245,7 @@ export default function StaffOrderDetailsPage() {
                <p className="text-gray-500 text-lg">Tạo lúc {formatDate(orderData?.createdAt)}</p>
             </div>
             <div className="flex gap-2">
-               <p className="bg-[#666666] cursor-default text-white px-4 py-1 rounded-full text-base flex items-center">{orderData?.status}</p>
+               <p className="bg-[#666666] cursor-default text-white px-4 py-1 rounded-full text-base flex items-center">{statusMap[orderData?.status]?.label}</p>
                <Button onClick={handlePrepareOrder} icon={<Box size={16} />} className={`${orderData?.status == 'Confirmed' ? 'cursor-pointer' : 'opacity-50 !cursor-not-allowed'} !border-[#E5E5E5] !text-base !text-black !hover:text-black`} size="large">Đã chuẩn bị hàng</Button>
                <Button
                   onClick={handleSyncGHN}
