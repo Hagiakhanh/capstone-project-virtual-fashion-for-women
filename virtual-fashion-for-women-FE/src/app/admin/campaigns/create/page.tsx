@@ -242,6 +242,7 @@ function CreateSaleCampaignPage() {
             >
               <RangePicker
                 format="DD/MM/YYYY"
+                placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
                 disabledDate={(current) => {
                   // ❌ Không cho chọn ngày trước hôm nay
                   return current && current < dayjs().startOf("day");
