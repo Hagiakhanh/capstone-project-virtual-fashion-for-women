@@ -10,7 +10,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.SaleCampaign
     {
         public decimal TotalRevenue { get; set; }
         public int TotalSoldQuantity { get; set; }
-        public decimal AverageRevenuePerDate { get; set; }
+        public int TotalProductInCampaign { get; set; }
         public List<ResponseProductInSaleCampaignStatistic> ListProductInCampaign { get; set; }
         public List<ResponseSaleCampaignRevenueDate> ListSaleRevenueDate { get; set; }
     }

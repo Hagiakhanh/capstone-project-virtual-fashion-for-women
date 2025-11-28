@@ -57,7 +57,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         {
             try
             {
-                var result = await _saleCampaignService.GetActiveSaleCampaignByID(id);
+                var result = await _saleCampaignService.GetSaleCampaignByID(id);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -121,7 +121,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
 
-        public async Task<IActionResult> Deactivate(int id, [FromForm] RequestUpdateSaleCampaign model)
+        public async Task<IActionResult> Update(int id, [FromForm] RequestUpdateSaleCampaign model)
         {
             try
             {
