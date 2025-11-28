@@ -24,3 +24,31 @@ export async function GET(
     );
   }
 }
+
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ salecampaignId: string }> }
+) {
+  try {
+    const { salecampaignId } = await params;
+    const formData = await request.formData(); // Lấy FormData từ client
+    const api = createApiInstance(request);
+
+    // Gọi backend PUT đúng route
+    const responseBE = await api.put(`/salecampaign/${parseInt(salecampaignId)}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return NextResponse.json(responseBE.data, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        message: error.response?.data?.message || error.message || "Có lỗi xảy ra",
+        details: error.response?.data,
+      },
+      { status: error.response?.status || 400 }
+    );
+  }
+}
