@@ -116,6 +116,10 @@ export function ChatMessageStage({
     try {
       const result = await api.get("/aiconversation/" + conversationID);
       const data = result.data?.data || result.data;
+      if(data==null|| data==""){
+        messageToast.error("Cuộc trò chuyện không hợp lệ");
+        router.push("/account/aiConversations");
+      }
       setCurrentConversation(data);
 
       const mappedMessages: ChatMessageItem[] = data.messages.map(
