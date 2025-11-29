@@ -136,59 +136,61 @@ export default function WishlistPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto p-4 font-sans">
-            <h1 className="text-3xl font-bold mb-6">Danh sách yêu thích của bạn</h1>
+        <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 font-sans">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Danh sách yêu thích của bạn</h1>
             
             {items.length === 0 ? (
                 <p className="text-gray-600">Danh sách yêu thích của bạn đang rỗng.</p>
             ) : (
-                <ul className="space-y-4">
+                <ul className="space-y-3 sm:space-y-4">
                     {items.map((item) => (
                         <li
                             key={item.wishlistId}
-                                className="flex items-center bg-white p-4 pr-6 rounded-lg shadow-sm border border-purple-100 relative"
-                            >
-                            {/* Nút X để xóa (giống trong hình) */}
+                            className="flex flex-col sm:flex-row items-start sm:items-center bg-white p-4 sm:pr-6 rounded-lg shadow-sm border border-purple-100 relative"
+                        >
+                            {/* Nút X để xóa */}
                             <button
                                 onClick={() => handleRemoveFromWishlist(item.wishlistId)}
-                                className="absolute top-2 right-3 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                                className="absolute top-2 right-2 sm:top-2 sm:right-3 text-gray-400 hover:text-red-500 transition-colors cursor-pointer z-10"
                                 aria-label="Remove from wishlist"
                             >
                                 <CloseIcon />
                             </button>
 
-                            {/* Hình ảnh sản phẩm */}
-                            <div className="flex-shrink-0 mr-5">
-                                <Image
-                                    src={item.product.mainImageUrl} // Lấy từ product include
-                                    alt={item.product.productName}
-                                    width={100} // Kích thước thực tế
-                                    height={100}
-                                    className="rounded-md object-cover w-24 h-24" // CSS cho kích thước
-                                />
+                            {/* Container cho hình ảnh và thông tin (mobile: ngang, desktop: như cũ) */}
+                            <div className="flex items-start w-full sm:flex-1 mb-3 sm:mb-0">
+                                {/* Hình ảnh sản phẩm */}
+                                <div className="flex-shrink-0 mr-3 sm:mr-5">
+                                    <Image
+                                        src={item.product.mainImageUrl}
+                                        alt={item.product.productName}
+                                        width={100}
+                                        height={100}
+                                        className="rounded-md object-cover w-20 h-20 sm:w-24 sm:h-24"
+                                    />
+                                </div>
+
+                                {/* Thông tin sản phẩm */}
+                                <div className="flex-grow pr-8 sm:pr-0">
+                                    <h3 className="text-base sm:text-lg font-semibold text-black-700">
+                                        {item.product.productName}
+                                    </h3>
+                                    <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">
+                                        {item.product.description}
+                                    </p>
+                                </div>
                             </div>
 
-                            {/* Thông tin sản phẩm */}
-                            <div className="flex-grow">
-                                <h3 className="text-lg font-semibold text-black-700">
-                                    {item.product.productName} {/* Lấy từ product include */}
-                                </h3>
-                                <p className="text-sm text-gray-600 mt-1 max-w-3xl line-clamp-2">
-                                    {item.product.description} {/* Lấy từ product include */}
-                                </p>
-                            </div>
-
-                            {/* Giá và Nút Add to Cart */}
-                            <Link href={`/products/${item.product.productSlug}`}>
-                                <div className="flex flex-col items-end ml-4 flex-shrink-0 w-40">
-                                    <span className="text-xl font-bold text-gray-900 mb-3">
-                                        <div className="text-black font-bold text-xl whitespace-nowrap">
+                            {/* Giá và Nút - Mobile: full width, Desktop: bên phải */}
+                            <Link href={`/products/${item.product.productSlug}`} className="w-full sm:w-auto">
+                                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start sm:ml-4 sm:flex-shrink-0 sm:w-40 w-full">
+                                    <span className="text-lg sm:text-xl font-bold text-gray-900 sm:mb-3">
+                                        <div className="text-black font-bold whitespace-nowrap">
                                             {formatPrice(item.product.price ?? 0)}đ
                                         </div>
                                     </span>
                                     <button
-                                        //onClick={() => handleAddToCart(item.product.productId)}
-                                        className="flex items-center justify-center bg-purple-600 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-purple-700 transition-colors cursor-pointer"
+                                        className="flex items-center justify-center bg-purple-600 text-white px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-medium hover:bg-purple-700 transition-colors cursor-pointer"
                                     >
                                         <span>Xem chi tiết</span>
                                     </button>
@@ -199,14 +201,16 @@ export default function WishlistPage() {
                 </ul>
             )}
 
-            <div className="flex justify-center items-center gap-3 mt-8">
+            {/* Pagination */}
+            <div className="flex justify-center items-center gap-1 sm:gap-3 mt-6 sm:mt-8 flex-wrap">
                 {/* Nút trước */}
                 <button
                     disabled={pagination.CurrentPage === 1}
                     onClick={() => handlePageChange(pagination.CurrentPage - 1)}
-                    className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    className="px-2 sm:px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-xs sm:text-base"
                 >
-                    « Trước
+                    <span className="hidden sm:inline">« Trước</span>
+                    <span className="sm:hidden">«</span>
                 </button>
 
                 {getPageNumbers(pagination.TotalPages, pagination.CurrentPage).map((page, idx) => (
@@ -214,10 +218,11 @@ export default function WishlistPage() {
                         key={idx}
                         onClick={() => typeof page === 'number' && handlePageChange(page)}
                         disabled={page === "..."}
-                        className={`px-4 py-2 rounded-lg border transition-all cursor-pointer ${pagination.CurrentPage === page
-                            ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-white hover:bg-gray-100'
-                            } ${page === "..." ? 'cursor-default opacity-70' : ''}`}
+                        className={`px-2 sm:px-4 py-2 rounded-lg border transition-all cursor-pointer text-xs sm:text-base ${
+                            pagination.CurrentPage === page
+                                ? 'bg-blue-500 text-white border-blue-500'
+                                : 'bg-white hover:bg-gray-100'
+                        } ${page === "..." ? 'cursor-default opacity-70' : ''}`}
                     >
                         {page}
                     </button>
@@ -227,9 +232,10 @@ export default function WishlistPage() {
                 <button
                     disabled={pagination.CurrentPage === pagination.TotalPages}
                     onClick={() => handlePageChange(pagination.CurrentPage + 1)}
-                    className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    className="px-2 sm:px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-xs sm:text-base"
                 >
-                    Sau »
+                    <span className="hidden sm:inline">Sau »</span>
+                    <span className="sm:hidden">»</span>
                 </button>
             </div>
         </div>

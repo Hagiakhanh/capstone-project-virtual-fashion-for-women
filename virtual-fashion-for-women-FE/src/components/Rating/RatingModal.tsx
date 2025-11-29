@@ -138,70 +138,92 @@ export default function RatingModal({
 
     // ...Phần JSX giữ nguyên...
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-             <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl relative">
-                 <button
-                     onClick={onClose}
-                     className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
-                 >
-                     <X size={24} />
-                 </button>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-md shadow-xl relative max-h-[90vh] overflow-y-auto">
+                {/* Nút đóng */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors z-10"
+                    aria-label="Đóng"
+                >
+                    <X size={20} className="sm:w-6 sm:h-6" />
+                </button>
 
-                 <h2 className="text-xl font-semibold mb-2">
-                     {isEditMode ? 'Xem/Sửa đánh giá' : 'Viết đánh giá'}
-                 </h2>
-                 <p className="text-gray-600 mb-4 truncate">
-                     Sản phẩm: <strong>{productName}</strong>
-                 </p>
-                 
-                 {/* FIX 1: Điều chỉnh logic loading 
-                   Chỉ loading khi (isEditMode VÀ chưa fetch xong currentRatingId)
-                 */}
-                 {loading && isEditMode && !currentRatingId ? (
-                      <div className="h-[200px] flex items-center justify-center">
-                          <p className="text-gray-500">Đang tải đánh giá của bạn...</p>
-                      </div>
-                 ) : (
-                      <>
-                          <div className="flex justify-center items-center gap-2 my-4">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star
-                                      key={star}
-                                      size={36}
-                                      className={`cursor-pointer transition-all ${
-                                          (hoverRating || rating) >= star
-                                              ? 'text-yellow-400 fill-yellow-400'
-                                              : 'text-gray-300'
-                                      }`}
-                                      onMouseEnter={() => setHoverRating(star)}
-                                      onMouseLeave={() => setHoverRating(0)}
-                                      onClick={() => setRating(star)}
-                                  />
-                              ))}
-                          </div>
+                {/* Tiêu đề */}
+                <h2 className="text-lg sm:text-xl font-semibold mb-2 pr-8">
+                    {isEditMode ? 'Xem/Sửa đánh giá' : 'Viết đánh giá'}
+                </h2>
+                
+                {/* Tên sản phẩm */}
+                <p className="text-sm sm:text-base text-gray-600 mb-4 line-clamp-2 pr-6">
+                    Sản phẩm: <strong className="text-gray-800">{productName}</strong>
+                </p>
+                
+                {loading && isEditMode && !currentRatingId ? (
+                    <div className="h-[150px] sm:h-[200px] flex items-center justify-center">
+                        <p className="text-sm sm:text-base text-gray-500">Đang tải đánh giá của bạn...</p>
+                    </div>
+                ) : (
+                    <>
+                        {/* Sao đánh giá */}
+                        <div className="flex justify-center items-center gap-1.5 sm:gap-2 my-4 sm:my-5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                    key={star}
+                                    size={32}
+                                    className={`cursor-pointer transition-all touch-manipulation active:scale-125 sm:w-9 sm:h-9 ${
+                                        (hoverRating || rating) >= star
+                                            ? 'text-yellow-400 fill-yellow-400'
+                                            : 'text-gray-300'
+                                    }`}
+                                    onMouseEnter={() => setHoverRating(star)}
+                                    onMouseLeave={() => setHoverRating(0)}
+                                    onClick={() => setRating(star)}
+                                />
+                            ))}
+                        </div>
 
-                          <textarea
-                              value={comment}
-                              onChange={(e) => setComment(e.target.value)}
-                              rows={4}
-                              maxLength={300}
-                              placeholder="Chia sẻ suy nghĩ của bạn về sản phẩm này..."
-                              className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/20"
-                          />
-                          <div className="text-right text-sm text-gray-400 mt-1">
-                              {comment.length}/300
-                          </div>
+                        {/* Label đánh giá (mobile) */}
+                        <div className="text-center mb-3 sm:mb-4">
+                            <span className="text-sm sm:text-base font-medium text-gray-700">
+                                {rating > 0 && (
+                                    <>
+                                        {rating === 1 && 'Rất tệ'}
+                                        {rating === 2 && 'Tệ'}
+                                        {rating === 3 && 'Ổn'}
+                                        {rating === 4 && 'Tốt'}
+                                        {rating === 5 && 'Rất tốt'}
+                                    </>
+                                )}
+                            </span>
+                        </div>
 
-                          <button
-                              onClick={handleSubmit}
-                              disabled={loading}
-                              className="w-full bg-red-500 text-white font-semibold py-3 rounded-lg mt-4 hover:bg-red-600 transition-all cursor-pointer disabled:opacity-50"
-                          >
-                              {loading ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Gửi đánh giá')}
-                          </button>
-                      </>
-                 )}
-             </div>
-         </div>
+                        {/* Textarea */}
+                        <textarea
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            rows={4}
+                            maxLength={300}
+                            placeholder="Chia sẻ suy nghĩ của bạn về sản phẩm này..."
+                            className="w-full p-3 text-sm sm:text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/20 resize-none"
+                        />
+                        
+                        {/* Đếm ký tự */}
+                        <div className="text-right text-xs sm:text-sm text-gray-400 mt-1 mb-3">
+                            {comment.length}/300
+                        </div>
+
+                        {/* Nút submit */}
+                        <button
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="w-full bg-red-500 text-white font-semibold py-2.5 sm:py-3 rounded-lg text-sm sm:text-base hover:bg-red-600 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                        >
+                            {loading ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Gửi đánh giá')}
+                        </button>
+                    </>
+                )}
+            </div>
+        </div>
     );
 }
