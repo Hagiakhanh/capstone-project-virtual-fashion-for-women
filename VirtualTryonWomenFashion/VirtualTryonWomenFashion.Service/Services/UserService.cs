@@ -458,5 +458,101 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
         }
+
+        public async Task<MessageModel> CreateForgotPassword(RequestForgotPassword requestForgotPassword)
+        {
+            User user = await _userRepository.GetUserByEmail(requestForgotPassword.Email);
+            if (user == null)
+            {
+                throw new Exception("Tài khoản không tồn tại");
+            }
+            if (user.IsActive == false)
+            {
+                throw new Exception("Tài khoản bị vô hiệu hóa");
+            }
+            if (user.IsEmailConfirm == false)
+            {
+                throw new Exception("Tài khoản chưa được kích hoạt");
+            }
+
+            user.ResetToken = Guid.NewGuid().ToString();
+            await _userRepository.UpdateAsync(user);
+
+            //Gọi service để gửi email
+            _mailService.sendEmailAsync(new MailRequest
+            {
+                ToEmail = user.Email,
+                Subject = "[Women Fashion] Quên mật khẩu",
+                Body = MailContent.ResetPasswordEmail(user.FullName, user.ResetToken, user.Email, _baseUrl)
+            });
+
+            int result = await _unitOfWork.SaveChanges();
+            if (result > 0)
+            {
+                return new MessageModel
+                {
+                    Message = "Tạo yêu cầu quên mật khẩu",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+
+            return new MessageModel
+            {
+                Message = "Tạo yêu cầu quên mật khẩu thất bại",
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
+
+
+        }
+
+        public async Task<MessageModel> CreateNewPassword(RequestCreateNewPassword requestCreateNewPassword)
+        {
+            User user = await _userRepository.GetUserByEmail(requestCreateNewPassword.Email);
+            if (user == null)
+            {
+                throw new Exception("Tài khoản không tồn tại");
+            }
+            if (user.IsActive == false)
+            {
+                throw new Exception("Tài khoản bị vô hiệu hóa");
+            }
+            if (user.IsEmailConfirm == false)
+            {
+                throw new Exception("Tài khoản chưa được kích hoạt");
+            }
+            if (string.IsNullOrEmpty(user.ResetToken))
+            {
+                throw new Exception("Không thể đổi mật khẩu");
+            }
+            if (user.ResetToken != requestCreateNewPassword.ResetToken)
+            {
+                throw new Exception("Token không hợp lệ");
+            }
+            if (requestCreateNewPassword.Password != requestCreateNewPassword.ConfirmPassword)
+            {
+                throw new Exception("Xác nhận mật khẩu không khớp");
+            }
+
+            user.Password = PasswordUtils.HashPassword(requestCreateNewPassword.Password);
+            user.ResetToken = null;
+            await _userRepository.UpdateAsync(user);
+            int result = await _unitOfWork.SaveChanges();
+
+            if (result > 0)
+            {
+                return new MessageModel
+                {
+                    Message = "Đổi mật khẩu thành công",
+                    StatusCode = StatusCodes.Status200OK,
+                };
+            }
+
+            return new MessageModel
+            {
+                Message = "Đổi mật khẩu thất bại",
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
+
+        }
     }
 }
