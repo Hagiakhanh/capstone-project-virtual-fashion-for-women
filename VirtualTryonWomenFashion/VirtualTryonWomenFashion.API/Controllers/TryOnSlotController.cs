@@ -121,12 +121,17 @@ public class TryOnSlotController : ControllerBase
     {
         try
         {
+            if (imageModel.ImageModelFile == null)
+            {
+                return BadRequest(new { message = "Vui lòng tải lên file ảnh" });
+            }
+
             var result = await _tryOnSlotService.CheckImageModelIsValid(imageModel);
             return Ok(result);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            return BadRequest(new { message = ex.Message });
         }
     }
 

@@ -96,5 +96,59 @@ namespace VirtualTryonWomenFashion.Service.Helpers
     </div>
 </div>";
         }
+
+        public static string ResetPasswordEmail(
+    string fullName,
+    string tokenReset,
+    string email,
+    string baseUrl
+)
+        {
+            string url = baseUrl + "/reset-password?token="
+                 + Uri.EscapeDataString(tokenReset)
+                 + "&email=" + Uri.EscapeDataString(email);
+
+            return $@"
+            <div style='background-color:#f4f4f7;font-family:Arial, sans-serif;padding:20px'>
+                <div style='max-width:750px;margin:auto;background:#ffffff;border-radius:8px;overflow:hidden;
+                    box-shadow:0 4px 15px rgba(0,0,0,0.1)'>
+
+                    <div style='background:linear-gradient(135deg,#3cc892,#2ba57c);padding:25px;text-align:center;color:white;'>
+                        <h1 style='margin:0;font-size:28px;font-weight:700;'>RESET PASSWORD</h1>
+                        <p style='margin:5px 0 0;font-size:16px;opacity:0.9;'>Yêu cầu đặt lại mật khẩu cho tài khoản của bạn</p>
+                    </div>
+
+                    <div style='padding:35px 25px;color:#333;font-size:16px;line-height:1.6;'>
+
+                        <p style='margin:0;'>Xin chào <b>{fullName}</b>,</p>
+                        <p>Bạn vừa yêu cầu đặt lại mật khẩu cho tài khoản Women Fashion.  
+                           Vui lòng nhấn nút bên dưới để tiến hành đặt lại mật khẩu.</p>
+
+                        <div style='padding:40px;text-align:center;'>
+                            <a href='{url}' style='color:#ffffff;text-decoration:none;'>
+                                <div style='width:fit-content;background:#3cc892;color:#fff;font-weight:bold;
+                                    padding:12px 22px;border-radius:4px;font-size:18px;margin:auto;'>
+                                    RESET PASSWORD
+                                </div>
+                            </a>
+                        </div>
+
+                        <div style='border-top:1px solid #e5e5e5;margin-top:25px;margin-bottom:25px;'></div>
+
+                        <p style='font-size:15px;color:#555;'>
+                            Nếu bạn không yêu cầu hành động này, hãy bỏ qua email này.  
+                            Tài khoản của bạn sẽ vẫn an toàn.
+                        </p>
+
+                        <p style='margin-top:35px;margin-bottom:0;'>Trân trọng,<br><b>Women Fashion</b></p>
+                    </div>
+
+                    <div style='background:#f1f1f1;padding:15px;text-align:center;font-size:14px;color:#777;'>
+                        © 2025 Women Fashion. Mọi quyền được bảo lưu.
+                    </div>
+                </div>
+            </div>";
+        }
+
     }
 }

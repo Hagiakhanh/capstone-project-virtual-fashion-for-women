@@ -127,5 +127,33 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(RequestForgotPassword requestForgotPassword)
+        {
+            try
+            {
+                MessageModel result = await _userService.CreateForgotPassword(requestForgotPassword);
+                return StatusCode(result.StatusCode, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost("create-new-password")]
+        public async Task<IActionResult> CreateNewPassword(RequestCreateNewPassword requestCreateNewPassword)
+        {
+            try
+            {
+                MessageModel result = await _userService.CreateNewPassword(requestCreateNewPassword);
+                return StatusCode(result.StatusCode, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }

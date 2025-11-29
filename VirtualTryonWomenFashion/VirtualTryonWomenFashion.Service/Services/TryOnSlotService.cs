@@ -156,6 +156,18 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public async Task<string> CheckImageModelIsValid(ImageModel imageModel)
         {
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var allowedMimeTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp" };
+
+            var fileExtension = Path.GetExtension(imageModel.ImageModelFile.FileName)?.ToLowerInvariant();
+            var contentType = imageModel.ImageModelFile.ContentType?.ToLowerInvariant();
+
+            // Kiểm tra extension và MIME type
+            if (!allowedExtensions.Contains(fileExtension) || !allowedMimeTypes.Contains(contentType))
+            {
+                throw new ArgumentException("Chỉ chấp nhận file ảnh định dạng JPG, JPEG, PNG hoặc WEBP");
+            }
+
             int userId = _currentUserService.GetUserId();
             var imageModelHasing = ComputeSHA256(imageModel.ImageModelFile);
             bool isExistValidImage = await _tryOnSlotRepository.HasImageModelHash(userId, imageModelHasing);
