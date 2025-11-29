@@ -37,39 +37,52 @@ export default function ProductReviewSelectionModal({
         : "Chưa có sản phẩm nào được đánh giá.";
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl relative">
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-700 hover:text-gray-800 cursor-pointer"
-                >
-                    <X size={24} />
-                </button>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-lg shadow-xl relative max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
+                {/* Header với nút đóng */}
+                <div className="flex items-start justify-between mb-3 sm:mb-4 pr-8">
+                    <h2 className="text-lg sm:text-xl font-semibold leading-tight">
+                        {title}
+                    </h2>
+                    <button
+                        onClick={onClose}
+                        className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-700 hover:text-gray-900 cursor-pointer transition-colors"
+                        aria-label="Đóng"
+                    >
+                        <X size={20} className="sm:w-6 sm:h-6" />
+                    </button>
+                </div>
 
-                <h2 className="text-xl font-semibold mb-4">{title}</h2>
-
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                {/* Danh sách sản phẩm - scrollable */}
+                <div className="space-y-2 sm:space-y-3 overflow-y-auto flex-1 -mx-4 px-4 sm:-mx-6 sm:px-6">
                     {detailsToShow.length > 0 ? (
                         detailsToShow.map((detail) => (
                             <div
                                 key={detail.orderDetailId}
-                                className="flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-lg"
+                                className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3 xs:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg"
                             >
-                                <div className="flex items-center gap-3 min-w-0">
+                                {/* Thông tin sản phẩm */}
+                                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 w-full xs:w-auto">
                                     <img
                                         src={detail.responseProductVariantDto.imageUrl}
                                         alt={detail.responseProductVariantDto.variantName}
-                                        className="w-14 h-14 rounded-md object-cover flex-shrink-0"
+                                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-md object-cover flex-shrink-0"
                                     />
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-gray-800 truncate">
+                                        <p className="font-medium text-sm sm:text-base text-gray-800 line-clamp-2">
                                             {detail.responseProductVariantDto.variantName}
+                                        </p>
+                                        {/* Hiển thị số lượng trên mobile nếu cần */}
+                                        <p className="text-xs text-gray-500 mt-0.5 xs:hidden">
+                                            Số lượng: {detail.quantity}
                                         </p>
                                     </div>
                                 </div>
+
+                                {/* Nút action */}
                                 <button
                                     onClick={() => onSelectProduct(detail)}
-                                    className={`px-4 py-2 rounded-lg text-black text-sm font-medium transition-all cursor-pointer${
+                                    className={`w-full xs:w-auto px-3 sm:px-4 py-2 rounded-lg text-white text-xs sm:text-sm font-medium transition-all cursor-pointer active:scale-95 whitespace-nowrap flex-shrink-0 ${
                                         mode === 'review' 
                                         ? 'bg-red-500 hover:bg-red-600' 
                                         : 'bg-blue-500 hover:bg-blue-600'
@@ -80,9 +93,11 @@ export default function ProductReviewSelectionModal({
                             </div>
                         ))
                     ) : (
-                        <p className="text-gray-500 text-center py-4">
-                            {emptyMessage}
-                        </p>
+                        <div className="flex items-center justify-center py-8 sm:py-10">
+                            <p className="text-sm sm:text-base text-gray-500 text-center">
+                                {emptyMessage}
+                            </p>
+                        </div>
                     )}
                 </div>
             </div>
