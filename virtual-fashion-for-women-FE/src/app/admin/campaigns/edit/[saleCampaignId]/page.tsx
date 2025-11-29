@@ -55,7 +55,9 @@ export default function EditSaleCampaignPage() {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const res = await apiToken.get(`/salecampaign/${saleCampaignId}/detail`);
+        const res = await apiToken.get(
+          `/salecampaign/${saleCampaignId}/detail`
+        );
         const data = res.data.data;
         setCampaignImage(data.imageUrl);
         form.setFieldsValue({
@@ -68,8 +70,8 @@ export default function EditSaleCampaignPage() {
               ProductName: p.product.productName,
               OriginalPrice: p.product.price,
               mainImageUrl: p.product.mainImageUrl,
-              DiscountType: "PercentDiscount", // vì backend chỉ có percentDiscount
-              Value: p.percentDiscount, // giá trị giảm %
+              DiscountType: "PriceDiscount", // vì backend chỉ có percentDiscount
+              Value: p.salePrice, // giá trị giảm %
               IsValid: true,
             })
           ),
@@ -139,10 +141,10 @@ export default function EditSaleCampaignPage() {
 
       const res = await apiToken.put(`/salecampaign/${id}`, formData);
       messageToast.success(res.data?.message || "Cập nhật thành công");
-      // router.push("/admin/campaigns");
+      router.push("/admin/campaigns");
     } catch (err: any) {
       console.error(err);
-      messageToast.error(err.response?.data?.message || err.message);
+      messageToast.error(err.response?.data?.details || err.message);
     } finally {
       setSaving(false);
     }
@@ -208,6 +210,7 @@ export default function EditSaleCampaignPage() {
             >
               <RangePicker
                 format="DD/MM/YYYY"
+                placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
                 disabledDate={(current) =>
                   current && current < dayjs().startOf("day")
                 }
@@ -294,18 +297,52 @@ export default function EditSaleCampaignPage() {
                           <Form.Item
                             {...restField}
                             name={[name, "Value"]}
-                            rules={[{ required: true }]}
+                            rules={[
+                              { required: true },
+                              {
+                                validator: (_, val) => {
+                                  const type = form.getFieldValue([
+                                    "ProductInSalesCampaigns",
+                                    name,
+                                    "DiscountType",
+                                  ]);
+                                  if (
+                                    type === "PercentDiscount" &&
+                                    (val < 0 || val > 100)
+                                  ) {
+                                    return Promise.reject(
+                                      new Error("Phần trăm phải từ 0-100")
+                                    );
+                                  }
+                                  if (
+                                    type === "PriceDiscount" &&
+                                    (val < 0 || val > price)
+                                  ) {
+                                    return Promise.reject(
+                                      new Error(
+                                        `Giá giảm phải từ 0-${price.toLocaleString()}`
+                                      )
+                                    );
+                                  }
+                                  return Promise.resolve();
+                                },
+                              },
+                            ]}
                           >
                             <InputNumber
                               min={0}
                               max={
-                                discountType === "PercentDiscount" ? 100 : price
+                                item.DiscountType === "PercentDiscount"
+                                  ? 100
+                                  : price
                               }
-                              disabled={campaignStatus !== "Pending"}
                               style={{ width: 150 }}
                               step={
-                                discountType === "PercentDiscount" ? 1 : 1000
+                                item.DiscountType === "PercentDiscount"
+                                  ? 1
+                                  : 1000
                               }
+                              disabled={campaignStatus !== "Pending"}
                             />
                           </Form.Item>
 

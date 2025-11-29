@@ -30,6 +30,8 @@ function LoginPage() {
           router.replace("/staff");
         } else if (response.data.user.role === 'customer') {
           router.replace("/");
+          window.location.reload();
+
         }
       } else {
 
@@ -54,6 +56,7 @@ function LoginPage() {
           router.replace("/staff");
         } else if (response.data.user.role === 'customer') {
           router.replace("/");
+          window.location.reload();
         }
       } else {
 

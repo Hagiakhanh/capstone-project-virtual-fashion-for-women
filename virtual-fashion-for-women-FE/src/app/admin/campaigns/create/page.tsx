@@ -242,6 +242,7 @@ function CreateSaleCampaignPage() {
             >
               <RangePicker
                 format="DD/MM/YYYY"
+                placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
                 disabledDate={(current) => {
                   // ❌ Không cho chọn ngày trước hôm nay
                   return current && current < dayjs().startOf("day");
@@ -371,10 +372,10 @@ function CreateSaleCampaignPage() {
                                   () => ({
                                     validator(_, val) {
                                       if (discountType === "PercentDiscount") {
-                                        if (val < 1 || val > 100) {
+                                        if (val < 1 || val > 99) {
                                           return Promise.reject(
                                             new Error(
-                                              "Phần trăm giảm phải trong khoảng 1–100%"
+                                              "Phần trăm giảm phải trong khoảng 1-99%"
                                             )
                                           );
                                         }

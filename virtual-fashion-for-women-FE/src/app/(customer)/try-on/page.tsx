@@ -120,17 +120,12 @@ export default function VirtualTryOnPage() {
 
     const handleTryOn = async () => {
         if (!userImage) {
-            alert('Vui lòng tải lên ảnh của bạn!');
+            messageToast.error('Vui lòng tải lên ảnh của bạn!');
             return;
         }
 
         if (!imageValidation.isValid) {
-            alert('Ảnh của bạn không hợp lệ. Vui lòng tải lên ảnh khác.');
-            return;
-        }
-
-        if (!selectedTop) {
-            alert('Vui lòng chọn áo!');
+            messageToast.error('Ảnh của bạn không hợp lệ. Vui lòng tải lên ảnh khác.');
             return;
         }
 
@@ -286,7 +281,7 @@ export default function VirtualTryOnPage() {
                         await Promise.all(
                             productColorIds.map(id => fetchProductColor(id, categoryRes.data))
                         );
-
+                        sessionStorage.removeItem("productColor");
                     } catch (e) {
                         console.error("❌ Lỗi parse sessionStorage productColor:", e);
                     }
@@ -312,7 +307,7 @@ export default function VirtualTryOnPage() {
     const bottomCategories = category.filter(
         (c) => c.bodyPart === 'Thân dưới'
     );
-    const canTryOn = userImage && imageValidation.isValid === true && selectedTop;
+    const canTryOn = userImage && imageValidation.isValid === true;
 
     return (
         <>
@@ -522,7 +517,7 @@ export default function VirtualTryOnPage() {
                     <SelectItemTryOn
                         category={modalType === 'top' ? topCategories : bottomCategories}
                         onClose={() => setShowModal(false)}
-                        onSelect={(item: any) => {
+                        onSelect={async (item: any) => {
                             console.log("Item selected from SelectItemTryOn:", item);
                             const fullBodyCategoryIds = category
                                 .filter((c) => c.bodyPart === 'Toàn thân')
@@ -534,7 +529,7 @@ export default function VirtualTryOnPage() {
                                 setSelectedBottom(null);
                             }
                             setIsDress(isDressItem);
-                            fetchProductColor(item.productColorId, category);
+                            await fetchProductColor(item.productColorId, category);
                             setShowModal(false);
                             sessionStorage.removeItem("productColor");
                         }}

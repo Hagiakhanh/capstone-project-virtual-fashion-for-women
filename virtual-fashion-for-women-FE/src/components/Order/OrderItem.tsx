@@ -237,7 +237,7 @@ export default function OrderItem({ order }: { order: OrderDTO }) {
                         <div className="flex gap-2 sm:self-center">
                             <button
                                 onClick={() => handleOpenReviewFlow(0)}
-                                className="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-red-500 text-white text-xs md:text-sm font-medium hover:bg-red-600 transition-all text-center"
+                                className="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-red-500 text-white text-xs md:text-sm font-medium hover:bg-red-600 transition-all text-center cursor-pointer"
                             >
                                 Viết đánh giá
                             </button>
