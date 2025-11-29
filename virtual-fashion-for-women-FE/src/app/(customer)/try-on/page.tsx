@@ -46,6 +46,7 @@ export default function VirtualTryOnPage() {
     const [isCreatingTask, setIsCreatingTask] = useState(false);
     const [showRecommendation, setShowRecommendation] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [fileTypeError, setFileTypeError] = useState<string>('');
     const [characteristicData, setCharacteristicData] =
         useState<Characteristic | null>(null);
 
@@ -53,8 +54,19 @@ export default function VirtualTryOnPage() {
         event: React.ChangeEvent<HTMLInputElement>,
         setter: React.Dispatch<React.SetStateAction<File | null>>
     ) => {
+
         const file = event.target.files?.[0];
         if (file) {
+            const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+            if (!validImageTypes.includes(file.type)) {
+                setFileTypeError('Vui lòng chọn file ảnh hợp lệ (JPG, JPEG, PNG, WEBP)');
+                setter(null);
+                // Reset input
+                event.target.value = '';
+                return;
+            }
+            setFileTypeError('');
             setter(file);
             resetOutputImage();
             await checkImageValidity(file);
@@ -307,7 +319,7 @@ export default function VirtualTryOnPage() {
     const bottomCategories = category.filter(
         (c) => c.bodyPart === 'Thân dưới'
     );
-    const canTryOn = userImage && imageValidation.isValid === true;
+    const canTryOn = userImage && imageValidation.isValid === true && !fileTypeError;;
 
     return (
         <>
@@ -466,7 +478,15 @@ export default function VirtualTryOnPage() {
                                     accept="image/*"
                                     onChange={(e) => handleFileChange(e, setUserImage)}
                                     className="hidden"
-                                />'
+                                />
+                                {fileTypeError && (
+                                    <div className="mt-3 flex items-start p-3 bg-red-100 border border-red-300 rounded-lg">
+                                        <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+                                        <p className="text-red-700 text-sm font-medium">
+                                            {fileTypeError}
+                                        </p>
+                                    </div>
+                                )}
                                 {imageValidation.isChecking && (
                                     <div className="mt-3 flex items-center justify-center text-blue-600 text-sm">
                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
@@ -510,6 +530,7 @@ export default function VirtualTryOnPage() {
                             >
                                 {imageValidation.isChecking ? 'Đang kiểm tra...' : 'Mặc thử ngay'}
                             </button>
+
                         </div>
                     </div>
                 </div>
