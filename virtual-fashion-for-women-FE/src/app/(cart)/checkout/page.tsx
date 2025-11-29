@@ -242,7 +242,9 @@ export default function CheckoutForm() {
         if (!query) return setAddressSuggestions([]);
         try {
             setIsLoadingSuggestions(true);
-            const response = await api.get(`/location/googleMap/${encodeURIComponent(query)}`);
+
+            const response = await api.get(`/location/googleMap?address=${encodeURIComponent(query)}`);
+
             if (response.status === 200) {
                 const data: Record<string, string> = response.data;
                 const arr = Object.entries(data).map(
@@ -292,9 +294,24 @@ export default function CheckoutForm() {
                 if (matchedDistrictEntry) {
                     const [districtId, districtName] = matchedDistrictEntry;
                     const wardsData = await fetchWardData(districtId);
+                    console.log("Wards data:", wardsData);
+                    const toPlainText = (str: string) =>
+                        str
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "")
+                            .replace(/đ/g, "d")
+                            .replace(/Đ/g, "D")
+                            .toLowerCase()
+                            .trim();
+
                     const matchedWardEntry = Object.entries(wardsData).find(
-                        ([, name]) => name.toLowerCase().includes(data.wardName.toLowerCase())
+                        ([, name]) => {
+                            console.log("Comparing ward:", toPlainText(name), "with", toPlainText(data.wardName));
+                            return toPlainText(name).includes(toPlainText(data.wardName)
+                            )
+                        }
                     );
+                    console.log("Matched ward entry:", matchedWardEntry);
                     if (matchedWardEntry) {
                         const [, wardName] = matchedWardEntry;
                         setAddressInformation({ provinceName, districtName, wardName });
