@@ -59,6 +59,7 @@ export default function CampaignStatisticPage() {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalSold, setTotalSold] = useState(0);
   const [avgRevenue, setAvgRevenue] = useState(0);
+  const [totalProductInSaleCampaign, setTotalProductInSaleCampaign] = useState(0);
 
   // 🔹 Gọi 1 lần để lấy chi tiết campaign trước
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function CampaignStatisticPage() {
       });
 
       const data = res.data;
-
+      setTotalProductInSaleCampaign(data.totalProductInCampaign|| 0);
       // 1. Map dữ liệu cho Biểu đồ Doanh thu theo ngày
       const mappedChart: ChartData[] =
         data.listSaleRevenueDate?.map((item: any) => ({
@@ -289,7 +290,7 @@ export default function CampaignStatisticPage() {
             <Card>
               <Statistic
                 title="Tổng sản phẩm trong chiến dịch"
-                value={productData.length}
+                value={totalProductInSaleCampaign}
                 valueStyle={{ color: "#3f8600" }}
                 prefix={<TrophyOutlined />}
               />
@@ -304,6 +305,7 @@ export default function CampaignStatisticPage() {
             <RangePicker
               format="DD/MM/YYYY"
               value={range}
+              placeholder={["Ngày bắt đầu", "Ngày kết thúc"]}
               disabledDate={(current) => {
                 if (!campaignDate.startDate || !campaignDate.endDate)
                   return false;

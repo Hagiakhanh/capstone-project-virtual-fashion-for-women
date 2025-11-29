@@ -13,20 +13,20 @@ interface SaleCampaign {
   startDate: string;
   endDate: string;
   createdAt: string;
-  status: "Active" | "Pending" | "Inactive" | "Expired";
+  status: "Active" | "Pending" | "InActive" | "Expired";
   imageUrl?: string;
 }
 
 const statusColorMap: Record<SaleCampaign["status"], string> = {
   Active: "green",
   Pending: "gold",
-  Inactive: "default",
+  InActive: "default",
   Expired: "red",
 };
 const statusLabelMap: Record<SaleCampaign["status"], string> = {
   Active: "Đang kích hoạt",
   Pending: "Chờ kích hoạt",
-  Inactive: "Tạm dừng",
+  InActive: "Tạm dừng",
   Expired: "Đã hết hạn",
 };
 export const SaleCampaignTable: React.FC = () => {
