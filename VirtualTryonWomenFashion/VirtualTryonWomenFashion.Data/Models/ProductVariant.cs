@@ -21,6 +21,8 @@ public partial class ProductVariant
 
     public string Status { get; set; }
 
+    public double? ClothesLength { get; set; }
+
     public decimal? ProductWeight { get; set; }
 
     public decimal? ProductLength { get; set; }
@@ -28,8 +30,6 @@ public partial class ProductVariant
     public decimal? ProductWidth { get; set; }
 
     public decimal? ProductHeight { get; set; }
-
-    public double? ClothesLength { get; set; }
 
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
