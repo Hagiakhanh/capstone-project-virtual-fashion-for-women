@@ -112,10 +112,11 @@ function LoginPage() {
                 placeholder="Nhập mật khẩu của bạn"
               />
             </Form.Item>
-
-            <p className="underline text-right cursor-pointer mt-2 text-xl font-normal">
-              Quên mật khẩu
-            </p>
+            <Link href="/forgot-password">
+              <p className="underline text-right cursor-pointer mt-2 text-xl font-normal text-gray-600">
+                Quên mật khẩu
+              </p>
+            </Link>
             <Form.Item>
               <div>
                 <Button style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#FAE3B6' }} className="mt-5 w-full !py-6 !text-black !hover:text-black" shape="round" size="large"
