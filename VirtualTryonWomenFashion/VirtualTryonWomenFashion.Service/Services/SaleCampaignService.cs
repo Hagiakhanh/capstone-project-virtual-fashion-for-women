@@ -573,17 +573,16 @@ int saleCampaignID, DateOnly? startDate = null, DateOnly? endDate = null)
         null,
         od => od.CampaignId == campaign.CampaignId && od.Order.CreatedAt >= actualStart.ToDateTime(TimeOnly.MinValue) &&
     od.Order.CreatedAt <= actualEnd.ToDateTime(TimeOnly.MaxValue)
-           && (od.Order.Status != OrderStatusEnum.Pending.ToString() || od.Order.Status != OrderStatusEnum.Failed.ToString()), null,
+           && (od.Order.Status != OrderStatusEnum.Pending.ToString() && od.Order.Status != OrderStatusEnum.Failed.ToString()), null,
         [x => x.ProductVariant.ProductColor.Product, x => x.Order]
     );
 
     // Tổng doanh thu & số lượng
-    decimal totalRevenue = orderDetails.Sum(x => x.PriceAtTime);
+    decimal totalRevenue = orderDetails.Sum(x => x.PriceAtTime*x.Quantity);
     int totalSoldQuantity = orderDetails.Sum(x => x.Quantity);
 
     // Trung bình doanh thu mỗi ngày
     int totalDays = (actualEnd.DayNumber - actualStart.DayNumber) + 1;
-    decimal avgRevenue = totalDays > 0 ? totalRevenue / totalDays : totalRevenue;
 
     // Nhóm doanh thu theo ngày
     var revenueByDate = orderDetails
@@ -606,7 +605,7 @@ int saleCampaignID, DateOnly? startDate = null, DateOnly? endDate = null)
    ImageUrl = g.First().ProductVariant.ProductColor.Product.MainImageUrl,
    TotalSoldQuantity = g.Sum(x => x.Quantity),
    SalePrice = g.First().PriceAtTime,
-   TotalRevenue = g.Sum(x => x.PriceAtTime),
+   TotalRevenue = g.Sum(x => x.PriceAtTime*x.Quantity),
     // 🔹 Lấy chi tiết từng variant trong sản phẩm
    ListResponseProductVariant = g.GroupBy(v => v.ProductVariantId)
        .Select(vg => new ResponseVariantInSaleCampaignStatistic
