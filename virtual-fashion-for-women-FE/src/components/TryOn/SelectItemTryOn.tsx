@@ -62,99 +62,108 @@ export default function SelectItemTryOn({
 
     return (
         <div
-            className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+            className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-3 md:p-4"
             onClick={onClose}
         >
             <div
-                className="bg-white w-full max-w-3xl rounded-xl shadow-lg p-6 relative"
+                className="bg-white w-full max-w-3xl rounded-xl shadow-lg p-4 md:p-6 relative max-h-[90vh] overflow-hidden flex flex-col"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Close button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                    className="absolute top-3 right-3 md:top-4 md:right-4 text-gray-500 hover:text-gray-700 z-10"
                 >
-                    <X size={22} />
+                    <X size={20} className="md:w-[22px] md:h-[22px]" />
                 </button>
 
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800 text-center">
+                <h2 className="text-xl md:text-2xl font-semibold mb-3 md:mb-4 text-gray-800 text-center pr-8">
                     Chọn một loại quần áo
                 </h2>
 
-                {/* Category buttons */}
+                {/* Category buttons - Horizontal scroll on mobile */}
                 {category.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4 justify-center">
-                        {category.map((c) => (
-                            <button
-                                key={c.categoryId}
-                                onClick={() => setSelectedCategory(c)}
-                                disabled={loading}
-                                className={`px-4 py-1.5 rounded-full border text-sm font-medium transition ${selectedCategory?.categoryId === c.categoryId
-                                    ? "bg-orange-500 text-white border-orange-500"
-                                    : "bg-white border-gray-300 hover:border-orange-400 hover:text-orange-500"
-                                    }
-                                    ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                                `}
-                            >
-                                {c.categoryName}
-                            </button>
-                        ))}
+                    <div className=" px-4 md:px-0 ">
+                        <div className="flex flex-wrap gap-2 mb-4 justify-center">
+                            {category.map((c) => (
+                                <button
+                                    key={c.categoryId}
+                                    onClick={() => setSelectedCategory(c)}
+                                    disabled={loading}
+                                    className={`px-3 md:px-4 py-1.5 rounded-full border text-xs md:text-sm font-medium transition flex-shrink-0 ${selectedCategory?.categoryId === c.categoryId
+                                        ? "bg-orange-500 text-white border-orange-500"
+                                        : "bg-white border-gray-300 hover:border-orange-400 hover:text-orange-500"
+                                        } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                                >
+                                    {c.categoryName}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
 
-                {/* Ô search */}
-                <div className="relative mb-4">
-                    <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                {/* Search box */}
+                <div className="relative mb-3 md:mb-4">
+                    <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
                     <input
                         type="text"
                         placeholder="Tìm kiếm sản phẩm..."
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        className="w-full pl-9 md:pl-10 pr-3 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
                     />
                 </div>
-                {loading ? (<LoadingSpinner size={50} />) : (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto pr-2">
-                    {products.length > 0 ? (
-                        products.map((item, index) => (
-                            <div
-                                key={index}
-                                onClick={() => onSelect(item)}
-                                className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-orange-50 cursor-pointer transition border border-transparent hover:border-orange-300"
-                            >
-                                <img
-                                    src={item.noBgImgUrl}
-                                    alt={item.productName}
-                                    className="w-32 h-32 rounded-lg object-cover"
-                                />
-                                <div className="text-center">
-                                    <p className="font-medium text-gray-800 text-sm">
-                                        {item.productName}
-                                    </p>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="col-span-3 text-center text-gray-500 py-6">
-                            Không tìm thấy sản phẩm nào
-                        </p>
-                    )}
-                </div>)}
 
+                {/* Products grid - Responsive */}
+                <div className="flex-1 overflow-y-auto">
+                    {loading ? (
+                        <div className="flex justify-center py-12">
+                            <LoadingSpinner size={50} />
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 pr-2">
+                            {products.length > 0 ? (
+                                products.map((item, index) => (
+                                    <div
+                                        key={index}
+                                        onClick={() => onSelect(item)}
+                                        className="flex flex-col items-center gap-2 p-2 md:p-3 rounded-lg hover:bg-orange-50 cursor-pointer transition border border-transparent hover:border-orange-300"
+                                    >
+                                        <img
+                                            src={item.noBgImgUrl}
+                                            alt={item.productName}
+                                            className="w-24 h-24 md:w-32 md:h-32 rounded-lg object-cover"
+                                        />
+                                        <div className="text-center w-full">
+                                            <p className="font-medium text-gray-800 text-xs md:text-sm line-clamp-2">
+                                                {item.productName}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="col-span-2 md:col-span-3 text-center text-gray-500 py-6 text-sm">
+                                    Không tìm thấy sản phẩm nào
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 {/* Footer buttons */}
-                <div className="flex justify-end mt-6 gap-3">
+                <div className="flex flex-col-reverse sm:flex-row justify-end mt-4 md:mt-6 gap-2 md:gap-3 pt-4 border-t">
                     <button
                         onClick={() => {
                             onReset();
                             onClose();
                         }}
-                        className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                        className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm md:text-base font-medium hover:bg-gray-100 hover:border-gray-400 transition-colors"
                     >
                         Reset
                     </button>
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-gray-300 transition-colors"
+                        className="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 text-sm md:text-base font-medium hover:bg-gray-300 transition-colors"
                     >
                         Hủy
                     </button>
