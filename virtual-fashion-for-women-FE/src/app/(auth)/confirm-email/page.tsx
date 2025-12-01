@@ -49,21 +49,21 @@ export default function ConfirmEmailPage() {
    }, [searchParams])
 
    return (
-      <div className='w-[100vw] h-[100vh] flex justify-center items-center bg-cover bg-center'
+      <div className='w-screen h-screen flex justify-center items-center bg-cover bg-center px-4'
          style={{
             backgroundImage: `url(${bgConfirm.src})`
          }}
       >
          <div className="absolute inset-0 bg-amber-50/50"></div>
 
-         <div className='text-center relative z-10'>
-            <div className="w-40 h-40 mx-auto mb-3">
+         <div className='text-center relative z-10 max-w-2xl mx-auto'>
+            <div className="w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40 mx-auto mb-3 md:mb-4 lg:mb-6">
                <Lottie animationData={loading} loop={true} />
             </div>
-            <h1 className='font-bold text-6xl mb-6'>
+            <h1 className='font-bold text-2xl md:text-4xl lg:text-5xl xl:text-6xl mb-3 md:mb-4 lg:mb-6 leading-tight px-4'>
                Đang xác minh tài khoản của bạn...
             </h1>
-            <p className='font-normal text-2xl'>
+            <p className='font-normal text-base md:text-xl lg:text-2xl px-4'>
                Vui lòng chờ trong giây lát.
             </p>
          </div>
