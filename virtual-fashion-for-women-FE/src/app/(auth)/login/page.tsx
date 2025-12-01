@@ -120,11 +120,11 @@ function LoginPage() {
                 placeholder="Nhập mật khẩu của bạn"
               />
             </Form.Item>
-
-            <p className="underline text-right cursor-pointer mt-2 text-base sm:text-lg md:text-xl font-normal">
+            <Link href="/forgot-password">
+              <p className="underline text-right cursor-pointer mt-2 text-gray-600 sm:text-lg md:text-xl font-normal">
               Quên mật khẩu
             </p>
-            
+            </Link>
             <Form.Item>
               <div>
                 <Button 

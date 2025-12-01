@@ -46,6 +46,7 @@ export default function VirtualTryOnPage() {
     const [isCreatingTask, setIsCreatingTask] = useState(false);
     const [showRecommendation, setShowRecommendation] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [fileTypeError, setFileTypeError] = useState<string>('');
     const [characteristicData, setCharacteristicData] =
         useState<Characteristic | null>(null);
 
@@ -53,8 +54,19 @@ export default function VirtualTryOnPage() {
         event: React.ChangeEvent<HTMLInputElement>,
         setter: React.Dispatch<React.SetStateAction<File | null>>
     ) => {
+
         const file = event.target.files?.[0];
         if (file) {
+            const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+            if (!validImageTypes.includes(file.type)) {
+                setFileTypeError('Vui lòng chọn file ảnh hợp lệ (JPG, JPEG, PNG, WEBP)');
+                setter(null);
+                // Reset input
+                event.target.value = '';
+                return;
+            }
+            setFileTypeError('');
             setter(file);
             resetOutputImage();
             await checkImageValidity(file);
@@ -307,154 +319,147 @@ export default function VirtualTryOnPage() {
     const bottomCategories = category.filter(
         (c) => c.bodyPart === 'Thân dưới'
     );
-    const canTryOn = userImage && imageValidation.isValid === true;
+    const canTryOn = userImage && imageValidation.isValid === true && !fileTypeError;;
 
     return (
         <>
             {loading && (<LoadingOverlay size={50} />)}
-            <div className="min-h-screen bg-gradient-to-b from-[#FAE3B6] via-[#FAE3B6] via-60% to-white flex items-center justify-center p-4 ">
+            <div className="min-h-screen bg-gradient-to-b from-[#FAE3B6] via-[#FAE3B6] via-60% to-white flex items-center justify-center p-3 md:p-4">
                 <div className="w-full max-w-6xl">
-                    {/* Title */}
-                    <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 text-center mb-10 tracking-tight">
+                    {/* Title - Responsive */}
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 text-center mb-6 md:mb-10 tracking-tight px-4">
                         Thử đồ trực tuyến
                     </h1>
 
-                    <div className="flex flex-col lg:flex-row bg-gray-700 rounded-3xl overflow-hidden shadow-2xl">
-                        {/* Left panel */}
-                        <div className="lg:w-[60%] p-4 lg:p-10 flex flex-col justify-center relative">
-                            <div className="text-4xl sm:text-4xl font-semibold text-white text-center mb-10">
+                    <div className="flex flex-col lg:flex-row bg-gray-700 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl">
+                        {/* Left panel - Responsive */}
+                        <div className="lg:w-[60%] p-4 md:p-6 lg:p-10 flex flex-col justify-center relative">
+                            <div className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white text-center mb-6 md:mb-10">
                                 Quần áo được chọn
                             </div>
 
-                            {selectedBottom &&
-                                !selectedTop &&
-                                bottomCategories.some(
-                                    (cat) =>
-                                        cat.categoryId === selectedBottom.categoryId &&
-                                        cat.categoryName.toLowerCase() === 'váy'
-                                ) && (
-                                    <div className="mt-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 rounded-lg text-sm leading-relaxed">
+                            {/* Warning - Responsive */}
+                            {selectedBottom && !selectedTop && bottomCategories.some(
+                                (cat) => cat.categoryId === selectedBottom.categoryId && cat.categoryName.toLowerCase() === 'váy'
+                            ) && (
+                                    <div className="mt-2 mb-4 md:mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-3 md:p-4 rounded-lg text-xs sm:text-sm leading-relaxed">
                                         ⚠️ <strong>Lưu ý:</strong> Nếu bạn chỉ chọn váy nhưng ảnh bạn đang mặc đầm sẵn, kết quả có thể không chính xác.
-                                        Hãy đổi ảnh sang trang phục khác hoặc thêm áo để thử đồ được chính xác hơn.
                                     </div>
                                 )}
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                                {/* Khung chọn áo */}
+                            {/* Product Selection Grid - Responsive */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8">
+                                {/* Khung chọn áo - Responsive height */}
                                 <div
-                                    className={`bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all
-            ${isDress ? 'col-span-2 h-[300px]' : 'h-[250px]'}`}
+                                    className={`bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all cursor-pointer
+                                    ${isDress ? 'col-span-1 sm:col-span-2 h-[250px] sm:h-[280px] md:h-[300px]' : 'h-[220px] sm:h-[240px] md:h-[250px]'}`}
                                     onClick={() => {
                                         setShowModal(true);
                                         setModalType('top');
                                     }}
                                 >
-                                    <label htmlFor="top-upload" className="cursor-pointer block h-full">
-                                        <div className="flex flex-col h-full">
-                                            <div className={`flex items-center justify-center bg-gray-100 p-2 ${isDress ? 'h-[240px]' : 'h-[190px]'}`}>
-                                                {selectedTop ? (
-                                                    <img
-                                                        src={selectedTop?.productColors[0].noBgImgUrl}
-                                                        alt={selectedTop?.productColorName}
-                                                        className={`${isDress ? 'max-h-[230px]' : 'max-h-[180px]'} w-auto object-contain rounded-lg`}
-                                                    />
-                                                ) : (
-                                                    <div className="bg-orange-400 rounded-full p-4 shadow-lg">
-                                                        <Plus className="w-10 h-10 text-white" strokeWidth={3} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px] flex items-center justify-center">
-                                                {selectedTop ? selectedTop?.productColorName : 'Chọn một loại áo hoặc đầm để phối'}
-                                            </div>
+                                    <div className="flex flex-col h-full">
+                                        <div className={`flex items-center justify-center bg-gray-100 p-2 ${isDress ? 'h-[190px] sm:h-[220px] md:h-[240px]' : 'h-[160px] sm:h-[180px] md:h-[190px]'
+                                            }`}>
+                                            {selectedTop ? (
+                                                <img
+                                                    src={selectedTop?.productColors[0].noBgImgUrl}
+                                                    alt={selectedTop?.productColorName}
+                                                    className={`${isDress ? 'max-h-[180px] sm:max-h-[210px] md:max-h-[230px]' : 'max-h-[150px] sm:max-h-[170px] md:max-h-[180px]'
+                                                        } w-auto object-contain rounded-lg`}
+                                                />
+                                            ) : (
+                                                <div className="bg-orange-400 rounded-full p-3 md:p-4 shadow-lg">
+                                                    <Plus className="w-8 h-8 md:w-10 md:h-10 text-white" strokeWidth={3} />
+                                                </div>
+                                            )}
                                         </div>
-                                    </label>
+                                        <div className="bg-white text-center py-3 md:py-4 font-medium text-gray-800 text-xs sm:text-sm md:text-base border-t border-gray-200 h-[60px] flex items-center justify-center px-2">
+                                            <span className="line-clamp-2">
+                                                {selectedTop ? selectedTop?.productColorName : 'Chọn một loại áo hoặc đầm để phối'}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                {/* Khung chọn quần/váy */}
+                                {/* Khung chọn quần/váy - Show when not dress */}
                                 {!isDress && (
                                     <div
-                                        className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all"
+                                        className="bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl overflow-hidden border-2 border-orange-400/60 shadow-sm hover:shadow-lg transition-all cursor-pointer h-[220px] sm:h-[240px] md:h-[250px]"
                                         onClick={() => {
                                             setShowModal(true);
                                             setModalType('bottom');
                                         }}
                                     >
-                                        <label htmlFor="bottom-upload" className="cursor-pointer block h-full">
-                                            <div className="flex flex-col h-full">
-                                                <div className="flex items-center justify-center bg-gray-100 p-2 h-[190px]">
-                                                    {selectedBottom ? (
-                                                        <img
-                                                            src={selectedBottom?.productColors[0].noBgImgUrl}
-                                                            alt={selectedBottom?.productColorName}
-                                                            className="max-h-[180px] w-auto object-contain rounded-lg"
-                                                        />
-                                                    ) : (
-                                                        <div className="bg-orange-400 rounded-full p-4 shadow-lg">
-                                                            <Plus className="w-10 h-10 text-white" strokeWidth={3} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="bg-white text-center py-4 font-medium text-gray-800 text-base border-t border-gray-200 h-[60px] flex items-center justify-center">
-                                                    {selectedBottom
-                                                        ? selectedBottom?.productColorName
-                                                        : 'Chọn một loại quần hoặc váy để phối'}
-                                                </div>
+                                        <div className="flex flex-col h-full">
+                                            <div className="flex items-center justify-center bg-gray-100 p-2 h-[160px] sm:h-[180px] md:h-[190px]">
+                                                {selectedBottom ? (
+                                                    <img
+                                                        src={selectedBottom?.productColors[0].noBgImgUrl}
+                                                        alt={selectedBottom?.productColorName}
+                                                        className="max-h-[150px] sm:max-h-[170px] md:max-h-[180px] w-auto object-contain rounded-lg"
+                                                    />
+                                                ) : (
+                                                    <div className="bg-orange-400 rounded-full p-3 md:p-4 shadow-lg">
+                                                        <Plus className="w-8 h-8 md:w-10 md:h-10 text-white" strokeWidth={3} />
+                                                    </div>
+                                                )}
                                             </div>
-                                        </label>
+                                            <div className="bg-white text-center py-3 md:py-4 font-medium text-gray-800 text-xs sm:text-sm md:text-base border-t border-gray-200 h-[60px] flex items-center justify-center px-2">
+                                                <span className="line-clamp-2">
+                                                    {selectedBottom ? selectedBottom?.productColorName : 'Chọn một loại quần hoặc váy để phối'}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
+
+                            {/* Recommendation Button - Responsive */}
                             {((selectedTop && !selectedBottom) || (!selectedTop && selectedBottom)) && !isDress && (
-                                <div className="flex justify-end mt-5">
+                                <div className="flex justify-center sm:justify-end mt-4 md:mt-5">
                                     <button
                                         onClick={() => setShowRecommendation(true)}
-                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white text-base 
-                                                bg-gradient-to-r from-orange-400 to-yellow-400 
-                                                shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300"
+                                        className="flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-white text-sm md:text-base 
+                                        bg-gradient-to-r from-orange-400 to-yellow-400 
+                                        shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto justify-center"
                                     >
                                         🌟 <span>Gợi ý phối đồ</span>
                                     </button>
                                 </div>
                             )}
-
-
                         </div>
 
-
-
-                        {/* Right panel */}
-                        <div className="lg:w-[40%] bg-white p-8 lg:p-10 flex flex-col justify-between rounded-t-3xl lg:rounded-t-none lg:rounded-r-3xl">
+                        {/* Right panel - Upload section - Responsive */}
+                        <div className="lg:w-[40%] bg-white p-4 md:p-6 lg:p-10 flex flex-col justify-between rounded-t-2xl lg:rounded-t-none lg:rounded-r-3xl">
                             <div>
-                                <div
-                                    className="text-3xl font-bold text-center mb-1 
-                                            bg-gradient-to-b from-[#E3A03D] to-[#B67421] 
-                                            bg-clip-text text-transparent whitespace-nowrap"
-                                >
+                                <div className="text-2xl sm:text-3xl font-bold text-center mb-1 
+                                bg-gradient-to-b from-[#E3A03D] to-[#B67421] 
+                                bg-clip-text text-transparent">
                                     Tải lên hình ảnh của bạn
                                 </div>
 
                                 <label
                                     htmlFor="user-image"
-                                    className="cursor-pointer border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center min-h-[230px] hover:border-orange-400 transition-all"
+                                    className="cursor-pointer border-2 border-dashed border-gray-300 rounded-xl md:rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center min-h-[200px] md:min-h-[230px] hover:border-orange-400 transition-all"
                                 >
                                     {userImage ? (
-                                        <div className="flex items-center justify-center max-h-[350px] w-full overflow-hidden">
+                                        <div className="flex items-center justify-center max-h-[280px] sm:max-h-[320px] md:max-h-[350px] w-full overflow-hidden">
                                             <img
                                                 src={URL.createObjectURL(userImage)}
                                                 alt="User"
-                                                className="max-h-[350px] w-auto object-contain rounded-2xl"
+                                                className="max-h-[280px] sm:max-h-[320px] md:max-h-[350px] w-auto object-contain rounded-xl md:rounded-2xl"
                                             />
                                         </div>
                                     ) : (
                                         <>
-                                            <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-3">
-                                                <Upload className="w-7 h-7 text-blue-500" />
+                                            <div className="w-12 h-12 md:w-14 md:h-14 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                                                <Upload className="w-6 h-6 md:w-7 md:h-7 text-blue-500" />
                                             </div>
-                                            <p className="text-gray-800 font-semibold text-center text-sm">
+                                            <p className="text-gray-800 font-semibold text-center text-sm md:text-base">
                                                 Chọn một tệp ảnh của bạn
                                             </p>
-                                            <p className="text-gray-400 text-xs text-center mt-1">
+                                            <p className="text-gray-400 text-xs md:text-sm text-center mt-1">
                                                 Hỗ trợ jpg, png, webp
                                             </p>
                                         </>
@@ -466,43 +471,51 @@ export default function VirtualTryOnPage() {
                                     accept="image/*"
                                     onChange={(e) => handleFileChange(e, setUserImage)}
                                     className="hidden"
-                                />'
+                                />
+
+                                {/* Messages - Responsive */}
+                                {fileTypeError && (
+                                    <div className="mt-3 flex items-start p-3 bg-red-100 border border-red-300 rounded-lg">
+                                        <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+                                        <p className="text-red-700 text-xs md:text-sm font-medium">{fileTypeError}</p>
+                                    </div>
+                                )}
+
                                 {imageValidation.isChecking && (
-                                    <div className="mt-3 flex items-center justify-center text-blue-600 text-sm">
+                                    <div className="mt-3 flex items-center justify-center text-blue-600 text-xs md:text-sm">
                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
                                         Đang kiểm tra ảnh...
                                     </div>
                                 )}
-                                <p className="mt-2 text-yellow-700 text-sm text-center">
+
+                                <p className="mt-2 text-yellow-700 text-xs sm:text-sm text-center px-2">
                                     🌟 Hãy chụp ảnh với mặt hướng về phía trước và chỉ một người trong khung hình để kết quả thử đồ chính xác nhất nhé!
                                 </p>
-                                {/* Error message */}
+
                                 {imageValidation.isValid === false && (
                                     <div className="mt-3 flex items-start p-3 bg-red-100 border border-red-300 rounded-lg">
-                                        <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
-                                        <p className="text-red-700 text-sm font-medium">
+                                        <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+                                        <p className="text-red-700 text-xs md:text-sm font-medium">
                                             {imageValidation.errorMessage}
                                         </p>
                                     </div>
                                 )}
 
-                                {/* Success message */}
                                 {imageValidation.isValid === true && (
                                     <div className="mt-3 flex items-start p-3 bg-green-100 border border-green-300 rounded-lg">
-                                        <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                                        <div>
-                                            <p className="text-green-700 text-sm font-medium">
-                                                Ảnh hợp lệ! Bạn có thể tiếp tục thử đồ.
-                                            </p>
-                                        </div>
+                                        <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                                        <p className="text-green-700 text-xs md:text-sm font-medium">
+                                            Ảnh hợp lệ! Bạn có thể tiếp tục thử đồ.
+                                        </p>
                                     </div>
                                 )}
                             </div>
 
+                            {/* Try-on Button - Responsive */}
                             <button
                                 onClick={handleTryOn}
                                 disabled={!canTryOn}
-                                className={`mt-6 w-full font-semibold py-3 rounded-xl transition-all text-base
+                                className={`mt-4 md:mt-6 w-full font-semibold py-2.5 md:py-3 rounded-lg md:rounded-xl transition-all text-sm md:text-base
                                 ${canTryOn
                                         ? 'bg-gradient-to-r from-amber-200 to-orange-200 hover:from-amber-300 hover:to-orange-300 text-gray-800 hover:shadow-lg cursor-pointer'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -513,21 +526,18 @@ export default function VirtualTryOnPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Modals giữ nguyên */}
                 {showModal && (
                     <SelectItemTryOn
                         category={modalType === 'top' ? topCategories : bottomCategories}
                         onClose={() => setShowModal(false)}
                         onSelect={async (item: any) => {
-                            console.log("Item selected from SelectItemTryOn:", item);
                             const fullBodyCategoryIds = category
                                 .filter((c) => c.bodyPart === 'Toàn thân')
                                 .map((c) => c.categoryId);
-
-
                             const isDressItem = fullBodyCategoryIds.includes(item.categoryId);
-                            if (isDressItem) {
-                                setSelectedBottom(null);
-                            }
+                            if (isDressItem) setSelectedBottom(null);
                             setIsDress(isDressItem);
                             await fetchProductColor(item.productColorId, category);
                             setShowModal(false);
@@ -545,9 +555,7 @@ export default function VirtualTryOnPage() {
                 )}
                 {showRecommendation && (
                     <ColorRecommendation
-                        category={
-                            selectedBottom ? topCategories.filter(c => c.bodyPart === 'Thân trên') : bottomCategories
-                        }
+                        category={selectedBottom ? topCategories.filter(c => c.bodyPart === 'Thân trên') : bottomCategories}
                         selectedHexcode={selectedTop ? selectedTop.productColors[0].color.hexCode : selectedBottom.productColors[0].color.hexCode}
                         onClose={() => setShowRecommendation(false)}
                         onSelect={(item) => {
@@ -571,7 +579,6 @@ export default function VirtualTryOnPage() {
                     ]}
                     category={category}
                     onAddToCart={async (productVariantId: string, quantity: number) => {
-                        // Xử lý thêm vào giỏ hàng
                         try {
                             const payload = {
                                 productVariantId: productVariantId,
@@ -584,7 +591,6 @@ export default function VirtualTryOnPage() {
                                 window.dispatchEvent(new Event("cart-updated"));
                             }
                         } catch (error: any) {
-                            console.error('Error adding to cart trong try on:', error.response?.data?.message);
                             messageToast.error(error.response?.data?.message);
                         }
                     }}
