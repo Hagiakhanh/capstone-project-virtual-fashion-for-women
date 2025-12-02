@@ -26,9 +26,7 @@ export default function WalletPage() {
     const [wallet, setWallet] = useState<WalletDTO>();
     const [showDepositModal, setShowDepositModal] = useState(false);
     const [depositAmount, setDepositAmount] = useState<number>(0);
-    const [selectedMethod, setSelectedMethod] = useState<'Momo' | 'VnPay' | null>(
-        null
-    );
+    const [selectedMethod, setSelectedMethod] = useState<'Momo' | 'VnPay' | null>(null);
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState<PaginationDTO>({
         CurrentPage: 1,
@@ -51,6 +49,7 @@ export default function WalletPage() {
         Failed: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-50', text: 'Thất bại' },
         Pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-50', text: 'Đang xử lý' },
     };
+
     const fetchWallet = async () => {
         try {
             const response = await api.get("/wallet");
@@ -73,7 +72,6 @@ export default function WalletPage() {
             }
             const response = await api.get('/transaction/recharge-history', { params: payloadPagination });
             if (response.status === 200) {
-
                 setRechargeTransactions(response.data.data);
                 setPagination((prev) => ({
                     ...prev,
@@ -127,7 +125,7 @@ export default function WalletPage() {
         const { icon: Icon, color, text } = styles[key];
 
         return {
-            icon: <Icon className={`w-8 h-8 ${color}`} />,
+            icon: <Icon className={`w-4 h-4 md:w-8 md:h-8 ${color}`} />,
             text,
             status: key
         };
@@ -138,6 +136,7 @@ export default function WalletPage() {
             setPagination((prev) => ({ ...prev, CurrentPage: newPage }));
         }
     };
+
     function getPageNumbers(totalPages: number, currentPage: number, delta = 2): (number | string)[] {
         const range: (number | string)[] = [];
         const left = Math.max(2, currentPage - delta);
@@ -176,51 +175,43 @@ export default function WalletPage() {
     }, [pagination.CurrentPage, pagination.PageSize]);
 
     return (
-        <div className="bg-gradient-to-br from-gray-50 via-white to-blue-50 py-10 px-6">
-            {/* Thay đổi tại đây */}
-            <div className="mx-auto grid grid-cols-1 md:grid-cols-[3fr_7fr] gap-8">
-
+        <div className="bg-gradient-to-br from-gray-50 via-white to-blue-50 py-6 md:py-10 px-3 md:px-6">
+            <div className="mx-auto grid grid-cols-1 lg:grid-cols-[3fr_7fr] gap-4 md:gap-8">
                 {loading && <LoadingOverlay />}
-                {/* Left: Wallet Info */}
-                <div className="space-y-6">
+
+                {/* Left: Wallet Info - Responsive */}
+                <div className="space-y-4 md:space-y-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-xl flex items-center justify-center shadow-md">
-                            <Wallet className="w-6 h-6 text-white" />
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-xl flex items-center justify-center shadow-md">
+                            <Wallet className="w-5 h-5 md:w-6 md:h-6 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-semibold text-gray-800">Ví của tôi</h1>
-                            <p className="text-sm text-gray-500">Quản lý tài chính cá nhân</p>
+                            <h1 className="text-xl md:text-2xl font-semibold text-gray-800">Ví của tôi</h1>
+                            <p className="text-xs md:text-sm text-gray-500">Quản lý tài chính cá nhân</p>
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-blue-500/90 to-indigo-500/90 rounded-2xl p-8 text-white shadow-lg">
-                        <p className="text-blue-100 text-sm mb-2">Số dư khả dụng</p>
-                        <h2 className="text-4xl font-bold mb-6">{formatPrice(wallet?.balance ?? 0)}đ</h2>
+                    <div className="bg-gradient-to-br from-blue-500/90 to-indigo-500/90 rounded-2xl p-6 md:p-8 text-white shadow-lg">
+                        <p className="text-blue-100 text-xs md:text-sm mb-2">Số dư khả dụng</p>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6">{formatPrice(wallet?.balance ?? 0)}đ</h2>
 
-                        <div className="flex gap-4">
+                        <div className="flex gap-3 md:gap-4">
                             <button
                                 onClick={() => setShowDepositModal(true)}
-                                className="flex-1 bg-white text-blue-600 py-3 rounded-xl font-medium hover:bg-blue-50 transition-all shadow-sm"
+                                className="flex-1 bg-white text-blue-600 py-2.5 md:py-3 rounded-xl font-medium hover:bg-blue-50 transition-all shadow-sm text-sm md:text-base"
                             >
                                 <div className="flex items-center justify-center gap-2">
                                     <Plus className="w-4 h-4" /> Nạp tiền
                                 </div>
                             </button>
-                            {/* <button
-                                className="flex-1 bg-white/20 backdrop-blur-md text-white py-3 rounded-xl font-medium hover:bg-white/30 transition-all"
-                            >
-                                <div className="flex items-center justify-center gap-2">
-                                    <ArrowUpRight className="w-4 h-4" /> Rút tiền
-                                </div>
-                            </button> */}
                         </div>
                     </div>
                 </div>
 
-                {/* Right: Transaction History */}
+                {/* Right: Transaction History - Responsive */}
                 <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100">
-                        <h3 className="text-lg font-semibold text-gray-800">Lịch sử giao dịch</h3>
+                    <div className="p-4 md:p-6 border-b border-gray-100">
+                        <h3 className="text-base md:text-lg font-semibold text-gray-800">Lịch sử giao dịch</h3>
                     </div>
 
                     <div className="flex flex-col justify-between">
@@ -231,31 +222,31 @@ export default function WalletPage() {
                                     return (
                                         <div
                                             key={t.transactionId}
-                                            className="p-5 hover:bg-gray-50 transition-colors flex items-center justify-between"
+                                            className="p-4 md:p-5 hover:bg-gray-50 transition-colors flex items-center justify-between gap-3"
                                         >
-                                            <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
                                                 <div
-                                                    className={`w-11 h-11 rounded-xl flex items-center justify-center ${t.type === 'Recharge' || t.type === 'Refund' ? 'bg-green-50' : 'bg-red-50'
+                                                    className={`w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${t.type === 'Recharge' || t.type === 'Refund' ? 'bg-green-50' : 'bg-red-50'
                                                         }`}
                                                 >
                                                     {t.type === 'Recharge' || t.type === 'Refund' ? (
-                                                        <ArrowDownLeft className="w-5 h-5 text-green-600" />
+                                                        <ArrowDownLeft className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
                                                     ) : (
-                                                        <ArrowUpRight className="w-5 h-5 text-red-600" />
+                                                        <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5 text-red-600" />
                                                     )}
                                                 </div>
-                                                <div>
-                                                    <p className="font-medium text-gray-800">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium text-gray-800 text-sm md:text-base truncate">
                                                         {typeTransaction(t.type)}
                                                     </p>
-                                                    <p className="text-sm text-gray-500">
+                                                    <p className="text-xs md:text-sm text-gray-500 truncate">
                                                         {t.method} • {formatDate(t.updatedAt)}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
+                                            <div className="text-right flex-shrink-0">
                                                 <p
-                                                    className={`text-base font-semibold ${t.type === 'Recharge' || t.type === 'Refund' ? 'text-green-600' : 'text-red-600'
+                                                    className={`text-sm md:text-base font-semibold ${t.type === 'Recharge' || t.type === 'Refund' ? 'text-green-600' : 'text-red-600'
                                                         }`}
                                                 >
                                                     {t.type === 'Recharge' || t.type === 'Refund' ? '+' : '-'}
@@ -263,7 +254,7 @@ export default function WalletPage() {
                                                 </p>
                                                 <div className="flex items-center gap-1 justify-end mt-1">
                                                     {statusInfor.icon}
-                                                    <span className="text-base text-gray-600">
+                                                    <span className="text-xs md:text-sm text-gray-600">
                                                         {statusInfor.text}
                                                     </span>
                                                 </div>
@@ -272,72 +263,76 @@ export default function WalletPage() {
                                     );
                                 })
                             ) : (
-                                <div className="flex flex-col justify-center items-center h-full text-gray-500 py-20">
-                                    <Clock className="w-8 h-8 mb-2 text-gray-400" />
-                                    <p className="text-base font-medium">Không có giao dịch nạp tiền</p>
+                                <div className="flex flex-col justify-center items-center h-full text-gray-500 py-12 md:py-20">
+                                    <Clock className="w-6 h-6 md:w-8 md:h-8 mb-2 text-gray-400" />
+                                    <p className="text-sm md:text-base font-medium">Không có giao dịch nạp tiền</p>
                                 </div>
                             )}
                         </div>
 
-                        {rechargeTransactions.length > 0 && (
-                            <div className="flex justify-center items-center gap-3 m-3">
-                                {/* Nút trước */}
+                        {/* Pagination - Responsive */}
+                        {rechargeTransactions.length > 0 && pagination.TotalPages > 1 && (
+                            <div className="flex justify-center items-center gap-1.5 md:gap-3 m-3 flex-wrap">
                                 <button
                                     disabled={pagination.CurrentPage === 1}
                                     onClick={() => handlePageChange(pagination.CurrentPage - 1)}
-                                    className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                    className="px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                                 >
-                                    « Trước
+                                    <span className="hidden sm:inline">« Trước</span>
+                                    <span className="sm:hidden">«</span>
                                 </button>
 
-                                {getPageNumbers(pagination.TotalPages, pagination.CurrentPage).map(
-                                    (page, idx) => (
-                                        <button
-                                            key={idx}
-                                            onClick={() => typeof page === 'number' && handlePageChange(page)}
-                                            disabled={page === '...'}
-                                            className={`px-4 py-2 rounded-lg border transition-all ${pagination.CurrentPage === page
-                                                ? 'bg-black text-white border-black'
-                                                : 'bg-white hover:bg-gray-100'
-                                                } ${page === '...' ? 'cursor-default opacity-70' : ''}`}
-                                        >
-                                            {page}
-                                        </button>
-                                    )
-                                )}
+                                {getPageNumbers(
+                                    pagination.TotalPages,
+                                    pagination.CurrentPage,
+                                    typeof window !== 'undefined' && window.innerWidth < 640 ? 1 : 2
+                                ).map((page, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => typeof page === 'number' && handlePageChange(page)}
+                                        disabled={page === '...'}
+                                        className={`px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg border transition-all min-w-[32px] md:min-w-[40px] ${pagination.CurrentPage === page
+                                            ? 'bg-black text-white border-black'
+                                            : 'bg-white hover:bg-gray-100'
+                                            } ${page === '...' ? 'cursor-default opacity-70' : ''}`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
 
-                                {/* Nút sau */}
                                 <button
                                     disabled={pagination.CurrentPage === pagination.TotalPages}
                                     onClick={() => handlePageChange(pagination.CurrentPage + 1)}
-                                    className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                                    className="px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                                 >
-                                    Sau »
+                                    <span className="hidden sm:inline">Sau »</span>
+                                    <span className="sm:hidden">»</span>
                                 </button>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* Deposit Modal - Responsive */}
             {showDepositModal && (
                 <div
-                    className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+                    className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
                     onClick={() => {
                         setShowDepositModal(false);
                         setDepositAmount(0);
                         setSelectedMethod(null);
                     }}
                 >
-                    {/* Chặn click bên trong modal lan ra ngoài */}
                     <div
-                        className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl"
+                        className="bg-white rounded-2xl max-w-md w-full p-6 md:p-8 shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h3 className="text-xl font-semibold text-gray-800 mb-6">
+                        <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 md:mb-6">
                             Nạp tiền vào ví
                         </h3>
 
-                        <div className="mb-6">
+                        <div className="mb-4 md:mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Số tiền cần nạp
                             </label>
@@ -346,26 +341,25 @@ export default function WalletPage() {
                                     type="text"
                                     value={depositAmount ? depositAmount.toLocaleString("vi-VN") : ""}
                                     onChange={(e) => {
-                                        const rawValue = e.target.value.replace(/\D/g, ""); // bỏ ký tự không phải số
+                                        const rawValue = e.target.value.replace(/\D/g, "");
                                         setDepositAmount(rawValue ? Number(rawValue) : 0);
                                     }}
                                     placeholder="Nhập số tiền"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    className="w-full px-4 py-2.5 md:py-3 text-sm md:text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                                 />
-                                <span className="absolute right-4 top-3.5 text-gray-500">đ</span>
+                                <span className="absolute right-4 top-2.5 md:top-3.5 text-gray-500 text-sm md:text-base">đ</span>
                             </div>
                             <p className="text-xs text-gray-500 mt-2">Tối thiểu 10.000đ</p>
                         </div>
 
-
-                        <div className="mb-6">
+                        <div className="mb-4 md:mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-3">
                                 Phương thức thanh toán
                             </label>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-3 md:gap-4">
                                 <button
                                     onClick={() => setSelectedMethod('Momo')}
-                                    className={`p-4 border-2 rounded-xl transition-all ${selectedMethod === 'Momo'
+                                    className={`p-3 md:p-4 border-2 rounded-xl transition-all ${selectedMethod === 'Momo'
                                         ? 'border-pink-400 bg-pink-50'
                                         : 'border-gray-200 hover:border-pink-300'
                                         }`}
@@ -373,14 +367,14 @@ export default function WalletPage() {
                                     <img
                                         src={MomoPng.src}
                                         alt="MoMo"
-                                        className="w-12 h-12 bg-pink-500 rounded-lg mx-auto mb-2 flex items-center justify-center"
+                                        className="w-10 h-10 md:w-12 md:h-12 bg-pink-500 rounded-lg mx-auto mb-2"
                                     />
-                                    <p className="text-sm font-medium text-gray-700">MoMo</p>
+                                    <p className="text-xs md:text-sm font-medium text-gray-700">MoMo</p>
                                 </button>
 
                                 <button
                                     onClick={() => setSelectedMethod('VnPay')}
-                                    className={`p-4 border-2 rounded-xl transition-all ${selectedMethod === 'VnPay'
+                                    className={`p-3 md:p-4 border-2 rounded-xl transition-all ${selectedMethod === 'VnPay'
                                         ? 'border-blue-400 bg-blue-50'
                                         : 'border-gray-200 hover:border-blue-300'
                                         }`}
@@ -388,21 +382,21 @@ export default function WalletPage() {
                                     <img
                                         src={VnpayPng.src}
                                         alt="VNPay"
-                                        className="w-12 h-12 bg-blue-500 rounded-lg mx-auto mb-2 flex items-center justify-center"
+                                        className="w-10 h-10 md:w-12 md:h-12 bg-blue-500 rounded-lg mx-auto mb-2"
                                     />
-                                    <p className="text-sm font-medium text-gray-700">VNPay</p>
+                                    <p className="text-xs md:text-sm font-medium text-gray-700">VNPay</p>
                                 </button>
                             </div>
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex flex-col-reverse sm:flex-row gap-3">
                             <button
                                 onClick={() => {
                                     setShowDepositModal(false);
                                     setDepositAmount(0);
                                     setSelectedMethod(null);
                                 }}
-                                className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all"
+                                className="flex-1 px-4 md:px-6 py-2.5 md:py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all text-sm md:text-base"
                             >
                                 Hủy
                             </button>
@@ -410,7 +404,7 @@ export default function WalletPage() {
                             <button
                                 onClick={handleDeposit}
                                 disabled={!depositAmount || !selectedMethod}
-                                className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all ${depositAmount && selectedMethod
+                                className={`flex-1 px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-medium transition-all text-sm md:text-base ${depositAmount && selectedMethod
                                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md'
                                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     }`}
@@ -421,8 +415,6 @@ export default function WalletPage() {
                     </div>
                 </div>
             )}
-
         </div>
-
     );
 }
