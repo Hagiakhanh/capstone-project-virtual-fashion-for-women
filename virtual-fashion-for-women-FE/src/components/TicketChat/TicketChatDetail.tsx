@@ -146,36 +146,62 @@ export default function TicketChatDetail({
    }
 
    return (
-      <div className='p-4'>
-         <Button onClick={() => onBack(null)} className='mb-4' style={{ fontSize: '18px', fontWeight: 'normal' }}>
-            Quay lại danh sách
+      <div className='p-2 sm:p-4'>
+         <Button 
+            onClick={() => onBack(null)} 
+            className='mb-3 sm:mb-4'
+            size='large'
+            style={{ 
+               fontSize: '16px', 
+               fontWeight: 'normal' 
+            }}
+         >
+            <span className='hidden sm:inline'>Quay lại danh sách</span>
+            <span className='inline sm:hidden'>Quay lại</span>
          </Button>
 
-         <div className='bg-white rounded-xl shadow p-4'>
+         <div className='bg-white rounded-lg sm:rounded-xl shadow p-3 sm:p-4'>
             {/* Header */}
-            <div className='border-b pb-2 mb-3 flex gap-2 items-center'>
-               <h3 className='text-lg font-semibold'>{messages?.title}</h3>
-               <span className='text-base text-gray-400'>#{messages?.ticketChatId}</span>
+            <div className='border-b pb-2 mb-3 flex flex-col sm:flex-row gap-1 sm:gap-2 sm:items-center'>
+               <h3 className='text-base sm:text-lg font-semibold line-clamp-2 sm:line-clamp-1'>
+                  {messages?.title}
+               </h3>
+               <span className='text-sm sm:text-base text-gray-400'>
+                  #{messages?.ticketChatId}
+               </span>
             </div>
 
             {/* Vùng hiển thị tin nhắn */}
-            <div ref={chatBoxRef}
-               className='h-[400px] overflow-y-auto p-4 bg-gray-50 rounded-md flex flex-col gap-2'>
+            <div 
+               ref={chatBoxRef}
+               className='h-[calc(100vh-280px)] sm:h-[400px] overflow-y-auto p-3 sm:p-4 bg-gray-50 rounded-md flex flex-col gap-2'
+            >
                {loading ? (
-                  <p>Đang tải tin nhắn...</p>
+                  <p className='text-sm sm:text-base text-center text-gray-500'>
+                     Đang tải tin nhắn...
+                  </p>
                ) : (
                   <>
                      {messages?.messages.map((msg) => {
+                        const isOwner = msg?.ownerRole?.toLowerCase() == user?.role?.toLowerCase();
                         return (
                            <div
                               key={msg.messageId}
-                              className={`flex ${msg?.ownerRole?.toLowerCase() == user?.role?.toLowerCase() ? 'justify-end' : 'justify-start'}`}
+                              className={`flex ${isOwner ? 'justify-end' : 'justify-start'}`}
                            >
                               <div
-                                 className={`max-w-[70%] rounded-2xl px-3 py-2 bg-blue-500 text-white rounded-br-none`}
+                                 className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-3 py-2 ${
+                                    isOwner 
+                                       ? 'bg-blue-500 text-white rounded-br-none' 
+                                       : 'bg-gray-200 text-gray-800 rounded-bl-none'
+                                 }`}
                               >
-                                 <p className='text-base whitespace-pre-wrap'>{msg.content}</p>
-                                 <p className='text-sm text-gray-300 mt-1 text-right'>
+                                 <p className='text-sm sm:text-base whitespace-pre-wrap break-words'>
+                                    {msg.content}
+                                 </p>
+                                 <p className={`text-xs sm:text-sm mt-1 text-right ${
+                                    isOwner ? 'text-gray-300' : 'text-gray-500'
+                                 }`}>
                                     {formatDate(msg?.createdAt)}
                                  </p>
                               </div>
@@ -189,20 +215,30 @@ export default function TicketChatDetail({
             {/* Ô nhập và nút gửi */}
             {
                messages?.ticketStatus?.startsWith('Open') || messages?.ticketStatus?.startsWith('Pending') ? (
-                  <div className='mt-4 flex gap-2'>
+                  <div className='mt-3 sm:mt-4 flex gap-2'>
                      <Input
                         placeholder='Nhập tin nhắn...'
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onPressEnter={handleSend}
-                        style={{ fontSize: '16px' }}
+                        size='large'
+                        className='text-sm sm:text-base'
                      />
-                     <Button type='primary' onClick={handleSend} style={{ fontSize: '16px' }}>
+                     <Button 
+                        type='primary' 
+                        onClick={handleSend} 
+                        size='large'
+                        className='text-sm sm:text-base px-4 sm:px-6'
+                     >
                         Gửi
                      </Button>
                   </div>
                ) : (
-                  <></>
+                  <div className='mt-3 sm:mt-4 text-center'>
+                     <p className='text-sm sm:text-base text-gray-500 bg-gray-100 rounded-lg py-2 px-4'>
+                        Cuộc trò chuyện này đã đóng
+                     </p>
+                  </div>
                )
             }
 
