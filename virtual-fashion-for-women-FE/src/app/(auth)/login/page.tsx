@@ -102,7 +102,7 @@ function LoginPage() {
             >
               <Input
                 id="email"
-                size="middle"
+                size="large"
                 className="text-base sm:text-lg md:text-xl"
                 placeholder="Nhập địa chỉ email của bạn"
               />
@@ -115,7 +115,7 @@ function LoginPage() {
             >
               <Input.Password
                 id="password"
-                size="middle"
+                size="large"
                 className="text-base sm:text-lg md:text-xl"
                 placeholder="Nhập mật khẩu của bạn"
               />
