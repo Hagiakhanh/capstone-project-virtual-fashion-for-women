@@ -88,15 +88,15 @@ export default function ColorRecommendation({
                 {/* Category buttons */}
                 {category.length > 0 && (
                     <div className="mb-3 md:mb-4 -mx-4 md:mx-0 px-4 md:px-0 overflow-hidden">
-                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        <div className="flex flex-wrap gap-2 mb-4 justify-center">
                             {category.map((c) => (
                                 <button
                                     key={c.categoryId}
                                     onClick={() => setSelectedCategory(c)}
                                     disabled={loading}
                                     className={`px-3 md:px-4 py-1.5 rounded-full border text-xs md:text-sm font-medium transition flex-shrink-0 ${selectedCategory?.categoryId === c.categoryId
-                                            ? "bg-orange-500 text-white border-orange-500"
-                                            : "bg-white border-gray-300 hover:border-orange-400 hover:text-orange-500"
+                                        ? "bg-orange-500 text-white border-orange-500"
+                                        : "bg-white border-gray-300 hover:border-orange-400 hover:text-orange-500"
                                         } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                                 >
                                     {c.categoryName}
