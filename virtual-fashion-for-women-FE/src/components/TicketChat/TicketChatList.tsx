@@ -99,7 +99,10 @@ function TicketChatList({ tickets, onSelect, fetchTicketsChat }: { tickets: Item
             okText='Tạo'
             cancelText='Hủy'
             centered
-            width={window.innerWidth < 640 ? '90%' : 520}
+            className='modal-responsive'
+            styles={{
+               body: { padding: '20px' }
+            }}
          >
             <Form layout='vertical' form={form}>
                <Form.Item
