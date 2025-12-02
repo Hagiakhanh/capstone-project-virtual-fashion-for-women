@@ -59,6 +59,11 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     return existingTryOnSlot.ToMapTryOnResponse();
                 }
+                
+                if(TopProductColor == null && BottomProductColor == null)
+                {
+                    throw new Exception("Phải chọn ít nhất một sản phẩm để thử đồ");
+                }
 
                 var productColors = new List<ProductColor>();
                 if (TopProductColor != null)
