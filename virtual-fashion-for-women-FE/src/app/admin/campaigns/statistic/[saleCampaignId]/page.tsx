@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { Card, DatePicker, Spin, Row, Col, Statistic } from "antd";
 import { useParams } from "next/navigation";
-import { Line, Column } from "@ant-design/plots";
 import dayjs from "dayjs";
 import { api, apiToken } from "@/api/instance";
 import {
@@ -14,6 +13,15 @@ import {
 import formatPrice from "@/utils/formatPrice";
 import { messageToast } from "@/helpers/toastHelper";
 import { Table, Image } from "antd";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 const { RangePicker } = DatePicker;
 
@@ -59,7 +67,8 @@ export default function CampaignStatisticPage() {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalSold, setTotalSold] = useState(0);
   const [avgRevenue, setAvgRevenue] = useState(0);
-  const [totalProductInSaleCampaign, setTotalProductInSaleCampaign] = useState(0);
+  const [totalProductInSaleCampaign, setTotalProductInSaleCampaign] =
+    useState(0);
 
   // 🔹 Gọi 1 lần để lấy chi tiết campaign trước
   useEffect(() => {
@@ -98,7 +107,7 @@ export default function CampaignStatisticPage() {
       });
 
       const data = res.data;
-      setTotalProductInSaleCampaign(data.totalProductInCampaign|| 0);
+      setTotalProductInSaleCampaign(data.totalProductInCampaign || 0);
       // 1. Map dữ liệu cho Biểu đồ Doanh thu theo ngày
       const mappedChart: ChartData[] =
         data.listSaleRevenueDate?.map((item: any) => ({
@@ -325,7 +334,39 @@ export default function CampaignStatisticPage() {
         <Row gutter={[16, 16]}>
           <Col span={24} md={24}>
             <Card title="Doanh thu chiến dịch theo ngày">
-              <Line {...revenueConfig} height={300} />
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value: string) =>
+                      dayjs(value).format("DD/MM")
+                    }
+                  />
+
+                  <YAxis tick={{ fontSize: 12 }} />
+
+                  <Tooltip
+                    labelFormatter={(label: string) =>
+                      dayjs(label).format("DD/MM/YYYY")
+                    }
+                    formatter={(value: number) => [
+                      value.toLocaleString("vi-VN") + " ₫",
+                      "Doanh thu",
+                    ]}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </Card>
           </Col>
         </Row>
