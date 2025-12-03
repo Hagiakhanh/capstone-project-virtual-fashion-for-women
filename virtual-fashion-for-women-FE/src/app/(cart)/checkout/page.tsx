@@ -54,7 +54,15 @@ export default function CheckoutForm() {
             addressInformation.wardName.trim() !== ''
         );
     }, [formData, addressInformation]);
+
     const [wallet, setWallet] = useState<WalletDTO>();
+    const canSelectWallet = useMemo(() => {
+        return isFormValid && checkoutDTO.serviceFee > 0;
+    }, [isFormValid, checkoutDTO.serviceFee]);
+
+    const hasEnoughBalance = useMemo(() => {
+        return wallet && wallet.balance >= checkoutDTO.totalPrice;
+    }, [wallet, checkoutDTO.totalPrice]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
@@ -67,6 +75,9 @@ export default function CheckoutForm() {
                 districtName: '',
                 wardName: ''
             });
+        }
+        if (selectedPayment === 'Wallet') {
+            setSelectedPayment('Momo');
         }
     };
 
@@ -127,6 +138,9 @@ export default function CheckoutForm() {
                 wardName: ''
             });
             clearAddressSelection();
+            if (selectedPayment === 'Wallet') {
+                setSelectedPayment('Momo');
+            }
             await fetchDistrictData(provinceId).then(() => {
                 setCurrentAddressTab('district');
             });
@@ -141,6 +155,9 @@ export default function CheckoutForm() {
                 wardName: ''
             });
             clearAddressSelection();
+            if (selectedPayment === 'Wallet') {
+                setSelectedPayment('Momo');
+            }
             await fetchWardData(districtId).then(() => {
                 setCurrentAddressTab('ward');
             });
@@ -154,6 +171,9 @@ export default function CheckoutForm() {
                 wardName
             });
             clearAddressSelection();
+            if (selectedPayment === 'Wallet') {
+                setSelectedPayment('Momo');
+            }
         }
         setShowAddressDropdown(false);
         setCurrentAddressTab('city');
@@ -570,14 +590,16 @@ export default function CheckoutForm() {
                             </label>
                             <label
                                 className={`flex items-center p-3 border rounded-lg transition-all cursor-pointer
-                                        ${(!wallet || (wallet?.balance ?? 0) < checkoutDTO.totalPrice)
+                                        ${!canSelectWallet
                                         ? 'opacity-60 cursor-not-allowed bg-gray-100 hover:bg-gray-100'
-                                        : 'hover:bg-gray-50'
+                                        : !hasEnoughBalance
+                                            ? 'opacity-60 cursor-not-allowed bg-gray-100 hover:bg-gray-100'
+                                            : 'hover:bg-gray-50'
                                     }`}
                             >
                                 <input
                                     type="radio"
-                                    disabled={!wallet || (wallet?.balance ?? 0) < checkoutDTO.totalPrice}
+                                    disabled={!canSelectWallet || !hasEnoughBalance}
                                     name="payment"
                                     value="Wallet"
                                     checked={selectedPayment === 'Wallet'}
