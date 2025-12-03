@@ -91,7 +91,7 @@ export default function RegisterPage() {
                   >
                      <Input
                         id="fullname"
-                        size="middle"
+                        size="large"
                         className="text-base sm:text-lg md:text-xl"
                         placeholder="Nhập họ và tên của bạn"
                      />
@@ -107,7 +107,7 @@ export default function RegisterPage() {
                   >
                      <Input
                         id="email"
-                        size="middle"
+                        size="large"
                         className="text-base sm:text-lg md:text-xl"
                         placeholder="Nhập địa chỉ email của bạn"
                      />
@@ -120,7 +120,7 @@ export default function RegisterPage() {
                   >
                      <Input.Password
                         id="password"
-                        size="middle"
+                        size="large"
                         className="text-base sm:text-lg md:text-xl"
                         placeholder="Nhập mật khẩu của bạn"
                      />
@@ -144,7 +144,7 @@ export default function RegisterPage() {
                   >
                      <Input.Password
                         id="confirm-password"
-                        size="middle"
+                        size="large"
                         className="text-base sm:text-lg md:text-xl"
                         placeholder="Nhập lại mật khẩu của bạn"
                      />
