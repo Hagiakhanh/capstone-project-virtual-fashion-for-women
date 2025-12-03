@@ -6,8 +6,7 @@ import LoadingOverlay from "@/components/Loading/LoadingOverlay";
 import { messageToast } from "@/helpers/toastHelper";
 import { CartItemDTO } from "@/models/CartItemDTO";
 import formatPrice from "@/utils/formatPrice";
-import { message } from "antd";
-import { debounce, set } from "lodash";
+import { debounce } from "lodash";
 import { ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -86,7 +85,6 @@ export default function CartContainer() {
         []
     );
 
-
     const updateQuantity = useCallback((id: number, change: number) => {
         setCartItems(prev => {
             const updatedItems = prev.map(item => {
@@ -106,7 +104,6 @@ export default function CartContainer() {
             return updatedItems;
         });
     }, [debouncedUpdate]);
-
 
     const removeItem = async (id: number) => {
         const res = await api.delete(`/cartItem/${id}`);
@@ -135,17 +132,21 @@ export default function CartContainer() {
         .reduce((sum, i) => sum + i.responseProductVariantDto.currentPrice * i.quantityItem, 0);
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8 py-4 md:py-8 px-3 md:px-0">
             {loading && <LoadingOverlay size={60} />}
-            {/* Left - Cart Items */}
-            <div className="lg:col-span-2 bg-white rounded-2xl shadow-md border border-gray-100">
-                <div className="flex items-center justify-between p-6 border-b">
-                    <div className="flex items-center space-x-3">
-                        <ShoppingBag className="text-yellow-700 w-6 h-6" />
-                        <h2 className="text-xl font-semibold text-gray-800">Giỏ hàng của bạn</h2>
+
+            {/* Left - Cart Items - Responsive */}
+            <div className="lg:col-span-2 bg-white rounded-xl md:rounded-2xl shadow-md border border-gray-100">
+                {/* Header - Responsive */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 md:p-6 border-b">
+                    <div className="flex items-center space-x-2 md:space-x-3">
+                        <ShoppingBag className="text-yellow-700 w-5 h-5 md:w-6 md:h-6" />
+                        <h2 className="text-lg md:text-xl font-semibold text-gray-800">
+                            Giỏ hàng của bạn
+                        </h2>
                     </div>
 
-                    <label className="flex items-center text-sm text-gray-600 space-x-2">
+                    <label className="flex items-center text-xs md:text-sm text-gray-600 space-x-2">
                         <input
                             type="checkbox"
                             checked={selectAll}
@@ -156,11 +157,12 @@ export default function CartContainer() {
                     </label>
                 </div>
 
-                <div className="p-6 space-y-5">
+                {/* Cart Items - Responsive */}
+                <div className="p-4 md:p-6 space-y-4 md:space-y-5">
                     {cartItems.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                            <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                            Giỏ hàng của bạn đang trống
+                        <div className="text-center py-6 md:py-8 text-gray-500">
+                            <ShoppingBag className="w-10 h-10 md:w-12 md:h-12 text-gray-400 mx-auto mb-2 md:mb-3" />
+                            <p className="text-sm md:text-base">Giỏ hàng của bạn đang trống</p>
                         </div>
                     ) : (
                         cartItems.map(item => (
@@ -178,20 +180,24 @@ export default function CartContainer() {
                 </div>
             </div>
 
-            {/* Right - Summary */}
-            <div className="lg:col-span-1 self-start bg-[#FFF8E1] rounded-2xl p-6 shadow-md border border-yellow-100">
-                <div className="flex justify-between mb-6">
-                    <span className="text-gray-700 font-medium">Tổng đơn hàng:</span>
-                    <span className="text-2xl font-bold text-gray-900">
+            {/* Right - Summary - Responsive */}
+            <div className="lg:col-span-1 lg:self-start bg-[#FFF8E1] rounded-xl md:rounded-2xl p-4 md:p-6 shadow-md border border-yellow-100">
+                {/* Total - Responsive */}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4 md:mb-6">
+                    <span className="text-sm md:text-base text-gray-700 font-medium">
+                        Tổng đơn hàng:
+                    </span>
+                    <span className="text-xl md:text-2xl font-bold text-gray-900">
                         {formatPrice(totalAmount)}₫
                     </span>
                 </div>
 
+                {/* Checkout Button - Responsive */}
                 <button
                     onClick={handleCheckout}
                     disabled={totalAmount === 0}
-                    className={`w-full py-3 rounded-xl font-semibold transition mb-4
-                            ${totalAmount === 0
+                    className={`w-full py-2.5 md:py-3 rounded-lg md:rounded-xl text-sm md:text-base font-semibold transition mb-3 md:mb-4
+                        ${totalAmount === 0
                             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                             : "bg-black text-white hover:bg-yellow-700"
                         }`}
@@ -199,14 +205,14 @@ export default function CartContainer() {
                     THANH TOÁN
                 </button>
 
+                {/* Continue Shopping Button - Responsive */}
                 <button
                     onClick={() => router.push("/")}
-                    className="w-full border border-yellow-600 text-yellow-700 py-3 rounded-xl font-medium hover:bg-yellow-100 transition"
+                    className="w-full border border-yellow-600 text-yellow-700 py-2.5 md:py-3 rounded-lg md:rounded-xl text-sm md:text-base font-medium hover:bg-yellow-100 transition"
                 >
                     Tiếp tục mua sắm
                 </button>
             </div>
         </div>
-
     );
 }
