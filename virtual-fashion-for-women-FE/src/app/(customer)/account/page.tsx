@@ -46,7 +46,9 @@ export default function AccountPage() {
         if (!query) return setAddressSuggestions([]);
         try {
             setIsLoadingSuggestions(true);
-            const response = await api.get(`/location/googleMap/${encodeURIComponent(query)}`);
+
+            const response = await api.get(`/location/googleMap?address=${encodeURIComponent(query)}`);
+
             if (response.status === 200) {
                 const data: Record<string, string> = response.data;
                 const arr = Object.entries(data).map(
