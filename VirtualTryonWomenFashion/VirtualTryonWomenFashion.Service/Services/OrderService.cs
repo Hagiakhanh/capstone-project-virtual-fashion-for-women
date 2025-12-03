@@ -522,7 +522,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 ReceiverAddress = order.ReceiverAddress,
                 CreatedAt = order.CreatedAt,
                 Status = ((OrderStatusEnum)Enum.Parse(typeof(OrderStatusEnum), order.Status)).ToString(),
-                Amount = order.Amount - order.ShippingMoney ?? 0,
+                Amount = order.Amount - order.ShippingMoney - order?.InsuranceFee ?? 0,
                 Note = order.Note,
                 PackageWeight = order.PackageWeight,
                 PackageHeight = order.PackageHeight,
