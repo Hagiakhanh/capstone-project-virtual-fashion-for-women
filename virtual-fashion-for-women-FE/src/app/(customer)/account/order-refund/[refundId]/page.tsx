@@ -3,7 +3,7 @@
 import { api } from "@/api/instance";
 import formatDate from "@/utils/formatDate";
 import formatPrice from "@/utils/formatPrice";
-import { Calendar, MapPin, Mail, Phone, User } from "lucide-react";
+import { Calendar, MapPin, Mail, Phone, User, ArrowLeft, Package } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { OrderRefundDetailDTO } from "@/models/OrderRefundDTO";
@@ -51,118 +51,141 @@ export default function RefundDetailsPage() {
    }, [refundId]);
 
    return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-4">
-         <div className="max-w-6xl mx-auto">
+      <div className="min-h-screen bg-gray-50">
+         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
 
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 bg-white shadow-sm rounded-xl p-4">
-               <div className="flex flex-col gap-2 text-gray-700">
-                  <h1 className="font-bold text-2xl text-black">#REFUND-{refundDetails?.orderRefundId}</h1>
+            {/* Header Card */}
+            <div className="bg-white shadow-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 mb-4 sm:mb-6">
+               <div className="flex flex-col gap-4">
+                  {/* Top row: Title and Button */}
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                     <div className="flex-1 min-w-0">
+                        <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2 sm:mb-3 break-words">
+                           #REFUND-{refundDetails?.orderRefundId}
+                        </h1>
 
-                  <div className="flex items-center gap-2 text-base text-gray-500">
-                     <span className="flex items-center gap-1">
-                        <Calendar size={14} />
-                        Tạo lúc: {formatDate(refundDetails?.createdAt)}
-                     </span>
-                     <span>• {refundDetails?.productCount} Sản phẩm</span>
+                        {/* Info row - Stack on mobile */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-sm sm:text-base text-gray-600 mb-3">
+                           <div className="flex items-center gap-1.5">
+                              <Calendar size={16} className="flex-shrink-0" />
+                              <span className="truncate">
+                                 Tạo lúc: {formatDate(refundDetails?.createdAt)}
+                              </span>
+                           </div>
+                           <span className="hidden sm:inline">•</span>
+                           <div className="flex items-center gap-1.5">
+                              <Package size={16} className="flex-shrink-0" />
+                              <span>{refundDetails?.productCount} Sản phẩm</span>
+                           </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div
+                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border border-gray-200 bg-gray-100 w-fit"
+                        >
+                           {statusOrderInformation?.icon && (
+                              <statusOrderInformation.icon size={16} />
+                           )}
+                           <span className="whitespace-nowrap">
+                              {statusOrderInformation?.label}
+                           </span>
+                        </div>
+                     </div>
+
+                     {/* Back Button */}
+                     <button
+                        className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-all flex-shrink-0 w-full sm:w-auto"
+                        onClick={() => route.back()}
+                     >
+                        <ArrowLeft size={16} />
+                        <span>Quay lại</span>
+                     </button>
                   </div>
-                  <span
-                     className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium border border-gray-200 bg-gray-100 w-fit"
-                  >
-                     {statusOrderInformation?.icon && (
-                        <statusOrderInformation.icon
-                           size={18} className="m-1"
-                        />
-                     )}
-                     <span className="text-sm font-medium" >
-                        {statusOrderInformation?.label}
-                     </span>
-                  </span>
-
-               </div>
-
-               <div className="flex gap-3 mt-3 sm:mt-0">
-                  <button
-                     className="mt-3 cursor-pointer sm:mt-0 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-all"
-                     onClick={() => {
-                        route.back()
-                     }}
-                  >
-                     Quay lại
-                  </button>
                </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
-               <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h2 className="text-2xl font-bold mb-4">Khách hàng</h2>
+            {/* Customer and Shipping Info Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+               {/* Customer Info */}
+               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5 lg:p-6">
+                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 text-gray-900">
+                     Thông tin khách hàng
+                  </h2>
                   <div className="space-y-3">
-                     <div className="flex items-center gap-2 text-sm">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span>{refundDetails?.customerName}</span>
+                     <div className="flex items-center gap-2.5 text-sm sm:text-base">
+                        <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700 break-words">{refundDetails?.customerName}</span>
                      </div>
-                     <div className="flex items-center gap-2 text-sm">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span>{refundDetails?.customerPhone}</span>
+                     <div className="flex items-center gap-2.5 text-sm sm:text-base">
+                        <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700">{refundDetails?.customerPhone}</span>
                      </div>
-                     <div className="flex items-center gap-2 text-sm">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <span>{refundDetails?.customerEmail}</span>
+                     <div className="flex items-center gap-2.5 text-sm sm:text-base">
+                        <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700 break-all">{refundDetails?.customerEmail}</span>
                      </div>
                   </div>
                </div>
 
                {/* Shipping Info */}
-               <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h2 className="text-2xl font-bold mb-2">Địa chỉ giao hàng</h2>
-                  <div className="space-y-2">
-                     <div className="flex items-center gap-2 text-sm">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <p className="text-sm ">{refundDetails?.receiverName}</p>
+               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5 lg:p-6">
+                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 text-gray-900">
+                     Địa chỉ nhận hàng
+                  </h2>
+                  <div className="space-y-3">
+                     <div className="flex items-center gap-2.5 text-sm sm:text-base">
+                        <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700 break-words">{refundDetails?.receiverName}</span>
                      </div>
-                     <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                        <p className="text-sm ">{refundDetails?.receiverAddress}</p>
+                     <div className="flex items-start gap-2.5 text-sm sm:text-base">
+                        <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-700 break-words">{refundDetails?.receiverAddress}</span>
                      </div>
-                     <div className="flex items-center gap-2 text-sm">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <p className="text-sm ">Điện thoại: {refundDetails?.receiverPhone}</p>
+                     <div className="flex items-center gap-2.5 text-sm sm:text-base">
+                        <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700">{refundDetails?.receiverPhone}</span>
                      </div>
-
                   </div>
                </div>
             </div>
 
-            {/* Hình ảnh và lý do */}
-            <div className="px-6 py-4 mb-6 border-1 border-[#E5E5E5] rounded-2xl shadow-md bg-white">
-               <h2 className="font-bold text-xl text-black pb-3">Hình ảnh & Lý do hoàn hàng</h2>
+            {/* Images and Reason Section */}
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5 lg:p-6 mb-4 sm:mb-6">
+               <h2 className="font-bold text-lg sm:text-xl lg:text-2xl text-gray-900 mb-3 sm:mb-4">
+                  Hình ảnh & Lý do hoàn hàng
+               </h2>
 
-               {/* Lý do hoàn hàng */}
-               <div className="mb-4">
-                  <p className="text-base text-gray-600 mb-1">Lý do từ khách hàng:</p>
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                     <p className="text-gray-800 leading-relaxed">
+               {/* Customer Reason */}
+               <div className="mb-4 sm:mb-5">
+                  <p className="text-sm sm:text-base text-gray-600 mb-2 font-medium">
+                     Lý do từ khách hàng:
+                  </p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4">
+                     <p className="text-sm sm:text-base text-gray-800 leading-relaxed break-words">
                         {refundDetails?.customerReason}
                      </p>
                   </div>
                </div>
 
-               {/* Danh sách hình ảnh */}
-               <div className="mb-4">
-                  <p className="text-base text-gray-600 mb-2">Hình ảnh minh chứng:</p>
-                  <div className="flex flex-wrap gap-3">
+               {/* Images */}
+               <div className="mb-4 sm:mb-5">
+                  <p className="text-sm sm:text-base text-gray-600 mb-2 sm:mb-3 font-medium">
+                     Hình ảnh minh chứng:
+                  </p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
                      {refundDetails?.customerImage?.map((img, index) => (
                         <div
                            key={index}
                            onClick={() => handlePreview(img)}
-                           className="relative group w-[120px] h-[120px] rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                           className="relative group aspect-square rounded-lg sm:rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer"
                         >
                            <img
                               src={img}
                               alt={`Hình ${index + 1}`}
                               className="w-full h-full object-cover"
                            />
-                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all">
-                              <span className="text-white text-sm opacity-0 group-hover:opacity-100">
+                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-all">
+                              <span className="text-white text-xs sm:text-sm font-medium opacity-0 group-hover:opacity-100">
                                  Xem
                               </span>
                            </div>
@@ -171,22 +194,26 @@ export default function RefundDetailsPage() {
                   </div>
                </div>
 
-               {/* Nhân viên */}
-               <div className="mb-4">
-                  <p className="text-base text-gray-600 mb-1">Phản hồi từ nhân viên:</p>
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                     <p className="text-gray-800 leading-relaxed">
+               {/* Staff Response */}
+               <div>
+                  <p className="text-sm sm:text-base text-gray-600 mb-2 font-medium">
+                     Phản hồi từ nhân viên:
+                  </p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4">
+                     <p className="text-sm sm:text-base text-gray-800 leading-relaxed break-words">
                         {refundDetails?.staffResponse || 'Chưa có phản hồi từ nhân viên.'}
                      </p>
                   </div>
                </div>
 
+               {/* Image Preview Modal */}
                <Modal
                   open={previewVisible}
                   footer={null}
                   onCancel={handleClose}
                   centered
-                  width={800}
+                  width="90%"
+                  style={{ maxWidth: '800px' }}
                >
                   {selectedImage && (
                      <img
@@ -196,142 +223,177 @@ export default function RefundDetailsPage() {
                      />
                   )}
                </Modal>
-
             </div>
 
             {/* Products Table */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-               <h2 className="text-2xl font-bold mb-4">Danh sách hoàn hàng</h2>
-               <div className="overflow-x-auto">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5 lg:p-6 mb-4 sm:mb-6">
+               <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 text-gray-900">
+                  Danh sách sản phẩm hoàn trả
+               </h2>
+
+               {/* Mobile: Card View */}
+               <div className="block lg:hidden space-y-3">
+                  {refundDetails?.items?.map((product, index) => (
+                     <div key={index} className="border rounded-lg p-3">
+                        <div className="flex gap-3 mb-3">
+                           <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                              <img
+                                 src={product?.variantImage}
+                                 alt={product?.variantName}
+                                 className="object-cover w-full h-full"
+                              />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
+                                 {product.variantName}
+                              </h3>
+                              <div className="flex gap-2 text-xs text-gray-600">
+                                 <span>{product?.variantColor}</span>
+                                 <span>•</span>
+                                 <span>{product?.variantSize}</span>
+                              </div>
+                           </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                           <div>
+                              <span className="text-gray-600">Đơn giá:</span>
+                              <p className="font-medium text-gray-900">
+                                 {formatPrice(product.variantPrice)}₫
+                              </p>
+                           </div>
+                           <div>
+                              <span className="text-gray-600">Số lượng:</span>
+                              <p className="font-medium text-gray-900">{product.quantity}</p>
+                           </div>
+                           <div className="col-span-2">
+                              <span className="text-gray-600">Tổng:</span>
+                              <p className="font-semibold text-gray-900 text-base">
+                                 {formatPrice(product.variantAmount)}₫
+                              </p>
+                           </div>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+
+               {/* Desktop: Table View */}
+               <div className="hidden lg:block overflow-x-auto">
                   <table className="w-full">
-                     <thead className="border-b">
-                        <tr className="text-left text-sm text-gray-500">
-                           <th className="pb-3 font-medium">SẢN PHẨM</th>
-                           {/* Thay đổi màu và size cho 2 cột này */}
-                           <th className="pb-3 pr-4 font-semibold text-[13px] tracking-wide text-center">
-                              MÀU
-                           </th>
-                           <th className="pb-3 pr-4 font-semibold text-[13px] tracking-wide text-center">
-                              SIZE
-                           </th>
-                           {/* Thêm padding trái cho 3 cột cuối */}
-                           <th className="pb-3 font-medium text-right pl-4">GIÁ / SẢN PHẨM</th>
-                           <th className="pb-3 font-medium text-center pl-4">SỐ LƯỢNG</th>
-                           <th className="pb-3 font-medium text-right pl-4">TỔNG TIỀN</th>
+                     <thead className="border-b border-gray-200">
+                        <tr className="text-left text-sm text-gray-600">
+                           <th className="pb-3 font-semibold">SẢN PHẨM</th>
+                           <th className="pb-3 font-semibold text-center">MÀU</th>
+                           <th className="pb-3 font-semibold text-center">SIZE</th>
+                           <th className="pb-3 font-semibold text-right">GIÁ</th>
+                           <th className="pb-3 font-semibold text-center">SỐ LƯỢNG</th>
+                           <th className="pb-3 font-semibold text-right">TỔNG</th>
                         </tr>
                      </thead>
                      <tbody>
                         {refundDetails?.items?.map((product, index) => (
                            <tr
                               key={index}
-                              className="border-b hover:bg-gray-50 transition-colors"
+                              className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                            >
-                              <td className="py-4 px-2">
-                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                              <td className="py-4">
+                                 <div className="flex items-center gap-3">
+                                    <div className="w-14 h-14 rounded-md overflow-hidden bg-gray-100">
                                        <img
                                           src={product?.variantImage}
                                           alt={product?.variantName}
                                           className="object-cover w-full h-full"
                                        />
                                     </div>
-                                    <div className="flex flex-col">
-                                       <span className=" text-gray-800 leading-tight">
-                                          {product.variantName}
-                                       </span>
-                                    </div>
-                                 </div>
-                              </td>
-
-                              <td className="py-4 text-sm text-gray-800 text-center pr-4">
-                                 {product?.variantColor}
-                              </td>
-
-                              <td className="py-4 text-sm text-center pr-4">
-                                 <div className="flex items-center justify-center gap-1 text-gray-800">
-                                    <span>
-                                       {product?.variantSize}
+                                    <span className="text-sm text-gray-800 font-medium">
+                                       {product.variantName}
                                     </span>
                                  </div>
                               </td>
-
-                              <td className="py-4 text-sm text-right font-medium text-gray-800 pl-4">
-                                 {formatPrice(product.variantPrice)} đ
+                              <td className="py-4 text-sm text-gray-700 text-center">
+                                 {product?.variantColor}
                               </td>
-
-                              <td className="py-4 text-sm text-center font-medium pl-4">
+                              <td className="py-4 text-sm text-gray-700 text-center">
+                                 {product?.variantSize}
+                              </td>
+                              <td className="py-4 text-sm text-right font-medium text-gray-800">
+                                 {formatPrice(product.variantPrice)}₫
+                              </td>
+                              <td className="py-4 text-sm text-center font-medium text-gray-800">
                                  {product.quantity}
                               </td>
-
-                              <td className="py-4 text-sm text-right font-semibold text-gray-800 pl-4">
-                                 {formatPrice(product.variantAmount)} đ
+                              <td className="py-4 text-sm text-right font-semibold text-gray-900">
+                                 {formatPrice(product.variantAmount)}₫
                               </td>
                            </tr>
                         ))}
                      </tbody>
                   </table>
-
                </div>
-               <p className="text-sm text-gray-500 mt-4">Số lượng sản phẩm: {refundDetails?.productCount}</p>
+
+               <p className="text-xs sm:text-sm text-gray-500 mt-3 sm:mt-4">
+                  Tổng số lượng sản phẩm: {refundDetails?.productCount}
+               </p>
             </div>
 
             {/* Payment and Summary */}
-            <div className="grid md:grid-cols-2 gap-6">
-               <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h2 className="text-2xl font-bold mb-4">Thanh toán</h2>
-                  <div className="space-y-3 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+               {/* Payment Info */}
+               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5 lg:p-6">
+                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 text-gray-900">
+                     Thông tin thanh toán
+                  </h2>
+                  <div className="space-y-3 sm:space-y-4">
                      <div>
-                        <p className="font-medium text-black">Phương thức</p>
-                        <p>Hoàn về ví</p>
+                        <p className="font-medium text-gray-700 mb-1 text-sm sm:text-base">
+                           Phương thức
+                        </p>
+                        <p className="text-sm sm:text-base text-gray-900">Hoàn về ví</p>
                      </div>
-                     {/* <div>
-                        <p className="font-medium text-black italic">Mã giao dịch</p>
-                        <p >1111</p>
-                     </div> */}
                      <div>
-                        <p className="font-medium text-black">Trạng thái</p>
-                        <span
-                           className={`inline-flex items-center p-2 rounded-full text-sm font-medium border-gray-200 bg-gray-100 text-gray-800`}
-                        // style={{ color: statusPaymentInformation.color }}
-                        >
+                        <p className="font-medium text-gray-700 mb-1 text-sm sm:text-base">
+                           Trạng thái
+                        </p>
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium border border-gray-200 bg-gray-100 text-gray-800">
                            {refundDetails?.transactionStatus || 'Chưa có giao dịch'}
                         </span>
-
                      </div>
                      <div>
-                        <p className="font-medium text-black">Thời gian thanh toán</p>
-                        <p>{formatDate(refundDetails?.transactionTime || undefined) || 'Chưa có thông tin'}</p>
+                        <p className="font-medium text-gray-700 mb-1 text-sm sm:text-base">
+                           Thời gian thanh toán
+                        </p>
+                        <p className="text-sm sm:text-base text-gray-900">
+                           {formatDate(refundDetails?.transactionTime || undefined) || 'Chưa có thông tin'}
+                        </p>
                      </div>
                   </div>
                </div>
 
-               <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h2 className="text-2xl font-bold mb-4">Tiền hoàn</h2>
+               {/* Summary */}
+               <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5 lg:p-6 border border-gray-200">
+                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 text-gray-900">
+                     Tổng tiền hoàn
+                  </h2>
+
                   <div className="space-y-3">
-                     <div className="flex justify-between text-base">
+                     <div className="flex justify-between text-sm sm:text-base">
                         <span className="text-gray-600">Tạm tính</span>
-                        <span className="font-bold">{refundDetails?.amount ? formatPrice(refundDetails?.amount) : '0'} đ</span>
+                        <span className="font-semibold text-gray-900">
+                           {refundDetails?.amount ? formatPrice(refundDetails?.amount) : '0'}₫
+                        </span>
                      </div>
 
-                     {/* <div className="flex justify-between text-base">
-                        <span className="text-gray-600">Phí vận chuyển</span>
-                        <span className="font-bold">20.000 đ</span>
-                     </div> */}
-                     {/* {(order?.insuranceFee ?? 0) > 0 && (
-                        <div className="flex justify-between text-base">
-                           <span className="text-gray-600">Phí bảo hiểm</span>
-                           <span className=" font-bold">{formatPrice(order?.insuranceFee ?? 0)} đ</span>
-                        </div>
-                     )} */}
-                     <div className="border-t pt-3 mt-3">
+                     <div className="border-t border-gray-200 pt-3 mt-3">
                         <div className="flex justify-between items-center">
-                           <span className="text-lg font-semibold">Tổng thanh toán</span>
-                           <span className="font-bold">{refundDetails?.amount ? formatPrice(refundDetails?.amount) : '0'} đ</span>
+                           <span className="text-base sm:text-lg font-semibold text-gray-900">
+                              Tổng cộng
+                           </span>
+                           <span className="text-xl sm:text-2xl font-bold text-gray-900">
+                              {refundDetails?.amount ? formatPrice(refundDetails?.amount) : '0'}₫
+                           </span>
                         </div>
                      </div>
                   </div>
                </div>
-
             </div>
 
          </div>

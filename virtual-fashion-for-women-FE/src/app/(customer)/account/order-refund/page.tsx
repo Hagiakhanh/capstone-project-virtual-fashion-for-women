@@ -29,7 +29,7 @@ function OrdersRefund() {
       { key: 'Delivering', label: 'Đang hoàn hàng', icon: Truck, index: 3 },
       { key: 'Delivered', label: 'Đã hoàn hàng', icon: Store, index: 4 },
       { key: 'Completed', label: 'Hoàn tất', icon: CheckCircle, index: 5 },
-      { key: 'Rejected', label: 'Từ chối yêu cầu', icon: XCircle, index: 2 },
+      { key: 'Rejected', label: 'Từ chối', icon: XCircle, index: 2 },
    ];
 
    const handlePageChange = (newPage: number) => {
@@ -92,89 +92,140 @@ function OrdersRefund() {
    }, [statusFilter, pagination.CurrentPage, pagination.PageSize]);
 
    return (
-      <div className="bg-gradient-to-br">
-         <div className="max-w-7xl mx-auto flex-1 flex flex-col">
+      <div className=" bg-gray-50">
+         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
             {/* Header */}
-            <h1 className="text-3xl font-semibold text-gray-800 mb-6">Yêu cầu hoàn hàng</h1>
-
-            {/* Filter tabs */}
-            <div className="flex flex-wrap gap-3 mb-6">
-               {statusTabs.map((tab) => {
-                  const Icon = tab.icon;
-                  const active = statusFilter === tab.index;
-                  return (
-                     <button
-                        key={tab.key}
-                        onClick={() => {
-                           setStatusFilter(tab.index);
-                           setPagination((prev) => ({ ...prev, CurrentPage: 1 }));
-                        }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${active
-                           ? 'bg-black text-white border-black shadow'
-                           : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
-                           }`}
-                     >
-                        {Icon && <Icon size={18} />}
-                        <span className="text-sm font-medium">{tab.label}</span>
-                     </button>
-                  );
-               })}
+            <div className="mb-4 sm:mb-6">
+               <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-800 mb-2">
+                  Yêu cầu hoàn hàng
+               </h1>
+               {orderRefundData && orderRefundData.length > 0 && (
+                  <p className="text-sm sm:text-base text-gray-600">
+                     Tổng {pagination.TotalCount} yêu cầu
+                  </p>
+               )}
             </div>
 
-            {/* Orders List - Fixed height container */}
-            <div className="flex-1 mb-6">
-               <div className="space-y-4">
+            {/* Filter tabs - Horizontal scroll on mobile */}
+            <div className="mb-4 sm:mb-6 -mx-3 px-3 sm:mx-0 sm:px-0 overflow-hidden">
+               <div className="flex sm:flex-wrap gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {statusTabs.map((tab) => {
+                     const Icon = tab.icon;
+                     const active = statusFilter === tab.index;
+                     return (
+                        <button
+                           key={tab.key}
+                           onClick={() => {
+                              setStatusFilter(tab.index);
+                              setPagination((prev) => ({ ...prev, CurrentPage: 1 }));
+                           }}
+                           className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-full border transition-all flex-shrink-0 ${active
+                              ? 'bg-black text-white border-black shadow-md'
+                              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                              }`}
+                        >
+                           {Icon && <Icon size={16} className="sm:w-[18px] sm:h-[18px]" />}
+                           <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+                              {tab.label}
+                           </span>
+                        </button>
+                     );
+                  })}
+               </div>
+            </div>
+
+
+            {/* Orders List */}
+            <div className="mb-6 sm:mb-8">
+               <div className="space-y-3 sm:space-y-4">
                   {loading ? (
-                     <div className="py-20">
+                     <div className="py-12 sm:py-20 bg-white rounded-xl sm:rounded-2xl shadow-sm">
                         <LoadingSpinner size={50} />
                      </div>
                   ) : (
                      orderRefundData?.length === 0 ? (
-                        <div className="text-center p-12 bg-white rounded-2xl shadow text-gray-500">
-                           Không có yêu cầu hoàn hàng nào
+                        <div className="text-center p-8 sm:p-12 bg-white rounded-xl sm:rounded-2xl shadow-sm">
+                           <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                              <ClipboardCheck className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
+                           </div>
+                           <p className="text-gray-500 text-sm sm:text-base">
+                              Không có yêu cầu hoàn hàng nào
+                           </p>
                         </div>
                      ) : (
-                        orderRefundData?.map((order) => <OrderRefundItem data={order} />)
+                        orderRefundData?.map((order) => (
+                           <OrderRefundItem key={order.orderRefundId} data={order} />
+                        ))
                      )
                   )}
                </div>
             </div>
 
-            <div className="flex justify-center items-center gap-3">
-               {/* Nút trước */}
+            {/* Pagination */}
+            <div className="flex flex-wrap justify-center items-center gap-2">
+               {/* Nút trước - Hidden on mobile if too many pages */}
                <button
                   disabled={pagination.CurrentPage === 1}
                   onClick={() => handlePageChange(pagination.CurrentPage - 1)}
-                  className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="hidden sm:flex px-3 sm:px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm"
                >
                   « Trước
                </button>
 
+               {/* Mobile: Show prev button as arrow */}
+               <button
+                  disabled={pagination.CurrentPage === 1}
+                  onClick={() => handlePageChange(pagination.CurrentPage - 1)}
+                  className="sm:hidden px-3 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+               >
+                  «
+               </button>
+
+               {/* Page numbers */}
                {getPageNumbers(pagination.TotalPages, pagination.CurrentPage).map((page, idx) => (
                   <button
                      key={idx}
                      onClick={() => typeof page === 'number' && handlePageChange(page)}
                      disabled={page === "..."}
-                     className={`px-4 py-2 rounded-lg border transition-all ${pagination.CurrentPage === page
-                        ? 'bg-black text-white border-black'
-                        : 'bg-white hover:bg-gray-100'
+                     className={`px-3 sm:px-4 py-2 rounded-lg border transition-all text-sm ${pagination.CurrentPage === page
+                        ? 'bg-black text-white border-black font-medium'
+                        : 'bg-white hover:bg-gray-100 text-gray-700'
                         } ${page === "..." ? 'cursor-default opacity-70' : ''}`}
                   >
                      {page}
                   </button>
                ))}
 
-               {/* Nút sau */}
+               {/* Nút sau - Hidden text on mobile */}
                <button
                   disabled={pagination.CurrentPage === pagination.TotalPages}
                   onClick={() => handlePageChange(pagination.CurrentPage + 1)}
-                  className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  className="hidden sm:flex px-3 sm:px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm"
                >
                   Sau »
                </button>
-            </div>
 
+               {/* Mobile: Show next button as arrow */}
+               <button
+                  disabled={pagination.CurrentPage === pagination.TotalPages}
+                  onClick={() => handlePageChange(pagination.CurrentPage + 1)}
+                  className="sm:hidden px-3 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+               >
+                  »
+               </button>
+            </div>
          </div>
+
+         {/* Custom scrollbar hide */}
+         <style jsx global>{`
+            .scrollbar-hide::-webkit-scrollbar {
+               display: none;
+            }
+            .scrollbar-hide {
+               -ms-overflow-style: none;
+               scrollbar-width: none;
+            }
+         `}</style>
       </div>
    )
 }
