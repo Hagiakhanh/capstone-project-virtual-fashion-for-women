@@ -116,6 +116,32 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         private async Task<MessageModel?> CheckTemplateOverlapAsync(List<TemplateDetailsModel> templates)
         {
+            foreach (var tpl in templates)
+            {
+                // Danh sách các cặp (Min, Max) cần kiểm tra
+                var ranges = new List<(double?, double?)>
+                {
+                    (tpl.MinShoulder, tpl.MaxShoulder),
+                    (tpl.MinBust, tpl.MaxBust),
+                    (tpl.MinWaist, tpl.MaxWaist),
+                    (tpl.MinHips, tpl.MaxHips)
+                };
+
+                // Kiểm tra từng cặp: nếu cả hai đều có giá trị (không null) và Min > Max thì lỗi
+                foreach (var (min, max) in ranges)
+                {
+                    if (min.HasValue && max.HasValue && min.Value > max.Value)
+                    {
+                        var size = await _sizeRepository.GetByIdAsync(tpl.SizeId);
+                        return new MessageModel
+                        {
+                            Message = $"Lỗi: Khoảng giá trị của size **{size?.SizeCode}** không hợp lệ (Min lớn hơn Max).",
+                            StatusCode = StatusCodes.Status400BadRequest
+                        };
+                    }
+                }
+            }
+
             var duplicateSizeIds = templates
                 .GroupBy(t => t.SizeId)
                 .Where(g => g.Count() > 1)
