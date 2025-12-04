@@ -7,6 +7,7 @@ import { ArrowDownWideNarrow } from "lucide-react";
 import { api } from "@/api/instance";
 import { Pagination } from "antd";
 import ProductItemHome from "@/components/Product/ProductItemHome";
+import { PaginationDTO } from "@/models/PaginationDTO";
 
 export default function SearchPage() {
    const params = useSearchParams();
@@ -14,24 +15,31 @@ export default function SearchPage() {
    const [sortValue, setSortValue] = useState("2");
    const [searchResults, setSearchResults] = useState<any[]>([]);
    const [loadingAddToCart, setLoadingAddToCart] = useState<boolean>(false);
-   const [pagination, setPagination] = useState({
-      pageIndex: 1,
-      pageSize: 5,
-      total: undefined
+   const [pagination, setPagination] = useState<PaginationDTO>({
+      CurrentPage: 1,
+      HasNext: false,
+      HasPrevious: false,
+      PageSize: 12,
+      TotalCount: 0,
+      TotalPages: 0,
    });
 
    const fetchSearchResults = async () => {
       const response = await api.get('/product/search', {
          params: {
-            PageIndex: pagination.pageIndex,
-            PageSize: 12,
+            PageIndex: pagination.CurrentPage,
+            PageSize: pagination.PageSize,
             ProductSort: parseInt(sortValue),
             ProductName: keyword
          }
       })
 
       if (response.status === 200) {
-         setSearchResults(response?.data);
+         setSearchResults(response.data?.data);
+         setPagination((prev) => ({
+            ...prev,
+            ...response.data?.pagination
+         }));
       } else {
          setSearchResults([]);
       }
@@ -41,9 +49,35 @@ export default function SearchPage() {
       fetchSearchResults();
    };
 
+   const handlePageChange = (newPage: number) => {
+      if (newPage >= 1 && newPage <= pagination.TotalPages) {
+         setPagination((prev) => ({ ...prev, CurrentPage: newPage }));
+      }
+   };
+
+   function getPageNumbers(totalPages: number, currentPage: number, delta = 2): (number | string)[] {
+      const range: (number | string)[] = [];
+      const left = Math.max(2, currentPage - delta);
+      const right = Math.min(totalPages - 1, currentPage + delta);
+      range.push(1);
+      if (left > 2) {
+         range.push("...");
+      }
+      for (let i = left; i <= right; i++) {
+         range.push(i);
+      }
+      if (right < totalPages - 1) {
+         range.push("...");
+      }
+      if (totalPages > 1) {
+         range.push(totalPages);
+      }
+      return range;
+   }
+
    useEffect(() => {
       fetchSearchResults();
-   }, [keyword, sortValue]);
+   }, [keyword, sortValue, pagination.CurrentPage, pagination.PageSize]);
 
    return (
       <div className="w-full lg:w-[75%] mx-auto min-h-screen px-4 sm:px-6 md:px-10 lg:px-20 py-6 md:py-10">
@@ -76,6 +110,40 @@ export default function SearchPage() {
                   <ProductItemHome onWishlistSuccess={handleProductChange} product={product} key={product.productId} setLoading={setLoadingAddToCart} />
                ))
             }
+         </div>
+
+         <div className="flex justify-center items-center gap-3 mt-5">
+            {/* Nút trước */}
+            <button
+               disabled={pagination.CurrentPage === 1}
+               onClick={() => handlePageChange(pagination.CurrentPage - 1)}
+               className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+               « Trước
+            </button>
+
+            {getPageNumbers(pagination.TotalPages, pagination.CurrentPage).map((page, idx) => (
+               <button
+                  key={idx}
+                  onClick={() => typeof page === 'number' && handlePageChange(page)}
+                  disabled={page === "..."}
+                  className={`px-4 py-2 rounded-lg border transition-all ${pagination.CurrentPage === page
+                     ? 'bg-black text-white border-black'
+                     : 'bg-white hover:bg-gray-100'
+                     } ${page === "..." ? 'cursor-default opacity-70' : ''}`}
+               >
+                  {page}
+               </button>
+            ))}
+
+            {/* Nút sau */}
+            <button
+               disabled={pagination.CurrentPage === pagination.TotalPages}
+               onClick={() => handlePageChange(pagination.CurrentPage + 1)}
+               className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+               Sau »
+            </button>
          </div>
 
       </div>

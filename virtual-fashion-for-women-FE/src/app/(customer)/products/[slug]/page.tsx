@@ -1,5 +1,5 @@
 'use client';
-import { RightOutlined, PlusOutlined, MinusOutlined, HeartOutlined } from '@ant-design/icons';
+import { RightOutlined, PlusOutlined, MinusOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons';
 import { Button } from "antd";
 import { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import QRCode from 'qrcode'
 import { set } from 'lodash';
 import ProductRatings from '@/components/Rating/ProductRatings';
+import SizeGuideModal from '@/components/Size/SizeGuideModal';
 
 function ProductDetailsPage() {
    const { user } = useAuth();
@@ -38,6 +39,9 @@ function ProductDetailsPage() {
    const [mainImage, setMainImage] = useState(null);
    const [lensID, setLensID] = useState<string>('');
    const [linkToArTryOn, setLinkToArTryOn] = useState<string>('');
+   const [wishlist, setWishlist] = useState<boolean>(false);
+   const [sizeTable, setSizeTable] = useState(null);
+   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
    const fetchProductDetails = async () => {
       try {
@@ -61,6 +65,7 @@ function ProductDetailsPage() {
             setSelectedColorVariant(selectedColorVariant || null);
             setColorImages(selectedColorVariant?.productImagesDto || [])
             setMainImage(selectedColorVariant?.productImagesDto[0]?.imageUrl || null);
+            setWishlist(response.data?.isInWishlist);
          }
 
       } catch (error) {
@@ -201,6 +206,48 @@ function ProductDetailsPage() {
       }
    };
 
+   const handleToggleWishlist = async (productId: string) => {
+      if (user?.role === 'guest') {
+         messageToast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+         return;
+      }
+      try {
+         if (!wishlist) {
+            const response = await api.post('/wishlist', { productId });
+            if (response.status === 200) {
+               messageToast.success("Thêm vào yêu thích thành công.");
+               fetchProductDetails();
+            }
+         } else {
+            const response = await api.delete(`/wishlist/product/${productId}`);
+            if (response.status === 200) {
+               messageToast.success("Xóa khỏi yêu thích thành công.");
+               fetchProductDetails();
+            }
+         }
+      } catch (error) {
+         console.error("Lỗi khi thêm sản phẩm vào danh sách yêu thích:", error);
+      }
+   };
+
+   const fetchSizeTable = async () => {
+      if (!productDetail?.categoryId) return;
+      try {
+         const response = await api.get(
+            `categorysizetemplate/by-categoryid/${productDetail?.categoryId}`
+         );
+         if (response.status === 200) {
+            setSizeTable(response?.data);
+         }
+      } catch (error) {
+         console.error('Lỗi khi lấy bảng size sản phẩm:', error);
+      }
+   }
+
+   useEffect(() => {
+      fetchSizeTable();
+   }, [productDetail]);
+
    useEffect(() => {
       fetchProductDetails();
    }, [productSlug]);
@@ -244,33 +291,45 @@ function ProductDetailsPage() {
          <div className='bg-[#f9f9f9]'>
             <div className="flex gap-7 w-[65%] mx-auto pt-20 items-start">
                {/* Bên trái */}
-               <div className="flex gap-6 flex-1">
-                  <div className="aspect-[4/5] overflow-hidden flex-1">
-                     <img src={mainImage} alt="Ảnh sản phẩm" className="w-full h-full object-cover rounded-xl" />
+               <div className='flex-1'>
+                  <div className="flex gap-6 flex-1">
+                     <div className="aspect-[4/5] overflow-hidden flex-1">
+                        <img src={mainImage} alt="Ảnh sản phẩm" className="w-full h-full object-cover rounded-xl" />
+                     </div>
+                     <div className="max-h-[564px] overflow-hidden">
+                        {/* <div className="flex flex-col h-[120px]"> */}
+                        <Swiper
+                           direction={'vertical'}
+                           slidesPerView={4}
+                           spaceBetween={15}
+                           className="h-full"
+                        >
+                           {
+                              colorImages?.map((image) => {
+                                 return (
+                                    <SwiperSlide key={image.id}>
+                                       <div className="mb-5 w-[88px] h-[120px] cursor-pointer" onClick={() => handleImageClick(image.imageUrl)}>
+                                          <img src={image.imageUrl} alt="Ảnh sản phẩm"
+                                             className={`${image.imageUrl == mainImage ? 'border-2' : ''} hover:border-2 w-[88px] h-[120px] object-cover rounded-xl`} style={{ aspectRatio: '88 / 120' }} />
+                                       </div>
+                                    </SwiperSlide>
+                                 )
+                              })
+                           }
+                        </Swiper>
+                        {/* </div> */}
+                     </div>
                   </div>
-                  <div className="max-h-[564px] overflow-hidden">
-                     {/* <div className="flex flex-col h-[120px]"> */}
-                     <Swiper
-                        direction={'vertical'}
-                        slidesPerView={4}
-                        spaceBetween={15}
-                        className="h-full"
+
+                  <div className='flex gap-3 w-[65%] items-center py-5'>
+                     <div className="cursor-pointer rounded-full bg-white text-xl w-10 h-10 flex justify-center items-center"
+                        onClick={() => handleToggleWishlist(productDetail?.productId)}
                      >
-                        {
-                           colorImages?.map((image) => {
-                              return (
-                                 <SwiperSlide key={image.id}>
-                                    <div className="mb-5 w-[88px] h-[120px] cursor-pointer" onClick={() => handleImageClick(image.imageUrl)}>
-                                       <img src={image.imageUrl} alt="Ảnh sản phẩm"
-                                          className={`${image.imageUrl == mainImage ? 'border-2' : ''} hover:border-2 w-[88px] h-[120px] object-cover rounded-xl`} style={{ aspectRatio: '88 / 120' }} />
-                                    </div>
-                                 </SwiperSlide>
-                              )
-                           })
-                        }
-                     </Swiper>
-                     {/* </div> */}
+                        {wishlist ? <HeartFilled style={{ color: 'red' }} /> : <HeartOutlined />}
+                     </div>
+                     <p className='font-normal text-lg text-black'>Thêm vào danh sách yêu thích</p>
                   </div>
+
                </div>
                {/* Bên phải */}
                <div className="flex-1 flex flex-col">
@@ -365,11 +424,27 @@ function ProductDetailsPage() {
                         </div>
                      )}
                   </div>
-                  <div className="flex gap-2 mt-3 items-center">
+                  {/* <div className="flex gap-2 mt-3 items-center">
                      <p className='text-xl font-normal underline cursor-pointer'>
                         Hướng dẫn chọn kích thước
                      </p>
                      <RightOutlined />
+                  </div> */}
+
+                  <div className="flex gap-2 mt-3 items-center">
+                     <p
+                        className='text-xl font-normal underline cursor-pointer hover:text-blue-600 transition-colors'
+                        onClick={() => {
+                           if (sizeTable && sizeTable?.length > 0) {
+                              setIsSizeGuideOpen(true);
+                           } else {
+                              messageToast.info("Sản phẩm này chưa có bảng size chi tiết.");
+                           }
+                        }}
+                     >
+                        Hướng dẫn chọn kích thước
+                     </p>
+                     <RightOutlined className="text-sm" />
                   </div>
                   <div className='mt-3 flex items-center gap-4'>
                      <span className='text-xl font-normal'>Số lượng</span>
@@ -445,18 +520,19 @@ function ProductDetailsPage() {
                </div>
 
             </div>
-            <div className='flex gap-3 w-[65%] mx-auto items-center py-5'>
-               <div className="cursor-pointer rounded-full bg-white text-xl w-10 h-10 flex justify-center items-center">
-                  <HeartOutlined />
-               </div>
-               <p className='font-normal text-lg text-black'>Thêm vào danh sách yêu thích</p>
-            </div>
+
          </div >
          <PolicyInProductDetail />
 
          {productDetail && (
             <ProductRatings productId={productDetail?.productId} />
          )}
+
+         <SizeGuideModal
+            isOpen={isSizeGuideOpen}
+            onClose={() => setIsSizeGuideOpen(false)}
+            categoryId={productDetail?.categoryId}
+         />
       </>
    );
 }
