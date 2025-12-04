@@ -88,7 +88,7 @@ function PolicyInProductDetail() {
                </div>
                <div className='flex flex-col items-center gap-2'>
                   <img src={policy3.src} alt="policy3" className='w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 object-contain' />
-                  <span className='text-xs md:text-sm lg:text-[15px] text-black text-center'>Hỗ trợ trả hàng trong vòng 3 ngày</span>
+                  <span className='text-xs md:text-sm lg:text-[15px] text-black text-center'>Hỗ trợ trả hàng trong vòng 2 ngày</span>
                </div>
                <div className='flex flex-col items-center gap-2'>
                   <img src={policy4.src} alt="policy4" className='w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 object-contain' />

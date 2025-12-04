@@ -22,7 +22,17 @@ export async function GET(request: NextRequest) {
             }
         });
         if (responseBE.status === 200) {
-            return NextResponse.json(responseBE.data?.data, { status: 200 });
+            const paginationHeader = responseBE?.headers?.get('X-Pagination');
+            if (paginationHeader) {
+                const paginationMetadata = JSON.parse(paginationHeader);
+                return NextResponse.json({
+                    data: responseBE.data?.data,
+                    pagination: paginationMetadata
+                }, { status: 200 });
+            }
+            return NextResponse.json({
+                data: responseBE.data?.data
+            }, { status: 200 });
         }
     } catch (error) {
         console.error("Error when calling list products:", error);
