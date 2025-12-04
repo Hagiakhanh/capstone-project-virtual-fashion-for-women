@@ -38,6 +38,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.Product
         public string MainImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public int CategoryId { get; set; }
+        public string BodyPart { get; set; }
         public List<ResponseColorDto> Color { get; set; }
         public List<ResponseSizeDto> SizeDto { get; set; }
         public List<ResponeProductColorWithListSize> ProductColors { get; set; } = new List<ResponeProductColorWithListSize>();
