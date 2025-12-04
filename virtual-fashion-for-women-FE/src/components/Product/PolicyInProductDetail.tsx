@@ -78,11 +78,11 @@ function PolicyInProductDetail() {
                </div>
                <div className='flex-1 flex flex-col items-center gap-2'>
                   <img src={policy2.src} alt="step2" className='max-w-[8rem]' />
-                  <span className='w-[70%] text-[15px] text-black text-center'>Có hỗ trợ khác trả lại hàng</span>
+                  <span className='w-[70%] text-[15px] text-black text-center'>Có hỗ trợ khách trả lại hàng</span>
                </div>
                <div className='flex-1 flex flex-col items-center gap-2'>
                   <img src={policy3.src} alt="step3" className='max-w-[8rem]' />
-                  <span className='w-[70%] text-[15px] text-black text-center'>Hỗ trợ trả hàng trong vòng 3 ngày</span>
+                  <span className='w-[70%] text-[15px] text-black text-center'>Hỗ trợ trả hàng trong vòng 2 ngày</span>
                </div>
                <div className='flex-1 flex flex-col items-center gap-2'>
                   <img src={policy4.src} alt="step4" className='max-w-[8rem]' />

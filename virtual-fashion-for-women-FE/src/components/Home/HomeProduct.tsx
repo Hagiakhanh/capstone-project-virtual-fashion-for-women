@@ -25,7 +25,7 @@ function HomeProductSection() {
             }
          });
          if (response.status === 200) {
-            setProducts(response.data);
+            setProducts(response.data?.data);
          } else {
             setProducts([]);
          }

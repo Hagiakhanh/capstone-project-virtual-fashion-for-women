@@ -18,7 +18,7 @@ export default function RegisterPage() {
    const router = useRouter();
    const [form] = Form.useForm();
    const [loading, setLoading] = useState<boolean>(false);
-     const { loginSuccess } = useAuth();
+   const { loginSuccess } = useAuth();
 
    const handleRegister = async (values: typeRegister) => {
       setLoading(true);
@@ -111,7 +111,10 @@ export default function RegisterPage() {
                   <Form.Item<typeRegister>
                      label={<span className="text-xl font-bold">Mật khẩu</span>}
                      name="password"
-                     rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
+                     rules={[
+                        { required: true, message: "Vui lòng nhập mật khẩu" },
+                        { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
+                     ]}
                   >
                      <Input.Password
                         id="password"
