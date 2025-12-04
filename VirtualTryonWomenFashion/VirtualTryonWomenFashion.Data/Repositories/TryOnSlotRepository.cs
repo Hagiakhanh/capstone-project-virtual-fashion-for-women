@@ -17,15 +17,42 @@ namespace VirtualTryonWomenFashion.Data.Repositories
         {
         }
 
-        public async Task<TryOnSlot?> GetExistingTryOnSlotAsync(int userId,string userModelImageHash, string? topProductColorId, string? bottomProductColorId)
+        public async Task<TryOnSlot?> GetExistingTryOnSlotAsync(
+    int userId,
+    string userModelImageHash,
+    string? topProductColorId,
+    string? bottomProductColorId)
         {
-            var productColorIds = new List<string> {topProductColorId, bottomProductColorId};
-            var tryOnSlotList =  await _context.TryOnSlots
+            var requestedProductColorIds = new List<string?> { topProductColorId, bottomProductColorId }
+                .Where(id => !string.IsNullOrEmpty(id))
+                .OrderBy(id => id)
+                .ToList();
+
+            // Nếu không có product color nào thì return null
+            if (!requestedProductColorIds.Any())
+                return null;
+
+            var tryOnSlotList = await _context.TryOnSlots
                 .AsNoTracking()
-                .Where(slot =>slot.CustomerId == userId && slot.UploadImageHash == userModelImageHash)
-                .Include(to => to.ProductColors).ToListAsync();
-            var tryOnSlot = tryOnSlotList.Where(slot => slot.ProductColors.Any(pc => productColorIds.Contains(pc.ProductColorId))).FirstOrDefault();
-            return tryOnSlot ??= null;
+                .Where(slot => slot.CustomerId == userId &&
+                               slot.UploadImageHash == userModelImageHash)
+                .Include(to => to.ProductColors)
+                .ToListAsync();
+
+            // Tìm slot có CHÍNH XÁC cùng tập hợp product colors
+            var tryOnSlot = tryOnSlotList.FirstOrDefault(slot =>
+            {
+                var slotProductColorIds = slot.ProductColors
+                    .Select(pc => pc.ProductColorId)
+                    .OrderBy(id => id)
+                    .ToList();
+
+                // Phải cùng số lượng VÀ cùng các product colors
+                return slotProductColorIds.Count == requestedProductColorIds.Count &&
+                       slotProductColorIds.SequenceEqual(requestedProductColorIds);
+            });
+
+            return tryOnSlot;
         }
 
         public async Task<TryOnSlot?> GetTryOnSlotById(int tryOnSlotId)
