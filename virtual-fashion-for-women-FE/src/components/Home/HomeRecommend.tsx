@@ -48,31 +48,49 @@ function HomeRecommendSection() {
    }, []);
 
    return (
-      <div className="w-[80%] mx-auto pb-20">
+      <div className="w-full md:w-[90%] lg:w-[80%] mx-auto pb-10 md:pb-16 lg:pb-20 px-4 md:px-0">
          {loadingAddToCart && <LoadingOverlay size={60} />}
-         <div className="bg-white p-10 rounded-2xl" style={{ boxShadow: '0px 0px 24px rgba(0, 0, 0, 0.1)' }}>
-            <h1 className="text-2xl font-normal text-gray-600 mb-5 text-center uppercase">
+         <div className="bg-white p-4 md:p-8 lg:p-10 rounded-xl md:rounded-2xl" style={{ boxShadow: '0px 0px 24px rgba(0, 0, 0, 0.1)' }}>
+            <h1 className="text-lg md:text-xl lg:text-2xl font-normal text-gray-600 mb-4 md:mb-5 text-center uppercase">
                Gợi ý dành cho bạn
             </h1>
             {products.length > 0 && (
                <div className="relative">
                   <button
                      ref={prevRef}
-                     className={`absolute -left-5 rounded-2xl top-1/2 -translate-y-1/2 z-10 w-10 h-10 border-2 flex items-center justify-center text-black cursor-pointer ${products.length <= 4 ? 'hidden' : ''}`}
+                     className={`absolute -left-3 md:-left-5 rounded-xl md:rounded-2xl top-1/2 -translate-y-1/2 z-10 w-8 h-8 md:w-10 md:h-10 border-2 bg-white items-center justify-center text-black cursor-pointer hidden md:flex ${products.length <= 4 ? 'md:hidden' : ''}`}
                   >
-                     <LeftOutlined className='text-2xl' />
+                     <LeftOutlined className='text-lg md:text-2xl' />
                   </button>
                   <button
                      ref={nextRef}
-                     className={`absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 border-2 rounded-2xl flex items-center justify-center text-black cursor-pointer ${products.length <= 4 ? 'hidden' : ''}`}
+                     className={`absolute -right-3 md:-right-5 top-1/2 -translate-y-1/2 z-10 w-8 h-8 md:w-10 md:h-10 border-2 rounded-xl md:rounded-2xl bg-white items-center justify-center text-black cursor-pointer hidden md:flex ${products.length <= 4 ? 'md:hidden' : ''}`}
                   >
-                     <RightOutlined className='text-2xl' />
+                     <RightOutlined className='text-lg md:text-2xl' />
                   </button>
-                  <Swiper modules={[Navigation, Pagination]} slidesPerView={4} spaceBetween={30} loop={products.length > 4}
-                     navigation={products.length > 4 ? { // Gán ref cho navigation
-                              prevEl: prevRef.current,
-                              nextEl: nextRef.current,
-                           } : false}
+                  <Swiper 
+                     modules={[Navigation, Pagination]} 
+                     slidesPerView={2}
+                     spaceBetween={12}
+                     loop={products.length > 2}
+                     breakpoints={{
+                        640: {
+                           slidesPerView: 2,
+                           spaceBetween: 20,
+                        },
+                        768: {
+                           slidesPerView: 3,
+                           spaceBetween: 24,
+                        },
+                        1024: {
+                           slidesPerView: 4,
+                           spaceBetween: 30,
+                        },
+                     }}
+                     navigation={{
+                        prevEl: prevRef.current,
+                        nextEl: nextRef.current,
+                     }}
                      onBeforeInit={(swiper) => {
                         if (swiper.params.navigation) {
                            (swiper.params.navigation as any).prevEl = prevRef.current;

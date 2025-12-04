@@ -419,7 +419,7 @@ const ProductsTab = () => {
                                     formatter={(value: number) => formatCurrency(value)}
                                     labelFormatter={formatDateLabel}
                                 />
-                                <Line type="monotone" dataKey="totalRevenue" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+                                <Line type="monotone" name='Doanh thu' dataKey="totalRevenue" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
                                 </LineChart>
                             )}
                         </ResponsiveContainer>

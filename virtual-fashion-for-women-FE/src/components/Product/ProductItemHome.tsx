@@ -107,7 +107,7 @@ function ProductItemHome({ product, onWishlistSuccess, setLoading }: { product?:
 
    return (
       <Link href={`/products/${product.productSlug}`}>
-         <div className="p-[1rem] relative rounded-2xl bg-[#f3f3f3] cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
+         <div className="p-2 md:p-3 lg:p-4 relative rounded-xl md:rounded-2xl bg-[#f3f3f3] cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
             {/* Hình ảnh */}
             <div
                className="flex justify-center aspect-[3/4] overflow-hidden relative"
@@ -116,13 +116,13 @@ function ProductItemHome({ product, onWishlistSuccess, setLoading }: { product?:
                <img
                   src={imageForColor ? imageForColor : product?.mainImageUrl}
                   alt={product?.productName}
-                  className="w-full h-auto object-cover rounded-2xl"
+                  className="w-full h-auto object-cover rounded-xl md:rounded-2xl"
                />
 
                {/* Wishlist */}
                <div
                   onClick={(e) => handleToggleWishlist(e, product?.productId)}
-                  className="absolute z-30 top-0 right-0 m-2 p-2 rounded-full bg-white text-xl"
+                  className="absolute z-30 top-0 right-0 m-1 md:m-2 p-1.5 md:p-2 rounded-full bg-white text-base md:text-xl"
                >
                   {wishlist ? <HeartFilled style={{ color: 'red' }} /> : <HeartOutlined />}
                </div>
@@ -134,9 +134,15 @@ function ProductItemHome({ product, onWishlistSuccess, setLoading }: { product?:
                      onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        if (!selectedHex) return;
+                        if (!selectedHex) {
+                           // Mobile: show size selector on tap
+                           if (window.innerWidth < 768) {
+                              setShowSize(true);
+                           }
+                           return;
+                        }
                      }}
-                     className={`absolute bottom-2 right-2 rounded-full p-2 shadow-md transition z-30 
+                     className={`absolute bottom-1.5 md:bottom-2 right-1.5 md:right-2 rounded-full p-1.5 md:p-2 shadow-md transition z-30 text-sm md:text-base
                            ${selectedHex
                            ? 'bg-white hover:bg-black hover:text-white cursor-pointer'
                            : 'bg-gray-300 cursor-not-allowed pointer-events-none'}`}
@@ -148,13 +154,13 @@ function ProductItemHome({ product, onWishlistSuccess, setLoading }: { product?:
                {showSize && (
                   <div
                      onMouseLeave={() => setShowSize(false)}
-                     className="absolute bottom-0 left-0 right-0 bg-white/90 py-2 flex justify-center gap-2 rounded-b-2xl z-40"
+                     className="absolute bottom-0 left-0 right-0 bg-white/90 py-1.5 md:py-2 flex justify-center gap-1.5 md:gap-2 rounded-b-xl md:rounded-b-2xl z-40"
                   >
                      {sizesForColor.map((sizeItem) => (
                         <button
                            key={sizeItem.sizeId}
                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleChooseSize(sizeItem); }}
-                           className="border border-black rounded-md px-3 py-1 hover:bg-black hover:text-white transition"
+                           className="border border-black rounded-md px-2 md:px-3 py-0.5 md:py-1 text-xs md:text-sm hover:bg-black hover:text-white transition"
                         >
                            {sizeItem.sizeCode}
                         </button>
@@ -164,15 +170,15 @@ function ProductItemHome({ product, onWishlistSuccess, setLoading }: { product?:
             </div>
 
             {/* Nội dung */}
-            <div className="flex flex-col mt-5">
+            <div className="flex flex-col mt-2 md:mt-3 lg:mt-4">
                <div className="line-clamp-1">
-                  <h2 className="text-lg font-normal">{product?.productName}</h2>
+                  <h2 className="text-sm md:text-base lg:text-lg font-normal">{product?.productName}</h2>
                </div>
 
                {/* Khối màu */}
                {allColors.length > 0 && (
                   <div
-                     className="flex gap-2 mt-2 mb-1"
+                     className="flex gap-1.5 md:gap-2 mt-1.5 md:mt-2 mb-1"
                      onClick={(e) => e.preventDefault()}
                      onMouseDown={(e) => e.stopPropagation()}
                      onTouchStart={(e) => e.stopPropagation()}
@@ -183,7 +189,7 @@ function ProductItemHome({ product, onWishlistSuccess, setLoading }: { product?:
                            <div
                               key={item.productColorId}
                               onClick={(e) => handleChooseColor(e, item)}
-                              className={`${isSelected ? 'border-2 border-black ' : ''} w-5 h-5 rounded-full shadow-sm`}
+                              className={`${isSelected ? 'border-2 border-black ' : ''} w-4 h-4 md:w-5 md:h-5 rounded-full shadow-sm cursor-pointer`}
                               style={{ backgroundColor: item.hexCode }}
                            ></div>
                         )
@@ -191,16 +197,12 @@ function ProductItemHome({ product, onWishlistSuccess, setLoading }: { product?:
                   </div>
                )}
 
-               {/* <div className="mt-2">
-                  <span className="font-bold text-lg">{product?.price ? `${formatPrice(product?.price)}đ` : '0đ'}</span>
-               </div> */}
-
-               <div className="mt-2 flex gap-2 items-center">
-                  <span className={`${hasDiscount == true ? 'text-red-600' : 'text-black'} font-bold`}>
+               <div className="mt-1.5 md:mt-2 flex gap-1.5 md:gap-2 items-center">
+                  <span className={`${hasDiscount == true ? 'text-red-600' : 'text-black'} font-bold text-sm md:text-base lg:text-lg`}>
                      {formatPrice(displayPrice)}đ
                   </span>
                   {hasDiscount && (
-                     <span className="line-through text-gray-500 text-sm">
+                     <span className="line-through text-gray-500 text-xs md:text-sm">
                         {formatPrice(product?.price)}đ
                      </span>
                   )}

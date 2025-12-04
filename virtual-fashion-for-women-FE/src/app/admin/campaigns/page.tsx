@@ -16,15 +16,13 @@ export default function SaleCampaignMangementPage() {
           <h1 className="text-3xl font-semibold text-gray-800 ">
             Quản lý các chiến dịch
           </h1>
-          <AntButtonCommon
+          <button
+                    className="bg-blue-600 flex gap-2 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors cursor-pointer"
             onClick={() => {
               router.push("campaigns/create");
             }}
-            label="Tạo chiến dịch"
-            style={{ margin: 0 }}
-            icon={<Pencil/>} 
-            iconPosition="end"
-          />
+            style={{ margin: 0 }} 
+          ><Pencil/> Tạo chiến dịch</button>
         </div>
         <SaleCampaignTable />
       </div>

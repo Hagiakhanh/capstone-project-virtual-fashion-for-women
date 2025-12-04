@@ -140,7 +140,7 @@ function ProductItem({
 
     return (
         <Link href={`/products/${product.productSlug}`}>
-            <div className="p-4 bg-[#f3f3f3] rounded-2xl hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
+            <div className="p-2 md:p-3 lg:p-4 bg-[#f3f3f3] rounded-xl md:rounded-2xl hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
 
                 <div
                     className="relative aspect-[3/4]"
@@ -149,13 +149,13 @@ function ProductItem({
                     <img
                         src={imageForColor || product?.mainImageUrl}
                         alt={product?.productName}
-                        className="w-full h-full object-cover rounded-2xl"
+                        className="w-full h-full object-cover rounded-xl md:rounded-2xl"
                     />
 
                     {/* Wishlist */}
                     <div
                         onClick={(e) => handleToggleWishlist(e, product?.productId)}
-                        className="absolute top-2 right-2 bg-white p-2 rounded-full z-30"
+                        className="absolute top-1 md:top-2 right-1 md:right-2 bg-white p-1.5 md:p-2 rounded-full z-30 text-base md:text-lg"
                     >
                         {wishlist ? <HeartFilled style={{ color: 'red' }} /> : <HeartOutlined />}
                     </div>
@@ -167,10 +167,21 @@ function ProductItem({
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                if (!selectedHex)
-                                    messageToast.info("Chọn màu trước");
+                                if (!selectedHex) {
+                                    // Mobile: show size selector on tap
+                                    if (window.innerWidth < 768) {
+                                        setShowSize(true);
+                                    } else {
+                                        messageToast.info("Chọn màu trước");
+                                    }
+                                } else {
+                                    // Mobile: toggle size selector on tap
+                                    if (window.innerWidth < 768) {
+                                        setShowSize(true);
+                                    }
+                                }
                             }}
-                            className={`absolute bottom-2 right-2 p-2 rounded-full z-30 
+                            className={`absolute bottom-1.5 md:bottom-2 right-1.5 md:right-2 p-1.5 md:p-2 rounded-full z-30 text-sm md:text-base
                             ${selectedHex ? 'bg-white hover:bg-black hover:text-white cursor-pointer'
                                     : 'bg-gray-300 cursor-not-allowed'}`}
                         >
@@ -179,7 +190,10 @@ function ProductItem({
                     )}
 
                     {showSize && (
-                        <div className="absolute bottom-0 w-full bg-white/90 py-2 flex justify-center gap-2 rounded-b-2xl">
+                        <div 
+                            onMouseLeave={() => setShowSize(false)}
+                            className="absolute bottom-0 w-full bg-white/90 py-1.5 md:py-2 flex justify-center gap-1.5 md:gap-2 rounded-b-xl md:rounded-b-2xl z-40"
+                        >
                             {sizesForColor.map(size => (
                                 <button
                                     key={size.sizeId}
@@ -188,7 +202,7 @@ function ProductItem({
                                         e.stopPropagation();
                                         handleChooseSize(size);
                                     }}
-                                    className="border px-3 py-1 rounded hover:bg-black hover:text-white"
+                                    className="border border-black px-2 md:px-3 py-0.5 md:py-1 rounded text-xs md:text-sm hover:bg-black hover:text-white transition"
                                 >
                                     {size.sizeCode}
                                 </button>
@@ -197,26 +211,26 @@ function ProductItem({
                     )}
                 </div>
 
-                <h2 className="mt-3 line-clamp-1">{product?.productName}</h2>
+                <h2 className="mt-2 md:mt-3 line-clamp-1 text-sm md:text-base">{product?.productName}</h2>
 
-                <div className="flex gap-2 mt-2">
-                    {allColors.map((color:any)  => (
+                <div className="flex gap-1.5 md:gap-2 mt-1.5 md:mt-2">
+                    {allColors.map((color: any) => (
                         <div
                             key={color.productColorId}
                             onClick={(e) => handleChooseColor(e, color)}
-                            className={`w-5 h-5 rounded-full cursor-pointer 
+                            className={`w-4 h-4 md:w-5 md:h-5 rounded-full cursor-pointer shadow-sm
                             ${selectedHex === color.hexCode ? 'border-2 border-black' : ''}`}
                             style={{ background: color.hexCode }}
                         />
                     ))}
                 </div>
 
-                <div className="mt-2 flex gap-2 items-center">
-                    <span className="text-red-600 font-bold">
+                <div className="mt-1.5 md:mt-2 flex gap-1.5 md:gap-2 items-center">
+                    <span className="text-red-600 font-bold text-sm md:text-base">
                         {formatPrice(displayPrice)}đ
                     </span>
                     {hasDiscount && (
-                        <span className="line-through text-gray-500 text-sm">
+                        <span className="line-through text-gray-500 text-xs md:text-sm">
                             {formatPrice(product?.price)}đ
                         </span>
                     )}

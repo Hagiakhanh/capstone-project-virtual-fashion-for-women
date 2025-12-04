@@ -5,9 +5,15 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
 
    return (
       <>
-         <HeaderComponent />
-         {children}
-         <FooterComponent />
+         <div className="flex flex-col min-h-screen">
+            <HeaderComponent />
+
+            <main className="flex-1">
+               {children}
+            </main>
+
+            <FooterComponent />
+         </div>
       </>
    )
 }
