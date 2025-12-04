@@ -63,5 +63,23 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
             }
         }
+
+        [HttpGet("by-categoryid-notfullmodel/{categoryId}")]
+        public async Task<IActionResult> GetByCategoryId(int categoryId)
+        {
+            try
+            {
+                var category = await _categorySizeTemplateService.GetAllTemplateByCategoryIdNotFullModel(categoryId);
+                return Ok(category);
+            }
+            catch (ArgumentNullException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An unexpected error occurred.", details = ex.Message });
+            }
+        }
     }
 }
