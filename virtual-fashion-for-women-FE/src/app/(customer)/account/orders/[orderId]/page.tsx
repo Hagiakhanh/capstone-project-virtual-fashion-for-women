@@ -189,12 +189,15 @@ export default function OrderDetailPage() {
                             </Button>
                         )}
 
-                        <button
-                            className="px-4 py-2 rounded-lg border border-gray-300 text-xs md:text-sm font-medium hover:bg-gray-50 transition-all w-full sm:w-auto"
-                            onClick={() => route.back()}
+                        <Button
+                            size="large"
+                            className="mt-3 sm:mt-0 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-all"
+                            onClick={() => {
+                                route.back()
+                            }}
                         >
                             Quay lại
-                        </button>
+                        </Button>
                     </div>
 
                     {/* Modals */}

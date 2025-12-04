@@ -216,7 +216,8 @@ export default function ProductListPage() {
 
                     <button
                         onClick={() => router.push('/admin/product/create')}
-                        className="px-6 py-2.5 bg-green-500 border border-gray-300 rounded-lg hover:bg-green-600 font-medium flex items-center gap-2 transition-all cursor-pointer"
+                        className="bg-blue-600 flex gap-2 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors cursor-pointer items-center"
+
                     >
                         <Package className="w-4 h-4" />
                         Thêm sản phẩm mới

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button, Modal, Form, Input, Table, Select } from "antd";
 import { api } from "@/api/instance";
 import { PaginationDTO } from "@/models/PaginationDTO";
-import { ListFilter } from "lucide-react";
+import { ListFilter, User } from "lucide-react";
 import { messageToast } from "@/helpers/toastHelper";
 
 export default function StaffsPage() {
@@ -115,10 +115,14 @@ export default function StaffsPage() {
          {/* Header */}
          <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-semibold">Quản lý nhân viên</h1>
+            <button
+                        onClick={() => setOpen(true)}
+                        className="bg-blue-600 flex gap-2 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors cursor-pointer items-center"
 
-            <Button type="primary" size="middle" onClick={() => setOpen(true)}>
-               Tạo nhân viên
-            </Button>
+                    >
+                        <User className="w-4 h-4" />
+                        Tạo nhân viên
+                    </button>
          </div>
 
          <div className="flex gap-3 items-center">
@@ -157,7 +161,8 @@ export default function StaffsPage() {
             open={open}
             onCancel={() => { setOpen(false); form.resetFields(); }}
             onOk={handleCreateStaff}
-            okText="Create"
+            okText="Tạo"
+            cancelText="Huỷ"
          >
             <Form layout="vertical" form={form}>
                <Form.Item
