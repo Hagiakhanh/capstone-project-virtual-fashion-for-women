@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,8 @@ using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Category;
+using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.Size;
 using VirtualTryonWomenFashion.Service.Helpers;
@@ -20,14 +23,17 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICategorySizeTemplateRepository _templateSizeRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ISizeRepository _sizeRepository;
+        private readonly IMapper _mapper;
 
         public CategorySizeTemplateService(ICategorySizeTemplateRepository templateSizeRepository,
             IUnitOfWork unitOfWork,
-            ISizeRepository sizeRepository)
+            ISizeRepository sizeRepository,
+            IMapper mapper)
         {
             _templateSizeRepository = templateSizeRepository;
             _unitOfWork = unitOfWork;
             _sizeRepository = sizeRepository;
+            _mapper = mapper;
         }
 
         public async Task<MessageModel> CreateCategoryTemplatesAsync(RequestCreateCategoryTemplatesModel request)
@@ -249,6 +255,27 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
 
                 return templates;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Fail");
+            }
+        }
+
+        public async Task<List<CategoryTemplateSizeResponse>> GetAllTemplateByCategoryIdNotFullModel(int categoryId)
+        {
+            try
+            {
+                List<CategorySizeTemplate> templates = await _templateSizeRepository.GetAllTemplateByCategoryId(categoryId);
+
+                if (templates == null)
+                {
+                    throw new ArgumentNullException("Not found");
+                }
+
+                var resutl = _mapper.Map<List<CategoryTemplateSizeResponse>>(templates);
+
+                return resutl;
             }
             catch (Exception ex)
             {
