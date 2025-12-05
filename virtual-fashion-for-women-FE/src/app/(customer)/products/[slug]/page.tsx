@@ -289,15 +289,14 @@ function ProductDetailsPage() {
    return (
       <>
          <div className='bg-[#f9f9f9]'>
-            <div className="flex gap-7 w-[65%] mx-auto pt-20 items-start">
-               {/* Bên trái */}
-               <div className='flex-1'>
-                  <div className="flex gap-6 flex-1">
-                     <div className="aspect-[4/5] overflow-hidden flex-1">
+            <div className="flex gap-7 lg:w-[65%] w-full mx-auto pt-6 lg:pt-20 px-4 lg:px-0 flex-col lg:flex-row items-start">
+               {/* Bên trái - Hình ảnh */}
+               <div className='flex-1 w-full lg:w-auto'>
+                  <div className="flex gap-3 lg:gap-6 flex-col lg:flex-row">
+                     <div className="aspect-[4/5] overflow-hidden flex-1 w-full">
                         <img src={mainImage} alt="Ảnh sản phẩm" className="w-full h-full object-cover rounded-xl" />
                      </div>
-                     <div className="max-h-[564px] overflow-hidden">
-                        {/* <div className="flex flex-col h-[120px]"> */}
+                     <div className="max-h-[564px] overflow-hidden hidden lg:block lg:max-w-[88px]">
                         <Swiper
                            direction={'vertical'}
                            slidesPerView={4}
@@ -317,49 +316,69 @@ function ProductDetailsPage() {
                               })
                            }
                         </Swiper>
-                        {/* </div> */}
                      </div>
                   </div>
 
-                  <div className='flex gap-3 w-[65%] items-center py-5'>
-                     <div className="cursor-pointer rounded-full bg-white text-xl w-10 h-10 flex justify-center items-center"
+                  {/* Mobile thumbnail slider */}
+                  <div className="lg:hidden max-h-[120px] overflow-hidden mt-3">
+                     <Swiper
+                        direction={'horizontal'}
+                        slidesPerView={4}
+                        spaceBetween={10}
+                        className="w-full"
+                     >
+                        {
+                           colorImages?.map((image) => {
+                              return (
+                                 <SwiperSlide key={image.id}>
+                                    <div className="w-[70px] h-[90px] cursor-pointer" onClick={() => handleImageClick(image.imageUrl)}>
+                                       <img src={image.imageUrl} alt="Ảnh sản phẩm"
+                                          className={`${image.imageUrl == mainImage ? 'border-2' : ''} hover:border-2 w-[70px] h-[90px] object-cover rounded-xl`} style={{ aspectRatio: '70 / 90' }} />
+                                    </div>
+                                 </SwiperSlide>
+                              )
+                           })
+                        }
+                     </Swiper>
+                  </div>
+
+                  <div className='flex gap-3 items-center py-3 lg:py-5 lg:w-[65%] w-full'>
+                     <div className="cursor-pointer rounded-full bg-white text-xl w-10 h-10 flex justify-center items-center shadow-sm"
                         onClick={() => handleToggleWishlist(productDetail?.productId)}
                      >
                         {wishlist ? <HeartFilled style={{ color: 'red' }} /> : <HeartOutlined />}
                      </div>
-                     <p className='font-normal text-lg text-black'>Thêm vào danh sách yêu thích</p>
+                     <p className='font-normal text-base lg:text-lg text-black'>Thêm vào danh sách yêu thích</p>
                   </div>
-
                </div>
-               {/* Bên phải */}
-               <div className="flex-1 flex flex-col">
-                  <h1 className="line-clamp-3 text-2xl font-bold">
+
+               {/* Bên phải - Thông tin sản phẩm */}
+               <div className="flex-1 w-full lg:w-auto flex flex-col">
+                  <h1 className="line-clamp-3 text-xl lg:text-2xl font-bold">
                      {productDetail?.productName}
                   </h1>
-                  <p className="line-clamp-2 text-lg font-normal mt-3 text-gray-600">
+                  <p className="line-clamp-2 text-base lg:text-lg font-normal mt-2 lg:mt-3 text-gray-600">
                      MSP: {chooseProduct.productVariant ? chooseProduct.productVariant?.productVariantId : selectedColorVariant?.productColorId}
                   </p>
-                  {/* <p className="text-2xl font-bold mt-3">
-                     {formatPrice(Number(productDetail?.price))}đ
-                  </p> */}
 
                   <div className="mt-2 flex gap-2 items-center">
-                     <span className={`${hasDiscount == true ? 'text-red-600' : 'text-black'} font-bold text-2xl`}>
+                     <span className={`${hasDiscount == true ? 'text-red-600' : 'text-black'} font-bold text-xl lg:text-2xl`}>
                         {formatPrice(Number(displayPrice))}đ
                      </span>
                      {hasDiscount && (
-                        <span className="line-through text-gray-500 text-sm">
+                        <span className="line-through text-gray-500 text-xs lg:text-sm">
                            {formatPrice(Number(productDetail?.price))}đ
                         </span>
                      )}
                   </div>
 
-                  <div className="flex mt-3 gap-5">
-                     <span className="font-bold text-xl">Màu sắc:</span>
-                     <span className="font-normal text-xl">{productColor.find(color => color.colorId === selectedColorVariant?.colorId)?.colorName}</span>
+                  {/* Màu sắc */}
+                  <div className="flex mt-3 gap-3 lg:gap-5 flex-col lg:flex-row items-start lg:items-center">
+                     <span className="font-bold text-base lg:text-xl">Màu sắc:</span>
+                     <span className="font-normal text-base lg:text-xl">{productColor.find(color => color.colorId === selectedColorVariant?.colorId)?.colorName}</span>
                   </div>
                   <div>
-                     <div className="flex gap-3">
+                     <div className="flex gap-2 lg:gap-3 flex-wrap">
                         {
                            productColor.map((color) => {
                               return (
@@ -376,64 +395,49 @@ function ProductDetailsPage() {
                         }
                      </div>
                   </div>
-                  <div className="mt-3">
-                     <p className="font-bold text-xl">Kích thước</p>
-                     <div className="flex gap-3">
+
+                  {/* Kích thước */}
+                  <div className="mt-3 w-full">
+                     <p className="font-bold text-base lg:text-xl">Kích thước</p>
+                     <div className="flex gap-2 lg:gap-3 flex-wrap">
                         {
-                           // isSupported: có hỗ trợ size đó không
-                           // isAvailable: size đó có còn hàng hay không
                            productSize?.map((size) => {
                               const { isSupported, isAvailable } = checkIsSizeAvailable(size.sizeCode);
                               const isSelected = chooseProduct.sizeCode === size.sizeCode;
-                              // Nếu không được hỗ trợ, ẩn nó đi
                               const supportedClasses = !isSupported ? 'hidden' : 'cursor-pointer';
                               let stylingClasses = '';
                               if (isSupported) {
                                  if (!isAvailable) {
-                                    // Nếu được hỗ trợ nhưng hết hàng -> Làm mờ và không cho click
                                     stylingClasses = 'opacity-50 !cursor-not-allowed';
                                  } else if (isSelected) {
-                                    // Nếu có hàng và được chọn
                                     stylingClasses = 'border-2 border-black';
                                  } else {
-                                    // Nếu có hàng và chưa được chọn
                                     stylingClasses = 'border-[#e3ddbb]';
                                  }
                               }
-                              // Class Disabled: Áp dụng khi size KHÔNG khả dụng
-                              const disabledClasses = !isSupported ? 'hidden' : 'cursor-pointer';
-                              // Class Available: Áp dụng khi size CÓ khả dụng và còn hàng
-                              const availableClasses = isSupported && isAvailable ? '' : 'cursor-not-allowed opacity-50';
-                              // Class Selected: Áp dụng khi size ĐƯỢC CHỌN VÀ KHẢ DỤNG
-                              const selectedClasses = isSelected && isSupported && isAvailable ? 'border-2 border-black' : 'border-[#e3ddbb]';
                               return (
                                  <div key={size.sizeId} onClick={() => {
                                     if (isAvailable) {
                                        setChooseProduct({ ...chooseProduct, sizeCode: size.sizeCode, quantity: 1 });
                                     }
-                                 }} className={`bg-white rounded-lg border-1 px-3 ${stylingClasses} ${supportedClasses}`}>
-                                    <span className="text-lg">{size.sizeCode}</span>
+                                 }} className={`bg-white rounded-lg border-1 px-2 lg:px-3 py-2 lg:py-0 ${stylingClasses} ${supportedClasses}`}>
+                                    <span className="text-sm lg:text-lg">{size.sizeCode}</span>
                                  </div>
                               )
                            })
                         }
                      </div>
                      {errorMessage && (
-                        <div className="mt-3 bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-sm transition-all duration-300">
+                        <div className="mt-3 bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-sm transition-all duration-300 text-sm lg:text-base">
                            {errorMessage}
                         </div>
                      )}
                   </div>
-                  {/* <div className="flex gap-2 mt-3 items-center">
-                     <p className='text-xl font-normal underline cursor-pointer'>
-                        Hướng dẫn chọn kích thước
-                     </p>
-                     <RightOutlined />
-                  </div> */}
 
+                  {/* Hướng dẫn chọn kích thước */}
                   <div className="flex gap-2 mt-3 items-center">
                      <p
-                        className='text-xl font-normal underline cursor-pointer hover:text-blue-600 transition-colors'
+                        className='text-sm lg:text-xl font-normal underline cursor-pointer hover:text-blue-600 transition-colors'
                         onClick={() => {
                            if (sizeTable && sizeTable?.length > 0) {
                               setIsSizeGuideOpen(true);
@@ -444,22 +448,26 @@ function ProductDetailsPage() {
                      >
                         Hướng dẫn chọn kích thước
                      </p>
-                     <RightOutlined className="text-sm" />
+                     <RightOutlined className="text-xs lg:text-sm" />
                   </div>
-                  <div className='mt-3 flex items-center gap-4'>
-                     <span className='text-xl font-normal'>Số lượng</span>
+
+                  {/* Số lượng */}
+                  <div className='mt-3 flex items-center gap-3 lg:gap-4 flex-wrap'>
+                     <span className='text-base lg:text-xl font-normal'>Số lượng</span>
                      <div className='flex gap-1'>
                         <Button onClick={() => handleQuantityChange('DECREASE')} style={{ border: 'none' }} disabled={chooseProduct.quantity === 1}><MinusOutlined /></Button>
-                        <div className='rounded-full border-1 px-5 flex justify-center items-center min-w-[60px]'>
+                        <div className='rounded-full border-1 px-4 lg:px-5 py-2 lg:py-0 flex justify-center items-center min-w-[50px] lg:min-w-[60px]'>
                            {chooseProduct.quantity}
                         </div>
                         <Button onClick={() => handleQuantityChange('INCREASE')} style={{ border: 'none' }} disabled={chooseProduct.quantity === chooseProduct.productVariant?.quantity || !chooseProduct.sizeCode}><PlusOutlined /></Button>
                      </div>
                   </div>
-                  <div className="flex gap-3 mt-5">
+
+                  {/* Nút hành động */}
+                  <div className="flex gap-2 lg:gap-3 mt-4 lg:mt-5 flex-col lg:flex-row w-full">
                      <Button
                         style={{ fontWeight: '500', border: '1.5px solid #d4d4d4' }}
-                        className="!flex-1 !h-12 !bg-white !text-black !rounded-xl !text-base hover:!border-black hover:!bg-gray-50 transition-all"
+                        className="!flex-1 !h-14 md:!h-14 lg:!h-12 !bg-white !text-black !rounded-xl !text-lg lg:!text-base hover:!border-black hover:!bg-gray-50 transition-all"
                         size="large"
                         onClick={handleAddToCart}
                      >
@@ -468,7 +476,7 @@ function ProductDetailsPage() {
 
                      <Button
                         style={{ fontWeight: '500', backgroundColor: '#FAE3B6', border: 'none' }}
-                        className="!flex-1 !h-12 !text-black !rounded-xl !text-base hover:!bg-[#f5d89f] transition-colors"
+                        className="!flex-1 !h-14 md:!h-14 lg:!h-12 !text-black !rounded-xl !text-lg lg:!text-base hover:!bg-[#f5d89f] transition-colors"
                         size="large"
                         onClick={handleBuyNow}
                      >
@@ -476,52 +484,50 @@ function ProductDetailsPage() {
                      </Button>
                   </div>
 
-                  {/* Secondary Action - Virtual Try-on */}
-                  <div className="mt-3 flex flex-col items-center text-center space-y-4">
+                  {/* Thử đồ ảo */}
+                  <div className="mt-3 flex flex-col items-center text-center space-y-3 lg:space-y-4 w-full">
                      <Button
                         onClick={() => {
                            router.push('/try-on');
                            sessionStorage.setItem("productColor", JSON.stringify(selectedColorVariant?.productColorId));
                         }}
-                        className="w-full !h-12 px-3 py-2 !rounded-xl !text-base !font-medium
-                              !bg-gradient-to-r !from-teal-400 !to-blue-500
-                            hover:!from-teal-500 hover:!to-blue-600
-                            !text-white !border-none !shadow-sm hover:!shadow-md
-                              transition-all duration-300"
+                        className="w-full !h-14 md:!h-14 lg:!h-12 px-3 py-2 !rounded-xl !text-lg md:!text-lg lg:!text-base !font-medium
+                    !bg-gradient-to-r !from-teal-400 !to-blue-500
+                  hover:!from-teal-500 hover:!to-blue-600
+                  !text-white !border-none !shadow-sm hover:!shadow-md
+                    transition-all duration-300"
                      >
                         <span className="mr-2">✨</span>
                         Thử đồ ảo ngay
                      </Button>
 
                      {lensID && (
-                        <div className="flex flex-col items-center space-y-3 mt-2">
-                           <div className="flex items-center space-x-2 text-gray-400 text-sm font-medium">
-                              <div className="w-8 h-[1px] bg-gray-300"></div>
-                              <span>Hoặc quét mã QR</span>
-                              <div className="w-8 h-[1px] bg-gray-300"></div>
+                        <div className="flex flex-col items-center space-y-2 lg:space-y-3 mt-2 w-full">
+                           <div className="flex items-center space-x-2 text-gray-400 text-xs lg:text-sm font-medium w-full">
+                              <div className="flex-1 h-[1px] bg-gray-300"></div>
+                              <span className="px-2 whitespace-nowrap">Hoặc quét mã QR</span>
+                              <div className="flex-1 h-[1px] bg-gray-300"></div>
                            </div>
 
-                           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 shadow-inner hover:shadow-md transition-all">
+                           <div className="p-2 lg:p-3 bg-gray-50 rounded-xl border border-gray-200 shadow-inner hover:shadow-md transition-all">
                               <img
                                  src={linkToArTryOn}
                                  alt="QR Code to AR Try-On"
-                                 className="w-40 h-40 object-contain"
+                                 className="w-32 h-32 lg:w-40 lg:h-40 object-contain"
                               />
                            </div>
                         </div>
                      )}
                   </div>
 
-
-                  <div className='border-[0.5px] border-[#e3ddbb] mt-5'></div>
-                  <p className='my-5 font-normal text-lg line-clamp-5'>
+                  <div className='border-[0.5px] border-[#e3ddbb] mt-4 lg:mt-5'></div>
+                  <p className='my-3 lg:my-5 font-normal text-sm lg:text-lg line-clamp-5'>
                      {productDetail?.description}
                   </p>
                </div>
-
             </div>
+         </div>
 
-         </div >
          <PolicyInProductDetail />
 
          {productDetail && (
