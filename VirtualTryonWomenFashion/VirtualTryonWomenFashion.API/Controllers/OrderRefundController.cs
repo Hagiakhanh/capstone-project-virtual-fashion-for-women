@@ -91,11 +91,11 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         [HttpGet("staff")]
         [Authorize(Roles = "Staff")]
-        public async Task<IActionResult> GetOrderRefundForStaff([FromQuery] PaginationParameter page, OrderRefundStatusEnum? refundEnum)
+        public async Task<IActionResult> GetOrderRefundForStaff([FromQuery] PaginationParameter page, OrderRefundStatusEnum? refundEnum, string? textSearch)
         {
             try
             {
-                MessageModelWithData<Pagination<ResponseOrderRefundStaff>> result = await _orderRefundService.ListOrderRefundForStaff(page, refundEnum);
+                MessageModelWithData<Pagination<ResponseOrderRefundStaff>> result = await _orderRefundService.ListOrderRefundForStaff(page, refundEnum, textSearch);
                 var metadata = new
                 {
                     result.Data.TotalCount,

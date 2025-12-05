@@ -441,10 +441,17 @@ namespace VirtualTryonWomenFashion.Service.Services
         }
 
         public async Task<MessageModelWithData<Pagination<ResponseOrderForStaff>>> GetAllOrderForStaff(
-            PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease)
+            PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease, string? textSearch)
         {
+            string textSearchLowerCase = textSearch?.Trim().ToLower();
+
             Expression<Func<Order, bool>> filterExpression =
-                x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString();
+                x => (!orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString())
+                && (string.IsNullOrEmpty(textSearch)
+                || x.ReceiverName.ToLower().Contains(textSearchLowerCase)
+                || x.ReceiverPhone.ToLower().Contains(textSearchLowerCase)
+                || x.Customer.Email.ToLower().Contains(textSearchLowerCase));
+
             int totalCount = await _orderRepository.CountAsync(filterExpression);
 
             List<Order> listOrder = new();
@@ -453,7 +460,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 // Ngày mới nằm bên trên
                 listOrder = await _orderRepository.GetAll(
                     pagination: page,
-                    filter: x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString(),
+                    filter: filterExpression,
                     includes: x => x.Customer,
                     orderBy: x => x.OrderByDescending(x => x.CreatedAt)
                 );
@@ -463,7 +470,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 // Ngày cũ nằm bên trên
                 listOrder = await _orderRepository.GetAll(
                     pagination: page,
-                    filter: x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString(),
+                    filter: filterExpression,
                     includes: x => x.Customer,
                     orderBy: x => x.OrderBy(x => x.CreatedAt)
                 );
