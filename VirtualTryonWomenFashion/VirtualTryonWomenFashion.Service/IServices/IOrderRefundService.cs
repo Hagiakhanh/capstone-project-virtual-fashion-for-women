@@ -15,7 +15,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
     {
         public Task<MessageModel> CreateOrderRefund(RequestCreateOrderRefund requestCreateOrderRefund);
         public Task<MessageModelWithData<Pagination<ResponseListOrderRefund>>> ListOrderRefundForCustomer(PaginationParameter page, OrderRefundStatusEnum? statusEnum);
-        public Task<MessageModelWithData<Pagination<ResponseOrderRefundStaff>>> ListOrderRefundForStaff(PaginationParameter page, OrderRefundStatusEnum? statusEnum);
+        public Task<MessageModelWithData<Pagination<ResponseOrderRefundStaff>>> ListOrderRefundForStaff(PaginationParameter page, OrderRefundStatusEnum? statusEnum, string? textSearch);
         public Task<MessageModelWithData<ResponseOrderRefundDetail>> GetOrderRefundDetailForCustomer(int orderRefundId);
         public Task<MessageModelWithData<ResponseOrderRefundDetail>> GetOrderRefundDetailForrStaff(int orderRefundId);
         public Task<MessageModelWithData<string>> UpdateOrderRefundForStaff(RequestUpdateOrderRefund requestUpdateOrderRefund);
