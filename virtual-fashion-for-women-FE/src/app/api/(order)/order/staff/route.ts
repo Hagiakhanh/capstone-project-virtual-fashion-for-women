@@ -8,6 +8,7 @@ export async function GET(request: Request) {
       const PageSize = searchParams.get('PageSize');
       const orderStatusEnum = searchParams.get('orderStatusEnum');
       const isDateDecrease = searchParams.get('isDateDecrease');
+      const textSearch = searchParams.get('textSearch');
 
       const api = createApiInstance(request);
       const responseBE = await api.get('/order/staff', {
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
             PageSize: PageSize,
             orderStatusEnum: orderStatusEnum,
             isDateDecrease: isDateDecrease,
+            textSearch: textSearch,
          }
       });
       if (responseBE.status === 200) {
