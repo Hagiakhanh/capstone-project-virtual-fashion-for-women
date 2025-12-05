@@ -36,8 +36,7 @@ export default function SelectItemTryOn({
                 }
             });
             if (response.status === 200) {
-                const data = response.data;
-
+                const data = response.data.data;
                 const productColorsWithProductInfo = data.flatMap((product: any) =>
                     product.productColors.map((color: any) => ({
                         ...color,
