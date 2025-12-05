@@ -99,14 +99,15 @@ export default function StaffOrderPage() {
       },
    ];
 
-   const fetchOrdersData = async () => {
+   const fetchOrdersData = async (PageIndex, PageSize, orderStatusEnum, isDateDecrease, textSearch) => {
       try {
          const response = await api.get('/order/staff', {
             params: {
-               PageIndex: pagination.currentPage,
-               PageSize: pagination.pageSize,
-               orderStatusEnum: selectedStatus,
+               PageIndex: PageIndex,
+               PageSize: PageSize,
+               orderStatusEnum: orderStatusEnum,
                isDateDecrease: isDateDecrease,
+               textSearch: textSearch,
             }
          });
          if (response.status === 200) {
@@ -153,7 +154,7 @@ export default function StaffOrderPage() {
          const response = await api.put('/order/staff/sync-ghn-status');
          if (response.status === 200) {
             messageToast.success("Đồng bộ dữ liệu GHN thành công");
-            fetchOrdersData();
+            fetchOrdersData(pagination.currentPage, pagination.pageSize, selectedStatus, isDateDecrease, searchText);
          } else {
             messageToast.error("Đồng bộ dữ liệu GHN thất bại");
          }
@@ -165,8 +166,12 @@ export default function StaffOrderPage() {
       }
    }
 
+   const handleSearch = async () => {
+      fetchOrdersData(1, pagination.pageSize, selectedStatus, isDateDecrease, searchText);
+   }
+
    useEffect(() => {
-      fetchOrdersData();
+      fetchOrdersData(pagination.currentPage, pagination.pageSize, selectedStatus, isDateDecrease, searchText);
    }, [pagination.currentPage, selectedStatus]);
 
    return (
@@ -180,15 +185,18 @@ export default function StaffOrderPage() {
                <Search className="w-5 h-5 text-gray-400" />
                <input
                   type="text"
-                  placeholder="Tìm kiếm theo ID đơn hàng, tên khách hàng, email, số điện thoại..."
+                  placeholder="Tìm kiếm theo tên khách hàng, email, số điện thoại"
                   className="w-full outline-none px-3 text-sm text-gray-600"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                />
             </div>
             <div className="flex gap-2">
                {/* <button className="flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100">
                   <Filter className="w-4 h-4" /> Filters
                </button> */}
-               <button className="bg-black text-white rounded-lg px-5 py-2 hover:bg-gray-800">
+               <button className="bg-black text-white rounded-lg px-5 py-2 hover:bg-gray-800"
+                  onClick={handleSearch}>
                   Áp dụng
                </button>
                <Button

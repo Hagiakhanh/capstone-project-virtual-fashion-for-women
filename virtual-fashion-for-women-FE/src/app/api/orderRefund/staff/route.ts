@@ -8,6 +8,7 @@ export async function GET(req: Request) {
       const PageIndex = searchParams.get("PageIndex");
       const PageSize = searchParams.get("PageSize");
       const refundEnum = searchParams.get("refundEnum");
+      const textSearch = searchParams.get("textSearch");
 
       const api = createApiInstance(req);
       const responseBE = await api.get("/orderrefund/staff", {
@@ -15,6 +16,7 @@ export async function GET(req: Request) {
             PageIndex: PageIndex,
             PageSize: PageSize,
             refundEnum: refundEnum,
+            textSearch: textSearch
          },
       });
 
