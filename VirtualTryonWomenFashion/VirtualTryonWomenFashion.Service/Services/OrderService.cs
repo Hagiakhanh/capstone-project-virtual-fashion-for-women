@@ -410,7 +410,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _orderRepository.UpdateRangeAsync(successfulOrders);
             await _unitOfWork.SaveChanges();
             await _statusLogService.CreateStatusLog(statusLogs);
-            foreach(var order in successfulOrders)
+            foreach (var order in successfulOrders)
             {
                 _mailService.sendEmailAsync(new MailRequest
                 {
@@ -686,6 +686,26 @@ namespace VirtualTryonWomenFashion.Service.Services
                 else
                 {
                     var error = await response.Content.ReadAsStringAsync();
+
+                    GHNErrorResponse errorObj = null;
+                    try
+                    {
+                        errorObj = JsonSerializer.Deserialize<GHNErrorResponse>(error);
+                    }
+                    catch (JsonException)
+                    {
+                    }
+
+                    if (errorObj != null && errorObj.code_message == "TO_ADDRESS_CONVERT_FAIL")
+                    {
+                        return new MessageModelWithData<string>
+                        {
+                            Message = "Chuyển đỗi vị trí thất bại",
+                            StatusCode = StatusCodes.Status200OK,
+                            Data = "TO_ADDRESS_CONVERT_FAIL"
+                        };
+                    }
+
                     throw new Exception($"Không thể tạo đơn hàng vận chuyển. Lỗi GHN: {error}");
                 }
 
@@ -1248,7 +1268,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         public async Task UpdateOrderCompleteAll()
         {
             Expression<Func<Order, bool>> filterExpression = x => x.Status == OrderStatusEnum.Delivered.ToString()
-                                            && x.DeliveredAt != null                            
+                                            && x.DeliveredAt != null
                                             && DateTime.UtcNow.AddHours(7) > x.DeliveredAt.Value.AddDays(2);
 
             List<Order> listOrder = await _orderRepository.GetAll(
