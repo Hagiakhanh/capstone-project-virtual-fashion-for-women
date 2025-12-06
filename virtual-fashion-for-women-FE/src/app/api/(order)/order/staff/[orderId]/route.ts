@@ -25,7 +25,10 @@ export async function PUT(request: Request, { params }: { params: { orderId: str
       const responseBE = await api.put(`/order/staff/${orderId}`);
       if (responseBE.status == 200) {
          return NextResponse.json(
-            { message: 'Cập nhật trạng thái đơn hàng thành công' },
+            {
+               message: 'Cập nhật trạng thái đơn hàng',
+               data: responseBE.data?.data
+            },
             { status: 200 }
          );
       }
