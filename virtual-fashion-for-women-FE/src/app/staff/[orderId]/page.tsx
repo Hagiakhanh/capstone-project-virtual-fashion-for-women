@@ -206,8 +206,12 @@ export default function StaffOrderDetailsPage() {
       try {
          const response = await api.put(`/order/staff/${orderId}`);
          if (response.status === 200) {
-            fetchOrderDetails();
-            messageToast.success('Cập nhật trạng thái đơn hàng thành công');
+            if (response.data?.data == 'TO_ADDRESS_CONVERT_FAIL') {
+               messageToast.info('Địa chỉ không được GHN hỗ trợ vận chuyển. Vui lòng kiểm tra lại');
+            } else {
+               fetchOrderDetails();
+               messageToast.success('Cập nhật trạng thái đơn hàng thành công');
+            }
          }
 
       } catch (error) {
