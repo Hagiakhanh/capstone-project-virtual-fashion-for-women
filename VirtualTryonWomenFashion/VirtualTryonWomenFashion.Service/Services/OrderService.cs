@@ -685,6 +685,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
                 else
                 {
+                    // Loi ko the tao don
                     var error = await response.Content.ReadAsStringAsync();
 
                     GHNErrorResponse errorObj = null;
@@ -698,6 +699,8 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                     if (errorObj != null && errorObj.code_message == "TO_ADDRESS_CONVERT_FAIL")
                     {
+                        await _unitOfWork.RollbackTransactionAsync();
+
                         return new MessageModelWithData<string>
                         {
                             Message = "Chuyển đỗi vị trí thất bại",
