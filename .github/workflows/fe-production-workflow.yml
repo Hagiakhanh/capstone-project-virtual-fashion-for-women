@@ -65,6 +65,15 @@ jobs:
             echo "⚙️ Build Next.js (env sẽ được load từ .env.production.local)"
             npm run build
 
+            echo "🔍 Check build"
+            if [ -d ".next" ]; then
+              echo "✅ Build thành công! Folder .next đã được tạo."
+              ls -lah .next
+            else
+              echo "❌ Build FAILED! Folder .next không tồn tại."
+              exit 1
+            fi
+
             echo "📝 Kiểm tra biến môi trường dùng trong Node"
             echo "NODE_ENV=$NODE_ENV"
             echo "API_URL=$API_URL"
@@ -72,7 +81,6 @@ jobs:
             echo "🚀 Start bằng PM2"
             if command -v pm2 > /dev/null; then
               pm2 delete vfwfe || true
-              # --update-env để PM2 lấy env hiện tại
               pm2 start "npm run start -- -H 0.0.0.0 -p 3000" --name "vfwfe" --update-env
               pm2 save
             else
