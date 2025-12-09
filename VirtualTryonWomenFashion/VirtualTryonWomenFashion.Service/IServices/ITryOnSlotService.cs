@@ -18,7 +18,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         Task<bool> UpdateOutputImageUrl(UpdateTryOnRequest updateTryOnRequest);
         Task<TryOnResponse?> GetTryOnSlotByIdAsync(int tryOnSlotId);
         Task<string> CheckImageModelIsValid(ImageModel imageModel);
-        Task<Pagination<TryOnResponse>> GetHistoryTryOn(PaginationParameter paginationParameter, bool isNewest);
+        Task<Pagination<TryOnResponse>> GetHistoryTryOn(PaginationParameter paginationParameter);
         Task<TryOnResponse> GetDetailTryOnSlot(int tryOnSlotId);
     }
 }
