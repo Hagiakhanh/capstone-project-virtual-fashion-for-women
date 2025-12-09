@@ -32,7 +32,6 @@ export default function TryOnHistoryListPage() {
             const payload = {
                 pageSize: pagination.PageSize,
                 pageNumber: pagination.CurrentPage,
-                isDescending: true,
             };
             const response = await api.get(`/history-try-on`, { params: payload });
             if (response.status === 200) {
