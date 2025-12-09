@@ -153,7 +153,14 @@ export default function TryOnResultModal({
                         {showCartView ? 'Thêm vào giỏ hàng' : 'Kết quả thử đồ'}
                     </h2>
                     <button
-                        onClick={onClose}
+                        onClick={() => {
+                            onClose();
+                            setShowCartView(false);
+                            setSelectedProduct(undefined);
+                            setShowBodyMeasurementForm(false);
+                            setSelectedProductVariant(null);
+                            setQuantity(1);
+                        }}
                         className="p-1.5 md:p-2 hover:bg-white/30 rounded-full transition-colors"
                     >
                         <X className="w-5 h-5 md:w-6 md:h-6 text-gray-800" />
@@ -445,6 +452,7 @@ export default function TryOnResultModal({
                             onClose();
                             setShowCartView(false);
                             setSelectedProduct(undefined);
+                            setShowBodyMeasurementForm(false);
                             setSelectedProductVariant(null);
                             setQuantity(1);
                         }}
