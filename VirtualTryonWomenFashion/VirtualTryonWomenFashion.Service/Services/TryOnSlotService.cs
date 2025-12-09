@@ -186,13 +186,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<Pagination<TryOnResponse>> GetHistoryTryOn(PaginationParameter paginationParameter, bool isNewest)
+        public async Task<Pagination<TryOnResponse>> GetHistoryTryOn(PaginationParameter paginationParameter)
         {
             int userId = _currentUserService.GetUserId();
             var rawTryOnSlot = await _tryOnSlotRepository.GetAll(
                     filter: to => to.CustomerId == userId,
                     pagination: paginationParameter,
-                    orderBy: to => isNewest? to.OrderByDescending(x=>x.UpdatedAt) : to.OrderBy(x=>x.UpdatedAt),
+                    orderBy: to => to.OrderByDescending(x=>x.UpdatedAt),
                     includes: to => to.ProductColors
                 );
 
