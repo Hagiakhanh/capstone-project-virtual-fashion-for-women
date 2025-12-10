@@ -167,6 +167,10 @@ public class ItemSimilarityMatrixBuilder : IItemSimilarityMatrixBuilder
             {
                 if (i?.ProductId == null || i.UserId == 0) continue;
 
+                string type = i.InteractionType?.ToLower() ?? "";
+                if (type == "purchase" || type == "wishlist")
+                    continue;
+
                 if (!userBehavior.ContainsKey(i.UserId))
                     userBehavior[i.UserId] = new Dictionary<string, decimal>();
 
