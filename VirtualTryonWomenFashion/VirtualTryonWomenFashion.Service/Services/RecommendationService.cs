@@ -359,6 +359,9 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             foreach (var i in userInteractions)
             {
+                string type = i.InteractionType?.ToLower() ?? "";
+                if (type == "purchase" || type == "wishlist")
+                    continue;
                 var weight = i.Weight ?? ComputeInteractionWeight(i.InteractionType);
                 if (!result.ContainsKey(i.ProductId))
                     result[i.ProductId] = 0;
