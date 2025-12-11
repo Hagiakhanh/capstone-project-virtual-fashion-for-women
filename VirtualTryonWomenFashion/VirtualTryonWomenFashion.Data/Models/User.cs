@@ -33,6 +33,8 @@ public partial class User
 
     public string ResetToken { get; set; }
 
+    public string SecondAddress { get; set; }
+
     public virtual ICollection<Aiconversation> Aiconversations { get; set; } = new List<Aiconversation>();
 
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
