@@ -134,6 +134,24 @@ public class TryOnSlotController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+    [HttpPost("check-image-model-gemini")]
+    public async Task<IActionResult> CheckImageModelIsValidGemini([FromForm] ImageModel imageModel)
+    {
+        try
+        {
+            if (imageModel.ImageModelFile == null)
+            {
+                return BadRequest(new { message = "Vui lòng tải lên file ảnh" });
+            }
+
+            var result = await _tryOnSlotService.CheckImageModelIsValidGeminiIntegrate(imageModel);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 
     [HttpGet("history-try-on-slot")]
     public async Task<IActionResult> GetHistoryTryOnSlot([FromQuery] PaginationParameter paginationParameter)
