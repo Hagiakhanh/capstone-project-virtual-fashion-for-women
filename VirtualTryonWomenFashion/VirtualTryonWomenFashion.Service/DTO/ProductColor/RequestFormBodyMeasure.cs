@@ -12,7 +12,6 @@ namespace VirtualTryonWomenFashion.Service.DTO.ProductColor
         public double Bust { get; set; }
         public double Waist { get; set; }
         public double Hips { get; set; }
-        public double Length { get; set; }
         public string ProductColorId { get; set; }
         public int CategoryId { get; set; }
         

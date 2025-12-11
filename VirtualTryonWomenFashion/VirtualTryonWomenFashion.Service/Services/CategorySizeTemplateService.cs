@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,8 @@ using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Category;
+using VirtualTryonWomenFashion.Service.DTO.Product;
 using VirtualTryonWomenFashion.Service.DTO.ProductColor;
 using VirtualTryonWomenFashion.Service.DTO.Size;
 using VirtualTryonWomenFashion.Service.Helpers;
@@ -20,14 +23,17 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICategorySizeTemplateRepository _templateSizeRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ISizeRepository _sizeRepository;
+        private readonly IMapper _mapper;
 
         public CategorySizeTemplateService(ICategorySizeTemplateRepository templateSizeRepository,
             IUnitOfWork unitOfWork,
-            ISizeRepository sizeRepository)
+            ISizeRepository sizeRepository,
+            IMapper mapper)
         {
             _templateSizeRepository = templateSizeRepository;
             _unitOfWork = unitOfWork;
             _sizeRepository = sizeRepository;
+            _mapper = mapper;
         }
 
         public async Task<MessageModel> CreateCategoryTemplatesAsync(RequestCreateCategoryTemplatesModel request)
@@ -116,6 +122,32 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         private async Task<MessageModel?> CheckTemplateOverlapAsync(List<TemplateDetailsModel> templates)
         {
+            foreach (var tpl in templates)
+            {
+                // Danh sách các cặp (Min, Max) cần kiểm tra
+                var ranges = new List<(double?, double?)>
+                {
+                    (tpl.MinShoulder, tpl.MaxShoulder),
+                    (tpl.MinBust, tpl.MaxBust),
+                    (tpl.MinWaist, tpl.MaxWaist),
+                    (tpl.MinHips, tpl.MaxHips)
+                };
+
+                // Kiểm tra từng cặp: nếu cả hai đều có giá trị (không null) và Min > Max thì lỗi
+                foreach (var (min, max) in ranges)
+                {
+                    if (min.HasValue && max.HasValue && min.Value > max.Value)
+                    {
+                        var size = await _sizeRepository.GetByIdAsync(tpl.SizeId);
+                        return new MessageModel
+                        {
+                            Message = $"Lỗi: Khoảng giá trị của size **{size?.SizeCode}** không hợp lệ (Min lớn hơn Max).",
+                            StatusCode = StatusCodes.Status400BadRequest
+                        };
+                    }
+                }
+            }
+
             var duplicateSizeIds = templates
                 .GroupBy(t => t.SizeId)
                 .Where(g => g.Count() > 1)
@@ -223,6 +255,27 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
 
                 return templates;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Fail");
+            }
+        }
+
+        public async Task<List<CategoryTemplateSizeResponse>> GetAllTemplateByCategoryIdNotFullModel(int categoryId)
+        {
+            try
+            {
+                List<CategorySizeTemplate> templates = await _templateSizeRepository.GetAllTemplateByCategoryId(categoryId);
+
+                if (templates == null)
+                {
+                    throw new ArgumentNullException("Not found");
+                }
+
+                var resutl = _mapper.Map<List<CategoryTemplateSizeResponse>>(templates);
+
+                return resutl;
             }
             catch (Exception ex)
             {

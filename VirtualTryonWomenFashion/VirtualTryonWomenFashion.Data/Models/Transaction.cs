@@ -33,6 +33,10 @@ public partial class Transaction
 
     public DateTime CreatedAt { get; set; }
 
+    public string BankName { get; set; }
+
+    public string BankAccountNumber { get; set; }
+
     public virtual Order Order { get; set; }
 
     public virtual OrderRefund OrderRefund { get; set; }

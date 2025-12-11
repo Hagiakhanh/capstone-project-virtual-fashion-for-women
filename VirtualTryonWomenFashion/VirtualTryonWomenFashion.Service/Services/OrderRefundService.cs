@@ -254,10 +254,17 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         }
 
-        public async Task<MessageModelWithData<Pagination<ResponseOrderRefundStaff>>> ListOrderRefundForStaff(PaginationParameter page, OrderRefundStatusEnum? statusEnum)
+        public async Task<MessageModelWithData<Pagination<ResponseOrderRefundStaff>>> ListOrderRefundForStaff(PaginationParameter page, OrderRefundStatusEnum? statusEnum, string? textSearch)
         {
+            string textSearchLowerCase = textSearch?.Trim().ToLower();
+
             Expression<Func<OrderRefund, bool>> filterExpression =
-                x => !statusEnum.HasValue || x.Status == statusEnum.ToString();
+                x => (!statusEnum.HasValue || x.Status == statusEnum.ToString())
+                && (string.IsNullOrEmpty(textSearch)
+                || x.Order.ReceiverName.ToLower().Contains(textSearchLowerCase)
+                || x.Order.ReceiverPhone.ToLower().Contains(textSearchLowerCase)
+                || x.Customer.Email.ToLower().Contains(textSearchLowerCase));
+
             int totalCount = await _orderRefundRepository.CountAsync(filterExpression);
 
             List<OrderRefund> orderRefunds = await _orderRefundRepository.GetAll(

@@ -36,7 +36,7 @@ public class RecommendationBackgroundService : BackgroundService
             
             while (!stoppingToken.IsCancellationRequested)
             {
-                try
+                /*try
                 {
                     await timer.WaitForNextTickAsync(stoppingToken);
                     await ComputeSimilarityMatrixAsync(stoppingToken);
@@ -49,6 +49,27 @@ public class RecommendationBackgroundService : BackgroundService
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "❌ Error in background job timer");
+                }*/
+                await timer.WaitForNextTickAsync(stoppingToken);
+
+                // --- LOGIC CẢI TIẾN: Thử lại ngắn hạn (Ví dụ: 3 lần, mỗi lần cách 10 phút) ---
+                for (int i = 0; i < 3; i++)
+                {
+                    try
+                    {
+                        await ComputeSimilarityMatrixAsync(stoppingToken);
+                        break; // Thành công, thoát vòng lặp thử lại ngắn hạn
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "❌ Lần tính toán thứ {Attempt} bị lỗi. Thử lại sau 10 phút...", i + 1);
+
+                        // Nếu là lần thử cuối cùng hoặc hết thời gian (7 giờ), không chờ nữa
+                        if (i == 2 || stoppingToken.IsCancellationRequested) break;
+
+                        // Chờ một khoảng thời gian ngắn (10 phút) trước khi thử lại
+                        await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
+                    }
                 }
             }
         }

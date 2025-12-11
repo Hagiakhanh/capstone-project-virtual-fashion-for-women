@@ -410,7 +410,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _orderRepository.UpdateRangeAsync(successfulOrders);
             await _unitOfWork.SaveChanges();
             await _statusLogService.CreateStatusLog(statusLogs);
-            foreach(var order in successfulOrders)
+            foreach (var order in successfulOrders)
             {
                 _mailService.sendEmailAsync(new MailRequest
                 {
@@ -441,10 +441,17 @@ namespace VirtualTryonWomenFashion.Service.Services
         }
 
         public async Task<MessageModelWithData<Pagination<ResponseOrderForStaff>>> GetAllOrderForStaff(
-            PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease)
+            PaginationParameter page, OrderStatusEnum? orderStatusEnum, bool isDateDecrease, string? textSearch)
         {
+            string textSearchLowerCase = textSearch?.Trim().ToLower();
+
             Expression<Func<Order, bool>> filterExpression =
-                x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString();
+                x => (!orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString())
+                && (string.IsNullOrEmpty(textSearch)
+                || x.ReceiverName.ToLower().Contains(textSearchLowerCase)
+                || x.ReceiverPhone.ToLower().Contains(textSearchLowerCase)
+                || x.Customer.Email.ToLower().Contains(textSearchLowerCase));
+
             int totalCount = await _orderRepository.CountAsync(filterExpression);
 
             List<Order> listOrder = new();
@@ -453,7 +460,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 // Ngày mới nằm bên trên
                 listOrder = await _orderRepository.GetAll(
                     pagination: page,
-                    filter: x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString(),
+                    filter: filterExpression,
                     includes: x => x.Customer,
                     orderBy: x => x.OrderByDescending(x => x.CreatedAt)
                 );
@@ -463,7 +470,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 // Ngày cũ nằm bên trên
                 listOrder = await _orderRepository.GetAll(
                     pagination: page,
-                    filter: x => !orderStatusEnum.HasValue || x.Status == orderStatusEnum.ToString(),
+                    filter: filterExpression,
                     includes: x => x.Customer,
                     orderBy: x => x.OrderBy(x => x.CreatedAt)
                 );
@@ -522,7 +529,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 ReceiverAddress = order.ReceiverAddress,
                 CreatedAt = order.CreatedAt,
                 Status = ((OrderStatusEnum)Enum.Parse(typeof(OrderStatusEnum), order.Status)).ToString(),
-                Amount = order.Amount - order.ShippingMoney ?? 0,
+                Amount = order.Amount - order.ShippingMoney - order?.InsuranceFee ?? 0,
                 Note = order.Note,
                 PackageWeight = order.PackageWeight,
                 PackageHeight = order.PackageHeight,
@@ -678,7 +685,30 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
                 else
                 {
+                    // Loi ko the tao don
                     var error = await response.Content.ReadAsStringAsync();
+
+                    GHNErrorResponse errorObj = null;
+                    try
+                    {
+                        errorObj = JsonSerializer.Deserialize<GHNErrorResponse>(error);
+                    }
+                    catch (JsonException)
+                    {
+                    }
+
+                    if (errorObj != null && errorObj.code_message == "TO_ADDRESS_CONVERT_FAIL")
+                    {
+                        await _unitOfWork.RollbackTransactionAsync();
+
+                        return new MessageModelWithData<string>
+                        {
+                            Message = "Chuyển đỗi vị trí thất bại",
+                            StatusCode = StatusCodes.Status200OK,
+                            Data = "TO_ADDRESS_CONVERT_FAIL"
+                        };
+                    }
+
                     throw new Exception($"Không thể tạo đơn hàng vận chuyển. Lỗi GHN: {error}");
                 }
 
@@ -1241,7 +1271,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         public async Task UpdateOrderCompleteAll()
         {
             Expression<Func<Order, bool>> filterExpression = x => x.Status == OrderStatusEnum.Delivered.ToString()
-                                            && x.DeliveredAt != null                            
+                                            && x.DeliveredAt != null
                                             && DateTime.UtcNow.AddHours(7) > x.DeliveredAt.Value.AddDays(2);
 
             List<Order> listOrder = await _orderRepository.GetAll(

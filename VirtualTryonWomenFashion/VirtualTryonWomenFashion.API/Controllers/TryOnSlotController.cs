@@ -154,11 +154,11 @@ public class TryOnSlotController : ControllerBase
     }
 
     [HttpGet("history-try-on-slot")]
-    public async Task<IActionResult> GetHistoryTryOnSlot([FromQuery] PaginationParameter paginationParameter, [FromQuery] bool isNewest = true)
+    public async Task<IActionResult> GetHistoryTryOnSlot([FromQuery] PaginationParameter paginationParameter)
     {
         try
         {
-            Pagination<TryOnResponse> result = await _tryOnSlotService.GetHistoryTryOn(paginationParameter, isNewest);
+            Pagination<TryOnResponse> result = await _tryOnSlotService.GetHistoryTryOn(paginationParameter);
             var metadata = new
             {
                 result.TotalCount,

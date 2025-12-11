@@ -51,6 +51,8 @@ public partial class Order
 
     public DateTime? DeliveredAt { get; set; }
 
+    public string DeliveringType { get; set; }
+
     public virtual User Customer { get; set; }
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

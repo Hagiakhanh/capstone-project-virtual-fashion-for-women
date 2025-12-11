@@ -63,6 +63,11 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     return existingTryOnSlot.ToMapTryOnResponse();
                 }
+                
+                if(TopProductColor == null && BottomProductColor == null)
+                {
+                    throw new Exception("Phải chọn ít nhất một sản phẩm để thử đồ");
+                }
 
                 var productColors = new List<ProductColor>();
                 if (TopProductColor != null)
@@ -185,13 +190,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<Pagination<TryOnResponse>> GetHistoryTryOn(PaginationParameter paginationParameter, bool isNewest)
+        public async Task<Pagination<TryOnResponse>> GetHistoryTryOn(PaginationParameter paginationParameter)
         {
             int userId = _currentUserService.GetUserId();
             var rawTryOnSlot = await _tryOnSlotRepository.GetAll(
                     filter: to => to.CustomerId == userId,
                     pagination: paginationParameter,
-                    orderBy: to => isNewest ? to.OrderByDescending(x => x.UpdatedAt) : to.OrderBy(x => x.UpdatedAt),
+                    orderBy: to => to.OrderByDescending(x=>x.UpdatedAt),
                     includes: to => to.ProductColors
                 );
 

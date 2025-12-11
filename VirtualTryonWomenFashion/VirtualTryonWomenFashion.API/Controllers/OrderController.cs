@@ -26,12 +26,12 @@ namespace VirtualTryonWomenFashion.API.Controllers
 
         [HttpGet("staff")]
         public async Task<IActionResult> GetAllOrderForStaff([FromQuery] PaginationParameter page,
-            OrderStatusEnum? orderStatusEnum, bool isDateDecrease)
+            OrderStatusEnum? orderStatusEnum, bool isDateDecrease, string? textSearch)
         {
             try
             {
                 MessageModelWithData<Pagination<ResponseOrderForStaff>> result =
-                    await _orderService.GetAllOrderForStaff(page, orderStatusEnum, isDateDecrease);
+                    await _orderService.GetAllOrderForStaff(page, orderStatusEnum, isDateDecrease, textSearch);
                 var metadata = new
                 {
                     result.Data.TotalCount,

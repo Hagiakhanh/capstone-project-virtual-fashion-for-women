@@ -29,6 +29,8 @@ namespace VirtualTryonWomenFashion.Service.Mappers
             CreateMap<Product, ResponseProductWithListColorAndSizeDto>()
                 .ForMember(dest => dest.CategoryId,
                            opt => opt.MapFrom(src => src.CategoryId ?? 0))
+                .ForMember(dest => dest.BodyPart,
+                           opt => opt.MapFrom(src => src.Category.BodyPart))
                 // Lấy danh sách Color từ tất cả ProductColors
                 .ForMember(dest => dest.Color,
                            opt => opt.MapFrom(src => src.ProductColors
