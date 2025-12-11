@@ -31,6 +31,8 @@ public partial class OrderRefund
 
     public string ShippingCode { get; set; }
 
+    public string DeliveringType { get; set; }
+
     public virtual User Customer { get; set; }
 
     public virtual Order Order { get; set; }
