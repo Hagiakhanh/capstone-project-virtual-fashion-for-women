@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
@@ -27,7 +29,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ICurrentUserService _currentUserService;
         private readonly IFitRoomService _fitRoomService;
         private readonly IProductService _productService;
-
+        private readonly IGeminiService _geminiService;
         public TryOnSlotService(
             ITryOnSlotRepository tryOnSlotRepository,
             IProductColorService productColorService,
@@ -35,7 +37,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService,
             IFitRoomService fitRoomService,
-            IProductService productService)
+            IProductService productService,
+            IGeminiService geminiService)
         {
             _tryOnSlotRepository = tryOnSlotRepository;
             _productColorService = productColorService;
@@ -44,6 +47,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             _currentUserService = currentUserService;
             _fitRoomService = fitRoomService;
             _productService = productService;
+            _geminiService = geminiService;
         }
         public async Task<TryOnResponse> CreateTryOnSlot(CreateTryOnRequest createTryOnRequest)
         {
@@ -173,7 +177,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             bool isExistValidImage = await _tryOnSlotRepository.HasImageModelHash(userId, imageModelHasing);
             if (isExistValidImage)
             {
-                return @"{""good_clothes_types"": [""upper"", ""lower"", ""full""]}"; 
+                return @"{""good_clothes_types"": [""upper"", ""lower"", ""full""]}";
             }
             else
             {
@@ -187,12 +191,12 @@ namespace VirtualTryonWomenFashion.Service.Services
             var rawTryOnSlot = await _tryOnSlotRepository.GetAll(
                     filter: to => to.CustomerId == userId,
                     pagination: paginationParameter,
-                    orderBy: to => isNewest? to.OrderByDescending(x=>x.UpdatedAt) : to.OrderBy(x=>x.UpdatedAt),
+                    orderBy: to => isNewest ? to.OrderByDescending(x => x.UpdatedAt) : to.OrderBy(x => x.UpdatedAt),
                     includes: to => to.ProductColors
                 );
 
-            int totalCount = await _tryOnSlotRepository.CountAsync(to =>to.CustomerId == userId);
-            List<TryOnResponse> tryOnResponses = rawTryOnSlot.Select(to=>to.ToMapTryOnResponse()).ToList();
+            int totalCount = await _tryOnSlotRepository.CountAsync(to => to.CustomerId == userId);
+            List<TryOnResponse> tryOnResponses = rawTryOnSlot.Select(to => to.ToMapTryOnResponse()).ToList();
             return new Pagination<TryOnResponse>(tryOnResponses, totalCount, paginationParameter.PageIndex, paginationParameter.PageSize);
         }
 
@@ -210,12 +214,85 @@ namespace VirtualTryonWomenFashion.Service.Services
             foreach (var productColor in detailTryOnSlot.ProductColors)
             {
                 var productDTO = await _productService.GetProductByProductColorIdAsyncForTryOn(productColor.ProductColorId);
-                if(productDTO != null) productResponseMapping.Add(productDTO);
+                if (productDTO != null) productResponseMapping.Add(productDTO);
             }
 
             var tryOnResponse = detailTryOnSlot.ToMapTryOnResponse();
             tryOnResponse.TryOnProductVariant = productResponseMapping;
             return tryOnResponse;
         }
+
+        public async Task<string> CheckImageModelIsValidGeminiIntegrate(ImageModel imageModel)
+        {
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var allowedMimeTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp" };
+
+            var fileExtension = Path.GetExtension(imageModel.ImageModelFile.FileName)?.ToLowerInvariant();
+            var contentType = imageModel.ImageModelFile.ContentType?.ToLowerInvariant();
+
+            // 1. Kiểm tra extension và MIME type (Logic cũ)
+            if (!allowedExtensions.Contains(fileExtension) || !allowedMimeTypes.Contains(contentType))
+            {
+                throw new ArgumentException("Chỉ chấp nhận file ảnh định dạng JPG, JPEG, PNG hoặc WEBP");
+            }
+
+            int userId = _currentUserService.GetUserId();
+            var imageModelHasing = ComputeSHA256(imageModel.ImageModelFile);
+            bool isExistValidImage = await _tryOnSlotRepository.HasImageModelHash(userId, imageModelHasing);
+
+            // 2. Kiểm tra Hash
+            if (isExistValidImage)
+            {
+                // Trả về kết quả TỐT NHẤT (vì đã được kiểm tra trước đó)
+                return JsonSerializer.Serialize(new ImageValidationResult
+                {
+                    IsGood = true,
+                    IsWarning = false, // Hợp lệ hoàn toàn, không có cảnh báo
+                    WarningMessage = null,
+                    GoodClothesTypes = new List<string> { "upper", "lower", "full" }
+                });
+            }
+            else
+            {
+                // 3. Gọi Gemini để phân tích tính hợp lệ của ảnh mới
+
+                // Prompt chi tiết yêu cầu Gemini trả về JSON với logic Good/Warning/Invalid
+                var geminiPrompt = "Phân tích hình ảnh này để xác định sự phù hợp cho Thử Đồ Ảo (Virtual Try-On). Trả về kết quả dưới dạng JSON thuần (RAW JSON) theo cấu trúc sau: { \"is_good\": [true/false], \"is_warning\": [true/false], \"warning_message\": \"[Thông điệp cảnh báo nếu is_warning là true, nếu không thì để trống]\", \"good_clothes_types\": [\"upper\", \"lower\", \"full\" hoặc mảng rỗng] }. " +
+                                   "Quy tắc phân loại: " +
+                                   "1. Hợp lệ (is_good: true, is_warning: false): Ảnh một người mẫu **nữ**, đứng thẳng, rõ ràng, thấy toàn thân và có thể tách nền tốt. " +
+                                   "2. Cảnh báo (is_good: false, is_warning: true): Ảnh một người mẫu là **nam** hoặc là **trẻ em/em bé**. `warning_message` phải mô tả rõ lý do cảnh báo (Ví dụ: 'Ảnh là người mẫu nam, có thể không phù hợp với các mẫu đồ nữ.'). `good_clothes_types` là mảng rỗng. " +
+                                   "3. Không hợp lệ (is_good: false, is_warning: false): Ảnh không có người, ảnh động vật, hoặc ảnh người không rõ ràng. `good_clothes_types` là mảng rỗng." +
+                                   "Hãy trả lời CHỈ bằng đối tượng JSON.";
+
+                // Sử dụng hàm chung CallGeminiWithMediaAsync
+                string rawGeminiJson = await _geminiService.CallGeminiWithMediaAsync(
+                    prompt: geminiPrompt,
+                    mediaFile: imageModel.ImageModelFile
+                );
+
+                // 4. Xử lý và Lưu trữ Hash nếu ảnh Hợp lệ hoàn toàn
+                try
+                {
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var geminiResult = JsonSerializer.Deserialize<ImageValidationResult>(rawGeminiJson, options);
+
+                    // Chỉ lưu Hash vào DB nếu ảnh hợp lệ VÀ không có cảnh báo
+                    if (geminiResult != null && geminiResult.IsGood && !geminiResult.IsWarning)
+                    {
+                        // Logic: Lưu Hash vào DB để dùng lại lần sau
+                        // await _tryOnSlotRepository.SaveImageModelHash(userId, imageModelHasing); 
+                    }
+
+                    // Trả về kết quả JSON từ Gemini (bao gồm cả trạng thái Warning)
+                    return rawGeminiJson;
+                }
+                catch (JsonException)
+                {
+                    // Trường hợp Gemini trả về JSON không đúng format, coi là cảnh báo lỗi hệ thống
+                    return @"{""is_good"": false, ""is_warning"": true, ""warning_message"": ""Không thể phân tích dữ liệu trả về từ hệ thống AI. Vui lòng thử lại."", ""good_clothes_types"": []}";
+                }
+            }
+        }
+        
     }
 }
