@@ -1707,7 +1707,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 await _vectorDbService.DeleteAsync(ids: variantIds);
             }
 
-            var imageUrlsToDelete = new List<string>();
+            /*var imageUrlsToDelete = new List<string>();
 
             foreach (var productColor in productColors)
             {
@@ -1764,7 +1764,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (productColors?.Any() == true)
             {
                 _productColorRepository.DeleteRange(productColors);
-            }
+            }*/
         }
 
         public async Task<ResponseProductDto> GetProductByProductColorIdAsyncForTryOn(string productColorId)

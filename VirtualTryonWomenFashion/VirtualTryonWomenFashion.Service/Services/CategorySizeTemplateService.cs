@@ -383,6 +383,201 @@ namespace VirtualTryonWomenFashion.Service.Services
             return new List<CategorySizeTemplate> { closest };
         }
 
+        /*public async Task<List<CategorySizeTemplate>> GetListTemplateSizeByBody(
+            int categoryId, double bust, double waist, double hips, double? shoulder = null)
+        {
+            var templates = await _templateSizeRepository.GetAll(
+                null,
+                x => x.CategoryId == categoryId,
+                null,
+                includes: [x => x.Size, x => x.Category]
+            );
+
+            if (templates == null || !templates.Any())
+                return new List<CategorySizeTemplate>();
+
+            var category = templates.First().Category;
+            string bodyPart = category.BodyPart; // Thân trên / Thân dưới / Toàn thân
+
+            decimal bustDec = (decimal)bust;
+            decimal waistDec = (decimal)waist;
+            decimal hipsDec = (decimal)hips;
+            decimal? shoulderDes = null;
+            if (shoulder != null)
+            {
+                shoulderDes = (decimal)shoulder.Value;
+            }
+
+            // ===============================
+            // 1️⃣ Tạo rule match theo BodyPart
+            // ===============================
+            Func<CategorySizeTemplate, bool> exactMatch;
+            Func<CategorySizeTemplate, decimal> deviation;
+
+            switch (bodyPart)
+            {
+                case "Thân trên":
+                    exactMatch = t =>
+                        bust >= (t.MinBust ?? double.MinValue) && bust <= (t.MaxBust ?? double.MaxValue) &&
+                        waist >= (t.MinWaist ?? double.MinValue) && waist <= (t.MaxWaist ?? double.MaxValue) &&
+                        (shoulderDes == null ||
+                         (shoulderDes >= (decimal)(t.MinShoulder ?? double.MinValue) &&
+                          shoulderDes <= (decimal)(t.MaxShoulder ?? double.MaxValue))
+                        );
+
+                    // LOGIC DEVIATION MỚI: Ưu tiên Min Tightness (bị chật) -> Max Slack (bị rộng)
+                    deviation = t =>
+                    {
+                        // 1. Tính độ chật (Tightness)
+                        // Phạt nặng nếu bất kỳ số đo nào > Max của template
+                        decimal bustTightness = 0m;
+                        if (t.MaxBust.HasValue)
+                            bustTightness = Math.Max(0m, bustDec - (decimal)t.MaxBust.Value);
+
+                        decimal waistTightness = 0m;
+                        if (t.MaxWaist.HasValue)
+                            waistTightness = Math.Max(0m, waistDec - (decimal)t.MaxWaist.Value);
+
+                        decimal shoulderTightness = 0m;
+                        if (t.MaxShoulder.HasValue && shoulderDes.HasValue)
+                            shoulderTightness = Math.Max(0m, shoulderDes.Value - (decimal)t.MaxShoulder.Value);
+
+                        decimal maxTightness = Math.Max(bustTightness, Math.Max(waistTightness, shoulderTightness));
+
+                        // Nếu có bất kỳ độ chật nào, áp dụng một hình phạt rất lớn (1.000.000)
+                        if (maxTightness > 0m)
+                            return maxTightness * 1000000m;
+
+                        // 2. Tính độ rộng/lỏng (Slack)
+                        // Tổng độ lỏng so với Min. Ta chọn size có tổng độ lỏng nhỏ nhất (size nhỏ nhất mà vẫn không bị chật)
+                        decimal bustSlack = 0m;
+                        if (t.MinBust.HasValue)
+                            bustSlack = Math.Max(0m, (decimal)t.MinBust.Value - bustDec);
+
+                        decimal waistSlack = 0m;
+                        if (t.MinWaist.HasValue)
+                            waistSlack = Math.Max(0m, (decimal)t.MinWaist.Value - waistDec);
+
+                        decimal shoulderSlack = 0m;
+                        if (t.MinShoulder.HasValue && shoulderDes.HasValue)
+                            shoulderSlack = Math.Max(0m, (decimal)t.MinShoulder.Value - shoulderDes.Value);
+
+                        // Trả về tổng độ lỏng
+                        return bustSlack + waistSlack + shoulderSlack;
+                    };
+                    break;
+
+                case "Thân dưới": // Váy + Quần
+                                  // Logic exactMatch giữ nguyên
+                    exactMatch = t =>
+                        waist >= (t.MinWaist ?? double.MinValue) && waist <= (t.MaxWaist ?? double.MaxValue) &&
+                        hips >= (t.MinHips ?? double.MinValue) && hips <= (t.MaxHips ?? double.MaxValue);
+
+                    // LOGIC DEVIATION MỚI
+                    deviation = t =>
+                    {
+                        // 1. Tính độ chật (Tightness)
+                        decimal waistTightness = 0m;
+                        if (t.MaxWaist.HasValue)
+                            waistTightness = Math.Max(0m, waistDec - (decimal)t.MaxWaist.Value);
+
+                        decimal hipsTightness = 0m;
+                        if (t.MaxHips.HasValue)
+                            hipsTightness = Math.Max(0m, hipsDec - (decimal)t.MaxHips.Value);
+
+                        decimal maxTightness = Math.Max(waistTightness, hipsTightness);
+
+                        if (maxTightness > 0m)
+                            return maxTightness * 1000000m;
+
+                        // 2. Tính độ rộng/lỏng (Slack)
+                        decimal waistSlack = 0m;
+                        if (t.MinWaist.HasValue)
+                            waistSlack = Math.Max(0m, (decimal)t.MinWaist.Value - waistDec);
+
+                        decimal hipsSlack = 0m;
+                        if (t.MinHips.HasValue)
+                            hipsSlack = Math.Max(0m, (decimal)t.MinHips.Value - hipsDec);
+
+                        return waistSlack + hipsSlack;
+                    };
+                    break;
+
+                case "Toàn thân": // Đầm
+                                  // Logic exactMatch giữ nguyên
+                    exactMatch = t =>
+                        bust >= (t.MinBust ?? double.MinValue) && bust <= (t.MaxBust ?? double.MaxValue) &&
+                        waist >= (t.MinWaist ?? double.MinValue) && waist <= (t.MaxWaist ?? double.MaxValue) &&
+                        hips >= (t.MinHips ?? double.MinValue) && hips <= (t.MaxHips ?? double.MaxValue);
+
+                    // LOGIC DEVIATION MỚI
+                    deviation = t =>
+                    {
+                        // 1. Tính độ chật (Tightness)
+                        decimal bustTightness = 0m;
+                        if (t.MaxBust.HasValue)
+                            bustTightness = Math.Max(0m, bustDec - (decimal)t.MaxBust.Value);
+
+                        decimal waistTightness = 0m;
+                        if (t.MaxWaist.HasValue)
+                            waistTightness = Math.Max(0m, waistDec - (decimal)t.MaxWaist.Value);
+
+                        decimal hipsTightness = 0m;
+                        if (t.MaxHips.HasValue)
+                            hipsTightness = Math.Max(0m, hipsDec - (decimal)t.MaxHips.Value);
+
+                        decimal maxTightness = Math.Max(bustTightness, Math.Max(waistTightness, hipsTightness));
+
+                        if (maxTightness > 0m)
+                            return maxTightness * 1000000m;
+
+                        // 2. Tính độ rộng/lỏng (Slack)
+                        decimal bustSlack = 0m;
+                        if (t.MinBust.HasValue)
+                            bustSlack = Math.Max(0m, (decimal)t.MinBust.Value - bustDec);
+
+                        decimal waistSlack = 0m;
+                        if (t.MinWaist.HasValue)
+                            waistSlack = Math.Max(0m, (decimal)t.MinWaist.Value - waistDec);
+
+                        decimal hipsSlack = 0m;
+                        if (t.MinHips.HasValue)
+                            hipsSlack = Math.Max(0m, (decimal)t.MinHips.Value - hipsDec);
+
+                        return bustSlack + waistSlack + hipsSlack;
+                    };
+                    break;
+
+                default:
+                    return new List<CategorySizeTemplate>();
+            }
+
+            // ... (Phần tìm kiếm và trả về kết quả giữ nguyên) ...
+
+            // ===============================
+            // 2️⃣ Tìm template khớp chính xác
+            // ===============================
+            var matched = templates.Where(exactMatch).ToList();
+            if (matched.Any())
+                return matched;
+
+            // ===============================
+            // 3️⃣ Không khớp → chọn size gần nhất
+            // Logic này hiện tại sẽ ưu tiên size không bị chật, sau đó là size nhỏ nhất
+            // ===============================
+            var closest = templates
+                .Select(t => new
+                {
+                    Template = t,
+                    Dev = deviation(t)
+                })
+                .OrderBy(x => x.Dev) // Dev thấp nhất = Ít chật nhất (hoặc không chật) và ít lỏng nhất
+                .First()
+                .Template;
+
+            return new List<CategorySizeTemplate> { closest };
+        }*/
+
         // =====================================
         // Helper tránh lỗi null + convert double? → decimal
         // =====================================
