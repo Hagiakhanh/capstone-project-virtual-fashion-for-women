@@ -108,7 +108,7 @@ export default function TransactionTable({ transactions, loading }: Props) {
                                             <div className="flex items-center gap-2">
                                                 <PaymentMethodIcon method={transaction.method} />
                                                 <span className="text-sm font-medium text-gray-800">
-                                                    {transaction.method}
+                                                    {transaction.method !== "Wallet" ? transaction.method : 'Ví'}
                                                 </span>
                                             </div>
                                         </div>
@@ -174,7 +174,7 @@ export default function TransactionTable({ transactions, loading }: Props) {
                                                     <div className="flex items-center gap-2">
                                                         <PaymentMethodIcon method={transaction.method} />
                                                         <span className="text-sm text-gray-900">
-                                                            {transaction.method}
+                                                            {transaction.method !== "Wallet" ? transaction.method : 'Ví'}
                                                         </span>
                                                     </div>
                                                 </td>
