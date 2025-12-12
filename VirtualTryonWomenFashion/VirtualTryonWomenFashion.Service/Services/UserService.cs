@@ -232,6 +232,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 user.Address = requestUpdateUser.Address;
                 user.PhoneNumber = requestUpdateUser.PhoneNumber;
                 user.FullName = requestUpdateUser.FullName;
+                user.SecondAddress = requestUpdateUser.SecondAddress;
                 await _userRepository.UpdateAsync(user);
                 await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();

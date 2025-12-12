@@ -10,4 +10,5 @@ public class UserInformation
     public string PhoneNumber { get; set; }
 
     public string Address { get; set; }
+    public string SecondAddress { get; set; }
 }
