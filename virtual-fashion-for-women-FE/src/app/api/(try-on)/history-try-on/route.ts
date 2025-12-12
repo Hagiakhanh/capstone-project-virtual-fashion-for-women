@@ -8,7 +8,7 @@ export async function GET(request: Request) {
         const pageSize = searchParams.get("pageSize");
         const isDescesing = searchParams.get("isDescesing") === "true";
         const api = createApiInstance(request);
-        const responseBE = await api.get(`/try-on-slot/history-try-on-slot?PageIndex=${pageNumber}&PageSize=${pageSize}&isNewest=${isDescesing}`);
+        const responseBE = await api.get(`/try-on-slot/history-try-on-slot?PageIndex=${pageNumber}&PageSize=${pageSize}`);
         if (responseBE.status === 200) {
             const paginationHeader = responseBE?.headers?.get('X-Pagination');
             if (paginationHeader) {

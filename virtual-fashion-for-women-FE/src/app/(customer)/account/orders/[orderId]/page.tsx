@@ -501,7 +501,7 @@ export default function OrderDetailPage() {
                         </div>
                         <div>
                             <p className="text-black mb-1 italic text-xs md:text-sm">Dự kiến giao hàng</p>
-                            <p className="text-xs md:text-base">{order?.estimatedDelivery}</p>
+                            <p className="text-xs md:text-base">{formatDate(order?.estimatedDelivery ?? "")}</p>
                         </div>
                     </div>
                 </div>
