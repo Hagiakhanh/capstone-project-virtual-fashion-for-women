@@ -39,7 +39,7 @@ export default function TransactionPage() {
                 setTransactions(response.data.data);
                 setPagination((prev) => ({
                     ...prev,
-                    ...response.data.data.pagination
+                    ...response.data.pagination
                 }));
             }
         } catch (error) {
