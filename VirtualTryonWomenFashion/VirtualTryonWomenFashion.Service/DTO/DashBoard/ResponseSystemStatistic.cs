@@ -22,6 +22,7 @@ public class ResponseBasicSystemIndicator
 
 public class RevenueResult
 {
+    public DateTime SortKey { get; set; }
     public string Label { get; set; } // "2025-01" hoặc "01/01/2025"
     public decimal TotalRevenue { get; set; }
 }

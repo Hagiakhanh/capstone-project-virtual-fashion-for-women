@@ -257,6 +257,7 @@ public class DashboardService : IDashboardService
 
                 return new RevenueResult
                 {
+                    SortKey = date,
                     Label = date.ToString(labelFormat),
                     TotalRevenue = 0
                 };
@@ -277,7 +278,7 @@ public class DashboardService : IDashboardService
                 item.TotalRevenue = CalculateRevenue(g);
         }
 
-        return results.OrderBy(x => x.Label).ToList();
+        return results.OrderBy(x => x.SortKey).ToList();
     }
 
     public async Task<List<CategorySalesPieDto>> GetCategorySalesPieAsync(string timeFilterType)
