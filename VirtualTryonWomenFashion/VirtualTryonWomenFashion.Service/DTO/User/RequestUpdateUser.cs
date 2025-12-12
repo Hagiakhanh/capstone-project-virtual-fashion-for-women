@@ -12,8 +12,9 @@ namespace VirtualTryonWomenFashion.Service.DTO.User
         [Required]
         public string FullName { get; set; }
         [RegularExpression(@"^(\d{10})?$", ErrorMessage = "Số điện thoại phải có đúng 10 chữ số.")]
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
-        public string Address { get; set; }
+        public string? Address { get; set; }
+        public string? SecondAddress { get; set; }
     }
 }
