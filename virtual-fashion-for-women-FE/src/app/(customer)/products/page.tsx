@@ -77,7 +77,7 @@ export default function ShowAllProductsPage() {
 
    useEffect(() => {
       fetchSearchResults();
-   }, [sortValue, category]);
+   }, [sortValue, category, pagination.CurrentPage]);
 
    return (
       <div className="w-full lg:w-[75%] mx-auto min-h-screen px-4 sm:px-6 md:px-10 lg:px-20 py-6 md:py-10">

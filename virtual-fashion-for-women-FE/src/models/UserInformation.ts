@@ -4,4 +4,5 @@ export interface UserInformation {
     phoneNumber: string;
     email: string;
     address: string;
+    secondAddress: string | null;
 }
