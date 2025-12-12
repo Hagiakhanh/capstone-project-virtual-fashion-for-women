@@ -232,6 +232,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 user.Address = requestUpdateUser.Address;
                 user.PhoneNumber = requestUpdateUser.PhoneNumber;
                 user.FullName = requestUpdateUser.FullName;
+                user.SecondAddress = requestUpdateUser.SecondAddress;
                 await _userRepository.UpdateAsync(user);
                 await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
@@ -553,6 +554,16 @@ namespace VirtualTryonWomenFashion.Service.Services
                 StatusCode = StatusCodes.Status500InternalServerError
             };
 
+        }
+
+        public async Task<User> GetUserById(int userId)
+        {
+            User user = await _userRepository.GetUserById(userId);
+            if (user == null)
+            {
+                throw new Exception("User không tồn tại");
+            }
+            return user;
         }
     }
 }

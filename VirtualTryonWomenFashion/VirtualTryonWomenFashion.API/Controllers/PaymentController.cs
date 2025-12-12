@@ -114,7 +114,43 @@ public class PaymentController : ControllerBase
             });
         }
     }
-    
+
+    [HttpPost("create-withdraw-payment")]
+    public async Task<IActionResult> CreateWithDrawPayment([FromBody] RequestWithDraw requestWithDraw)
+    {
+        try
+        {
+            var result = await _paymentService.CreateWithDrawTransaction(requestWithDraw);
+            if (result)
+            {
+                return Ok(new MessageModelWithData<object>()
+                {
+                    StatusCode = StatusCodes.Status200OK,
+                    Message = "Tạo giao dịch rút tiền thành công",
+                    Data = null
+                });
+            }else
+            {
+                return BadRequest(new MessageModelWithData<object>()
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = "Tạo giao dịch rút tiền thất bại",
+                    Data = null
+                });
+            }
+            
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = "Tạo giao dịch rút tiền thất bại: " + ex.Message,
+                Data = null
+            });
+        }
+    }
+
     [HttpPost("pay-order-by-wallet")]
     public async Task<IActionResult> PayOrderByWalletAsync([FromBody] RequestCreateOrder requestCreateOrder)
     {
@@ -219,6 +255,30 @@ public class PaymentController : ControllerBase
             {
                 StatusCode = StatusCodes.Status400BadRequest,
                 Message = "Xử lý trạng thái giao dịch nạp tiền thất bại: " + ex.Message,
+                Data = null
+            });
+        }
+    }
+
+    [HttpGet("get-banks")]
+    public async Task<IActionResult> GetBank()
+    {
+        try
+        {
+            var banks = await _paymentService.GetBanks();
+            return Ok(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Lấy các ngân hàng thành công",
+                Data = banks
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new MessageModelWithData<object>()
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = "Lấy các ngân hàng thành công: " + ex.Message,
                 Data = null
             });
         }

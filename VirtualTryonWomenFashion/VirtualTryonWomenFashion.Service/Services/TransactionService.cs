@@ -1,5 +1,9 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.SignalR;
+using StackExchange.Redis;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -10,9 +14,14 @@ using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Data.Repositories;
 using VirtualTryonWomenFashion.Data.UnitOfWork;
+using VirtualTryonWomenFashion.Service.DTO.Mail;
+using VirtualTryonWomenFashion.Service.DTO.Notification;
 using VirtualTryonWomenFashion.Service.DTO.Order;
 using VirtualTryonWomenFashion.Service.DTO.OrderDetail;
 using VirtualTryonWomenFashion.Service.DTO.Transaction;
+using VirtualTryonWomenFashion.Service.DTO.Wallet;
+using VirtualTryonWomenFashion.Service.Helpers;
+using VirtualTryonWomenFashion.Service.Hubs;
 using VirtualTryonWomenFashion.Service.IServices;
 using VirtualTryonWomenFashion.Service.Mappers;
 
@@ -23,16 +32,31 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly ITransactionRepository _transactionRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IUserService _userService;
+        private readonly IWalletService _walletService;
+        private readonly IMailService _mailService;
+        private readonly INotificationService _notificationService;
+        private readonly IHubContext<NotificationHub> _notificationHub;
 
         public TransactionService(
             ITransactionRepository transactionRepository,
             IUnitOfWork unitOfWork,
-            ICurrentUserService currentUserService
+            ICurrentUserService currentUserService,
+            IUserService userService,
+            IWalletService walletService,
+            IMailService mailService,
+            INotificationService notificationService,
+            IHubContext<NotificationHub> notificationHub
         )
         {
             _transactionRepository = transactionRepository;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
+            _userService = userService;
+            _walletService = walletService;
+            _mailService = mailService;
+            _notificationHub = notificationHub;
+            _notificationService = notificationService;
         }
 
         public async Task<int> CreateTransactionAsync(Transaction transaction)
@@ -127,7 +151,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 filter: t => t.UserId == userId
                              && t.WalletId != null,
                 pagination: paginationParameter,
-                orderBy: t =>t.OrderByDescending(x => x.UpdatedAt) 
+                orderBy: t => t.OrderByDescending(x => x.UpdatedAt)
             );
             int totalRecords = await _transactionRepository.CountAsync(t =>
                 t.UserId == userId && t.WalletId != null);
@@ -206,15 +230,15 @@ namespace VirtualTryonWomenFashion.Service.Services
                 (!startDate.HasValue || t.CreatedAt >= startDate.Value) &&
                 (!endDate.HasValue || t.CreatedAt < endDate.Value);
 
-            
+
             // Gọi repository
             List<Transaction> rawResult = await _transactionRepository.GetAll(
                 pagination: pagination,
                 filter: filter,
                 orderBy: q => q.OrderByDescending(t => t.CreatedAt),
                 includes: t => t.User
-            ); 
-            
+            );
+
             int totalRecords = await _transactionRepository.CountAsync(filter);
 
             List<ResponseTransactionAdmin> responseTransactions = new List<ResponseTransactionAdmin>();
@@ -228,5 +252,126 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         }
 
+        public async Task<Pagination<ResponseWithDrawTransactionAdmin>> GetPendingWithDrawTransactions(bool isDescending, string status, PaginationParameter pagination)
+        {
+            List<Transaction> rawTransactions = await _transactionRepository.GetAll(
+                pagination: pagination,
+                filter: t => t.Type == TypeTransactionEnum.Withdraw.ToString() &&
+                (string.IsNullOrEmpty(status) || t.Status == status),
+                orderBy: t => isDescending ? t.OrderByDescending(t => t.CreatedAt) : t.OrderBy(t => t.CreatedAt),
+                includes: t => t.User
+                );
+
+            int totalRecords = await _transactionRepository.CountAsync(
+                t => t.Type == TypeTransactionEnum.Withdraw.ToString() &&
+                (string.IsNullOrEmpty(status) || t.Status == status));
+            List<ResponseWithDrawTransactionAdmin> responseTransactions = new List<ResponseWithDrawTransactionAdmin>();
+
+            foreach (Transaction transaction in rawTransactions)
+            {
+                responseTransactions.Add(transaction.MapToResponseWithDrawTransactionAdmin());
+            }
+
+            return new Pagination<ResponseWithDrawTransactionAdmin>(responseTransactions, totalRecords,
+                pagination.PageIndex, pagination.PageSize);
+        }
+
+        public async Task<bool> RefuseWithDrawTransaction(int transactionId)
+        {
+            int userId = _currentUserService.GetUserId();
+            var currentUser = await _userService.GetUserById(userId);
+            var transaction = await _transactionRepository.GetByIdAsync(transactionId);
+            if (transaction == null)
+            {
+                throw new Exception("Giao dịch không tìm thấy");
+            }
+
+            if (transaction.Type != TypeTransactionEnum.Withdraw.ToString())
+            {
+                throw new Exception("Giao dịch này không phải là giao dịch rút tiền");
+            }
+
+            if (transaction.Status != TransactionStatusEnum.Pending.ToString())
+            {
+                throw new Exception("Giao dịch này đã được xử lý rồi");
+            }
+            if (currentUser.Role.RoleId != "Admin" && userId != transaction.UserId)
+            {
+                throw new Exception("Bạn không có quyền từ chối hoặc cancel cái giao dịch này");
+            }
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                transaction.Status = TransactionStatusEnum.Failed.ToString();
+                transaction.UpdatedAt = DateTime.UtcNow.AddHours(7);
+                await _transactionRepository.UpdateAsync(transaction);
+                await _walletService.UpdateBalanceInWalletAsync(new RequestUpdateRecharge
+                {
+                    Amount = transaction.Money.Value,
+                    WalletId = transaction.WalletId.Value
+                }, TypeTransactionEnum.Recharge.ToString());
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw new Exception(ex.Message);
+            }
+
+        }
+
+        public async Task<bool> AcceptWithDrawTransaction(int transactionId)
+        {
+            int userId = _currentUserService.GetUserId();
+            var transaction = await _transactionRepository.GetByIdAsync(transactionId);
+            if (transaction == null)
+            {
+                throw new Exception("Giao dịch không tìm thấy");
+            }
+
+            if (transaction.Type != TypeTransactionEnum.Withdraw.ToString())
+            {
+                throw new Exception("Giao dịch này không phải là giao dịch rút tiền");
+            }
+
+            if (transaction.Status != TransactionStatusEnum.Pending.ToString())
+            {
+                throw new Exception("Giao dịch này đã được xử lý rồi");
+            }
+
+            var ownerTransaction = await _userService.GetUserById(transaction.UserId);
+
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                transaction.Status = TransactionStatusEnum.Success.ToString();
+                transaction.UpdatedAt = DateTime.UtcNow.AddHours(7);
+                await _transactionRepository.UpdateAsync(transaction);
+                RequestCreateNotification requestNotification = new RequestCreateNotification()
+                {
+                    ReceiverId = transaction.UserId,
+                    Title = "Giao dịch rút tiền ra khỏi ví đã được chấp nhận",
+                    Content = $"Giao dịch rút tiền {transaction.ThirdPartyCode} với số tiền {transaction.Money} VNĐ đã được admin chấp nhận"
+                };
+                await _notificationService.CreateNotificationAsync(requestNotification);
+                await _notificationHub.Clients.Group(transaction.UserId.ToString())
+                    .SendAsync("ReceiveNotification", requestNotification.Title);
+                _mailService.sendEmailAsync(new MailRequest
+                {
+                    ToEmail = ownerTransaction.Email,
+                    Subject = $"[Women Fashion] Giao dịch rút tiền {transaction.ThirdPartyCode} đã được admin chấp nhận",
+                    Body = MailContent.WithdrawRequestApproved(ownerTransaction.FullName, transaction.Money.Value, transaction.BankName, transaction.BankAccountNumber, transaction.ThirdPartyCode)
+                });
+                await _unitOfWork.CommitTransactionAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw new Exception(ex.Message);
+            }
+        }
     }
 }

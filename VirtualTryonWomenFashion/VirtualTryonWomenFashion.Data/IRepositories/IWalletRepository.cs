@@ -12,5 +12,6 @@ namespace VirtualTryonWomenFashion.Data.IRepositories
     {
         Task<Wallet?> GetWalletByUserIdAsync(int userId);
         Task<List<Wallet>> GetAllWalletsByIds(List<int> walletIds);
+        Task<Wallet?> GetByIdAsync(int walletId);
     }
 }

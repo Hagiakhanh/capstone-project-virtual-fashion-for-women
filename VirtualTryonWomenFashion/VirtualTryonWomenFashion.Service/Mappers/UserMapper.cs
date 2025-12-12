@@ -17,7 +17,8 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 Address = user.Address,
                 Email = user.Email,
                 FullName = user.FullName,
-                PhoneNumber = user.PhoneNumber
+                PhoneNumber = user.PhoneNumber,
+                SecondAddress = user.SecondAddress,
             };
         }
     }
