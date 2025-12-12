@@ -489,7 +489,7 @@ export default function VirtualTryOnPage() {
                                 )}
 
                                 <p className="mt-2 text-yellow-700 text-xs sm:text-sm text-center px-2">
-                                    🌟 Hãy chụp ảnh với mặt hướng về phía trước và chỉ một người trong khung hình để kết quả thử đồ chính xác nhất nhé!
+                                    ⚠️ Hãy tải ảnh chụp một người, nhìn thẳng; trang phục trong ảnh phải cùng loại với trang phục bạn muốn thử để kết quả thử đồ chính xác nhất nhé!
                                 </p>
 
                                 {imageValidation.isValid === false && (

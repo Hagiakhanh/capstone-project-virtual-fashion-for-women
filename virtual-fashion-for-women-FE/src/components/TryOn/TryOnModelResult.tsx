@@ -50,6 +50,9 @@ export default function TryOnResultModal({
 
     if (!isOpen) return null;
 
+    // Kiểm tra xem có thể đóng modal không
+    const canClose = resultImageUrl && !isLoading && !isCreatingLoading;
+
     const handleDownload = async () => {
         if (!resultImageUrl) return;
 
@@ -115,6 +118,18 @@ export default function TryOnResultModal({
         }
     };
 
+    const handleClose = () => {
+        // Chỉ cho phép đóng nếu có kết quả ảnh
+        if (!canClose) return;
+
+        onClose();
+        setShowCartView(false);
+        setSelectedProduct(undefined);
+        setShowBodyMeasurementForm(false);
+        setSelectedProductVariant(null);
+        setQuantity(1);
+    }
+
     const handleSubmitMeasurement = async (measurements: Record<string, number>) => {
         try {
             const payload = {
@@ -122,7 +137,6 @@ export default function TryOnResultModal({
                 bust: measurements.bust || 0,
                 waist: measurements.waist || 0,
                 hips: measurements.hips || 0,
-                length: measurements.length || 0,
                 productColorId: selectedProduct?.productColors[0].productColorId || '',
                 categoryId: clothingType?.categoryId
             }
@@ -153,8 +167,14 @@ export default function TryOnResultModal({
                         {showCartView ? 'Thêm vào giỏ hàng' : 'Kết quả thử đồ'}
                     </h2>
                     <button
-                        onClick={onClose}
-                        className="p-1.5 md:p-2 hover:bg-white/30 rounded-full transition-colors"
+                        disabled={!canClose}
+                        onClick={handleClose}
+                        className={`p-1.5 md:p-2 rounded-full transition-colors
+                                ${!canClose
+                                ? "opacity-40 cursor-not-allowed pointer-events-none"
+                                : "hover:bg-white/30"
+                            }`}
+                        title={!canClose ? "Vui lòng đợi cho đến khi xử lý xong" : "Đóng"}
                     >
                         <X className="w-5 h-5 md:w-6 md:h-6 text-gray-800" />
                     </button>
@@ -441,17 +461,18 @@ export default function TryOnResultModal({
                     )}
 
                     <button
-                        onClick={() => {
-                            onClose();
-                            setShowCartView(false);
-                            setSelectedProduct(undefined);
-                            setSelectedProductVariant(null);
-                            setQuantity(1);
-                        }}
-                        className="flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg md:rounded-xl transition-all shadow-md hover:shadow-lg text-sm md:text-base w-full sm:w-auto"
+                        disabled={!canClose}
+                        onClick={handleClose}
+                        className={`flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-3 
+                                    font-semibold rounded-lg md:rounded-xl transition-all shadow-md text-sm md:text-base w-full sm:w-auto
+                                    ${!canClose
+                                ? "bg-gray-300 text-gray-500 opacity-50 cursor-not-allowed pointer-events-none"
+                                : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                            }`}
                     >
                         Đóng
                     </button>
+
                 </div>
             </div>
 

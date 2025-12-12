@@ -180,10 +180,13 @@ export function ChatMessageStage({
         {
           isBot: true,
           message: aiResponse.content,
-          time: new Date(aiResponse.createdAt).toLocaleTimeString("vi-VN", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          time: new Date(aiResponse.createdAt.replace("Z", "")).toLocaleTimeString(
+            "vi-VN",
+            {
+              hour: "2-digit",
+              minute: "2-digit",
+            }
+          ),
         },
       ]);
     } catch (error: any) {

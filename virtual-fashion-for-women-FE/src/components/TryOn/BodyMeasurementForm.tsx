@@ -24,23 +24,19 @@ export default function BodyMeasurementForm({
             { key: 'bust', label: 'Vòng ngực (cm)' },
             { key: 'waist', label: 'Vòng eo (cm)' },
             { key: 'shoulder', label: 'Chiều ngang vai (cm)' },
-            { key: 'length', label: 'Chiều dài tay (cm)' },
         ],
         Quần: [
             { key: 'waist', label: 'Vòng eo (cm)' },
             { key: 'hips', label: 'Vòng mông (cm)' },
-            { key: 'length', label: 'Chiều dài quần (cm)' },
         ],
         Váy: [
             { key: 'waist', label: 'Vòng eo (cm)' },
             { key: 'hips', label: 'Vòng mông (cm)' },
-            { key: 'length', label: 'Chiều dài chân váy (cm)' },
         ],
         Đầm: [
             { key: 'bust', label: 'Vòng ngực (cm)' },
             { key: 'waist', label: 'Vòng eo (cm)' },
             { key: 'hips', label: 'Vòng mông (cm)' },
-            { key: 'length', label: 'Chiều dài đầm (cm)' },
         ],
     };
 
