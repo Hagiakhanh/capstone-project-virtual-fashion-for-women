@@ -15,17 +15,21 @@ export default function AccountPage() {
         email: "",
         phoneNumber: "",
         address: "",
+        secondAddress: "",
     });
     const isSelectingRef = useRef(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedUser, setEditedUser] = useState<any>({
         fullName: user.fullName,
-        phoneNumber: user.phoneNumber,
-        address: user.address,
+        phoneNumber: user.phoneNumber || '',
+        address: user.address || '',
+        secondAddress: user.secondAddress,
     });
     const [loading, setLoading] = useState(false);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [addressSuggestions, setAddressSuggestions] = useState<{ placeId: string, description: string }[]>([]);
+    const isSelectingRef2 = useRef(false);
+    const [addressSuggestions2, setAddressSuggestions2] = useState<{ placeId: string, description: string }[]>([]);
 
     const fetchUserInformation = async () => {
         try {
@@ -33,6 +37,7 @@ export default function AccountPage() {
             const response = await api.get("/user-information");
             if (response.status === 200) {
                 setUser(response.data);
+                console.log("Fetched user information:", response.data);
                 setEditedUser(response.data);
             }
         } catch (error) {
@@ -42,7 +47,7 @@ export default function AccountPage() {
         }
     }
 
-    const fetchAddressSuggestions = async (query: string) => {
+    const fetchAddressSuggestions = async (query: string, addressNum: string) => {
         if (!query) return setAddressSuggestions([]);
         try {
             setIsLoadingSuggestions(true);
@@ -54,7 +59,11 @@ export default function AccountPage() {
                 const arr = Object.entries(data).map(
                     ([placeId, description]) => ({ placeId, description })
                 );
-                setAddressSuggestions(arr);
+                if (addressNum == "address") {
+                    setAddressSuggestions(arr);
+                } else if (addressNum == "secondAddress") {
+                    setAddressSuggestions2(arr);
+                }
             }
         } catch (error) {
             console.error(error);
@@ -74,6 +83,7 @@ export default function AccountPage() {
                 fullName: editedUser.fullName,
                 phoneNumber: editedUser.phoneNumber,
                 address: editedUser.address,
+                secondAddress: editedUser.secondAddress,
             };
             const response = await api.put(`/user-information/${user.userId}`, payload);
             if (response.status === 200) {
@@ -106,11 +116,23 @@ export default function AccountPage() {
             return;
         }
         const handler = setTimeout(() => {
-            if (editedUser.address.length > 1) fetchAddressSuggestions(editedUser.address);
+            if (editedUser.address.length > 1) fetchAddressSuggestions(editedUser.address, "address");
             else setAddressSuggestions([]);
         }, 500);
         return () => clearTimeout(handler);
     }, [editedUser.address]);
+
+    useEffect(() => {
+        if (isSelectingRef2.current) {
+            isSelectingRef2.current = false;
+            return;
+        }
+        const handler = setTimeout(() => {
+            if (editedUser.secondAddress.length > 1) fetchAddressSuggestions(editedUser.secondAddress, "secondAddress");
+            else setAddressSuggestions2([]);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [editedUser.secondAddress]);
 
     return (
         <div className="bg-white lg:shadow-lg rounded-2xl lg:p-8 p-4">
@@ -137,8 +159,13 @@ export default function AccountPage() {
                             </div>
 
                             <div className="flex flex-col sm:flex-row sm:justify-between border-b pb-3 gap-1 sm:gap-0">
-                                <span className="font-medium text-gray-700">Địa chỉ:</span>
+                                <span className="font-medium text-gray-700">Địa chỉ 1:</span>
                                 <span className="text-gray-900 sm:text-right">{user.address}</span>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row sm:justify-between border-b pb-3 gap-1 sm:gap-0">
+                                <span className="font-medium text-gray-700">Địa chỉ 2:</span>
+                                <span className="text-gray-900 sm:text-right">{user.secondAddress}</span>
                             </div>
                         </div>
 
@@ -178,7 +205,7 @@ export default function AccountPage() {
 
                             <div className="relative">
                                 <label className="block font-medium text-gray-700 mb-1">
-                                    Địa chỉ
+                                    Địa chỉ 1
                                 </label>
                                 <div className="relative">
                                     <Input
@@ -203,6 +230,46 @@ export default function AccountPage() {
                                                     isSelectingRef.current = true;
                                                     setEditedUser({ ...editedUser, address: s.description });
                                                     setAddressSuggestions([]);
+                                                }}
+                                                className="flex items-start gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-all border-b border-gray-100 last:border-0"
+                                            >
+                                                <MapPin className="w-4 h-4 text-red-500 mt-1 shrink-0" />
+                                                <span className="text-gray-700 text-sm leading-snug">
+                                                    {s.description}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="relative">
+                                <label className="block font-medium text-gray-700 mb-1">
+                                    Địa chỉ 2
+                                </label>
+                                <div className="relative">
+                                    <Input
+                                        value={editedUser.secondAddress}
+                                        onChange={(e) => handleChange("secondAddress", e.target.value)}
+                                        className="!rounded-xl !py-2.5 !px-4 focus:!border-blue-500 focus:!ring-blue-200 w-full"
+                                        placeholder="Nhập địa chỉ của bạn..."
+                                    />
+                                    {isLoadingSuggestions && (
+                                        <div className="absolute right-3 top-3 text-gray-400 text-sm animate-pulse">
+                                            ...
+                                        </div>
+                                    )}
+                                </div>
+
+                                {addressSuggestions2.length > 0 && (
+                                    <div className="absolute top-full left-0 w-full bg-white border border-gray-200 rounded-xl mt-2 shadow-xl z-50 overflow-hidden max-h-64 overflow-y-auto">
+                                        {addressSuggestions2.map((s, idx) => (
+                                            <div
+                                                key={s.placeId}
+                                                onClick={() => {
+                                                    isSelectingRef2.current = true;
+                                                    setEditedUser({ ...editedUser, secondAddress: s.description });
+                                                    setAddressSuggestions2([]);
                                                 }}
                                                 className="flex items-start gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-all border-b border-gray-100 last:border-0"
                                             >
