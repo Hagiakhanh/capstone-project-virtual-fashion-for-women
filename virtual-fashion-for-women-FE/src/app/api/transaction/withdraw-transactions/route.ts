@@ -6,10 +6,10 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const pageNumber = searchParams.get("pageNumber");
         const pageSize = searchParams.get("pageSize");
-        const statusFilter = searchParams.get("statusFilter");
-        const isDescesing = searchParams.get("isDescesing") === "true";
+        const isDescending = searchParams.get("isDescending");
+        const status = searchParams.get("status");
         const api = createApiInstance(request);
-        const responseBE = await api.get(`/transaction/get-transaction-history?PageIndex=${pageNumber}&PageSize=${pageSize}&transactionStatus=${statusFilter}&isDescesing=${isDescesing}`)
+        const responseBE = await api.get(`/transaction/get-pending-withdraw-transaction?PageIndex=${pageNumber}&PageSize=${pageSize}&isDescending=${isDescending}&status=${status}`);
         if (responseBE.status === 200) {
             const dataResponse = responseBE.data?.data || [];
             const paginationHeader = responseBE.headers["x-pagination"];
@@ -17,17 +17,15 @@ export async function GET(request: Request) {
             return NextResponse.json(
                 {
                     data: dataResponse,
-                    pagination: pagination,
+                    pagination,
                 },
                 { status: responseBE.data?.statusCode }
             );
         }
-
-
     } catch (error: any) {
-        return NextResponse.json({
-            message: error.response.data.message,
-        }, { status: 400 });
+        return NextResponse.json(
+            error.response.data.message,
+            { status: 400 }
+        );
     }
-
 }
