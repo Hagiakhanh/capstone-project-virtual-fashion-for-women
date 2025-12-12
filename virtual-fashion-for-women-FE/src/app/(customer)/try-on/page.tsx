@@ -101,34 +101,51 @@ export default function VirtualTryOnPage() {
 
             if (response.status === 200) {
                 const result = response.data;
-                if (result.error_code) {
-                    const errorMessage = mapTryOnCode(result.error_code) + " Vui lòng thử lại với ảnh khác.";
-                    setImageValidation({
-                        isChecking: false,
-                        isValid: false,
-                        errorMessage: errorMessage,
-                        supportedTypes: []
-                    });
-                } else {
-                    setImageValidation({
-                        isChecking: false,
-                        isValid: true,
-                        errorMessage: '',
-                        supportedTypes: result.goodClothesTypes || []
-                    });
+                const {
+                    is_good,
+                    is_warning,
+                    warning_message,
+                    good_clothes_types
+                } = result;
+
+                let finalErrorMessage = '';
+                
+                const isValid = is_good === true; 
+
+                if (is_warning && warning_message) {
+                    if (isValid) {
+                        finalErrorMessage = `⚠️ Cảnh báo: ${warning_message}. Ảnh vẫn có thể sử dụng, nhưng kết quả có thể không tối ưu.`;
+                    } else {
+                        finalErrorMessage = `Ảnh không hợp lệ để thử đồ. Lý do: ${warning_message}. Vui lòng tải lên ảnh khác.`;
+                    }
+                } else if (!isValid) {
+                    finalErrorMessage = result.error_code 
+                        ? mapTryOnCode(result.error_code) + " Vui lòng thử lại với ảnh khác."
+                        : 'Ảnh không hợp lệ. Vui lòng thử lại với ảnh khác.';
                 }
+                
+                setImageValidation({
+                    isChecking: false,
+                    isValid: isValid,
+                    errorMessage: finalErrorMessage, 
+                    supportedTypes: good_clothes_types || []
+                });
+
+                if (isValid && is_warning && warning_message) {
+                    messageToast.warning(warning_message);
+                }
+
             }
         } catch (error) {
             console.error('Error checking image validity:', error);
             setImageValidation({
                 isChecking: false,
                 isValid: false,
-                errorMessage: 'Không thể kiểm tra ảnh. Vui lòng thử lại.',
+                errorMessage: 'Lỗi kết nối khi kiểm tra ảnh. Vui lòng thử lại.',
                 supportedTypes: []
             });
         }
     };
-
 
     const handleTryOn = async () => {
         if (!userImage) {
@@ -494,11 +511,11 @@ export default function VirtualTryOnPage() {
 
                                 {imageValidation.isValid === false && (
                                     <div className="mt-3 flex items-start p-3 bg-red-100 border border-red-300 rounded-lg">
-                                        <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
-                                        <p className="text-red-700 text-xs md:text-sm font-medium">
-                                            {imageValidation.errorMessage}
-                                        </p>
-                                    </div>
+                                    <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+                                    <p className="text-red-700 text-xs md:text-sm font-medium">
+                                        {imageValidation.errorMessage} 
+                                    </p>
+                                </div>
                                 )}
 
                                 {imageValidation.isValid === true && (

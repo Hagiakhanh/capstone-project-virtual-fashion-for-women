@@ -5,7 +5,7 @@ export async function POST(request: Request) {
     try {
         const reqBody = await request.formData();
         const api = createApiInstance(request);
-        const responseBE = await api.post(`/try-on-slot/check-image-model`, reqBody);
+        const responseBE = await api.post(`/try-on-slot/check-image-model-gemini`, reqBody);
         if (responseBE.status === 200) {
             return NextResponse.json(responseBE.data, { status: 200 });
         }
