@@ -40,5 +40,24 @@ namespace VirtualTryonWomenFashion.Service.Mappers
             };
         }
 
+        public static ResponseWithDrawTransactionAdmin MapToResponseWithDrawTransactionAdmin(this Transaction transaction)
+        {
+            if (transaction == null)
+                return null;
+            return new ResponseWithDrawTransactionAdmin
+            {
+                TransactionId =  transaction.TransactionId,
+                UserName = transaction.User?.FullName ?? "Unknown",
+                Status = transaction.Status,
+                Money = transaction.Money,
+                Method = transaction.Method,
+                Type = transaction.Type,
+                CreatedAt = transaction.CreatedAt,
+                BankAccountNumber = transaction.BankAccountNumber,
+                BankName = transaction.BankName,
+                ThirdPartyCode = transaction.ThirdPartyCode,    
+            };
+        }
+
     }
 }

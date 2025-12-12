@@ -21,5 +21,8 @@ namespace VirtualTryonWomenFashion.Service.IServices
             DateTime? startDate,
             DateTime? endDate,
             PaginationParameter pagination);
+        Task<Pagination<ResponseWithDrawTransactionAdmin>> GetPendingWithDrawTransactions(bool isDescending, string status, PaginationParameter pagination);
+        Task<bool> RefuseWithDrawTransaction(int transactionId);   
+        Task<bool> AcceptWithDrawTransaction(int transactionId);
     }
 }

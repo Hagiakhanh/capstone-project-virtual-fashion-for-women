@@ -85,7 +85,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         {
             Wallet existingWallet = await this.GetWalletById(requestUpdateRecharge.WalletId);
 
-            if (type == TypeTransactionEnum.Purchase.ToString())
+            if (type == TypeTransactionEnum.Purchase.ToString() || type == TypeTransactionEnum.Withdraw.ToString())
             {
                 if(existingWallet.Balance < requestUpdateRecharge.Amount)
                 {

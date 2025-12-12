@@ -554,5 +554,15 @@ namespace VirtualTryonWomenFashion.Service.Services
             };
 
         }
+
+        public async Task<User> GetUserById(int userId)
+        {
+            User user = await _userRepository.GetUserById(userId);
+            if (user == null)
+            {
+                throw new Exception("User không tồn tại");
+            }
+            return user;
+        }
     }
 }

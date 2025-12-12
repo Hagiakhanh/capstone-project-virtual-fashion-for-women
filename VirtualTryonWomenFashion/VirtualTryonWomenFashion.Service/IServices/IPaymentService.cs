@@ -3,6 +3,7 @@ using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.DTO.Momo;
 using VirtualTryonWomenFashion.Service.DTO.Order;
 using VirtualTryonWomenFashion.Service.DTO.Wallet;
+using VirtualTryonWomenFashion.Service.Helpers;
 
 namespace VirtualTryonWomenFashion.Service.IServices;
 
@@ -25,4 +26,7 @@ public interface IPaymentService
     public Task<string> CreatePaymentUrlInMomoForRechargeAsync(RequestRechargeWallet requestRechargeWallet);
     public Task<string> CreatePaymentUrlInVnPayForRechargeAsync(RequestRechargeWallet requestRechargeWallet);
     public Task HandleTransactionStatusWithMomoMethod();
+    public Task<bool> CreateWithDrawTransaction(RequestWithDraw requestWithDraw);
+    public Task<List<BankResponse>> GetBanks();
+
 }

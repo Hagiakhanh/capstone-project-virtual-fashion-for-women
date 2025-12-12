@@ -150,5 +150,43 @@ namespace VirtualTryonWomenFashion.Service.Helpers
             </div>";
         }
 
+        public static string WithdrawRequestApproved(
+    string fullName,
+    decimal money,
+    string bankName,
+    string bankAccountNumber,
+    string transactionCode)
+        {
+
+            return "<div style=\"background-color:#f8f8f8;font-family:sans-serif;padding:15px\">\n"
+                + "    <div style=\"max-width:1000px; margin:auto\">\n"
+                + "        <div style=\"background-color:#fff;padding:5px 20px;color:#000;border-radius:2px\">\n"
+                + "            <div style=\"padding:35px 15px\">\n"
+                + "                <p style=\"margin:0;font-size:16px\">\n"
+                + "                    <b>Hello, " + fullName + "</b>\n"
+                + "                </p>\n"
+                + "                <br>\n"
+                + "                <p style=\"margin:0;font-size:16px;line-height:1.6\">\n"
+                + "                    Yêu cầu rút tiền của bạn đã được <b>Admin chấp nhận</b> và đang được xử lý.\n"
+                + "                    <br>Admin sẽ tiến hành chuyển tiền cho bạn thông qua phương thức rút mà bạn đã cung cấp.\n"
+                + "                </p>\n"
+                + "                <br>\n"
+                + "                <p style=\"margin:0;font-size:16px;line-height:1.6\">\n"
+                + "                    <b>Số tiền rút:</b> " + money.ToString("N0") + " VND<br>\n"
+                + "                    <b>Ngân hàng:</b> " + bankName + "<br>\n"
+                + "                    <b>Số tài khoản:</b> " + bankAccountNumber + "<br>\n"
+                + "                    <b>Mã giao dịch:</b> #" + transactionCode + "\n"
+                + "                </p>\n"
+                + "                <div style=\"border-top:1px solid #dcdbdb\"></div>\n"
+                + "                <br>\n"
+                + "                <p style=\"margin:0;font-size:16px\">Trân trọng,</p>\n"
+                + "                <p style=\"margin:0;font-size:16px\">Women Fashion</p>\n"
+                + "            </div>\n"
+                + "        </div>\n"
+                + "    </div>\n"
+                + "</div>";
+        }
+
     }
+
 }
