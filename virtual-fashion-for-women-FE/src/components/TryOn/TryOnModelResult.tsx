@@ -80,6 +80,13 @@ export default function TryOnResultModal({
         setShowCartView(true);
     };
 
+    const handleSkipFromMeasurementForm = () => {
+        setShowBodyMeasurementForm(false);
+        // setSelectedProduct(undefined);
+        // setSelectedProductVariant(null);
+        // setQuantity(1);
+    }
+
     const handleBackFromMeasurementForm = () => {
         setShowBodyMeasurementForm(false);
         setSelectedProduct(undefined);
@@ -251,7 +258,7 @@ export default function TryOnResultModal({
                             {showBodyMeasurementForm && selectedProduct ? (
                                 <BodyMeasurementForm
                                     clothingType={clothingType}
-                                    onCancel={handleBackFromMeasurementForm}
+                                    onSkip={handleSkipFromMeasurementForm}
                                     onSubmit={handleSubmitMeasurement}
                                     onBackToResult={handleBackFromMeasurementForm}
                                     characteristicData={characteristicData}
