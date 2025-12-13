@@ -53,7 +53,7 @@ public class PaymentService : IPaymentService
         IHubContext<NotificationHub> notificationHub,
         IUserService userService,
         IWalletService walletService,
-        IMailService mailService 
+        IMailService mailService
     )
     {
         _configuration = configuration;
@@ -419,7 +419,7 @@ public class PaymentService : IPaymentService
 
                     await _orderService.UpdatePaymentUrlAsync(null, responseOrder.OrderId);
                     // Xóa các item trong giỏ hàng tương ứng với đơn hàng đã thanh toán
-                    List<ResponseOrderDetail> listResponseOrderDetail =  responseOrder.ResponseOrderDetails;
+                    List<ResponseOrderDetail> listResponseOrderDetail = responseOrder.ResponseOrderDetails;
 
                     List<string> productVariantIds = listResponseOrderDetail
                         .Where(od => od.ResponseProductVariantDto != null) // tránh null
@@ -443,7 +443,7 @@ public class PaymentService : IPaymentService
                     {
                         WalletId = transaction.WalletId.Value,
                         Amount = transaction?.Money ?? 0
-                    },TypeTransactionEnum.Recharge.ToString());
+                    }, TypeTransactionEnum.Recharge.ToString());
 
                     // Gửi thông báo nạp tiền thành công
                     RequestCreateNotification requestCreateNotificationRecharge = new RequestCreateNotification()
@@ -589,7 +589,7 @@ public class PaymentService : IPaymentService
         {
             int userId = _currentUserService.GetUserId();
             Order order = await _orderService.CreateOrderAsync(requestCreateOrder);
-            var currentUser = await _userService.GetUserInformationAsync(); 
+            var currentUser = await _userService.GetUserInformationAsync();
             ResponseWallet userWallet = await _walletService.GetWalletAsync(userId);
             Transaction transaction = new Transaction()
             {
@@ -611,28 +611,29 @@ public class PaymentService : IPaymentService
                     Amount = (decimal)order.Amount
                 }, TypeTransactionEnum.Purchase.ToString()
                 );
-            if( resultUpdateBalance > 0)
+            if (resultUpdateBalance > 0)
             {
                 transaction.Status = TransactionStatusEnum.Success.ToString();
                 await _transactionService.CreateTransactionAsync(transaction);
-                await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(),order.OrderId);
+                await _orderService.UpdateOrderStatusAsync(OrderStatusEnum.Confirmed.ToString(), order.OrderId);
             }
             await _unitOfWork.CommitTransactionAsync();
             _mailService.sendEmailAsync(new MailRequest
             {
                 ToEmail = currentUser.Email,
                 Subject = $"[Women Fashion] Đơn hàng ORD-{order.OrderId} đã được đặt thành công",
-                Body = MailContent.OrderSuccessEmail(order.ReceiverName, "ORD-" + order.OrderId, order.CreatedAt.ToString("HH:mm dd/MM/yyyy"), order.Amount.Value.ToString("#,0", new CultureInfo("vi-VN")) +" đ", order.ReceiverAddress)
+                Body = MailContent.OrderSuccessEmail(order.ReceiverName, "ORD-" + order.OrderId, order.CreatedAt.ToString("HH:mm dd/MM/yyyy"), order.Amount.Value.ToString("#,0", new CultureInfo("vi-VN")) + " đ", order.ReceiverAddress)
             });
             return true;
-        }catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             await _unitOfWork.RollbackTransactionAsync();
             throw new Exception($"Lỗi khi thanh toán bằng ví: {ex.Message}");
         }
-       
-        
-                
+
+
+
         throw new NotImplementedException();
     }
 
@@ -641,7 +642,7 @@ public class PaymentService : IPaymentService
         await _unitOfWork.BeginTransactionAsync();
         try
         {
-            
+
             Order order = await _orderService.CreateOrderAsync(requestCreateOrder);
             var currentUser = await _userService.GetUserInformationAsync();
             string paymentUrl = "";
@@ -799,7 +800,7 @@ public class PaymentService : IPaymentService
             if (pendingTransactions.Count > 0)
             {
                 await _transactionService.UpdateTransactionStatusAsync(pendingTransactions);
-                if(successfulTransaction.Count > 0)
+                if (successfulTransaction.Count > 0)
                 {
                     successfulTransaction = successfulTransaction
                    .GroupBy(x => x.WalletId)
@@ -932,7 +933,7 @@ public class PaymentService : IPaymentService
                 UserId = userId,
                 Status = TransactionStatusEnum.Pending.ToString(),
                 Money = requestRechargeWallet.Amount,
-                Method = "Momo",
+                Method = PaymentMethodEnum.Momo.ToString(),
                 Type = TypeTransactionEnum.Recharge.ToString(),
                 CreatedAt = DateTime.UtcNow.AddHours(7),
                 UpdatedAt = DateTime.UtcNow.AddHours(7),
@@ -1097,7 +1098,7 @@ public class PaymentService : IPaymentService
 
     public async Task HandleTransactionStatusWithMomoMethod()
     {
-       await _unitOfWork.BeginTransactionAsync();
+        await _unitOfWork.BeginTransactionAsync();
         try
         {
             List<Order> pendingOrders = await _orderService.GetOrdersByStatusAsync(OrderStatusEnum.Pending.ToString());
@@ -1141,7 +1142,7 @@ public class PaymentService : IPaymentService
                 await _orderService.HandleFailedOrders(failedOrders);
             }
 
-            
+
             //xử lý cho nạp tiền bằng momo kh gọi được callback
             List<Transaction> pendingRechargeTransactions = await _transactionService.GetAllPendingRechargeTransaction();
             List<RequestUpdateRecharge> successfulTransaction = new List<RequestUpdateRecharge>();
@@ -1178,7 +1179,7 @@ public class PaymentService : IPaymentService
             if (pendingRechargeTransactions.Count > 0)
             {
                 await _transactionService.UpdateTransactionStatusAsync(pendingRechargeTransactions);
-                if(successfulTransaction.Count > 0)
+                if (successfulTransaction.Count > 0)
                 {
                     successfulTransaction = successfulTransaction
                    .GroupBy(x => x.WalletId)
@@ -1230,4 +1231,95 @@ public class PaymentService : IPaymentService
             throw new Exception(ex.Message);
         }
     }
+
+    public async Task<bool> CreateWithDrawTransaction(RequestWithDraw requestWithDraw)
+    {
+        await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            int userId = _currentUserService.GetUserId();
+            var userWallet = await _walletService.GetWalletById(requestWithDraw.WalletId);
+            if (userWallet.Balance < requestWithDraw.Amount)
+            {
+                throw new Exception("Ví của bạn không đủ tiền để rút");
+            }
+
+            if (userWallet.User.UserId != userId)
+            {
+                throw new Exception("Bạn không có quyền truy cập vào ví này");
+            }
+            Transaction transaction = new Transaction()
+            {
+                UserId = userId,
+                Status = TransactionStatusEnum.Pending.ToString(),
+                Money = requestWithDraw.Amount,
+                Method = PaymentMethodEnum.Wallet.ToString(),
+                Type = TypeTransactionEnum.Withdraw.ToString(),
+                CreatedAt = DateTime.UtcNow.AddHours(7),
+                UpdatedAt = DateTime.UtcNow.AddHours(7),
+                WalletId = requestWithDraw.WalletId,
+                BankName = requestWithDraw.BankName,
+                BankAccountNumber = requestWithDraw.BankAccountNumber,
+                ThirdPartyCode = Guid.NewGuid().ToString()
+            };
+
+            await _transactionService.CreateTransactionAsync(transaction);
+            await _walletService.UpdateBalanceInWalletAsync(new RequestUpdateRecharge
+            {
+                WalletId = requestWithDraw.WalletId,
+                Amount = requestWithDraw.Amount
+            }, TypeTransactionEnum.Withdraw.ToString());
+            await _unitOfWork.CommitTransactionAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await _unitOfWork.RollbackTransactionAsync();
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public async Task<List<BankResponse>> GetBanks()
+    {
+        var bankResponse = new List<BankResponse>();
+        var client = new HttpClient();
+
+        var response = await client.GetAsync("https://test-payment.momo.vn/v2/gateway/api/bankcodes");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Lỗi API: " + response.StatusCode);
+            return bankResponse;
+        }
+
+        string json = await response.Content.ReadAsStringAsync();
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        // JSON là dictionary => duyệt từng property
+        foreach (var property in root.EnumerateObject())
+        {
+
+            string bankCode = property.Name;
+            if (bankCode == "MoMo")
+                continue;
+            var item = property.Value;
+
+            string shortName = item.GetProperty("shortName").GetString();
+            string name = item.GetProperty("name").GetString();
+            string logo = item.GetProperty("bankLogoUrl").GetString();
+
+            bankResponse.Add(new BankResponse
+            {
+                BankCode = bankCode,
+                Name = name,
+                ShortName = shortName,
+                LogoUrl = logo
+            });
+        }
+
+        return bankResponse;
+    }
+
 }

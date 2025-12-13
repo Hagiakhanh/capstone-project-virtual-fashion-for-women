@@ -33,5 +33,10 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .ToListAsync();
             return wallets;
         }
+
+        public async Task<Wallet?> GetByIdAsync(int walletId)
+        {
+            return await _context.Wallets.Include(w => w.User).FirstOrDefaultAsync(w => w.WalletId == walletId);
+        }
     }
 }
