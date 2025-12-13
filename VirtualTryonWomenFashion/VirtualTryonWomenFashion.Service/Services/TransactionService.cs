@@ -179,10 +179,47 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new ArgumentException("Start date must be before end date");
             }
 
-            // 1. Không cho phép ngày ở tương lai
-            DateTime now = DateTime.Now.AddHours(+7);
+            TimeZoneInfo vnZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            DateTime nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnZone);
 
-            if (startDate.HasValue && startDate.Value > now)
+            // 1. Không cho phép ngày ở tương lai
+            //DateTime now = DateTime.Now.AddHours(+7);
+            DateTime? filterStartDate = startDate;
+            DateTime? filterEndDate = endDate;
+
+            if (filterStartDate.HasValue)
+            {
+                filterStartDate = TimeZoneInfo.ConvertTimeFromUtc(filterStartDate.Value, vnZone);
+            }
+
+            if (filterEndDate.HasValue)
+            {
+                filterEndDate = TimeZoneInfo.ConvertTimeFromUtc(filterEndDate.Value, vnZone);
+            }
+
+            if (filterStartDate.HasValue && filterStartDate.Value.Date > nowVn.Date)
+            {
+                filterStartDate = nowVn.Date;
+            }
+
+            if (filterEndDate.HasValue && filterEndDate.Value.Date > nowVn.Date)
+            {
+                filterEndDate = nowVn;
+            }
+            if (filterEndDate.HasValue)
+            {
+                filterEndDate = filterEndDate.Value.Date.AddDays(1); 
+            }
+
+
+            filter = t =>
+                (string.IsNullOrEmpty(type) || t.Type == type) &&
+                (string.IsNullOrEmpty(method) || t.Method == method) &&
+                (string.IsNullOrEmpty(status) || t.Status == status) &&
+                (!filterStartDate.HasValue || t.CreatedAt >= filterStartDate.Value) &&
+                (!filterEndDate.HasValue || t.CreatedAt <= filterEndDate.Value);
+
+            /*if (startDate.HasValue && startDate.Value > now)
             {
                 startDate = now;
             }
@@ -204,9 +241,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                 (string.IsNullOrEmpty(method) || t.Method == method) &&
                 (string.IsNullOrEmpty(status) || t.Status == status) &&
                 (!startDate.HasValue || t.CreatedAt >= startDate.Value) &&
-                (!endDate.HasValue || t.CreatedAt < endDate.Value);
+                (!endDate.HasValue || t.CreatedAt < endDate.Value);*/
 
-            
+
             // Gọi repository
             List<Transaction> rawResult = await _transactionRepository.GetAll(
                 pagination: pagination,

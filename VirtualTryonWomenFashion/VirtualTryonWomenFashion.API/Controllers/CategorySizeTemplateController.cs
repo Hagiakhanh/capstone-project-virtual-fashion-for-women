@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Service.DTO.Size;
 using VirtualTryonWomenFashion.Service.Helpers;
@@ -19,6 +20,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Post([FromBody] RequestCreateCategoryTemplatesModel sizeModel)
         {
             try
@@ -33,6 +35,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpPut("{categoryId}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Put(int categoryId, [FromBody] RequestUpdateCategoryTemplatesModel sizeModel)
         {
             try

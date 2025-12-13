@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Ocsp;
 using System.Globalization;
 using VirtualTryonWomenFashion.Data.Commons;
 using VirtualTryonWomenFashion.Data.Enum;
@@ -22,10 +23,12 @@ namespace VirtualTryonWomenFashion.API.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
+        private readonly ILogger<ProductController> _logger;
 
-        public ProductController(IProductService productService)
+        public ProductController(IProductService productService, ILogger<ProductController> logger)
         {
             _productService = productService;
+            _logger = logger;
         }
 
         [HttpGet]
