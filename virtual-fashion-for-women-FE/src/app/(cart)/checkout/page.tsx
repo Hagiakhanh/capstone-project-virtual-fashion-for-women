@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronRight, ShoppingBag, MapPin, Wallet } from 'lucide-react';
+import { ChevronRight, ShoppingBag, MapPin, Wallet, Star, Home, Store, Truck } from 'lucide-react';
 import { CheckoutDTO } from '@/models/CheckoutDTO';
 import { RequestCheckout } from '@/models/RequestCheckout';
 import { api } from '@/api/instance';
@@ -44,6 +44,9 @@ export default function CheckoutForm() {
     const [addressSuggestions, setAddressSuggestions] = useState<{ placeId: string, description: string }[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [selectedPayment, setSelectedPayment] = useState('Momo');
+    const [savedAddresses, setSavedAddresses] = useState([]);
+    const [showSavedList, setShowSavedList] = useState(false);
+    const [shippingMethod, setShippingMethod] = useState('GHN');
     const isFormValid = useMemo(() => {
         return (
             formData.fullName.trim() !== '' &&
@@ -129,7 +132,7 @@ export default function CheckoutForm() {
             setIsProcessing(false);
         }
     };
-
+    console.log("method", shippingMethod);
     const handleCitySelect = async (provinceId: string, provinceName: string) => {
         if (addressInformation.provinceName !== provinceName) {
             setAddressInformation({
@@ -279,7 +282,7 @@ export default function CheckoutForm() {
         }
     };
 
-    const fetchAddressDetails = async (placeId: string, placeName: string) => {
+    const fetchAddressDetails = async (placeName: string) => {
         try {
             console.log("Fetching address details:", placeName);
             const parts = placeName.split(',').map(part => part.trim());
@@ -362,6 +365,34 @@ export default function CheckoutForm() {
         }
     }
 
+    const fetchUserSavedAddresses = async () => {
+        try {
+            const response = await api.get('/user-information/user-address');
+            if (response.status === 200) {
+                console.log('Địa chỉ đã lưu của người dùng:', response.data);
+                setSavedAddresses(response.data);
+            } else {
+                setSavedAddresses([]);
+            }
+        } catch (error) {
+            console.log('Lỗi khi lấy địa chỉ đã lưu của người dùng:', error);
+            setSavedAddresses([]);
+        }
+    }
+
+    const handleSelectSavedAddress = (item: any) => {
+        // Cập nhật text hiển thị
+        setFormData({
+            ...formData,
+            address: item.address
+        });
+
+        // fetchAddressDetails(item.address);
+
+        // Ẩn dropdown
+        setShowSavedList(false);
+        setAddressSuggestions([]);
+    };
 
     useEffect(() => {
         if (isSelectingRef.current) {
@@ -400,6 +431,7 @@ export default function CheckoutForm() {
         }
         fetchProvinceData();
         fetchWallet();
+        fetchUserSavedAddresses();
     }, []);
 
     useEffect(() => {
@@ -459,12 +491,43 @@ export default function CheckoutForm() {
                                     name="address"
                                     placeholder="Địa chỉ"
                                     value={formData.address}
-                                    onChange={handleInputChange}
+                                    onChange={(e) => {
+                                        handleInputChange(e);
+                                        setShowSavedList(false);
+                                    }}
+                                    onFocus={() => {
+                                        // Khi focus, nếu ô input đang trống thì hiện địa chỉ đã lưu
+                                        if (!formData.address.trim() && savedAddresses.length > 0) {
+                                            setShowSavedList(true);
+                                        }
+                                    }}
+                                    onBlur={() => setTimeout(() => setShowSavedList(false), 200)}
                                     className="w-full p-2.5 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition-all"
                                 />
                                 {isLoadingSuggestions && (
                                     <div className="absolute right-3 top-2.5 md:top-3 text-gray-400 text-xs md:text-sm animate-pulse">
                                         ...
+                                    </div>
+                                )}
+                                {showSavedList && savedAddresses.length > 0 && (
+                                    <div className="border-b-2 border-gray-100 pb-1">
+                                        <div className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50 flex items-center gap-1">
+                                            ĐỊA CHỈ CỦA BẠN
+                                        </div>
+                                        {savedAddresses.map((addr, index) => (
+                                            <div
+                                                key={index}
+                                                onClick={() => handleSelectSavedAddress(addr)}
+                                                className="flex flex-col p-2.5 md:p-3 hover:bg-red-50 cursor-pointer border-b last:border-0 border-gray-100 transition-colors group/item"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <Home className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                                    <span className="text-sm font-medium text-gray-800 group-hover/item:text-red-700">
+                                                        {addr.address}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                                 {addressSuggestions.length > 0 && (
@@ -475,7 +538,7 @@ export default function CheckoutForm() {
                                                 onClick={() => {
                                                     isSelectingRef.current = true;
                                                     setFormData({ ...formData, address: s.description });
-                                                    fetchAddressDetails(s.placeId, s.description);
+                                                    fetchAddressDetails(s.description);
                                                     setAddressSuggestions([]);
                                                 }}
                                                 className="flex items-center gap-2 p-2.5 md:p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0 border-gray-100"
@@ -545,6 +608,47 @@ export default function CheckoutForm() {
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-md border border-gray-100">
+                        <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-5 text-gray-800 border-b pb-2">
+                            Phương thức vận chuyển
+                        </h2>
+                        <div className="space-y-3">
+                            {/* Giao hàng nhanh (GHN) */}
+                            <label className={`flex items-center p-2.5 md:p-3 border rounded-lg cursor-pointer transition-all ${shippingMethod === 'GHN' ? '' : 'hover:bg-gray-50'}`}>
+                                <input
+                                    type="radio"
+                                    name="shipping"
+                                    value="GHN"
+                                    checked={shippingMethod === 'GHN'}
+                                    onChange={(e) => setShippingMethod(e.target.value)}
+                                    className="mr-2 md:mr-3 accent-red-500 mt-1"
+                                />
+                                <Truck className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 text-blue-600 flex-shrink-0" />
+                                <div className="flex flex-col">
+                                    <span className="text-sm md:text-base font-medium text-gray-800">Giao hàng nhanh</span>
+                                    <span className="text-xs text-gray-500">Đơn vị vận chuyển giao hàng nhanh.</span>
+                                </div>
+                            </label>
+
+                            {/* Cửa hàng tự giao */}
+                            <label className={`flex items-center p-2.5 md:p-3 border rounded-lg cursor-pointer transition-all ${shippingMethod === 'SHOP' ? '' : 'hover:bg-gray-50'}`}>
+                                <input
+                                    type="radio"
+                                    name="shipping"
+                                    value="SHOP"
+                                    checked={shippingMethod === 'SHOP'}
+                                    onChange={(e) => setShippingMethod(e.target.value)}
+                                    className="mr-2 md:mr-3 accent-red-500 mt-1"
+                                />
+                                <Store className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 text-green-600 flex-shrink-0" />
+                                <div className="flex flex-col">
+                                    <span className="text-sm md:text-base font-medium text-gray-800">Cửa hàng giao</span>
+                                    <span className="text-xs text-gray-500">Nhân viên cửa hàng sẽ làm việc với đơn vị bên ngoài.</span>
+                                </div>
+                            </label>
                         </div>
                     </div>
 

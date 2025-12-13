@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // 1. Import hook usePathname
-import { Home, ShoppingCart, Package, Users, LineChart, X, BadgePercent, LayoutGrid, Ruler } from "lucide-react";
+import { Home, ShoppingCart, Package, Users, LineChart, X, BadgePercent, LayoutGrid, Ruler, HandCoins } from "lucide-react";
 
 // Interface cho props
 interface SidebarProps {
@@ -43,17 +43,15 @@ export default function AdminSidebar({
     <>
       {/* Lớp Overlay mờ */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${
-          isSidebarOpen ? "opacity-60" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden ${isSidebarOpen ? "opacity-60" : "opacity-0 pointer-events-none"
+          }`}
         onClick={toggleSidebar}
       ></div>
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 text-white z-50 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 text-white z-50 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-700">
           <span className="text-2xl font-bold">Chào Mừng Admin</span>
@@ -113,6 +111,14 @@ export default function AdminSidebar({
           >
             <BadgePercent className="w-5 h-5 mr-3" />
             Chiến dịch giảm giá
+          </Link>
+          <Link
+            onClick={handleLinkClick}
+            href="/admin/withdraw-transactions"
+            className={`${baseLinkClasses} ${isActive("/admin/campaigns") ? activeLinkClasses : inactiveLinkClasses}`}
+          >
+            <HandCoins className="w-5 h-5 mr-3" />
+            Giao dịch rút tiền
           </Link>
         </nav>
       </aside>
