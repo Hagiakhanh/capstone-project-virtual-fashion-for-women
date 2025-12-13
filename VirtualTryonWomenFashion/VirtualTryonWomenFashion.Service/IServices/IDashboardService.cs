@@ -8,6 +8,7 @@ public interface IDashboardService
 {
     Task<ResponseBasicSystemIndicator> GetBasicSystemIndicators();
     Task<List<RevenueResult>> GetRevenueAsync(RevenueFilterRequest filter);
+    Task<List<RevenueResult>> GetRevenueVersion2Async(RevenueFilterRequest filter);
     Task<List<CategorySalesPieDto>> GetCategorySalesPieAsync(string timeFilterType);
     Task<List<TopTryOnProductDto>> GetTopTryOnProductsAsync(
         DateTime? start, DateTime? end, int limit);
