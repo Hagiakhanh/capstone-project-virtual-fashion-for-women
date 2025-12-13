@@ -555,5 +555,32 @@ namespace VirtualTryonWomenFashion.Service.Services
             };
 
         }
+
+        public async Task<MessageModelWithData<List<ResponseUserAddress>>> GetUserAddress()
+        {
+            int userId = _currentUserService.GetUserId();
+            User user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new Exception("User không tồn tại");
+            }
+
+            List<ResponseUserAddress> addresses = new List<ResponseUserAddress>();
+            if(!string.IsNullOrWhiteSpace(user.Address))
+            {
+                addresses.Add(new ResponseUserAddress { Address = user.Address });
+            }
+            if (!string.IsNullOrWhiteSpace(user.SecondAddress))
+            {
+                addresses.Add(new ResponseUserAddress { Address = user.SecondAddress });
+            }
+
+            return new MessageModelWithData<List<ResponseUserAddress>>
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Danh sách địa chỉ",
+                Data = addresses
+            };
+        }
     }
 }
