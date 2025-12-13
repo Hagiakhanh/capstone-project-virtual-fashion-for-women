@@ -63,8 +63,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 {
                     return existingTryOnSlot.ToMapTryOnResponse();
                 }
-                
-                if(TopProductColor == null && BottomProductColor == null)
+
+                if (TopProductColor == null && BottomProductColor == null)
                 {
                     throw new Exception("Phải chọn ít nhất một sản phẩm để thử đồ");
                 }
@@ -196,7 +196,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             var rawTryOnSlot = await _tryOnSlotRepository.GetAll(
                     filter: to => to.CustomerId == userId,
                     pagination: paginationParameter,
-                    orderBy: to => to.OrderByDescending(x=>x.UpdatedAt),
+                    orderBy: to => to.OrderByDescending(x => x.UpdatedAt),
                     includes: to => to.ProductColors
                 );
 
@@ -242,62 +242,41 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             int userId = _currentUserService.GetUserId();
-            var imageModelHasing = ComputeSHA256(imageModel.ImageModelFile);
-            bool isExistValidImage = await _tryOnSlotRepository.HasImageModelHash(userId, imageModelHasing);
+            var geminiPrompt = "Phân tích hình ảnh này để xác định sự phù hợp cho Thử Đồ Ảo (Virtual Try-On). Trả về kết quả dưới dạng JSON thuần (RAW JSON) theo cấu trúc sau: { \"is_good\": [true/false], \"is_warning\": [true/false], \"warning_message\": \"[Thông điệp cảnh báo nếu is_warning là true, nếu không thì để trống]\", \"good_clothes_types\": [\"upper\", \"lower\", \"full\" hoặc mảng rỗng] }. " +
+                               "Quy tắc phân loại: " +
+                               "1. Hợp lệ (is_good: true, is_warning: false): Ảnh một người mẫu **nữ**, đứng thẳng có đầy đủ toàn thân từ đầu đến chân, rõ ràng, thấy toàn thân và có thể tách nền tốt. " +
+                               "2. Cảnh báo (is_good: true, is_warning: true): Ảnh một người mẫu là **nam** `warning_message` phải mô tả rõ lý do cảnh báo (Ví dụ: 'Ảnh là người mẫu nam, có thể không phù hợp với các mẫu đồ nữ.'). `good_clothes_types` là mảng rỗng. " +
+                               "3. Không hợp lệ (is_good: false, is_warning: false): Ảnh không có người,  Ảnh trẻ em/em bé .,ảnh động vật, hoặc ảnh người không rõ ràng, ảnh người không có đầy đủ từ đầu đến chân. `good_clothes_types` là mảng rỗng." +
+                               "Hãy trả lời CHỈ bằng đối tượng JSON.";
 
-            // 2. Kiểm tra Hash
-            if (isExistValidImage)
+            // Sử dụng hàm chung CallGeminiWithMediaAsync
+            string rawGeminiJson = await _geminiService.CallGeminiWithMediaAsync(
+                prompt: geminiPrompt,
+                mediaFile: imageModel.ImageModelFile
+            );
+
+            // 4. Xử lý và Lưu trữ Hash nếu ảnh Hợp lệ hoàn toàn
+            try
             {
-                // Trả về kết quả TỐT NHẤT (vì đã được kiểm tra trước đó)
-                return JsonSerializer.Serialize(new ImageValidationResult
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var geminiResult = JsonSerializer.Deserialize<ImageValidationResult>(rawGeminiJson, options);
+
+                // Chỉ lưu Hash vào DB nếu ảnh hợp lệ VÀ không có cảnh báo
+                if (geminiResult != null && geminiResult.IsGood && !geminiResult.IsWarning)
                 {
-                    IsGood = true,
-                    IsWarning = false, // Hợp lệ hoàn toàn, không có cảnh báo
-                    WarningMessage = null,
-                    GoodClothesTypes = new List<string> { "upper", "lower", "full" }
-                });
+                    // Logic: Lưu Hash vào DB để dùng lại lần sau
+                    // await _tryOnSlotRepository.SaveImageModelHash(userId, imageModelHasing); 
+                }
+
+                // Trả về kết quả JSON từ Gemini (bao gồm cả trạng thái Warning)
+                return rawGeminiJson;
             }
-            else
+            catch (JsonException)
             {
-                // 3. Gọi Gemini để phân tích tính hợp lệ của ảnh mới
-
-                // Prompt chi tiết yêu cầu Gemini trả về JSON với logic Good/Warning/Invalid
-                var geminiPrompt = "Phân tích hình ảnh này để xác định sự phù hợp cho Thử Đồ Ảo (Virtual Try-On). Trả về kết quả dưới dạng JSON thuần (RAW JSON) theo cấu trúc sau: { \"is_good\": [true/false], \"is_warning\": [true/false], \"warning_message\": \"[Thông điệp cảnh báo nếu is_warning là true, nếu không thì để trống]\", \"good_clothes_types\": [\"upper\", \"lower\", \"full\" hoặc mảng rỗng] }. " +
-                                   "Quy tắc phân loại: " +
-                                   "1. Hợp lệ (is_good: true, is_warning: false): Ảnh một người mẫu **nữ**, đứng thẳng, rõ ràng, thấy toàn thân và có thể tách nền tốt. " +
-                                   "2. Cảnh báo (is_good: false, is_warning: true): Ảnh một người mẫu là **nam** hoặc là **trẻ em/em bé**. `warning_message` phải mô tả rõ lý do cảnh báo (Ví dụ: 'Ảnh là người mẫu nam, có thể không phù hợp với các mẫu đồ nữ.'). `good_clothes_types` là mảng rỗng. " +
-                                   "3. Không hợp lệ (is_good: false, is_warning: false): Ảnh không có người, ảnh động vật, hoặc ảnh người không rõ ràng. `good_clothes_types` là mảng rỗng." +
-                                   "Hãy trả lời CHỈ bằng đối tượng JSON.";
-
-                // Sử dụng hàm chung CallGeminiWithMediaAsync
-                string rawGeminiJson = await _geminiService.CallGeminiWithMediaAsync(
-                    prompt: geminiPrompt,
-                    mediaFile: imageModel.ImageModelFile
-                );
-
-                // 4. Xử lý và Lưu trữ Hash nếu ảnh Hợp lệ hoàn toàn
-                try
-                {
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var geminiResult = JsonSerializer.Deserialize<ImageValidationResult>(rawGeminiJson, options);
-
-                    // Chỉ lưu Hash vào DB nếu ảnh hợp lệ VÀ không có cảnh báo
-                    if (geminiResult != null && geminiResult.IsGood && !geminiResult.IsWarning)
-                    {
-                        // Logic: Lưu Hash vào DB để dùng lại lần sau
-                        // await _tryOnSlotRepository.SaveImageModelHash(userId, imageModelHasing); 
-                    }
-
-                    // Trả về kết quả JSON từ Gemini (bao gồm cả trạng thái Warning)
-                    return rawGeminiJson;
-                }
-                catch (JsonException)
-                {
-                    // Trường hợp Gemini trả về JSON không đúng format, coi là cảnh báo lỗi hệ thống
-                    return @"{""is_good"": false, ""is_warning"": true, ""warning_message"": ""Không thể phân tích dữ liệu trả về từ hệ thống AI. Vui lòng thử lại."", ""good_clothes_types"": []}";
-                }
+                // Trường hợp Gemini trả về JSON không đúng format, coi là cảnh báo lỗi hệ thống
+                return @"{""is_good"": false, ""is_warning"": true, ""warning_message"": ""Không thể phân tích dữ liệu trả về từ hệ thống AI. Vui lòng thử lại."", ""good_clothes_types"": []}";
             }
         }
-        
+
     }
 }

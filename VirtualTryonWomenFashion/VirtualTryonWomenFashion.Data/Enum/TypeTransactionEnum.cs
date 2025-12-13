@@ -10,6 +10,7 @@ namespace VirtualTryonWomenFashion.Data.Enum
     {
         Purchase,
         Refund,
-        Recharge
+        Recharge,
+        Withdraw
     }
 }
