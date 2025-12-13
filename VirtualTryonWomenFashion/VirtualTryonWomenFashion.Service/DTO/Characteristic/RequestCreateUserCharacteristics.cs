@@ -10,14 +10,14 @@ namespace VirtualTryonWomenFashion.Service.DTO.Characteristic
 {
     public class RequestCreateUserCharacteristics
         {
-            [Range(30, 200, ErrorMessage = "Cân nặng phải nằm trong khoảng từ 30kg đến 200kg.")]
-            public double? Weight { get; set; }
+            //[Range(30, 200, ErrorMessage = "Cân nặng phải nằm trong khoảng từ 30kg đến 200kg.")]
+            //public double? Weight { get; set; }
 
-            [Range(10, 100, ErrorMessage = "Tuổi phải nằm trong khoảng từ 10 đến 100.")]
-            public int? Age { get; set; }
+            //[Range(10, 100, ErrorMessage = "Tuổi phải nằm trong khoảng từ 10 đến 100.")]
+            //public int? Age { get; set; }
 
-            [Range(100, 250, ErrorMessage = "Chiều cao phải nằm trong khoảng từ 100cm đến 250cm.")]
-            public double? Height { get; set; }
+            //[Range(100, 250, ErrorMessage = "Chiều cao phải nằm trong khoảng từ 100cm đến 250cm.")]
+            //public double? Height { get; set; }
 
             [Required(ErrorMessage = "Vui lòng chọn kiểu phong cách (Style Type).")]
             public int? StyleTypeID { get; set; }
