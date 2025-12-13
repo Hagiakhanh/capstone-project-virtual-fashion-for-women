@@ -784,11 +784,29 @@ export default function WalletPage() {
                                     </span>
                                 </div>
                             </div>
+                            {selectedTransaction.bankName && (
+                                <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                                    <span className="text-sm text-gray-600">Ngân hàng:</span>
+                                    <span className="text-sm font-medium text-gray-800">
+                                        {selectedTransaction.bankName}
+                                    </span>
+                                </div>
+                            )}
+
+                            {selectedTransaction.bankAccountNumber && (
+                                <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                                    <span className="text-sm text-gray-600">Số tài khoản:</span>
+                                    <span className="text-sm font-medium text-gray-800">
+                                        {selectedTransaction.bankAccountNumber}
+                                    </span>
+                                </div>
+                            )}
+
 
                             <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                                 <span className="text-sm text-gray-600">Ngày tạo:</span>
                                 <span className="text-sm font-medium text-gray-800">
-                                    {formatDate(selectedTransaction.createdAt)}
+                                    {formatDate(selectedTransaction.createAt)}
                                 </span>
                             </div>
 
