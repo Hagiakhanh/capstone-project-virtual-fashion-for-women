@@ -45,7 +45,7 @@ export default function CheckoutForm() {
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [selectedPayment, setSelectedPayment] = useState('Momo');
     const [savedAddresses, setSavedAddresses] = useState([]);
-    const [showSavedList, setShowSavedList] = useState(false);
+    const [showSavedList, setShowSavedList] = useState(true);
     const [shippingMethod, setShippingMethod] = useState('GHN');
     const isFormValid = useMemo(() => {
         return (
@@ -68,6 +68,11 @@ export default function CheckoutForm() {
     }, [wallet, checkoutDTO.totalPrice]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        if (e.target.name === 'address') {
+            if (e.target.value == '') {
+                setShowSavedList(true);
+            }
+        }
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
@@ -369,7 +374,6 @@ export default function CheckoutForm() {
         try {
             const response = await api.get('/user-information/user-address');
             if (response.status === 200) {
-                console.log('Địa chỉ đã lưu của người dùng:', response.data);
                 setSavedAddresses(response.data);
             } else {
                 setSavedAddresses([]);
@@ -493,7 +497,7 @@ export default function CheckoutForm() {
                                     value={formData.address}
                                     onChange={(e) => {
                                         handleInputChange(e);
-                                        setShowSavedList(false);
+                                        // setShowSavedList(false);
                                     }}
                                     onFocus={() => {
                                         // Khi focus, nếu ô input đang trống thì hiện địa chỉ đã lưu
@@ -501,7 +505,7 @@ export default function CheckoutForm() {
                                             setShowSavedList(true);
                                         }
                                     }}
-                                    onBlur={() => setTimeout(() => setShowSavedList(false), 200)}
+                                    // onBlur={() => setTimeout(() => setShowSavedList(false), 200)}
                                     className="w-full p-2.5 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition-all"
                                 />
                                 {isLoadingSuggestions && (
@@ -509,7 +513,7 @@ export default function CheckoutForm() {
                                         ...
                                     </div>
                                 )}
-                                {showSavedList && savedAddresses.length > 0 && (
+                                {showSavedList && formData.address == '' && addressSuggestions.length == 0 && savedAddresses.length > 0 && (
                                     <div className="border-b-2 border-gray-100 pb-1">
                                         <div className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50 flex items-center gap-1">
                                             ĐỊA CHỈ CỦA BẠN
