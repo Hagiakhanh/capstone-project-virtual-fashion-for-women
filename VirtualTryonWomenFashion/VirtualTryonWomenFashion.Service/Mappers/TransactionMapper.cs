@@ -19,6 +19,8 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 Type = transaction.Type,
                 Status = transaction.Status,
                 TransactionCode = transaction.ThirdPartyCode,
+                BankName = transaction.BankName,
+                BankAccountNumber = transaction.BankAccountNumber,
                 UpdatedAt = transaction.UpdatedAt
             };
         }
