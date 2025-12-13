@@ -497,10 +497,10 @@ export function convertUpdateToFormData(
             formData.append(`ProductColor[${i}].NoBgImgUrl`, pc.noBgImgUrl);
         }
         if (pc.lensId) {
-            formData.append(`ProductColor[${i}].LensId`, pc.lensId);
+            formData.append(`ProductColor[${i}].LensId`, pc.lensId || "");
         }
         if (pc.packageLens) {
-            formData.append(`ProductColor[${i}].PackageLens`, pc.packageLens);
+            formData.append(`ProductColor[${i}].PackageLens`, pc.packageLens || "");
         }
 
         // Add variant images

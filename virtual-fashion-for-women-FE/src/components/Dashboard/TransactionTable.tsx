@@ -3,102 +3,163 @@
 import React, { useState, useMemo } from "react";
 import formatPrice from "@/utils/formatPrice"; 
 import { TransactionAdmin } from "@/models/Dashboard"; 
-// Import PaginationDTO để đồng nhất kiểu dữ liệu với WishlistPage
 import { PaginationDTO } from "@/models/PaginationDTO"; 
 
-// --- KHAI BÁO TYPE CHO PROPS (CẬP NHẬT) ---
-
+// --- KHAI BÁO TYPE CHO PROPS ---
 interface TransactionTableProps {
     transactions: TransactionAdmin[];
     loading: boolean;
-    // Sử dụng kiểu PaginationDTO được truyền từ OverviewTab
     pagination: PaginationDTO | null; 
     filterParams: {
         type: string;
         status: string;
         method: string;
-        startDate: string;
-        endDate: string;
+        startDate: string; // YYYY-MM-DD (Hoặc chuỗi ISO đã xử lý khi apply filter)
+        endDate: string;   // YYYY-MM-DD (Hoặc chuỗi ISO đã xử lý khi apply filter)
     };
-    onApplyFilter: (filters: TransactionTableProps['filterParams']) => void;
+    onApplyFilter: (filters: TransactionTableProps['filterParams']) => void; 
     onPageChange: (newPage: number) => void;
 }
 
 // Các tùy chọn cứng cho bộ lọc
 const filterOptions = {
-    types: [{ value: '', label: 'Tất cả loại' }, { value: 'Purchase', label: 'Mua hàng' }, { value: 'Refund', label: 'Hoàn tiền' }, { value: 'Recharge', label: 'Nạp ví' }],
+    types: [{ value: '', label: 'Tất cả loại' }, { value: 'Purchase', label: 'Mua hàng' }, { value: 'Refund', label: 'Hoàn tiền' }, { value: 'Recharge', label: 'Nạp ví' }, { value: 'Withdraw', label: 'Rút tiền' }],
     statuses: [{ value: '', label: 'Tất cả trạng thái' }, { value: 'Success', label: 'Thành công' }, { value: 'Pending', label: 'Đang chờ' }, { value: 'Failed', label: 'Thất bại' }],
     methods: [{ value: '', label: 'Tất cả phương thức' }, { value: 'Momo', label: 'Momo' }, { value: 'VnPay', label: 'VnPay' }, { value: 'Wallet', label: 'Ví' }],
+};
+
+const formatToApiDate = (dateString: string, isEndOfDay: boolean): string => {
+    let date: Date;
+    if (isEndOfDay) {
+        // Tạo ngày với 23:59:59 +07:00, sau đó thêm 999ms
+        date = new Date(`${dateString}T23:59:59+07:00`); 
+        date.setMilliseconds(date.getMilliseconds() + 999); 
+    } else {
+        // Tạo ngày với 00:00:00 +07:00
+        date = new Date(`${dateString}T00:00:00+07:00`);
+    }
+    
+    // toISOString() chuyển đổi thời điểm đã đặt (+7) sang UTC (Z)
+    return date.toISOString(); 
 };
 
 export default function TransactionTable({
     transactions,
     loading,
-    pagination, // Đã là PaginationDTO | null
+    pagination, 
     filterParams,
     onApplyFilter,
     onPageChange,
 }: TransactionTableProps) {
     const [dateError, setDateError] = useState("");
     
-    // Khởi tạo trạng thái filter nội bộ
     const [currentFilters, setCurrentFilters] = useState(filterParams);
-
-    const getVietnameseLabel = (value: string, category: keyof typeof filterOptions): string => {
-        if (!value) return '';
-        const option = filterOptions[category].find(opt => opt.value === value);
-        return option ? option.label : value;
-    };
 
     // Xử lý thay đổi input
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         const { name, value } = e.target;
-        // setCurrentFilters(prev => ({
-        //     ...prev,
-        //     [name]: value,
-        // }));
+        
         const newFilters = {
             ...currentFilters,
             [name]: value,
         };
 
+        // Lấy thời điểm hiện tại ở múi giờ UTC+7
         const now = new Date(
             new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })
         );
+        // Chuyển 'now' về 00:00:00 của ngày hôm nay để so sánh chỉ phần ngày
+        const todayAtStartOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        if (name === "startDate" || name === "endDate") {
-            const selected = new Date(`${value}T00:00:00+07:00`);
+        // Validate tổng thể ngày bắt đầu/kết thúc
+        let error = "";
+        
+        // --- Bắt đầu Kiểm tra Ngày Tương Lai & Thứ Tự Ngày ---
+        if (newFilters.startDate || newFilters.endDate) {
+            
+            const startDateValue = newFilters.startDate;
+            const endDateValue = newFilters.endDate;
 
-            if (selected > now) {
-                setDateError("Ngày không được chọn trong tương lai");
-                return;
+            // 1. Kiểm tra ngày tương lai
+            if (startDateValue) {
+                const selectedStart = new Date(`${startDateValue}T00:00:00+07:00`);
+                if (selectedStart > todayAtStartOfDay) {
+                    error = "Ngày bắt đầu không được chọn trong tương lai";
+                }
+            }
+            if (!error && endDateValue) {
+                const selectedEnd = new Date(`${endDateValue}T00:00:00+07:00`);
+                 if (selectedEnd > todayAtStartOfDay) {
+                    error = "Ngày kết thúc không được chọn trong tương lai";
+                }
+            }
+            
+            // 2. Kiểm tra thứ tự ngày
+            if (!error && startDateValue && endDateValue) {
+                const selectedStart = new Date(`${startDateValue}T00:00:00+07:00`); 
+                const selectedEnd = new Date(`${endDateValue}T00:00:00+07:00`);
+
+                if (selectedStart > selectedEnd) {
+                    error = "Ngày bắt đầu phải trước hoặc bằng ngày kết thúc";
+                }
             }
         }
-
-        // Validate
-        if (newFilters.startDate && newFilters.endDate) {
-            const start = new Date(newFilters.startDate);
-            const end = new Date(newFilters.endDate);
-
-            if (start > end) {
-                setDateError("Ngày bắt đầu phải trước ngày kết thúc");
-            } else {
-                setDateError("");
-            }
-        }
-
+        // --- Kết thúc Kiểm tra Ngày Tương Lai & Thứ Tự Ngày ---
+        
+        setDateError(error);
         setCurrentFilters(newFilters);
     };
 
     // Xử lý áp dụng filter
     const handleFilterSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onApplyFilter(currentFilters);
-    };
+        
+        if (dateError) {
+            alert(dateError); 
+            return;
+        }
 
-    // --- LOGIC GỘP CÁC HÀM/COMPONENT CON (Nội bộ) ---
+        const { startDate, endDate, ...rest } = currentFilters;
+        
+        let finalStartDate = startDate; 
+        let finalEndDate = endDate;
+
+        if (startDate && endDate) {
+            // Lấy 00:00:00 UTC+7 của startDate, chuyển sang chuỗi UTC (Z)
+            finalStartDate = formatToApiDate(startDate, false);
+            
+            // Lấy 23:59:59.999 UTC+7 của endDate, chuyển sang chuỗi UTC (Z)
+            finalEndDate = formatToApiDate(endDate, true);
+        } else if (startDate && !endDate) {
+            // Xử lý trường hợp chỉ có startDate (filter cho 1 ngày duy nhất)
+            finalStartDate = formatToApiDate(startDate, false);
+            finalEndDate = formatToApiDate(startDate, true);
+        } else if (!startDate && endDate) {
+            // Xử lý trường hợp chỉ có endDate (filter từ đầu đến ngày kết thúc)
+            // Có thể bỏ qua startDate nếu muốn filter từ đầu, hoặc đặt là 01/01/1970
+            // Tùy theo logic API. Ở đây ta giữ nguyên endDate và bỏ qua startDate để API hiểu
+            finalEndDate = formatToApiDate(endDate, true);
+            finalStartDate = ''; // Để API tự hiểu là từ ban đầu
+        }
+
+
+        // Truyền các giá trị chuỗi ngày tháng chuẩn UTC (Z) lên API.
+        onApplyFilter({ 
+            ...rest, 
+            type: currentFilters.type,
+            status: currentFilters.status,
+            method: currentFilters.method,
+            startDate: finalStartDate, // Chuỗi UTC (Z)
+            endDate: finalEndDate,     // Chuỗi UTC (Z)
+        });
+    };
     
-    // 1. Logic cho Badge trạng thái
+    // (Các hàm con StatusBadge, FilterSelect, FilterInput, getPageNumbers, pageNumbers giữ nguyên)
+    const getVietnameseLabel = (value: string, category: keyof typeof filterOptions): string => {
+        if (!value) return '';
+        const option = filterOptions[category].find(opt => opt.value === value);
+        return option ? option.label : value;
+    };
     const StatusBadge = ({ status }: { status: string }) => {
         let color = 'bg-gray-100 text-gray-800';
         if (status === 'Success') color = 'bg-green-100 text-green-800';
@@ -111,8 +172,6 @@ export default function TransactionTable({
             </span>
         );
     };
-
-    // 2. Component Select cho Filter
     const FilterSelect = ({ 
         name, 
         label, 
@@ -127,13 +186,11 @@ export default function TransactionTable({
         options: { value: string; label: string }[]; 
     }) => (
         <div>
-            {/* Đã xóa label vì label đã có trong component cha */}
             <select
                 id={name}
                 name={name}
                 value={value}
                 onChange={onChange}
-                // Đã điều chỉnh class để loại bỏ mt-1 và sử dụng h-10 để khớp với nút Áp dụng
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 px-2 border bg-white cursor-pointer"
             >
                 {options.map(option => (
@@ -142,24 +199,18 @@ export default function TransactionTable({
             </select>
         </div>
     );
-
-    // 3. Component Input cho Filter
     const FilterInput = ({ name, label, type, value, onChange }: { name: string; label: string; type: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
         <div>
-            {/* Đã xóa label vì label đã có trong component cha */}
             <input
                 type={type}
                 id={name}
                 name={name}
                 value={value}
                 onChange={onChange}
-                // Đã điều chỉnh class để loại bỏ mt-1 và sử dụng h-10 để khớp với nút Áp dụng
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 px-2 border cursor-pointer"
             />
         </div>
     );
-
-    // 4. Hàm tạo dãy số trang có dấu '...' (Lấy từ WishlistPage, điều chỉnh tên biến)
     const getPageNumbers = (totalPages: number, currentPage: number, delta = 2): (number | string)[] => {
         const range: (number | string)[] = [];
         const left = Math.max(2, currentPage - delta);
@@ -188,18 +239,17 @@ export default function TransactionTable({
         
         return range;
     };
-    
-    // Tính toán dãy số trang cần hiển thị
     const pageNumbers = useMemo(() => {
         if (!pagination) return [];
         return getPageNumbers(pagination.TotalPages, pagination.CurrentPage);
     }, [pagination]);
+    // --- END CÁC HÀM CON ---
 
     return (
         <div className="bg-white p-2 rounded-lg shadow-md">
             <h2 className="text-xl font-sans pb-2 pt-2">💰 Lịch sử Giao dịch</h2>
+            
             {/* Bộ Lọc (Filter) */}
-            {/* Đã đổi grid-cols-6 thành md:grid-cols-6, thêm các label và items-end */}
             <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-6 items-end">
                 
                 <div>
@@ -260,11 +310,13 @@ export default function TransactionTable({
                 {/* Nút Áp dụng */}
                 <button
                     type="submit"
-                    className="h-10 px-4 py-2 bg-indigo-600 text-white font-sans rounded-md hover:bg-indigo-700 transition duration-150 cursor-pointer"
+                    className={`h-10 px-4 py-2 text-white font-sans rounded-md transition duration-150 cursor-pointer ${dateError ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                    disabled={!!dateError} 
                 >
                     Áp Dụng
                 </button>
-                {dateError && <p className="text-red-500 text-sm">{dateError}</p>}
+                
+                {dateError && <p className="text-red-500 text-sm md:col-span-6">{dateError}</p>}
             </form>
 
             {/* Bảng Hiển thị Dữ liệu */}
