@@ -27,5 +27,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModel> CreateForgotPassword(RequestForgotPassword requestForgotPassword);
         public Task<MessageModel> CreateNewPassword(RequestCreateNewPassword requestCreateNewPassword);
         public Task<User> GetUserById(int userId);
+        public Task<MessageModelWithData<List<ResponseUserAddress>>> GetUserAddress();
     }
 }

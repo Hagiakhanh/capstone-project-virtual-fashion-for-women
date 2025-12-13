@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using VirtualTryonWomenFashion.Data.DBContext;
+using VirtualTryonWomenFashion.Data.Enum;
 using VirtualTryonWomenFashion.Data.GenericRepository;
 using VirtualTryonWomenFashion.Data.IRepositories;
 using VirtualTryonWomenFashion.Data.Models;
@@ -87,5 +88,31 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                     .ThenInclude(ord => ord.OrderRefund)
                 .ToListAsync();
         }
+
+        public async Task<List<OrderDetail>> GetRevenueOrderDetailsAsync(
+            DateTime start,
+            DateTime end)
+        {
+            return await _context.OrderDetails
+                .Include(od => od.Order)
+                .Include(od => od.OrderRefundDetails)
+                    .ThenInclude(rd => rd.OrderRefund)
+                /*.Where(od =>
+                    od.Order.CreatedAt >= start &&
+                    od.Order.CreatedAt <= end &&
+                    (
+                        od.Order.Status == OrderStatusEnum.Completed.ToString()
+                        || od.Order.Status == OrderStatusEnum.Returning.ToString()
+                        || od.Order.Status == OrderStatusEnum.Returned.ToString()
+                    ))*/
+                .Where(od =>
+                    od.Order.CreatedAt >= start &&
+                    od.Order.CreatedAt <= end &&
+                    od.Order.Status == OrderStatusEnum.Completed.ToString() &&
+                    od.Order.DeliveredAt != null
+                )
+                .ToListAsync();
+        }
+
     }
 }

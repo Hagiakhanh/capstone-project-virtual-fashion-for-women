@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using VirtualTryonWomenFashion.Service.IServices;
@@ -32,6 +33,7 @@ public class RecommendationController : ControllerBase
     }
 
     [HttpPost("trigger-compute")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> TriggerComputeAsync()
     {
         try

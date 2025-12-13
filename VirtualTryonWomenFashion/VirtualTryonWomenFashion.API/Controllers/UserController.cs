@@ -78,7 +78,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 Pagination<ResponseStaffInformation> staffList = await _userService.GetAllStaffForAdmin(page, isActive);
                 var metadata = new
                 {
-                    staffList.TotalCount,   
+                    staffList.TotalCount,
                     staffList.PageSize,
                     staffList.CurrentPage,
                     staffList.TotalPages
@@ -90,6 +90,20 @@ namespace VirtualTryonWomenFashion.API.Controllers
                     StatusCode = StatusCodes.Status200OK,
                     Data = staffList
                 });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("user-address")]
+        public async Task<IActionResult> GetUserAddressList()
+        {
+            try
+            {
+                MessageModelWithData<List<ResponseUserAddress>> result = await _userService.GetUserAddress();
+                return StatusCode(result.StatusCode, result);
             }
             catch (Exception ex)
             {

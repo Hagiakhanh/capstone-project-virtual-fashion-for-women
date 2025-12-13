@@ -158,6 +158,34 @@ public class DashboardService : IDashboardService
         return purchase - refund;
     }
 
+    private decimal CalculateRevenueFromOrderDetails(IEnumerable<OrderDetail> details)
+    {
+        decimal revenue = 0;
+
+        foreach (var od in details)
+        {
+            // ❌ Đơn không nhận hàng → bỏ qua
+            if (od.Order.Status == OrderStatusEnum.Returning.ToString()
+             || od.Order.Status == OrderStatusEnum.Returned.ToString())
+            {
+                continue;
+            }
+
+            int refundedQty = od.OrderRefundDetails
+                .Where(rd =>
+                    rd.OrderRefund.Status == OrderRefundStatusEnum.Accepted.ToString()
+                 || rd.OrderRefund.Status == OrderRefundStatusEnum.Completed.ToString())
+                .Sum(rd => rd.Quantity);
+
+            int validQty = od.Quantity - refundedQty;
+            if (validQty <= 0) continue;
+
+            revenue += validQty * od.PriceAtTime;
+        }
+
+        return revenue;
+    }
+
     public async Task<List<RevenueResult>> GetRevenueAsync(RevenueFilterRequest filter)
     {
         DateTime start, end;
@@ -193,7 +221,7 @@ public class DashboardService : IDashboardService
                 periodStart: start,
                 periodEnd: end,
                 labelFormat: "yyyy-MM",
-                groupBy: t => new DateTime(t.CreatedAt.Year, t.CreatedAt.Month, 1),
+                groupBy: t => new DateTime(t.UpdatedAt.Year, t.UpdatedAt.Month, 1),
                 transactions: transactions
             );
         }
@@ -211,7 +239,7 @@ public class DashboardService : IDashboardService
                 periodStart: start,
                 periodEnd: end,
                 labelFormat: "dd/MM/yyyy",
-                groupBy: t => t.CreatedAt.Date,
+                groupBy: t => t.UpdatedAt.Date,
                 transactions: transactions
             );
         }
@@ -227,8 +255,85 @@ public class DashboardService : IDashboardService
                 periodStart: start,
                 periodEnd: end,
                 labelFormat: "dd/MM/yyyy",
-                groupBy: t => t.CreatedAt.Date,
+                groupBy: t => t.UpdatedAt.Date,
                 transactions: transactions
+            );
+        }
+
+        return new List<RevenueResult>();
+    }
+
+    public async Task<List<RevenueResult>> GetRevenueVersion2Async(RevenueFilterRequest filter)
+    {
+        DateTime start, end;
+
+        if (filter.StartDate.HasValue && filter.EndDate.HasValue && filter.StartDate >= filter.EndDate)
+        {
+            throw new ArgumentException("Start date must be before end date");
+        }
+
+        // 1. Không cho phép ngày ở tương lai
+        DateTime now = DateTime.Now.AddHours(+7);
+
+        if (filter.StartDate.HasValue && filter.StartDate.Value > now)
+        {
+            start = now;
+        }
+
+        if (filter.EndDate.HasValue && filter.EndDate.Value > now)
+        {
+            end = now;
+        }
+
+        // ===== CASE 1: NĂM =====
+        if (filter.Year.HasValue &&
+            !filter.Month.HasValue &&
+            !filter.StartDate.HasValue)
+        {
+            (start, end) = GetYearRange(filter.Year.Value);
+
+            var orderDetails = await _orderDetailRepository.GetRevenueOrderDetailsAsync(start, end);
+
+            return GenerateFilledPeriodByOrderDetail(
+                periodStart: start,
+                periodEnd: end,
+                labelFormat: "yyyy-MM",
+                groupBy: od => od.Order.DeliveredAt!.Value.Date,
+                details: orderDetails
+            );
+        }
+
+        // ===== CASE 2: THÁNG =====
+        if (filter.Year.HasValue &&
+            filter.Month.HasValue &&
+            !filter.StartDate.HasValue)
+        {
+            (start, end) = GetMonthRange(filter.Year.Value, filter.Month.Value);
+
+            var orderDetails = await _orderDetailRepository.GetRevenueOrderDetailsAsync(start, end);
+
+            return GenerateFilledPeriodByOrderDetail(
+                periodStart: start,
+                periodEnd: end,
+                labelFormat: "dd/MM/yyyy",
+                groupBy: od => od.Order.DeliveredAt!.Value.Date,
+                details: orderDetails
+            );
+        }
+
+        // ===== CASE 3: KHOẢNG NGÀY =====
+        if (filter.StartDate.HasValue && filter.EndDate.HasValue)
+        {
+            (start, end) = GetDateRange(filter.StartDate.Value, filter.EndDate.Value);
+
+            var orderDetails = await _orderDetailRepository.GetRevenueOrderDetailsAsync(start, end);
+
+            return GenerateFilledPeriodByOrderDetail(
+                periodStart: start,
+                periodEnd: end,
+                labelFormat: "dd/MM/yyyy",
+                groupBy: od => od.Order.DeliveredAt!.Value.Date,
+                details: orderDetails
             );
         }
 
@@ -276,6 +381,48 @@ public class DashboardService : IDashboardService
             var item = results.FirstOrDefault(x => x.Label == label);
             if (item != null)
                 item.TotalRevenue = CalculateRevenue(g);
+        }
+
+        return results.OrderBy(x => x.SortKey).ToList();
+    }
+
+    private List<RevenueResult> GenerateFilledPeriodByOrderDetail(
+        DateTime periodStart,
+        DateTime periodEnd,
+        string labelFormat,
+        Func<OrderDetail, DateTime> groupBy,
+        IEnumerable<OrderDetail> details)
+    {
+        int totalDays = (periodEnd.Date - periodStart.Date).Days + 1;
+
+        var results = Enumerable.Range(0, totalDays)
+            .Select(i =>
+            {
+                var date = periodStart.AddDays(i);
+                if (labelFormat == "yyyy-MM")
+                    date = new DateTime(date.Year, date.Month, 1);
+
+                return new RevenueResult
+                {
+                    SortKey = date,
+                    Label = date.ToString(labelFormat),
+                    TotalRevenue = 0
+                };
+            })
+            .GroupBy(x => x.Label)
+            .Select(g => g.First())
+            .ToList();
+
+        var grouped = details.GroupBy(groupBy);
+
+        foreach (var g in grouped)
+        {
+            string label = g.Key.ToString(labelFormat);
+            var item = results.FirstOrDefault(x => x.Label == label);
+            if (item != null)
+            {
+                item.TotalRevenue = CalculateRevenueFromOrderDetails(g);
+            }
         }
 
         return results.OrderBy(x => x.SortKey).ToList();

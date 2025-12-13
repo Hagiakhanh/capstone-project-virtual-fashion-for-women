@@ -1322,10 +1322,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                 if (!string.IsNullOrEmpty(colorReq.ProductColorId) && dbColorsDict.TryGetValue(colorReq.ProductColorId, out var existingColor))
                 {
                     // Đây là UPDATE. Lấy giá trị final
-                    // Nếu request là null, giữ giá trị cũ (existing).
-                    // Nếu request không null (kể cả ""), lấy giá trị request.
-                    finalLensId = colorReq.LensId ?? existingColor.LensId;
-                    finalPackageLens = colorReq.PackageLens ?? existingColor.PackageLens;
+                    /*finalLensId = colorReq.LensId ?? existingColor.LensId;
+                    finalPackageLens = colorReq.PackageLens ?? existingColor.PackageLens;*/
+                    finalLensId = colorReq.LensId;
+                    finalPackageLens = colorReq.PackageLens;
                 }
                 else
                 {
@@ -1361,7 +1361,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             // Xóa color không còn trong request
-            var toRemove = dbColors.Where(c => !requestColorIds.Contains(c.ProductColorId)).ToList();
+            /*var toRemove = dbColors.Where(c => !requestColorIds.Contains(c.ProductColorId)).ToList();
             if (toRemove.Any())
             {
                 foreach (var color in toRemove)
@@ -1376,7 +1376,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
 
                 _productColorRepository.DeleteRange(toRemove);
-            }
+            }*/
         }
 
         private async Task AddNewProductColorAsync(Product product, UpdateProductColorDto colorReq)
@@ -1422,11 +1422,13 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (colorReq.NoBgImgUrl != null)
                 existingColor.NoBgImgUrl = await _cloudinaryService.UploadImageAsync(colorReq.NoBgImgUrl);
 
-            if (colorReq.LensId != null)
-                existingColor.LensId = colorReq.LensId;
-            
-            if (colorReq.PackageLens != null)
-                existingColor.PackageLens = colorReq.PackageLens;
+            //if (colorReq.LensId != null)
+                //existingColor.LensId = colorReq.LensId;
+            existingColor.LensId = string.IsNullOrWhiteSpace(colorReq.LensId) ? null : colorReq.LensId;
+
+            //if (colorReq.PackageLens != null)
+                //existingColor.PackageLens = colorReq.PackageLens;
+            existingColor.PackageLens = string.IsNullOrWhiteSpace(colorReq.PackageLens) ? null : colorReq.PackageLens;
 
             // Replace images
             if (colorReq.ProductVariantImages?.Any() == true)
@@ -1495,9 +1497,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             // Xóa variant không có trong request
-            var toRemove = dbVariants.Where(v => !reqIds.Contains(v.ProductVariantId)).ToList();
+            /*var toRemove = dbVariants.Where(v => !reqIds.Contains(v.ProductVariantId)).ToList();
             if (toRemove.Any())
-                _productVariantRepository.DeleteRange(toRemove);
+                _productVariantRepository.DeleteRange(toRemove);*/
         }
 
         private async Task UpdateExistingVariantAsync(ProductVariant dbVariant, UpdateProductVariantRequest req)
