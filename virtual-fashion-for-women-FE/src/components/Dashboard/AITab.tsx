@@ -47,6 +47,37 @@ const AIDashboard = () => {
     const [topLimit, setTopLimit] = useState(5); 
     const [isTopProductLoading, setIsTopProductLoading] = useState(false);
 
+    // Thêm hàm này vào trong component AIDashboard, trước các hàm fetch...
+    const formatDateLocal = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+
+        // API format: YYYY-MM-DD HH:mm:ss
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    const parseDateRangeWithTime = (dateStr: string, type: 'start' | 'end') => {
+        // Tạo đối tượng Date. Sử dụng "YYYY-MM-DD T00:00:00" để đảm bảo Date được khởi tạo
+        // dựa trên múi giờ local của người dùng (giả sử họ ở VN - UTC+7)
+        // Hoặc sử dụng parse Date.now() để tránh sự khác biệt múi giờ.
+        const date = new Date(dateStr + "T00:00:00");
+        
+        if (type === 'start') {
+            // Ngày bắt đầu: YYYY-MM-DD 00:00:00
+            date.setHours(0, 0, 0, 0); 
+        } else { // type === 'end'
+            // Ngày kết thúc: YYYY-MM-DD 23:59:59
+            // Dùng 999ms để đảm bảo bao gồm toàn bộ giây cuối cùng
+            date.setHours(23, 59, 59, 999); 
+        }
+        
+        return date;
+    };
+
     // --- Logic Fetch Data ---
 
     const fetchOverviewStats = useCallback(async () => {
@@ -61,9 +92,13 @@ const AIDashboard = () => {
     const fetchConversationChart = useCallback(async () => {
         setIsChartLoading(true);
         try {
+            const startDateTime = parseDateRangeWithTime(conversationDateRange.startDate, 'start');
+            const endDateTime = parseDateRangeWithTime(conversationDateRange.endDate, 'end');
             const params = new URLSearchParams({
-                startDate: conversationDateRange.startDate,
-                endDate: conversationDateRange.endDate
+                // startDate: conversationDateRange.startDate,
+                // endDate: conversationDateRange.endDate
+                startDate: formatDateLocal(startDateTime),
+                endDate: formatDateLocal(endDateTime)
             });
             const response = await api.get(`/dashboard/conversation-chart?${params}`);
             setChartData(response.data);
@@ -78,9 +113,13 @@ const AIDashboard = () => {
     const fetchTopProducts = useCallback(async () => {
         setIsTopProductLoading(true);
         try {
+            const startDateTime = parseDateRangeWithTime(topProductDateRange.startDate, 'start');
+            const endDateTime = parseDateRangeWithTime(topProductDateRange.endDate, 'end');
             const params = new URLSearchParams({
-                start: topProductDateRange.startDate,
-                end: topProductDateRange.endDate,
+                // start: topProductDateRange.startDate,
+                // end: topProductDateRange.endDate,
+                start: formatDateLocal(startDateTime),
+                end: formatDateLocal(endDateTime),
                 top: topLimit.toString()
             });
             const response = await api.get(`/dashboard/top-suggest-product?${params}`);
