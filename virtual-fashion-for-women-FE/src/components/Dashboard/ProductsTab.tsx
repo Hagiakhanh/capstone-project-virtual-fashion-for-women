@@ -63,13 +63,6 @@ const ProductsTab = () => {
 
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];  
 
-    // const formatDateLocal = (date: Date) => {
-    //     const year = date.getFullYear();
-    //     const month = String(date.getMonth() + 1).padStart(2, '0');
-    //     const day = String(date.getDate()).padStart(2, '0');
-    //     return `${year}-${month}-${day}`;
-    // };
-
     const formatDateLocal = (date: Date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -81,7 +74,23 @@ const ProductsTab = () => {
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     };
 
-    
+    // Thêm hàm này vào component ProductsTab
+    const formatDateWithTime = (date: Date, type: 'start' | 'end') => {
+        // Luôn bắt đầu từ đối tượng Date của ngày được chọn
+        const d = new Date(date); 
+
+        if (type === 'start') {
+            // Thiết lập 00:00:00.000 (Đầu ngày)
+            d.setHours(0, 0, 0, 0); 
+        } else { // type === 'end'
+            // Thiết lập 23:59:59.999 (Cuối ngày)
+            d.setHours(23, 59, 59, 999); 
+        }
+        
+        // Sử dụng hàm formatDateLocal đã có để định dạng chuỗi
+        return formatDateLocal(d); 
+    };
+
     const getTryOnDateRange = () => {
         const end = new Date();
         let start = new Date();
@@ -91,18 +100,30 @@ const ProductsTab = () => {
             end.setHours(23, 59, 59, 999);
         } else if (tryOnFilter === '7Days') {
             start.setDate(end.getDate() - 7);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
         } else if (tryOnFilter === '14Days') {
             start.setDate(end.getDate() - 14);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
         } else if (tryOnFilter === 'Range') {
             // Nếu chưa chọn ngày, fallback về 7 ngày
             if (tryOnStartDate && tryOnEndDate) {
-                return { start: tryOnStartDate, end: tryOnEndDate };
+                return {
+                    //start: tryOnStartDate, end: tryOnEndDate 
+                    start: new Date(tryOnStartDate.setHours(0, 0, 0, 0)), 
+                    end: new Date(tryOnEndDate.setHours(23, 59, 59, 999))
+                };
             } else {
                 start.setDate(end.getDate() - 7);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
             }
         } else {
             // Default
             start.setDate(end.getDate() - 7);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
         }
         
         return { start, end };
@@ -118,9 +139,10 @@ const ProductsTab = () => {
             params = { year: year, month: month };
         } else if (timeFilter === 'Range' && startDateRange && endDateRange) {
             params = { 
-            // Backend mong đợi định dạng ISO string
-                startDate: formatDateLocal(startDateRange), 
-                endDate: formatDateLocal(endDateRange) 
+                // startDate: formatDateLocal(startDateRange), 
+                // endDate: formatDateLocal(endDateRange) 
+                startDate: formatDateWithTime(startDateRange, 'start'), 
+                endDate: formatDateWithTime(endDateRange, 'end')
             };
         } else {
             // Mặc định cho năm hiện tại
@@ -309,7 +331,7 @@ const ProductsTab = () => {
                         <div className="flex flex-wrap justify-between items-center mb-3 gap-2">
                             <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-blue-500" />
-                                Doanh Thu Theo Thời Gian
+                                Doanh Thu Thuần Theo Thời Gian
                             </h2>
                             <div className="flex gap-2 items-center">
                                 <select 
@@ -419,7 +441,7 @@ const ProductsTab = () => {
                                     formatter={(value: number) => formatCurrency(value)}
                                     labelFormatter={formatDateLabel}
                                 />
-                                <Line type="monotone" name='Doanh thu' dataKey="totalRevenue" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+                                <Line type="monotone" name='Doanh thu thuần' dataKey="totalRevenue" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
                                 </LineChart>
                             )}
                         </ResponsiveContainer>
