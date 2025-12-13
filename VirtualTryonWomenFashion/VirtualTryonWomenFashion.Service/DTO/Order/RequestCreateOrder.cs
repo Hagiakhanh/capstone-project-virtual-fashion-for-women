@@ -24,5 +24,7 @@ public class RequestCreateOrder
     public string? Note { get; set; } = "";
     [Required]
     public string PaymentMethod { get; set; }
+    [Required]
+    public string DeliveringType { get; set; }
     
 }

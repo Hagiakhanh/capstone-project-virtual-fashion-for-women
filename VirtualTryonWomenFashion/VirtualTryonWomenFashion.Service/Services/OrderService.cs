@@ -127,7 +127,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     WardName = requestCreateOrder.WardName,
                 });
 
-                (int provinceId, int districtId, string wardCode) =
+                var deliveringFee = responseCheckout.DeliveryTypeFees.Where(rc => rc.DeliveryType == requestCreateOrder.DeliveringType).FirstOrDefault();
+
+                (int provinceId, int districtId, string wardCode, string errorGHN) =
                     await _cartService.GetAddressCodeAsync(requestCreateOrder.ProvinceName,
                         requestCreateOrder.DistrictName,
                         requestCreateOrder.WardName);
@@ -140,16 +142,17 @@ namespace VirtualTryonWomenFashion.Service.Services
                     CreatedAt = DateTime.UtcNow.AddHours(7),
                     Note = requestCreateOrder.Note,
                     Status = OrderStatusEnum.Pending.ToString(),
-                    Amount = responseCheckout.TotalPrice,
+                    Amount = deliveringFee.TotalPrice,
                     PackageWeight = totalWeight,
                     PackageHeight = totalHeight,
                     PackageWidth = totalWidth,
                     PackageLength = totalLength,
-                    ShippingMoney = responseCheckout.ServiceFee,
-                    InsuranceFee = responseCheckout.InsuranceFee,
+                    ShippingMoney = deliveringFee.ServiceFee,
+                    InsuranceFee = deliveringFee.InsuranceFee,
                     ProvinceId = provinceId,
                     DistrictId = districtId,
                     WardCode = wardCode,
+                    DeliveringType = requestCreateOrder.DeliveringType
                 };
                 await _orderRepository.InsertAsync(order);
                 await _unitOfWork.SaveChanges();
