@@ -856,12 +856,16 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 await _transactionService.CreateTransactionAsync(transaction);
                             }
                         }
-                        requestCreateStatusLogs.Add(new RequestCreateStatusLog()
+                        List<string> transitionStatuses =OrderShippingStateHelper.BuildTransitionPath(oldStatus,order.Status);
+                        foreach (var status in transitionStatuses)
                         {
-                            OrderId = order.OrderId,
-                            Status = order.Status,
-                            UpdateAt = DateTime.UtcNow.AddHours(7)
-                        });
+                            requestCreateStatusLogs.Add(new RequestCreateStatusLog
+                            {
+                                OrderId = order.OrderId,
+                                Status = status,
+                                UpdateAt = DateTime.UtcNow.AddHours(7)
+                            });
+                        }
                         await _orderRepository.UpdateAsync(order);
                         int result = await _unitOfWork.SaveChanges();
                         await _statusLogService.CreateStatusLog(requestCreateStatusLogs);
@@ -1038,12 +1042,16 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                             }
                         }
-                        statusLogs.Add(new RequestCreateStatusLog()
+                        List<string> transitionStatuses = OrderShippingStateHelper.BuildTransitionPath(oldStatus, order.Status);
+                        foreach (var status in transitionStatuses)
                         {
-                            OrderId = order.OrderId,
-                            Status = order.Status,
-                            UpdateAt = DateTime.UtcNow.AddHours(7)
-                        });
+                            statusLogs.Add(new RequestCreateStatusLog
+                            {
+                                OrderId = order.OrderId,
+                                Status = status,
+                                UpdateAt = DateTime.UtcNow.AddHours(7)
+                            });
+                        }
                         await _orderRepository.UpdateAsync(order);
                         successCount++;
 
