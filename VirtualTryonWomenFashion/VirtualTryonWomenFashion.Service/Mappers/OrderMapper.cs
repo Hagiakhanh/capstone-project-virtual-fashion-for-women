@@ -27,6 +27,7 @@ public static class OrderMapper
             ShippingCode = model.ShippingCode,
             PaymentUrl = model.PaymentUrl,
             EstimatedDelivery = model.EstimatedDelivery,
+            DeliveringType = model.DeliveringType,
             UserInformation = model.Customer.MapToUserInformation(),
             TransactionInformations = model.Transactions.Select(x=>x.MapToTransactionInformation()).ToList(),
             ResponseOrderDetails = responseOrderDetails,

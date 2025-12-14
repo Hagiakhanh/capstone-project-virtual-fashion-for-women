@@ -16,7 +16,8 @@ namespace VirtualTryonWomenFashion.Service.DTO.SaleCampaign
 
         public string DescriptionUpdated { get; set; }
         public IFormFile? ImageFile { get; set; }
-
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
         public List<RequestCreateProductInSaleCampaign>? ProductInSalesCampaigns { get; set; }
         public List<string>? ListIdDeleted { get; set; }
         public SaleCampaignStatusEnum? CampaignStatus { get; set; }
