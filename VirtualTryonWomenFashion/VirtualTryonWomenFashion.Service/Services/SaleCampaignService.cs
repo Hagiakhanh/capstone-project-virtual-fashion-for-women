@@ -314,6 +314,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                         StatusCode = StatusCodes.Status404NotFound
                     };
                 }
+                if (campaign.Status.ToString() == SaleCampaignStatusEnum.Expired.ToString())
+                {
+                    throw new ArgumentException("Trạng thái chiến dịch là hết hạn cập nhật không hợp lệ");
+                }
                 DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
 
                 // cập nhật thông tin cơ bản
