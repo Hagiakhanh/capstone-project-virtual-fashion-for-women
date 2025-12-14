@@ -49,6 +49,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 t.CreatedAt >= startDate &&
                 t.CreatedAt <= endDate &&
                 t.Status == TransactionStatusEnum.Success.ToString())
+            .Include(t => t.Order)
             .ToListAsync();
         }
     }

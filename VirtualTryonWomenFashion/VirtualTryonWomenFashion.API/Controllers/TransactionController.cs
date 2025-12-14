@@ -97,7 +97,8 @@ public class TransactionController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllTransaction([FromQuery] string? type,
+    public async Task<IActionResult> GetAllTransaction([FromQuery] int? orderId,
+            [FromQuery] string? type,
             [FromQuery] string? status,
             [FromQuery] string? method,
             [FromQuery] DateTime? startDate,
@@ -107,7 +108,7 @@ public class TransactionController : ControllerBase
         try
         {
             Pagination<ResponseTransactionAdmin> result =
-                await _transactionService.GetAllTransactions(type, status, method, startDate, endDate, pagination);
+                await _transactionService.GetAllTransactions(orderId, type, status, method, startDate, endDate, pagination);
             var metadata = new
             {
                 result.TotalCount,
