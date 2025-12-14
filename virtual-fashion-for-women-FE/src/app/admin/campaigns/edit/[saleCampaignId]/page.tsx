@@ -51,10 +51,7 @@ export default function EditSaleCampaignPage() {
   const [deletedProductIds, setDeletedProductIds] = useState<string[]>([]);
   const [campaignImage, setCampaignImage] = useState<string | undefined>();
 
-  const watchedProducts = Form.useWatch(
-    "ProductInSalesCampaigns",
-    form
-  );
+  const watchedProducts = Form.useWatch("ProductInSalesCampaigns", form);
   // 🧩 Fetch dữ liệu chiến dịch
   useEffect(() => {
     const fetchDetail = async () => {
@@ -135,11 +132,9 @@ export default function EditSaleCampaignPage() {
           );
           formData.append(`ProductInSalesCampaigns[${i}].Value`, p.Value);
         });
-
-       
       }
-      if(campaignStatus=="Pending"){
-         deletedProductIds.forEach((pid, i) =>
+      if (campaignStatus == "Pending") {
+        deletedProductIds.forEach((pid, i) =>
           formData.append(`ListIdDeleted[${i}]`, pid)
         );
       }
@@ -188,11 +183,18 @@ export default function EditSaleCampaignPage() {
               label="Tên chiến dịch"
               rules={[{ required: true, message: "Vui lòng nhập tên" }]}
             >
-              <Input placeholder="Nhập tên chiến dịch" />
+              <Input
+                placeholder="Nhập tên chiến dịch"
+                disabled={campaignStatus == "Expired"}
+              />
             </Form.Item>
 
             <Form.Item name="Description" label="Mô tả">
-              <Input.TextArea rows={3} placeholder="Nhập mô tả" />
+              <Input.TextArea
+                rows={3}
+                placeholder="Nhập mô tả"
+                disabled={campaignStatus == "Expired"}
+              />
             </Form.Item>
 
             <Form.Item
@@ -200,12 +202,23 @@ export default function EditSaleCampaignPage() {
               label="Ảnh đại diện"
               valuePropName="selectedFile"
             >
-              <ImageUploader
-                label="Chọn ảnh mới (nếu cần)"
-                onFileChange={(file) => form.setFieldValue("ImageFile", file)}
-                selectedFile={null}
-                imageDefaultUrl={campaignImage}
-              />
+              {campaignStatus == "Expired" ? (
+                <Image
+                  src={campaignImage || ""}
+                  alt="Preview"
+                  height={350}
+                  width={350}
+                  style={{ objectFit: "cover"}}
+                  className="rounded-lg "
+                />
+              ) : (
+                <ImageUploader
+                  label="Chọn ảnh mới (nếu cần)"
+                  onFileChange={(file) => form.setFieldValue("ImageFile", file)}
+                  selectedFile={null}
+                  imageDefaultUrl={campaignImage}
+                />
+              )}
             </Form.Item>
 
             <Form.Item
@@ -294,13 +307,14 @@ export default function EditSaleCampaignPage() {
                             <Select
                               options={discountTypeOptions}
                               disabled={
-                                campaignStatus !== "Expired" && isExisting
+                                campaignStatus == "Expired" ||
+                                (campaignStatus != "Expired" && campaignStatus!="Pending" && isExisting)
                               }
                               onChange={() => {
                                 form.validateFields([
-                                    ["ProductInSalesCampaigns", name, "Value"],
+                                  ["ProductInSalesCampaigns", name, "Value"],
                                 ]);
-                            }}
+                              }}
                               style={{ width: 180 }}
                             />
                           </Form.Item>
@@ -357,7 +371,8 @@ export default function EditSaleCampaignPage() {
                                   : 1000
                               }
                               disabled={
-                                campaignStatus !== "Expired" && isExisting
+                                campaignStatus == "Expired" ||
+                                (campaignStatus != "Expired" && campaignStatus!="Pending" && isExisting)
                               }
                             />
                           </Form.Item>
@@ -381,7 +396,7 @@ export default function EditSaleCampaignPage() {
 
             <div className="flex justify-between mt-6">
               {/* Nút trạng thái */}
-              {campaignStatus === "Active" ? (
+              {campaignStatus == "Active" || campaignStatus== "Pending" ? (
                 <Button
                   danger
                   onClick={() => setCampaignStatus("Inactive")}
@@ -393,7 +408,7 @@ export default function EditSaleCampaignPage() {
                 <Button
                   type="default"
                   onClick={() => setCampaignStatus("Active")}
-                  disabled={saving}
+                  disabled={saving ||  campaignStatus=="Expired"}
                 >
                   Kích hoạt lại
                 </Button>
@@ -403,7 +418,7 @@ export default function EditSaleCampaignPage() {
                 type="primary"
                 htmlType="submit"
                 loading={saving}
-                disabled={saving}
+                disabled={saving || campaignStatus=="Expired"}
               >
                 Lưu thay đổi
               </AntButtonCommon>
