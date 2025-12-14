@@ -58,9 +58,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                 var newCharacteristic = new Characteristic
                 {
                     UserId = currentUserId,
-                    Weight = requestModel.Weight,
-                    Height = requestModel.Height,
-                    Age = requestModel.Age
+                    //Weight = requestModel.Weight,
+                    //Height = requestModel.Height,
+                    //Age = requestModel.Age
                 };
                 if (requestModel.Waist != null && requestModel.Hips != null && requestModel.Bust != null)
                 {
@@ -295,9 +295,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                     };
                 }
 
-                existingCharacteristic.Weight = requestModel.Weight;
-                existingCharacteristic.Height = requestModel.Height;
-                existingCharacteristic.Age = requestModel.Age;
+                //existingCharacteristic.Weight = requestModel.Weight;
+                //existingCharacteristic.Height = requestModel.Height;
+                //existingCharacteristic.Age = requestModel.Age;
                 if (requestModel.Waist != null && requestModel.Hips != null && requestModel.Bust != null)
                 {
                     if ((requestModel.Waist <= 30 || requestModel.Hips <= 30 || requestModel.Bust <= 30) ||

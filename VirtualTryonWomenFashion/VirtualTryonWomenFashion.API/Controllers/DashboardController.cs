@@ -52,6 +52,24 @@ public class DashboardController : ControllerBase
         }
     }
 
+    [HttpGet("revenue-v2")]
+    public async Task<IActionResult> GetRevenueV2([FromQuery] RevenueFilterRequest filter)
+    {
+        try
+        {
+            var result = await _dashboardService.GetRevenueVersion2Async(filter);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return StatusCode(400, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     [HttpGet("category-pie")]
     public async Task<IActionResult> GetCategorySalePie([FromQuery]string timeFilterType)
     {

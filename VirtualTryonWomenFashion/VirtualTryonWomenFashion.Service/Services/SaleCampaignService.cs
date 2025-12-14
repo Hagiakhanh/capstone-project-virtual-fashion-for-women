@@ -314,6 +314,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                         StatusCode = StatusCodes.Status404NotFound
                     };
                 }
+                if (campaign.Status.ToString() == SaleCampaignStatusEnum.Expired.ToString())
+                {
+                    throw new ArgumentException("Trạng thái chiến dịch là hết hạn cập nhật không hợp lệ");
+                }
                 DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
 
                 // cập nhật thông tin cơ bản
@@ -332,6 +336,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         campaign.Status = SaleCampaignStatusEnum.Pending.ToString();
                     }
+                    if (today == campaign.StartDate)
+                    {
+                        campaign.Status = SaleCampaignStatusEnum.Active.ToString();
+                    }
+                    campaign.StartDate = model.StartDate;
+                    campaign.EndDate = model.EndDate;
                 }
                 else
                     if (model.CampaignStatus == SaleCampaignStatusEnum.Expired)
@@ -341,329 +351,333 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 // cập nhật hình ảnh
                 if (model.ImageFile != null)
-            {
-                string imageUrl = await _cloudinaryService.UploadImageAsync(model.ImageFile);
-                campaign.ImageUrl = imageUrl;
-            }
-
-
-
-            // xử lý cập nhật sản phẩm
-            var productInCampaigns = campaign.ProductInSaleCampaigns?.ToList() ?? new List<ProductInSaleCampaign>();
-
-            // xoá sản phẩm theo ListIdDeleted
-            if (model.ListIdDeleted != null && model.ListIdDeleted.Any())
-            {
-                productInCampaigns.RemoveAll(p => model.ListIdDeleted.Contains(p.ProductId));
-                await _productInSaleCampaignService.BulkDeleteProductInCampaign(campaignId, model.ListIdDeleted);
-            }
-
-            // thêm hoặc update sản phẩm
-            if (model.ProductInSalesCampaigns != null && model.ProductInSalesCampaigns.Any())
-            {
-                var productIds = model.ProductInSalesCampaigns.Select(p => p.ProductID).ToList();
-                var productDetails = await _productRepository.GetAll(null, x => (productIds.Contains(x.ProductId) && !x.IsDeleted.Value));
-
-                ValidateProductInSaleCampaigns(model.ProductInSalesCampaigns, productDetails);
-
-                foreach (var requestProd in model.ProductInSalesCampaigns)
                 {
-                    var detailProduct = productDetails.First(x => x.ProductId == requestProd.ProductID);
-                    decimal originalPrice = detailProduct.Price ?? 0;
+                    string imageUrl = await _cloudinaryService.UploadImageAsync(model.ImageFile);
+                    campaign.ImageUrl = imageUrl;
+                }
 
-                    decimal salePercent = 0;
-                    decimal salePrice = 0;
 
-                    if (requestProd.DiscountType == SalePriceTypeInputEnum.PercentDiscount)
-                    {
-                        salePercent = requestProd.Value;
-                        salePrice = Math.Round(originalPrice * (1 - (salePercent / 100)), 0, MidpointRounding.AwayFromZero);
-                    }
-                    else
-                    {
-                        salePrice = requestProd.Value;
-                        salePercent = Math.Round((1 - (salePrice / originalPrice)) * 100, 2, MidpointRounding.AwayFromZero);
-                    }
 
-                    var existingProd = productInCampaigns.FirstOrDefault(p => p.ProductId == requestProd.ProductID);
-                    if (existingProd != null)
+                // xử lý cập nhật sản phẩm
+                var productInCampaigns = campaign.ProductInSaleCampaigns?.ToList() ?? new List<ProductInSaleCampaign>();
+
+                // xoá sản phẩm theo ListIdDeleted
+                if (model.ListIdDeleted != null && model.ListIdDeleted.Any())
+                {
+                    if (campaign.Status != SaleCampaignStatusEnum.Pending.ToString())
                     {
-                        // update sản phẩm đã có
-                        existingProd.SalePrice = salePrice;
-                        existingProd.PercentDiscount = salePercent;
+                        throw new ArgumentException("Chiến dịch đã hoạt động không thể xoá sản phẩm");
                     }
-                    else
+                    productInCampaigns.RemoveAll(p => model.ListIdDeleted.Contains(p.ProductId));
+                    await _productInSaleCampaignService.BulkDeleteProductInCampaign(campaignId, model.ListIdDeleted);
+                }
+
+                // thêm hoặc update sản phẩm
+                if (model.ProductInSalesCampaigns != null && model.ProductInSalesCampaigns.Any())
+                {
+                    var productIds = model.ProductInSalesCampaigns.Select(p => p.ProductID).ToList();
+                    var productDetails = await _productRepository.GetAll(null, x => (productIds.Contains(x.ProductId) && !x.IsDeleted.Value));
+
+                    ValidateProductInSaleCampaigns(model.ProductInSalesCampaigns, productDetails);
+
+                    foreach (var requestProd in model.ProductInSalesCampaigns)
                     {
-                        // thêm mới
-                        productInCampaigns.Add(new ProductInSaleCampaign
+                        var detailProduct = productDetails.First(x => x.ProductId == requestProd.ProductID);
+                        decimal originalPrice = detailProduct.Price ?? 0;
+
+                        decimal salePercent = 0;
+                        decimal salePrice = 0;
+
+                        if (requestProd.DiscountType == SalePriceTypeInputEnum.PercentDiscount)
                         {
-                            CampaignId = campaign.CampaignId,
-                            ProductId = requestProd.ProductID,
-                            SalePrice = salePrice,
-                            PercentDiscount = salePercent
-                        });
+                            salePercent = requestProd.Value;
+                            salePrice = Math.Round(originalPrice * (1 - (salePercent / 100)), 0, MidpointRounding.AwayFromZero);
+                        }
+                        else
+                        {
+                            salePrice = requestProd.Value;
+                            salePercent = Math.Round((1 - (salePrice / originalPrice)) * 100, 2, MidpointRounding.AwayFromZero);
+                        }
+
+                        var existingProd = productInCampaigns.FirstOrDefault(p => p.ProductId == requestProd.ProductID);
+                        if (existingProd != null)
+                        {
+                            // update sản phẩm đã có
+                            existingProd.SalePrice = salePrice;
+                            existingProd.PercentDiscount = salePercent;
+                        }
+                        else
+                        {
+                            // thêm mới
+                            productInCampaigns.Add(new ProductInSaleCampaign
+                            {
+                                CampaignId = campaign.CampaignId,
+                                ProductId = requestProd.ProductID,
+                                SalePrice = salePrice,
+                                PercentDiscount = salePercent
+                            });
+                        }
                     }
                 }
+
+                // gán lại danh sách sản phẩm
+                campaign.ProductInSaleCampaigns = productInCampaigns;
+
+                await _saleCampaignRepository.UpdateAsync(campaign);
+                await _unitOfWork.SaveChanges();
+
+                var response = new ResponseGetSaleCampaign
+                {
+                    CampaignId = campaign.CampaignId,
+                    CampaignName = campaign.CampaignName,
+                    Description = campaign.Description,
+                    StartDate = campaign.StartDate,
+                    EndDate = campaign.EndDate,
+                    Status = campaign.Status,
+                    ImageUrl = campaign.ImageUrl,
+                };
+
+                return new MessageModelWithData<ResponseGetSaleCampaign>
+                {
+                    Message = "Cập nhật chiến dịch thành công",
+                    StatusCode = StatusCodes.Status200OK,
+                    Data = response
+                };
             }
-
-            // gán lại danh sách sản phẩm
-            campaign.ProductInSaleCampaigns = productInCampaigns;
-
-            await _saleCampaignRepository.UpdateAsync(campaign);
-            await _unitOfWork.SaveChanges();
-
-            var response = new ResponseGetSaleCampaign
-            {
-                CampaignId = campaign.CampaignId,
-                CampaignName = campaign.CampaignName,
-                Description = campaign.Description,
-                StartDate = campaign.StartDate,
-                EndDate = campaign.EndDate,
-                Status = campaign.Status,
-                ImageUrl = campaign.ImageUrl,
-            };
-
-            return new MessageModelWithData<ResponseGetSaleCampaign>
-            {
-                Message = "Cập nhật chiến dịch thành công",
-                StatusCode = StatusCodes.Status200OK,
-                Data = response
-            };
-        }
             catch (ArgumentException ex)
             {
                 return new MessageModelWithData<ResponseGetSaleCampaign>
                 {
                     Message = "Cập nhật thất bại - " + ex.Message,
                     StatusCode = StatusCodes.Status400BadRequest
-    };
-}
+                };
+            }
             catch (Exception ex)
             {
                 return new MessageModelWithData<ResponseGetSaleCampaign>
-                       {
-                           Message = "Cập nhật thất bại - Lỗi hệ thống",
-                           StatusCode = StatusCodes.Status500InternalServerError
-                       };
+                {
+                    Message = "Cập nhật thất bại - Lỗi hệ thống",
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
             }
         }
 
         public void ValidateProductInSaleCampaignsBasic(List<RequestCreateProductInSaleCampaign> products)
-{
-    if (products == null || !products.Any())
-    {
-        throw new ArgumentException("Danh sách sản phẩm không được để trống");
-    }
-
-    foreach (var p in products)
-    {
-        if (string.IsNullOrWhiteSpace(p.ProductID))
         {
-            throw new ArgumentException("ProductID không được để trống");
-        }
+            if (products == null || !products.Any())
+            {
+                throw new ArgumentException("Danh sách sản phẩm không được để trống");
+            }
 
-        if (p.DiscountType == SalePriceTypeInputEnum.PercentDiscount)
-        {
-            if (p.Value < 1 || p.Value > 99)
+            foreach (var p in products)
+            {
+                if (string.IsNullOrWhiteSpace(p.ProductID))
+                {
+                    throw new ArgumentException("ProductID không được để trống");
+                }
+
+                if (p.DiscountType == SalePriceTypeInputEnum.PercentDiscount)
+                {
+                    if (p.Value < 1 || p.Value > 99)
+                    {
+                        throw new ArgumentException(
+                            $"Sản phẩm {p.ProductID}: % giảm giá phải nằm trong khoảng 1 đến 99"
+                        );
+                    }
+                }
+                else // Direct price
+                {
+                    if (p.Value <= 0)
+                    {
+                        throw new ArgumentException(
+                            $"Sản phẩm {p.ProductID}: giá sau giảm phải > 0"
+                        );
+                    }
+                }
+            }
+
+            // check trùng ID
+            var duplicateIds = products.GroupBy(x => x.ProductID)
+                                       .Where(g => g.Count() > 1)
+                                       .Select(g => g.Key)
+                                       .ToList();
+            if (duplicateIds.Any())
             {
                 throw new ArgumentException(
-                    $"Sản phẩm {p.ProductID}: % giảm giá phải nằm trong khoảng 1 đến 99"
+                    $"Danh sách có sản phẩm trùng lặp: {string.Join(", ", duplicateIds)}"
                 );
             }
         }
-        else // Direct price
+
+        public async Task ChangeStatusForExistingSaleCampaign()
         {
-            if (p.Value <= 0)
+            try
             {
-                throw new ArgumentException(
-                    $"Sản phẩm {p.ProductID}: giá sau giảm phải > 0"
-                );
+                DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
+
+                List<SaleCampaign> listExistingSaleCampaign = await _saleCampaignRepository.GetAll(null, x => x.IsDeleted == false
+                && (x.Status == SaleCampaignStatusEnum.InActive.ToString() || x.Status == SaleCampaignStatusEnum.Active.ToString()
+                || x.Status == SaleCampaignStatusEnum.Pending.ToString()));
+
+                List<SaleCampaign> listToExpired = listExistingSaleCampaign.Where(x => x.EndDate < today
+                && x.Status != SaleCampaignStatusEnum.Pending.ToString()).ToList();
+                foreach (SaleCampaign expiredItem in listToExpired)
+                {
+                    expiredItem.Status = SaleCampaignStatusEnum.Expired.ToString();
+                }
+
+                List<SaleCampaign> listWaiting = listExistingSaleCampaign.Where(x => x.StartDate <= today && x.EndDate >= today
+                && x.Status == SaleCampaignStatusEnum.Pending.ToString()).ToList();
+                foreach (SaleCampaign pendingItem in listWaiting)
+                {
+                    pendingItem.Status = SaleCampaignStatusEnum.Active.ToString();
+                }
+
+                if (listWaiting.Any() || listToExpired.Any())
+                {
+                    IEnumerable<SaleCampaign> mergeResult = listWaiting.Concat(listToExpired);
+                    await _saleCampaignRepository.UpdateRangeAsync(mergeResult);
+                    await _unitOfWork.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
-    }
 
-    // check trùng ID
-    var duplicateIds = products.GroupBy(x => x.ProductID)
-                               .Where(g => g.Count() > 1)
-                               .Select(g => g.Key)
-                               .ToList();
-    if (duplicateIds.Any())
-    {
-        throw new ArgumentException(
-            $"Danh sách có sản phẩm trùng lặp: {string.Join(", ", duplicateIds)}"
-        );
-    }
-}
-
-public async Task ChangeStatusForExistingSaleCampaign()
-{
-    try
-    {
-        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
-
-        List<SaleCampaign> listExistingSaleCampaign = await _saleCampaignRepository.GetAll(null, x => x.IsDeleted == false
-        && (x.Status == SaleCampaignStatusEnum.InActive.ToString() || x.Status == SaleCampaignStatusEnum.Active.ToString()
-        || x.Status == SaleCampaignStatusEnum.Pending.ToString()));
-
-        List<SaleCampaign> listToExpired = listExistingSaleCampaign.Where(x => x.EndDate < today
-        && x.Status != SaleCampaignStatusEnum.Pending.ToString()).ToList();
-        foreach (SaleCampaign expiredItem in listToExpired)
+        public async Task<ResponseSaleCampaignStatistic> GetStatisticBySaleCampaignID(
+        int saleCampaignID, DateOnly? startDate = null, DateOnly? endDate = null)
         {
-            expiredItem.Status = SaleCampaignStatusEnum.Expired.ToString();
-        }
+            // Lấy thông tin chiến dịch
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                if (endDate.Value < startDate.Value)
+                {
+                    throw new ArgumentException("Ngày kết thúc không được nhỏ hơn ngày bắt đầu.");
+                }
+            }
+            var campaign = await _saleCampaignRepository.GetDetailSaleCampaignByID(saleCampaignID);
+            if (campaign == null || campaign.IsDeleted)
+                throw new ArgumentException("Chiến dịch không tồn tại hoặc đã bị xoá");
 
-        List<SaleCampaign> listWaiting = listExistingSaleCampaign.Where(x => x.StartDate <= today && x.EndDate >= today
-        && x.Status == SaleCampaignStatusEnum.Pending.ToString()).ToList();
-        foreach (SaleCampaign pendingItem in listWaiting)
+            // Xác định phạm vi ngày
+            DateOnly actualStart = startDate ?? campaign.StartDate.Value;
+            DateOnly actualEnd = endDate ?? campaign.EndDate.Value;
+            if (actualStart < campaign.StartDate.Value || actualEnd > campaign.EndDate.Value)
+                throw new ArgumentException("Khoảng thời gian thống kê phải nằm trong phạm vi của chiến dịch.");
+
+            // Lấy danh sách sản phẩm thuộc chiến dịch
+            var productInCampaigns = campaign.ProductInSaleCampaigns?.ToList() ?? [];
+            var productIds = productInCampaigns.Select(x => x.ProductId).ToList();
+
+            if (!productIds.Any())
+            {
+                return new ResponseSaleCampaignStatistic
+                {
+                    TotalRevenue = 0,
+                    TotalSoldQuantity = 0,
+                    TotalProductInCampaign = 0,
+                    ListProductInCampaign = new(),
+                    ListSaleRevenueDate = new()
+                };
+            }
+
+            var orderDetails = await _orderDetailRepository.GetAllThenInclude(
+                null,
+                od => od.CampaignId == campaign.CampaignId && od.Order.CreatedAt >= actualStart.ToDateTime(TimeOnly.MinValue) &&
+            od.Order.CreatedAt <= actualEnd.ToDateTime(TimeOnly.MaxValue)
+                   && (od.Order.Status != OrderStatusEnum.Pending.ToString() && od.Order.Status != OrderStatusEnum.Failed.ToString()), null,
+                [x => x.ProductVariant.ProductColor.Product, x => x.Order]
+            );
+
+            // Tổng doanh thu & số lượng
+            decimal totalRevenue = orderDetails.Sum(x => x.PriceAtTime * x.Quantity);
+            int totalSoldQuantity = orderDetails.Sum(x => x.Quantity);
+
+            // Trung bình doanh thu mỗi ngày
+            int totalDays = (actualEnd.DayNumber - actualStart.DayNumber) + 1;
+
+            // Nhóm doanh thu theo ngày
+            var revenueByDate = orderDetails
+                .GroupBy(x => DateOnly.FromDateTime(x.Order.CreatedAt))
+                .Select(g => new ResponseSaleCampaignRevenueDate
+                {
+                    Date = g.Key.ToDateTime(TimeOnly.MinValue),
+                    Revenue = g.Sum(x => x.PriceAtTime)
+                })
+                .OrderBy(x => x.Date)
+                .ToList();
+
+            // Nhóm sản phẩm trong chiến dịch
+            var productStatistic = orderDetails
+        .GroupBy(x => x.ProductVariant.ProductColor.ProductId)
+        .Select(g => new ResponseProductInSaleCampaignStatistic
         {
-            pendingItem.Status = SaleCampaignStatusEnum.Active.ToString();
-        }
-
-        if (listWaiting.Any() || listToExpired.Any())
-        {
-            IEnumerable<SaleCampaign> mergeResult = listWaiting.Concat(listToExpired);
-            await _saleCampaignRepository.UpdateRangeAsync(mergeResult);
-            await _unitOfWork.SaveChanges();
-        }
-    }
-    catch (Exception ex)
-    {
-        throw ex;
-    }
-}
-
-public async Task<ResponseSaleCampaignStatistic> GetStatisticBySaleCampaignID(
-int saleCampaignID, DateOnly? startDate = null, DateOnly? endDate = null)
-{
-    // Lấy thông tin chiến dịch
-    if (startDate.HasValue && endDate.HasValue)
-    {
-        if (endDate.Value < startDate.Value)
-        {
-            throw new ArgumentException("Ngày kết thúc không được nhỏ hơn ngày bắt đầu.");
-        }
-    }
-    var campaign = await _saleCampaignRepository.GetDetailSaleCampaignByID(saleCampaignID);
-    if (campaign == null || campaign.IsDeleted)
-        throw new ArgumentException("Chiến dịch không tồn tại hoặc đã bị xoá");
-
-    // Xác định phạm vi ngày
-    DateOnly actualStart = startDate ?? campaign.StartDate.Value;
-    DateOnly actualEnd = endDate ?? campaign.EndDate.Value;
-    if (actualStart < campaign.StartDate.Value || actualEnd > campaign.EndDate.Value)
-        throw new ArgumentException("Khoảng thời gian thống kê phải nằm trong phạm vi của chiến dịch.");
-
-    // Lấy danh sách sản phẩm thuộc chiến dịch
-    var productInCampaigns = campaign.ProductInSaleCampaigns?.ToList() ?? [];
-    var productIds = productInCampaigns.Select(x => x.ProductId).ToList();
-
-    if (!productIds.Any())
-    {
-        return new ResponseSaleCampaignStatistic
-        {
-            TotalRevenue = 0,
-            TotalSoldQuantity = 0,
-            TotalProductInCampaign = 0,
-            ListProductInCampaign = new(),
-            ListSaleRevenueDate = new()
-        };
-    }
-
-    var orderDetails = await _orderDetailRepository.GetAllThenInclude(
-        null,
-        od => od.CampaignId == campaign.CampaignId && od.Order.CreatedAt >= actualStart.ToDateTime(TimeOnly.MinValue) &&
-    od.Order.CreatedAt <= actualEnd.ToDateTime(TimeOnly.MaxValue)
-           && (od.Order.Status != OrderStatusEnum.Pending.ToString() && od.Order.Status != OrderStatusEnum.Failed.ToString()), null,
-        [x => x.ProductVariant.ProductColor.Product, x => x.Order]
-    );
-
-    // Tổng doanh thu & số lượng
-    decimal totalRevenue = orderDetails.Sum(x => x.PriceAtTime*x.Quantity);
-    int totalSoldQuantity = orderDetails.Sum(x => x.Quantity);
-
-    // Trung bình doanh thu mỗi ngày
-    int totalDays = (actualEnd.DayNumber - actualStart.DayNumber) + 1;
-
-    // Nhóm doanh thu theo ngày
-    var revenueByDate = orderDetails
-        .GroupBy(x => DateOnly.FromDateTime(x.Order.CreatedAt))
-        .Select(g => new ResponseSaleCampaignRevenueDate
-        {
-            Date = g.Key.ToDateTime(TimeOnly.MinValue),
-            Revenue = g.Sum(x => x.PriceAtTime)
+            ProductID = g.Key,
+            ProductName = g.First().ProductVariant.ProductColor.Product.ProductName,
+            ImageUrl = g.First().ProductVariant.ProductColor.Product.MainImageUrl,
+            TotalSoldQuantity = g.Sum(x => x.Quantity),
+            SalePrice = g.First().PriceAtTime,
+            TotalRevenue = g.Sum(x => x.PriceAtTime * x.Quantity),
+            // 🔹 Lấy chi tiết từng variant trong sản phẩm
+            ListResponseProductVariant = g.GroupBy(v => v.ProductVariantId)
+               .Select(vg => new ResponseVariantInSaleCampaignStatistic
+               {
+                   ProductVariantId = vg.Key,
+                   ProductVariantName = vg.First().ProductVariant.VariantName,
+                   SoldQuantity = vg.Sum(x => x.Quantity),
+                   ImageUrl = vg.First().ProductVariant.ImageUrl,
+               })
+               .ToList()
         })
-        .OrderBy(x => x.Date)
+        .OrderByDescending(x => x.TotalSoldQuantity)
         .ToList();
 
-    // Nhóm sản phẩm trong chiến dịch
-    var productStatistic = orderDetails
-.GroupBy(x => x.ProductVariant.ProductColor.ProductId)
-.Select(g => new ResponseProductInSaleCampaignStatistic
-{
-   ProductID = g.Key,
-   ProductName = g.First().ProductVariant.ProductColor.Product.ProductName,
-   ImageUrl = g.First().ProductVariant.ProductColor.Product.MainImageUrl,
-   TotalSoldQuantity = g.Sum(x => x.Quantity),
-   SalePrice = g.First().PriceAtTime,
-   TotalRevenue = g.Sum(x => x.PriceAtTime*x.Quantity),
-    // 🔹 Lấy chi tiết từng variant trong sản phẩm
-   ListResponseProductVariant = g.GroupBy(v => v.ProductVariantId)
-       .Select(vg => new ResponseVariantInSaleCampaignStatistic
-       {
-           ProductVariantId = vg.Key,
-           ProductVariantName = vg.First().ProductVariant.VariantName,
-           SoldQuantity = vg.Sum(x => x.Quantity),
-           ImageUrl = vg.First().ProductVariant.ImageUrl,
-       })
-       .ToList()
-})
-.OrderByDescending(x => x.TotalSoldQuantity)
-.ToList();
 
-
-    // Kết quả trả về
-    return new ResponseSaleCampaignStatistic
-    {
-        TotalRevenue = totalRevenue,
-        TotalSoldQuantity = totalSoldQuantity,
-        TotalProductInCampaign = productInCampaigns.Count(),
-        ListProductInCampaign = productStatistic,
-        ListSaleRevenueDate = revenueByDate
-    };
-}
-
-public async Task<List<ResponseGetShortSaleCampaignDetail>> GetAllActiveSaleCampaign()
-{
-    try
-    {
-        List<SaleCampaign> listSaleCampaign = await _saleCampaignRepository.GetAll(null, x => x.IsDeleted == false && x.Status.Equals(SaleCampaignStatusEnum.Active.ToString()), null, []);
-        List<ResponseGetShortSaleCampaignDetail> listMapper = _mapper.Map<List<ResponseGetShortSaleCampaignDetail>>(listSaleCampaign);
-        return listMapper;
-
-    }
-    catch (Exception ex)
-    {
-        return [];
-    }
-}
-
-public async Task<ResponseGetShortSaleCampaignDetail> GetSaleCampaignByID(int saleCampaignID)
-{
-    try
-    {
-        List<SaleCampaign> saleCampaign = await _saleCampaignRepository.GetAll(null, x => (x.IsDeleted == false && x.CampaignId == saleCampaignID), null, []);
-        if (saleCampaign.Count == 0)
-        {
-            return null;
+            // Kết quả trả về
+            return new ResponseSaleCampaignStatistic
+            {
+                TotalRevenue = totalRevenue,
+                TotalSoldQuantity = totalSoldQuantity,
+                TotalProductInCampaign = productInCampaigns.Count(),
+                ListProductInCampaign = productStatistic,
+                ListSaleRevenueDate = revenueByDate
+            };
         }
-        ResponseGetShortSaleCampaignDetail mapperResponse = _mapper.Map<ResponseGetShortSaleCampaignDetail>(saleCampaign.FirstOrDefault());
-        return mapperResponse;
 
-    }
-    catch (Exception ex)
-    {
-        return null;
-    }
-}
+        public async Task<List<ResponseGetShortSaleCampaignDetail>> GetAllActiveSaleCampaign()
+        {
+            try
+            {
+                List<SaleCampaign> listSaleCampaign = await _saleCampaignRepository.GetAll(null, x => x.IsDeleted == false && x.Status.Equals(SaleCampaignStatusEnum.Active.ToString()), null, []);
+                List<ResponseGetShortSaleCampaignDetail> listMapper = _mapper.Map<List<ResponseGetShortSaleCampaignDetail>>(listSaleCampaign);
+                return listMapper;
+
+            }
+            catch (Exception ex)
+            {
+                return [];
+            }
+        }
+
+        public async Task<ResponseGetShortSaleCampaignDetail> GetSaleCampaignByID(int saleCampaignID)
+        {
+            try
+            {
+                List<SaleCampaign> saleCampaign = await _saleCampaignRepository.GetAll(null, x => (x.IsDeleted == false && x.CampaignId == saleCampaignID), null, []);
+                if (saleCampaign.Count == 0)
+                {
+                    return null;
+                }
+                ResponseGetShortSaleCampaignDetail mapperResponse = _mapper.Map<ResponseGetShortSaleCampaignDetail>(saleCampaign.FirstOrDefault());
+                return mapperResponse;
+
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
     }
 }
