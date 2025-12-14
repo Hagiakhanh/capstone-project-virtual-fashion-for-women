@@ -57,6 +57,7 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IWalletRepository, WalletRepository>();
             services.AddScoped<ICategorySizeTemplateRepository, CategorySizeTemplateRepository>();
             services.AddScoped<IShopAddressRepository, ShopAddressRepository>();
+            services.AddScoped<IShippingRegionRespository, ShippingRegionRespository>();
             //Services
             services.AddScoped<IAiconversationService, AiconversationService>();
             services.AddScoped<ICartService, CartService>();
@@ -102,6 +103,7 @@ namespace VirtualTryonWomenFashion.Service.Extensions
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<ICategorySizeTemplateService, CategorySizeTemplateService>();
             services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<IShippingRegionService, ShippongRegionService>();
 
             return services;
         }
