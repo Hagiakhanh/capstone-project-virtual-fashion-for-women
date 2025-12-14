@@ -211,9 +211,9 @@ export default function UpdateColorItem({
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-md font-semibold text-gray-700">Màu {colorIndex + 1}</h3>
-                <button type="button" onClick={onRemove} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 cursor-pointer">
+                {/* <button type="button" onClick={onRemove} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 cursor-pointer">
                     <Trash2 size={18} />
-                </button>
+                </button> */}
             </div>
 
             <div className="space-y-4">
@@ -252,9 +252,9 @@ export default function UpdateColorItem({
                             </p>
                             {productColor.colorName && (
                                 <div className="space-y-0.5 mb-2 font-medium text-blue-800">
-                                     <p>Tên: {productColor.colorName}</p>
-                                     <p>Mã: {productColor.colorPrefix}</p>
-                                     <p>Hex: {productColor.hexCode}</p>
+                                    <p>Tên: {productColor.colorName}</p>
+                                    <p>Mã: {productColor.colorPrefix}</p>
+                                    <p>Hex: {productColor.hexCode}</p>
                                 </div>
                             )}
                             <button

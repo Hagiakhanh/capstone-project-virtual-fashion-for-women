@@ -97,7 +97,7 @@ export default function ProductListPage() {
 
         try {
             const response = await api.delete(`/product/${productId}`); // ✅ gọi trực tiếp backend
-            if (response.status === 200) {
+            if (response.status === 204 || response.status === 200) {
                 messageToast.success('Xóa sản phẩm thành công!');
                 fetchProducts();
             } else {
