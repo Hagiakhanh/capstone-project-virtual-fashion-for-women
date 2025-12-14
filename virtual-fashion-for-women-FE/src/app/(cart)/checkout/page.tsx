@@ -8,6 +8,7 @@ import { api } from '@/api/instance';
 import CartItems from '@/components/CartItem/CartItem';
 import MomoPng from '../../../assets/payment/momo.png';
 import VnpayPng from '../../../assets/payment/vnpay.png';
+import GhnPng from '../../../assets/payment/ghnImage.png';
 import { useRouter } from 'next/navigation';
 import { messageToast } from '@/helpers/toastHelper';
 import LoadingOverlay from '@/components/Loading/LoadingOverlay';
@@ -113,7 +114,8 @@ export default function CheckoutForm() {
             provinceName: addressInformation.provinceName,
             districtName: addressInformation.districtName,
             wardName: addressInformation.wardName,
-            note: formData.note
+            note: formData.note,
+            deliveringType: shippingMethod
         };
 
         try {
@@ -687,7 +689,7 @@ export default function CheckoutForm() {
                                     disabled={isDeliveryMethodDisabled('GHN')}
                                     className="mr-2 md:mr-3 accent-red-500 mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
-                                <Truck className={`w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 flex-shrink-0 ${isDeliveryMethodDisabled('GHN') ? 'text-gray-400' : 'text-blue-600'
+                                <img src={GhnPng.src} alt="GHN" className={`w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 flex-shrink-0 ${isDeliveryMethodDisabled('GHN') ? 'text-gray-400' : 'text-blue-600'
                                     }`} />
                                 <div className="flex flex-col flex-1">
                                     <span className={`text-sm md:text-base font-medium ${isDeliveryMethodDisabled('GHN') ? 'text-gray-500' : 'text-gray-800'
