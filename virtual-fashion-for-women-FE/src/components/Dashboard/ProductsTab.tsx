@@ -151,6 +151,7 @@ const ProductsTab = () => {
 
         try {
             const response = await api.get('/dashboard/revenue', { params });
+            //const response = await api.get('/dashboard/revenue-v2', { params });
 
             const data: RevenueResult[] = response.data.map((item: any) => ({
                 label: item.label,
