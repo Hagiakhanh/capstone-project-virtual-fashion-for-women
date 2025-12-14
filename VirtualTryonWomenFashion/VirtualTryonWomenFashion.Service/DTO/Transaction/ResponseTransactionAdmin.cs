@@ -10,10 +10,12 @@ namespace VirtualTryonWomenFashion.Service.DTO.Transaction
     {
         public int TransactionId { get; set; }
         public string UserName { get; set; }
+        public int? OrderId { get; set; }
         public string Status { get; set; }
         public decimal? Money { get; set; }
         public string Method { get; set; }
         public string Type { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

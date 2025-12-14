@@ -14,7 +14,7 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<Pagination<TransactionInformation>> GetTransactionHistory(PaginationParameter paginationParameter,string transactionStatus, bool isDescending);
         public Task<Pagination<TransactionInformation>> GetRechargeTransactionHistory(PaginationParameter paginationParameter);
         public Task<List<Transaction>> GetAllPendingRechargeTransaction();
-        Task<Pagination<ResponseTransactionAdmin>> GetAllTransactions(
+        Task<Pagination<ResponseTransactionAdmin>> GetAllTransactions(int? orderId,
             string? type,
             string? status,
             string? method,
