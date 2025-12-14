@@ -55,6 +55,7 @@ namespace VirtualTryonWomenFashion.Service.DTO.Order
 
         public List<OrderDetailInformation> OrderDetails { get; set; }
         public List<ResponseStatusLog> ResponseStatusLogs { get; set; }
+        public string? deliveringType { get; set; }
     }
 
     public class OrderDetailInformation
