@@ -52,6 +52,15 @@ export default function StaffOrderPage() {
          )
       },
       {
+         title: "Vận Chuyển",
+         key: "deliveringType",
+         render: (_: any, record: any) => (
+            <div className="font-semibold text-gray-800">
+               {record?.deliveringType == 'GHN' ? 'GHN' : record?.deliveringType == 'External' ? 'Vận chuyển bên ngoài' : ''}
+            </div>
+         )
+      },
+      {
          title: "Khách Hàng",
          key: "name",
          render: (_: any, record: any) => (
