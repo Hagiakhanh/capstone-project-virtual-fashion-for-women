@@ -493,7 +493,7 @@ export default function OrderDetailPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
                         <div>
                             <p className="text-black mb-1 italic text-xs md:text-sm">Phương thức</p>
-                            <p className="text-xs md:text-base">GHN</p>
+                            <p className="text-xs md:text-base">{order?.deliveringType === 'GHN' ? 'Giao hàng nhanh' : 'Cửa hàng giao'}</p>
                         </div>
                         <div>
                             <p className="text-black mb-1 italic text-xs md:text-sm">Mã vận đơn</p>

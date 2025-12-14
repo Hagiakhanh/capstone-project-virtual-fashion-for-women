@@ -51,6 +51,7 @@ export default function EditSaleCampaignPage() {
   const [deletedProductIds, setDeletedProductIds] = useState<string[]>([]);
   const [campaignImage, setCampaignImage] = useState<string | undefined>();
 
+  const watchedProducts = Form.useWatch("ProductInSalesCampaigns", form);
   // 🧩 Fetch dữ liệu chiến dịch
   useEffect(() => {
     const fetchDetail = async () => {
@@ -70,9 +71,9 @@ export default function EditSaleCampaignPage() {
               ProductName: p.product.productName,
               OriginalPrice: p.product.price,
               mainImageUrl: p.product.mainImageUrl,
-              DiscountType: "PriceDiscount", // vì backend chỉ có percentDiscount
-              Value: p.salePrice, // giá trị giảm %
-              IsValid: true,
+              DiscountType: "PriceDiscount",
+              Value: p.salePrice,
+              IsExisting: true,
             })
           ),
         });
@@ -112,8 +113,7 @@ export default function EditSaleCampaignPage() {
       formData.append("StartDate", start?.format("YYYY-MM-DD"));
       formData.append("EndDate", end?.format("YYYY-MM-DD"));
 
-      // Danh sách sản phẩm (nếu Pending)
-      if (campaignStatus === "Pending") {
+      if (campaignStatus != "Expired") {
         const products =
           values.ProductInSalesCampaigns?.map((p: any) => ({
             ProductID: p.ProductID,
@@ -132,8 +132,8 @@ export default function EditSaleCampaignPage() {
           );
           formData.append(`ProductInSalesCampaigns[${i}].Value`, p.Value);
         });
-
-        // Danh sách đã xóa
+      }
+      if (campaignStatus == "Pending") {
         deletedProductIds.forEach((pid, i) =>
           formData.append(`ListIdDeleted[${i}]`, pid)
         );
@@ -183,11 +183,18 @@ export default function EditSaleCampaignPage() {
               label="Tên chiến dịch"
               rules={[{ required: true, message: "Vui lòng nhập tên" }]}
             >
-              <Input placeholder="Nhập tên chiến dịch" />
+              <Input
+                placeholder="Nhập tên chiến dịch"
+                disabled={campaignStatus == "Expired"}
+              />
             </Form.Item>
 
             <Form.Item name="Description" label="Mô tả">
-              <Input.TextArea rows={3} placeholder="Nhập mô tả" />
+              <Input.TextArea
+                rows={3}
+                placeholder="Nhập mô tả"
+                disabled={campaignStatus == "Expired"}
+              />
             </Form.Item>
 
             <Form.Item
@@ -195,12 +202,23 @@ export default function EditSaleCampaignPage() {
               label="Ảnh đại diện"
               valuePropName="selectedFile"
             >
-              <ImageUploader
-                label="Chọn ảnh mới (nếu cần)"
-                onFileChange={(file) => form.setFieldValue("ImageFile", file)}
-                selectedFile={null}
-                imageDefaultUrl={campaignImage}
-              />
+              {campaignStatus == "Expired" ? (
+                <Image
+                  src={campaignImage || ""}
+                  alt="Preview"
+                  height={350}
+                  width={350}
+                  style={{ objectFit: "cover"}}
+                  className="rounded-lg "
+                />
+              ) : (
+                <ImageUploader
+                  label="Chọn ảnh mới (nếu cần)"
+                  onFileChange={(file) => form.setFieldValue("ImageFile", file)}
+                  selectedFile={null}
+                  imageDefaultUrl={campaignImage}
+                />
+              )}
             </Form.Item>
 
             <Form.Item
@@ -231,7 +249,7 @@ export default function EditSaleCampaignPage() {
                 <>
                   <div className="flex justify-between items-center mb-2">
                     <label className="font-medium">Sản phẩm áp dụng</label>
-                    {campaignStatus === "Pending" && (
+                    {campaignStatus !== "Expired" && (
                       <Button
                         type="dashed"
                         icon={<PlusOutlined />}
@@ -243,9 +261,8 @@ export default function EditSaleCampaignPage() {
                   </div>
 
                   {fields.map(({ key, name, ...restField }) => {
-                    const item =
-                      form.getFieldValue("ProductInSalesCampaigns")?.[name] ||
-                      {};
+                    const item = watchedProducts?.[name] || {};
+                    const isExisting = item.IsExisting == true;
                     const discountType = item.DiscountType || "PercentDiscount";
                     const value = item.Value || 0;
                     const price = item.OriginalPrice || 0;
@@ -289,7 +306,15 @@ export default function EditSaleCampaignPage() {
                           >
                             <Select
                               options={discountTypeOptions}
-                              disabled={campaignStatus !== "Pending"}
+                              disabled={
+                                campaignStatus == "Expired" ||
+                                (campaignStatus != "Expired" && campaignStatus!="Pending" && isExisting)
+                              }
+                              onChange={() => {
+                                form.validateFields([
+                                  ["ProductInSalesCampaigns", name, "Value"],
+                                ]);
+                              }}
                               style={{ width: 180 }}
                             />
                           </Form.Item>
@@ -297,6 +322,9 @@ export default function EditSaleCampaignPage() {
                           <Form.Item
                             {...restField}
                             name={[name, "Value"]}
+                            dependencies={[
+                              ["ProductInSalesCampaigns", name, "DiscountType"],
+                            ]}
                             rules={[
                               { required: true },
                               {
@@ -342,7 +370,10 @@ export default function EditSaleCampaignPage() {
                                   ? 1
                                   : 1000
                               }
-                              disabled={campaignStatus !== "Pending"}
+                              disabled={
+                                campaignStatus == "Expired" ||
+                                (campaignStatus != "Expired" && campaignStatus!="Pending" && isExisting)
+                              }
                             />
                           </Form.Item>
 
@@ -365,7 +396,7 @@ export default function EditSaleCampaignPage() {
 
             <div className="flex justify-between mt-6">
               {/* Nút trạng thái */}
-              {campaignStatus === "Active" ? (
+              {campaignStatus == "Active" || campaignStatus== "Pending" ? (
                 <Button
                   danger
                   onClick={() => setCampaignStatus("Inactive")}
@@ -377,7 +408,7 @@ export default function EditSaleCampaignPage() {
                 <Button
                   type="default"
                   onClick={() => setCampaignStatus("Active")}
-                  disabled={saving}
+                  disabled={saving ||  campaignStatus=="Expired"}
                 >
                   Kích hoạt lại
                 </Button>
@@ -387,7 +418,7 @@ export default function EditSaleCampaignPage() {
                 type="primary"
                 htmlType="submit"
                 loading={saving}
-                disabled={saving}
+                disabled={saving || campaignStatus=="Expired"}
               >
                 Lưu thay đổi
               </AntButtonCommon>
@@ -396,41 +427,39 @@ export default function EditSaleCampaignPage() {
         </Card>
       </div>
 
-      {showProductModal &&
-        selectedDateRange &&
-        campaignStatus === "Pending" && (
-          <SelectProductModal
-            onClose={() => setShowProductModal(false)}
-            onSelect={(product: any) => {
-              const current =
-                form.getFieldValue("ProductInSalesCampaigns") || [];
-              if (current.some((p: any) => p.ProductID === product.productId)) {
-                message.warning("Sản phẩm này đã có trong danh sách!");
-                return;
-              }
-              form.setFieldsValue({
-                ProductInSalesCampaigns: [
-                  ...current,
-                  {
-                    ProductID: product.productId,
-                    ProductName: product.productName,
-                    OriginalPrice: product.price,
-                    mainImageUrl: product.mainImageUrl,
-                    DiscountType: "PercentDiscount",
-                    Value: 0,
-                  },
-                ],
-              });
-              setShowProductModal(false);
-            }}
-            campaignDate={selectedDateRange}
-            selectedProducts={
-              form
-                .getFieldValue("ProductInSalesCampaigns")
-                ?.map((p: any) => p.ProductID) || []
+      {showProductModal && selectedDateRange && campaignStatus != "Expired" && (
+        <SelectProductModal
+          onClose={() => setShowProductModal(false)}
+          onSelect={(product: any) => {
+            const current = form.getFieldValue("ProductInSalesCampaigns") || [];
+            if (current.some((p: any) => p.ProductID === product.productId)) {
+              message.warning("Sản phẩm này đã có trong danh sách!");
+              return;
             }
-          />
-        )}
+            form.setFieldsValue({
+              ProductInSalesCampaigns: [
+                ...current,
+                {
+                  ProductID: product.productId,
+                  ProductName: product.productName,
+                  OriginalPrice: product.price,
+                  mainImageUrl: product.mainImageUrl,
+                  DiscountType: "PercentDiscount",
+                  Value: 0,
+                  IsExisting: false,
+                },
+              ],
+            });
+            setShowProductModal(false);
+          }}
+          campaignDate={selectedDateRange}
+          selectedProducts={
+            form
+              .getFieldValue("ProductInSalesCampaigns")
+              ?.map((p: any) => p.ProductID) || []
+          }
+        />
+      )}
     </div>
   );
 }

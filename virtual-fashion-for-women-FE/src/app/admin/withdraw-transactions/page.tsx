@@ -254,7 +254,7 @@ export default function WithdrawTransactionAdmin() {
                                                 <td className="px-6 py-4 text-sm text-gray-700">{t.bankName}</td>
                                                 <td className="px-6 py-4 text-sm font-mono text-gray-600">{t.bankAccountNumber}</td>
                                                 <td className="px-6 py-4 text-sm font-bold text-gray-900 text-right">{formatPrice(t.money ?? 0)} ₫</td>
-                                                <td className="px-6 py-4 text-sm text-gray-700">{t.method}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-700">{t.method === "Wallet" ? "Ví" : t.method}</td>
                                                 <td className="px-6 py-4 text-sm">
                                                     <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-semibold ${getStatusColor(t.status)}`}>
                                                         {getStatusName(t.status)}

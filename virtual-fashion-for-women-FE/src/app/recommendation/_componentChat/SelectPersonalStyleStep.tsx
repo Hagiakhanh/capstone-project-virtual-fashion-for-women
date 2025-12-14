@@ -132,17 +132,6 @@ export function SelectPersonalStyle({
                     
                     {/* Info grid - responsive */}
                     <div className="space-y-1 text-sm sm:text-base">
-                      <p className="flex flex-wrap gap-x-4">
-                        <span>
-                          <b>Chiều cao:</b> {characteristicData.height} cm
-                        </span>
-                        <span>
-                          <b>Cân nặng:</b> {characteristicData.weight} kg
-                        </span>
-                      </p>
-                      <p>
-                        <b>Tuổi:</b> {characteristicData.age}
-                      </p>
                       <p>
                         <b>Phong cách:</b>{" "}
                         {characteristicData.styleType?.styleTypeName ?? "Chưa có"}

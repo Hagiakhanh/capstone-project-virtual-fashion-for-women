@@ -8,11 +8,15 @@ import { api } from '@/api/instance';
 import CartItems from '@/components/CartItem/CartItem';
 import MomoPng from '../../../assets/payment/momo.png';
 import VnpayPng from '../../../assets/payment/vnpay.png';
+import GhnPng from '../../../assets/payment/ghnImage.png';
 import { useRouter } from 'next/navigation';
 import { messageToast } from '@/helpers/toastHelper';
 import LoadingOverlay from '@/components/Loading/LoadingOverlay';
 import { WalletDTO } from '@/models/WalletDTO';
 import formatPrice from '@/utils/formatPrice';
+import { ResponseDeliveryTypeFee } from '@/models/ResponseDeliveryTypeFee';
+import { set } from 'lodash';
+import { ShippingRegionFee } from '@/models/ShippingRegionFee';
 
 export default function CheckoutForm() {
     const router = useRouter();
@@ -21,9 +25,8 @@ export default function CheckoutForm() {
     const [checkoutDTO, setCheckoutDTO] = useState<CheckoutDTO>({
         items: [],
         totalProductPrice: 0,
-        serviceFee: 0,
-        insuranceFee: 0,
-        totalPrice: 0
+        deliveryTypeFees: [],
+        totalWeight: 0
     });
     const [provinces, setProvince] = useState<Record<string, string>>({});
     const [districts, setDistrict] = useState<Record<string, string>>({});
@@ -45,8 +48,14 @@ export default function CheckoutForm() {
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [selectedPayment, setSelectedPayment] = useState('Momo');
     const [savedAddresses, setSavedAddresses] = useState([]);
-    const [showSavedList, setShowSavedList] = useState(false);
+    const [showSavedList, setShowSavedList] = useState(true);
     const [shippingMethod, setShippingMethod] = useState('GHN');
+    const [selectedDelivery, setSelectedDelivery] = useState<ResponseDeliveryTypeFee>({
+        deliveryType: 'GHN',
+        serviceFee: 0,
+        insuranceFee: 0,
+        totalPrice: 0
+    });
     const isFormValid = useMemo(() => {
         return (
             formData.fullName.trim() !== '' &&
@@ -59,15 +68,22 @@ export default function CheckoutForm() {
     }, [formData, addressInformation]);
 
     const [wallet, setWallet] = useState<WalletDTO>();
+    const [showShippingFeeModal, setShowShippingFeeModal] = useState(false);
+    const [shippingFeeData, setShippingFeeData] = useState<ShippingRegionFee[]>([]);
     const canSelectWallet = useMemo(() => {
-        return isFormValid && checkoutDTO.serviceFee > 0;
-    }, [isFormValid, checkoutDTO.serviceFee]);
+        return isFormValid && selectedDelivery.serviceFee > 0;
+    }, [isFormValid, selectedDelivery.serviceFee]);
 
     const hasEnoughBalance = useMemo(() => {
-        return wallet && wallet.balance >= checkoutDTO.totalPrice;
-    }, [wallet, checkoutDTO.totalPrice]);
+        return wallet && wallet.balance >= selectedDelivery.totalPrice;
+    }, [wallet, selectedDelivery.totalPrice]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        if (e.target.name === 'address') {
+            if (e.target.value == '') {
+                setShowSavedList(true);
+            }
+        }
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
@@ -103,7 +119,8 @@ export default function CheckoutForm() {
             provinceName: addressInformation.provinceName,
             districtName: addressInformation.districtName,
             wardName: addressInformation.wardName,
-            note: formData.note
+            note: formData.note,
+            deliveringType: shippingMethod
         };
 
         try {
@@ -182,6 +199,20 @@ export default function CheckoutForm() {
         setCurrentAddressTab('city');
     };
 
+    const handleSelectShippingMethod = (method: string) => {
+        setShippingMethod(method);
+        const selectedDeliveryData: ResponseDeliveryTypeFee = checkoutDTO.deliveryTypeFees.find((fee: ResponseDeliveryTypeFee) => {
+            return fee.deliveryType === method;
+        });
+        setSelectedDelivery((prev) => ({
+            ...prev,
+            deliveryType: method,
+            serviceFee: selectedDeliveryData.serviceFee,
+            insuranceFee: selectedDeliveryData.insuranceFee,
+            totalPrice: selectedDeliveryData.totalPrice
+        }));
+    };
+
     const getAddressDisplayValue = () => {
         const parts = [];
         if (addressInformation.provinceName) parts.push(addressInformation.provinceName);
@@ -196,13 +227,25 @@ export default function CheckoutForm() {
     const fetchCheckoutData = async (payload: RequestCheckout) => {
         try {
             const response = await api.post('/checkout', payload);
-            if (response.status === 200) setCheckoutDTO((prev) => ({
-                ...prev,
-                insuranceFee: response.data.insuranceFee,
-                serviceFee: response.data.serviceFee,
-                totalPrice: response.data.totalPrice,
-                totalProductPrice: response.data.totalProductPrice
-            }));
+            if (response.status === 200) {
+                setCheckoutDTO((prev) => ({
+                    ...prev,
+                    deliveryTypeFees: response.data.deliveryTypeFees,
+                    totalWeight: response.data.totalWeight,
+                    totalProductPrice: response.data.totalProductPrice,
+                }));
+                const selectedDeliveryData = response.data.deliveryTypeFees.find((fee: ResponseDeliveryTypeFee) => {
+                    return fee.deliveryType === shippingMethod;
+                });
+                setSelectedDelivery((prev) => ({
+                    ...prev,
+                    deliveryType: selectedDeliveryData.deliveryType,
+                    serviceFee: selectedDeliveryData.serviceFee,
+                    insuranceFee: selectedDeliveryData.insuranceFee,
+                    totalPrice: selectedDeliveryData.totalPrice,
+                    error: selectedDeliveryData.error
+                }));
+            }
         } catch (error: any) {
             console.error("Fetch checkout data error:", error);
             messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực này. Vui lòng chọn địa chỉ khác.");
@@ -302,52 +345,7 @@ export default function CheckoutForm() {
             if (data.provinceName === "TP Hồ Chí Minh" || data.provinceName === "Thành phố Hồ Chí Minh") {
                 data.provinceName = "Hồ Chí Minh";
             }
-            const matchedProvinceEntry = Object.entries(provinces).find(
-                ([, name]) => name.toLowerCase().includes(data.provinceName.toLowerCase())
-            );
-            console.log("Matched province entry:", matchedProvinceEntry);
-            console.log("Provinces data:", provinces);
-            if (matchedProvinceEntry) {
-                const [provinceId, provinceName] = matchedProvinceEntry;
-                const districtsData = await fetchDistrictData(provinceId);
-                //if (data.districtName === "Thủ Đức") messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực Thủ Đức. Vui lòng chọn địa chỉ khác.");
-                const matchedDistrictEntry = Object.entries(districtsData).find(
-                    ([, name]) => name.toLowerCase().includes(data.districtName.toLowerCase())
-                );
-                if (matchedDistrictEntry) {
-                    const [districtId, districtName] = matchedDistrictEntry;
-                    const wardsData = await fetchWardData(districtId);
-                    console.log("Wards data:", wardsData);
-                    const toPlainText = (str: string) =>
-                        str
-                            .normalize("NFD")
-                            .replace(/[\u0300-\u036f]/g, "")
-                            .replace(/đ/g, "d")
-                            .replace(/Đ/g, "D")
-                            .toLowerCase()
-                            .trim();
-
-                    const matchedWardEntry = Object.entries(wardsData).find(
-                        ([, name]) => {
-                            console.log("Comparing ward:", toPlainText(name), "with", toPlainText(data.wardName));
-                            return toPlainText(name).includes(toPlainText(data.wardName)
-                            )
-                        }
-                    );
-                    console.log("Matched ward entry:", matchedWardEntry);
-                    if (matchedWardEntry) {
-                        const [, wardName] = matchedWardEntry;
-                        setAddressInformation({ provinceName, districtName, wardName });
-
-                    } else {
-                        messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực này. Vui lòng chọn địa chỉ khác.");
-                    }
-                } else {
-                    messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực này. Vui lòng chọn địa chỉ khác.");
-                }
-            } else {
-                messageToast.error("Giao hàng nhanh chưa hỗ trợ khu vực này. Vui lòng chọn địa chỉ khác.");
-            }
+            setAddressInformation({ provinceName: data.provinceName, districtName: data.districtName, wardName: data.wardName });
         } catch (error) {
             console.error(error);
         }
@@ -365,11 +363,22 @@ export default function CheckoutForm() {
         }
     }
 
+    const fetchShippingFeeData = async () => {
+        try {
+            const response = await api.get('/shipping/fees'); // Adjust endpoint as needed
+            if (response.status === 200) {
+                setShippingFeeData(response.data);
+            }
+        } catch (error: any) {
+            console.error("Fetch shipping fee error:", error);
+            messageToast.error("Lỗi khi tải bảng giá vận chuyển");
+        }
+    };
+
     const fetchUserSavedAddresses = async () => {
         try {
             const response = await api.get('/user-information/user-address');
             if (response.status === 200) {
-                console.log('Địa chỉ đã lưu của người dùng:', response.data);
                 setSavedAddresses(response.data);
             } else {
                 setSavedAddresses([]);
@@ -407,6 +416,7 @@ export default function CheckoutForm() {
     }, [formData.address]);
 
     useEffect(() => {
+        fetchShippingFeeData();
         const idsStr = sessionStorage.getItem("checkoutCartIds");
         if (idsStr) {
             const ids: number[] = JSON.parse(idsStr);
@@ -444,14 +454,65 @@ export default function CheckoutForm() {
             };
             setCheckoutDTO((prev) => ({
                 ...prev,
+                totalPrice: prev.totalProductPrice
+            }));
+            setSelectedDelivery((prev) => ({
+                ...prev,
                 serviceFee: 0,
                 insuranceFee: 0,
-                totalPrice: prev.totalProductPrice
             }));
             fetchCheckoutData(payload);
 
         }
     }, [addressInformation]);
+
+    useEffect(() => {
+        if (checkoutDTO.deliveryTypeFees.length > 0) {
+            // Nếu GHN có error
+            if (isDeliveryMethodDisabled('GHN') && shippingMethod === 'GHN') {
+                // Tự động chuyển sang External
+                setShippingMethod('External');
+                const selectedDeliveryData = checkoutDTO.deliveryTypeFees.find((fee: ResponseDeliveryTypeFee) => {
+                    return fee.deliveryType === 'External';
+                });
+                if (selectedDeliveryData) {
+                    setSelectedDelivery((prev) => ({
+                        ...prev,
+                        deliveryType: 'External',
+                        serviceFee: selectedDeliveryData.serviceFee,
+                        insuranceFee: selectedDeliveryData.insuranceFee,
+                        totalPrice: selectedDeliveryData.totalPrice,
+                        error: selectedDeliveryData.error
+                    }));
+                }
+            }
+        }
+    }, [checkoutDTO.deliveryTypeFees]);
+
+    const isDeliveryMethodDisabled = (method: string): boolean => {
+        const deliveryFee = checkoutDTO.deliveryTypeFees.find(
+            (fee: ResponseDeliveryTypeFee) => fee.deliveryType === method
+        );
+        return deliveryFee?.error ? true : false;
+    };
+
+    const getDeliveryErrorMessage = (method: string): string => {
+        const deliveryFee = checkoutDTO.deliveryTypeFees.find(
+            (fee: ResponseDeliveryTypeFee) => fee.deliveryType === method
+        );
+
+        if (deliveryFee?.error) {
+            return deliveryFee.error;
+        }
+
+        // Return description mặc định nếu không có error
+        if (method === 'GHN') {
+            return 'Đơn vị vận chuyển giao hàng nhanh.';
+        } else if (method === 'External') {
+            return 'Nhân viên cửa hàng sẽ làm việc với đơn vị bên ngoài.';
+        }
+        return '';
+    };
 
     // ================= UI ==================
     return (
@@ -493,7 +554,7 @@ export default function CheckoutForm() {
                                     value={formData.address}
                                     onChange={(e) => {
                                         handleInputChange(e);
-                                        setShowSavedList(false);
+                                        // setShowSavedList(false);
                                     }}
                                     onFocus={() => {
                                         // Khi focus, nếu ô input đang trống thì hiện địa chỉ đã lưu
@@ -501,7 +562,7 @@ export default function CheckoutForm() {
                                             setShowSavedList(true);
                                         }
                                     }}
-                                    onBlur={() => setTimeout(() => setShowSavedList(false), 200)}
+                                    // onBlur={() => setTimeout(() => setShowSavedList(false), 200)}
                                     className="w-full p-2.5 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition-all"
                                 />
                                 {isLoadingSuggestions && (
@@ -509,7 +570,7 @@ export default function CheckoutForm() {
                                         ...
                                     </div>
                                 )}
-                                {showSavedList && savedAddresses.length > 0 && (
+                                {showSavedList && formData.address == '' && addressSuggestions.length == 0 && savedAddresses.length > 0 && (
                                     <div className="border-b-2 border-gray-100 pb-1">
                                         <div className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50 flex items-center gap-1">
                                             ĐỊA CHỈ CỦA BẠN
@@ -617,37 +678,94 @@ export default function CheckoutForm() {
                         </h2>
                         <div className="space-y-3">
                             {/* Giao hàng nhanh (GHN) */}
-                            <label className={`flex items-center p-2.5 md:p-3 border rounded-lg cursor-pointer transition-all ${shippingMethod === 'GHN' ? '' : 'hover:bg-gray-50'}`}>
+                            <label
+                                className={`flex items-center p-2.5 md:p-3 border rounded-lg cursor-pointer transition-all ${isDeliveryMethodDisabled('GHN')
+                                    ? 'opacity-60 bg-gray-100 cursor-not-allowed'
+                                    : shippingMethod === 'GHN' ? '' : 'hover:bg-gray-50'
+                                    }`}
+                            >
                                 <input
                                     type="radio"
                                     name="shipping"
                                     value="GHN"
                                     checked={shippingMethod === 'GHN'}
-                                    onChange={(e) => setShippingMethod(e.target.value)}
-                                    className="mr-2 md:mr-3 accent-red-500 mt-1"
+                                    onChange={(e) => handleSelectShippingMethod(e.target.value)}
+                                    disabled={isDeliveryMethodDisabled('GHN')}
+                                    className="mr-2 md:mr-3 accent-red-500 mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
-                                <Truck className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 text-blue-600 flex-shrink-0" />
-                                <div className="flex flex-col">
-                                    <span className="text-sm md:text-base font-medium text-gray-800">Giao hàng nhanh</span>
-                                    <span className="text-xs text-gray-500">Đơn vị vận chuyển giao hàng nhanh.</span>
+                                <img src={GhnPng.src} alt="GHN" className={`w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 flex-shrink-0 ${isDeliveryMethodDisabled('GHN') ? 'text-gray-400' : 'text-blue-600'
+                                    }`} />
+                                <div className="flex flex-col flex-1">
+                                    <span className={`text-sm md:text-base font-medium ${isDeliveryMethodDisabled('GHN') ? 'text-gray-500' : 'text-gray-800'
+                                        }`}>
+                                        Giao hàng nhanh
+                                    </span>
+                                    <span className={`text-xs ${isDeliveryMethodDisabled('GHN') ? 'text-red-500 font-medium' : 'text-gray-500'
+                                        }`}>
+                                        {getDeliveryErrorMessage('GHN')}
+                                    </span>
                                 </div>
                             </label>
 
                             {/* Cửa hàng tự giao */}
-                            <label className={`flex items-center p-2.5 md:p-3 border rounded-lg cursor-pointer transition-all ${shippingMethod === 'SHOP' ? '' : 'hover:bg-gray-50'}`}>
+                            <label
+                                className={`flex items-center p-2.5 md:p-3 border rounded-lg cursor-pointer transition-all ${isDeliveryMethodDisabled('External')
+                                    ? 'opacity-60 bg-gray-100 cursor-not-allowed'
+                                    : shippingMethod === 'External'
+                                        ? ''
+                                        : 'hover:bg-gray-50'
+                                    }`}
+                            >
                                 <input
                                     type="radio"
                                     name="shipping"
-                                    value="SHOP"
-                                    checked={shippingMethod === 'SHOP'}
-                                    onChange={(e) => setShippingMethod(e.target.value)}
-                                    className="mr-2 md:mr-3 accent-red-500 mt-1"
+                                    value="External"
+                                    checked={shippingMethod === 'External'}
+                                    onChange={(e) => handleSelectShippingMethod(e.target.value)}
+                                    disabled={isDeliveryMethodDisabled('External')}
+                                    className="mr-2 md:mr-3 accent-red-500 mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
-                                <Store className="w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 text-green-600 flex-shrink-0" />
-                                <div className="flex flex-col">
-                                    <span className="text-sm md:text-base font-medium text-gray-800">Cửa hàng giao</span>
-                                    <span className="text-xs text-gray-500">Nhân viên cửa hàng sẽ làm việc với đơn vị bên ngoài.</span>
+                                <Store
+                                    className={`w-5 h-5 md:w-6 md:h-6 mr-2 md:mr-3 flex-shrink-0 ${isDeliveryMethodDisabled('External') ? 'text-gray-400' : 'text-green-600'
+                                        }`}
+                                />
+                                <div className="flex flex-col flex-1">
+                                    <span
+                                        className={`text-sm md:text-base font-medium ${isDeliveryMethodDisabled('External') ? 'text-gray-500' : 'text-gray-800'
+                                            }`}
+                                    >
+                                        Cửa hàng giao
+                                    </span>
+                                    {!isDeliveryMethodDisabled('External') && checkoutDTO.totalWeight && (
+                                        <span className="text-xs text-gray-600 font-medium">
+                                            Khối lượng sản phẩm tạm tính: {checkoutDTO.totalWeight} kg
+                                        </span>
+                                    )}
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span
+                                            className={`text-xs ${isDeliveryMethodDisabled('External')
+                                                ? 'text-red-500 font-medium'
+                                                : 'text-gray-500'
+                                                }`}
+                                        >
+                                            {getDeliveryErrorMessage('External')}
+                                        </span>
+
+                                    </div>
                                 </div>
+                                {!isDeliveryMethodDisabled('External') && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setShowShippingFeeModal(true);
+                                        }}
+                                        className="ml-2 md:ml-3 px-3 py-1 text-xs md:text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors whitespace-nowrap flex-shrink-0"
+                                    >
+                                        Xem bảng giá
+                                    </button>
+                                )}
                             </label>
                         </div>
                     </div>
@@ -768,21 +886,21 @@ export default function CheckoutForm() {
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Phí vận chuyển</span>
                                 <span className="font-semibold">
-                                    {checkoutDTO.serviceFee === 0 ? '' : `${checkoutDTO.serviceFee.toLocaleString('vi-VN')}đ`}
+                                    {selectedDelivery.serviceFee === 0 ? '' : `${selectedDelivery.serviceFee.toLocaleString('vi-VN')}đ`}
                                 </span>
                             </div>
-                            {checkoutDTO.insuranceFee > 0 && (
+                            {selectedDelivery.insuranceFee > 0 && (
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Phí bảo hiểm</span>
                                     <span className="font-semibold">
-                                        {checkoutDTO.insuranceFee.toLocaleString('vi-VN')}đ
+                                        {selectedDelivery.insuranceFee.toLocaleString('vi-VN')}đ
                                     </span>
                                 </div>
                             )}
                             <div className="border-t pt-2 md:pt-3 flex justify-between text-base md:text-lg font-bold">
                                 <span>Tổng thanh toán</span>
                                 <span className="text-red-600">
-                                    {checkoutDTO.totalPrice.toLocaleString('vi-VN')}đ
+                                    {selectedDelivery.totalPrice.toLocaleString('vi-VN')}đ
                                 </span>
                             </div>
                         </div>
@@ -791,12 +909,12 @@ export default function CheckoutForm() {
                             className={`w-full py-3 md:py-4 mt-4 md:mt-6 text-base md:text-lg font-semibold rounded-xl transition-all duration-300 flex justify-center items-center gap-2
                             ${isProcessing || !isFormValid
                                     ? 'bg-gray-400 text-white cursor-not-allowed'
-                                    : checkoutDTO.serviceFee === 0
+                                    : selectedDelivery.serviceFee === 0
                                         ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                                         : 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
                                 }`}
                             onClick={handlePayment}
-                            disabled={isProcessing || !isFormValid || checkoutDTO.serviceFee === 0}
+                            disabled={isProcessing || !isFormValid || selectedDelivery.serviceFee === 0}
                         >
                             {isProcessing ? (
                                 <>
@@ -828,6 +946,90 @@ export default function CheckoutForm() {
                         </button>
                     </div>
                 </div>
+                {showShippingFeeModal && (
+                    <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-auto">
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 md:p-6 flex justify-between items-center sticky top-0">
+                                <h3 className="text-lg md:text-xl font-bold">Bảng Giá Vận Chuyển Cửa Hàng</h3>
+                                <button
+                                    onClick={() => setShowShippingFeeModal(false)}
+                                    className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-1 transition-all"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-4 md:p-6">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-100 border-b-2 border-gray-300">
+                                                <th className="px-3 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-700">
+                                                    Tuyến
+                                                </th>
+                                                <th className="px-3 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-700">
+                                                    Khối Lượng
+                                                </th>
+                                                <th className="px-3 md:px-4 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-gray-700">
+                                                    Phí Cơ Bảng
+                                                </th>
+                                                <th className="px-3 md:px-4 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-gray-700">
+                                                    Thêm 0.5 kg
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {shippingFeeData.length > 0 ? (
+                                                shippingFeeData.map((deliveringFee, index) => (
+                                                    <tr
+                                                        key={index}
+                                                        className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                                            }`}
+                                                    >
+                                                        <td className="px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm text-gray-800">
+                                                            {deliveringFee.regionType === 'NS tinh' && 'Nội Tỉnh'}
+                                                            {deliveringFee.regionType === 'Ngoai tinh' && 'Ngoài Tỉnh'}
+                                                            {deliveringFee.regionType !== 'NS tinh' && deliveringFee.regionType !== 'Ngoai tinh' && deliveringFee.regionType}
+                                                        </td>
+                                                        <td className="px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm text-gray-800">
+                                                            0 - 0.5 kg
+                                                        </td>
+                                                        <td className="px-3 md:px-4 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-green-600">
+                                                            {deliveringFee.basePrice.toLocaleString('vi-VN')} đ
+                                                        </td>
+                                                        <td className="px-3 md:px-4 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-green-600">
+                                                            {deliveringFee.additionalWeightFee.toLocaleString('vi-VN')} đ
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={4} className="px-3 md:px-4 py-6 text-center text-sm text-gray-500">
+                                                        Không có dữ liệu
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="bg-gray-50 p-4 md:p-6 border-t flex justify-end">
+                                <button
+                                    onClick={() => setShowShippingFeeModal(false)}
+                                    className="px-4 md:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm md:text-base font-medium"
+                                >
+                                    Đóng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

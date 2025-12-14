@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle, Plus, Upload } from 'lucide-react';
+import { AlertCircle, CheckCircle, FileWarningIcon, Plus, Upload } from 'lucide-react';
 import { Category } from '@/models/RequestCreateProduct';
 import { api } from '@/api/instance';
 import SelectItemTryOn from '@/components/TryOn/SelectItemTryOn';
@@ -49,7 +49,7 @@ export default function VirtualTryOnPage() {
     const [fileTypeError, setFileTypeError] = useState<string>('');
     const [characteristicData, setCharacteristicData] =
         useState<Characteristic | null>(null);
-
+const [warningMessage, setWarningMessage] = useState<string | null>();
     const handleFileChange = async (
         event: React.ChangeEvent<HTMLInputElement>,
         setter: React.Dispatch<React.SetStateAction<File | null>>
@@ -132,7 +132,9 @@ export default function VirtualTryOnPage() {
                 });
 
                 if (isValid && is_warning && warning_message) {
-                    messageToast.warning(warning_message);
+                    setWarningMessage(warning_message);
+                }else{
+                    setWarningMessage(null);
                 }
 
             }
@@ -525,6 +527,14 @@ export default function VirtualTryOnPage() {
                                             Ảnh hợp lệ! Bạn có thể tiếp tục thử đồ.
                                         </p>
                                     </div>
+                                )}
+                                {warningMessage && (
+                                    <div className="mt-3 flex items-start p-3 bg-orange-100 border border-orange-300 rounded-lg">
+                                    <FileWarningIcon className="w-4 h-4 md:w-5 md:h-5 text-orange-400 mr-2 flex-shrink-0 mt-0.5" />
+                                    <p className="text-orange-400 text-xs md:text-sm font-medium">
+                                        {warningMessage} 
+                                    </p>
+                                </div>
                                 )}
                             </div>
 

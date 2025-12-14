@@ -111,6 +111,10 @@ export default function AccountPage() {
     }, []);
 
     useEffect(() => {
+        if (!isEditing) {
+            setAddressSuggestions([]);
+            return;
+        }
         if (isSelectingRef.current) {
             isSelectingRef.current = false;
             return;
@@ -123,6 +127,10 @@ export default function AccountPage() {
     }, [editedUser.address]);
 
     useEffect(() => {
+        if (!isEditing) {
+            setAddressSuggestions2([]);
+            return;
+        }
         if (isSelectingRef2.current) {
             isSelectingRef2.current = false;
             return;

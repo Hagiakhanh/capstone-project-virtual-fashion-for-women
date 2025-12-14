@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Modal, Form, InputNumber, Button, message } from "antd";
+import { Modal, Form, InputNumber, Button } from "antd";
 import { RadioWithOther } from "./RadioWithOther";
 import { api } from "@/api/instance";
 import { messageToast } from "@/helpers/toastHelper";
@@ -28,9 +28,6 @@ export const CharacteristicForm: React.FC<CharacteristicFormProps> = ({
         setCharacteristicDetail(data);
         if (data) {
           form.setFieldsValue({
-            weight: data.weight,
-            age: data.age,
-            height: data.height,
             bust: data.bust,
             waist: data.waist,
             hips: data.hips,
@@ -52,9 +49,6 @@ export const CharacteristicForm: React.FC<CharacteristicFormProps> = ({
   const handleSubmit = async (values: any) => {
     console.log(values);
     const payload = {
-      weight: values.weight,
-      age: values.age,
-      height: values.height,
       styleTypeID: values.styleTypeID,
       styleTypeNote: values.styleTypeNote ?? "",
       occasionPreferenceID: values.occasionPreferenceID,
@@ -108,46 +102,6 @@ export const CharacteristicForm: React.FC<CharacteristicFormProps> = ({
         <div className="flex flex-col md:flex-row gap-6">
           {/* --- Cột nhập liệu --- */}
           <div className="flex-1 grid grid-cols-2 w-full gap-2 ">
-            <Form.Item
-              label="Tuổi"
-              name="age"
-              className="w-full"
-              rules={[{ required: true, message: "Vui lòng nhập tuổi" }]}
-            >
-              <InputNumber
-                min={10}
-                max={100}
-                className="w-full"
-                style={{ width: "100%" }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              label="Cân nặng (kg)"
-              name="weight"
-              rules={[{ required: true, message: "Vui lòng nhập cân nặng" }]}
-            >
-              <InputNumber
-                min={30}
-                max={150}
-                className="w-full"
-                style={{ width: "100%" }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              label="Chiều cao (cm)"
-              name="height"
-              rules={[{ required: true, message: "Vui lòng nhập chiều cao" }]}
-            >
-              <InputNumber
-                min={100}
-                max={220}
-                className="w-full"
-                style={{ width: "100%" }}
-              />
-            </Form.Item>
-
             <Form.Item label="Vòng 1 (cm)" name="bust">
               <InputNumber
                 min={60}
