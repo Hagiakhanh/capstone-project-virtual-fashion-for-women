@@ -8,6 +8,7 @@ export async function GET(request: Request) {
         const pageNumber = searchParams.get("pageNumber") ?? 1;
         const pageSize = searchParams.get("pageSize") ?? 10;
 
+        const orderId = searchParams.get("orderId") ?? "";
         const type = searchParams.get("type") ?? "";
         const status = searchParams.get("status") ?? "";
         const method = searchParams.get("method") ?? "";
@@ -18,7 +19,8 @@ export async function GET(request: Request) {
         const api = createApiInstance(request);
 
         const responseBE = await api.get(
-            `/transaction?type=${type}` +
+            `/transaction?orderId=${orderId}` +
+            `&type=${type}` +
             `&status=${status}` +
             `&method=${method}` +
             `&startDate=${startDate}` +

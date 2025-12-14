@@ -63,6 +63,7 @@ export default function OverviewTab() {
     const [error, setError] = useState<string | null>(null);
 
     const [filterParams, setFilterParams] = useState({
+        orderId: '',
         type: '',
         status: '',
         method: '',
@@ -82,19 +83,34 @@ export default function OverviewTab() {
 
     const { PageSize, CurrentPage } = pagination;
 
-    const fetchTransactions = useCallback(async (filters: typeof filterParams) => {
+    //const fetchTransactions = useCallback(async (filters: typeof filterParams) => {
+    const fetchTransactions = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const payloadPagination = {
+            const payloadPagination: any = {
                 pageSize: PageSize, 
-                pageNumber: CurrentPage, 
-                type: filters.type,
-                status: filters.status,
-                method: filters.method,
-                startDate: filters.startDate,
-                endDate: filters.endDate,
+                pageNumber: CurrentPage,
+                //orderId: filters.orderId > 0 ? filters.orderId : undefined, 
+                // type: filters.type,
+                // status: filters.status,
+                // method: filters.method,
+                // startDate: filters.startDate,
+                // endDate: filters.endDate,
+                type: filterParams.type || undefined,
+                status: filterParams.status || undefined,
+                method: filterParams.method || undefined,
+                startDate: filterParams.startDate || undefined,
+                endDate: filterParams.endDate || undefined,
             };
+
+            // if (filterParams.orderId > 0) {
+            //     payloadPagination.orderId = filterParams.orderId;
+            // }
+
+            if (Number(filterParams.orderId) > 0) {
+                payloadPagination.orderId = Number(filterParams.orderId);
+            }
 
             const response = await api.get(`/transaction`, { params: payloadPagination });
 
@@ -117,15 +133,18 @@ export default function OverviewTab() {
         } finally {
             setLoading(false);
         }
-    }, [PageSize, CurrentPage, filterParams, setPagination]); 
+    //}, [PageSize, CurrentPage, filterParams, setPagination]); 
+    }, [pagination.PageSize, pagination.CurrentPage, filterParams]);
 
     useEffect(() => {
         fetchIndicators(); 
     }, [fetchIndicators]);
 
     useEffect(() => {
-        fetchTransactions(filterParams);
-    }, [CurrentPage, filterParams, fetchTransactions]); 
+    //     fetchTransactions(filterParams);
+    // }, [CurrentPage, filterParams, fetchTransactions]); 
+        fetchTransactions();
+    }, [fetchTransactions]);
 
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= pagination.TotalPages) {
