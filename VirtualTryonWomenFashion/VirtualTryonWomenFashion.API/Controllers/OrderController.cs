@@ -208,6 +208,19 @@ namespace VirtualTryonWomenFashion.API.Controllers
             }
         }
 
+        [HttpPut("staff/external-delivering/{orderId}")]
+        public async Task<IActionResult> UpdateOrderStatusWithExternalDeliveringForStaff(int orderId, OrderStatusEnum orderStatusEnum)
+        {
+            try
+            {
+                MessageModel result = await _orderService.UpdateOrderStatusWithExternalDeliveringForStaff(orderId, orderStatusEnum);
+                return StatusCode(result.StatusCode, result.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
 
     }
 }

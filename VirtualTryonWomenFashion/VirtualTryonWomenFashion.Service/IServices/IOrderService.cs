@@ -32,5 +32,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
         public Task<MessageModel> UpdateOrderCompleteForCustomer(int orderId);
         public Task<MessageModelWithData<bool>> CanRequestOrderComplete(int orderId);
         public Task UpdateOrderCompleteAll();
+        public Task<MessageModel> UpdateOrderStatusWithExternalDeliveringForStaff(int orderId, OrderStatusEnum orderStatusEnum);
     }
 }
