@@ -31,6 +31,8 @@ export interface OrderRefundDetailDTO {
    staffResponse: string | null;
    shippingCode: string | null;
    customerImage: string[];
+   orderDeliveringType: string | null;
+   orderRefundDeliveringType: string | null;
 }
 
 export interface ItemRefundDetailDTO {
