@@ -10,5 +10,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
     public interface IShippingRegionService
     {
         Task<List<ShippingRegion>> GetShippingRegionAsync();
+        Task<bool > UpdateShippingRegionAsync(List<ShippingRegion> shippingRegions);
     }
 }
