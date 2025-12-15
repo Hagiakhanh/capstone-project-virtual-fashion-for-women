@@ -277,7 +277,7 @@ export default function StaffOrderDetailsPage() {
          ],
          'Packed': [
             { value: '3', label: 'Đang giao hàng' },
-            { value: '7', label: 'Trả hàng' }
+            // { value: '7', label: 'Trả hàng' }
          ],
          'Delivering': [
             { value: '4', label: 'Đã giao hàng' },
