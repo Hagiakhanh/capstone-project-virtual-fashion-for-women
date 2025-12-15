@@ -26,6 +26,8 @@ namespace VirtualTryonWomenFashion.Service.DTO.OrderRefund
         public string? StaffResponse { get; set; }
         public string? ShippingCode { get; set; }
         public List<string> CustomerImage { get; set; }
+        public string? OrderDeliveringType { get; set; }
+        public string? OrderRefundDeliveringType { get; set; }
 
     }
     public class OrderRefundDetailItem

@@ -407,6 +407,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Quantity = detail.OrderDetail.Quantity,
                     VariantAmount = detail.OrderDetail.Quantity * detail.OrderDetail.PriceAtTime,
                 }).ToList(),
+                OrderDeliveringType = orderRefund.Order.DeliveringType,
+                OrderRefundDeliveringType = orderRefund.DeliveringType,
             };
 
             return new MessageModelWithData<ResponseOrderRefundDetail>
@@ -443,6 +445,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                 && requestUpdateOrderRefund.StatusEnum.ToString() != OrderRefundStatusEnum.Rejected.ToString())
             {
                 throw new Exception("Trạng thái cập nhập cho đơn hàng không hợp lệ (Accepted: 1, Rejected: 2)");
+            }
+            if (requestUpdateOrderRefund.OrderRefundDeliveringType.HasValue
+                && orderRefund.Order.DeliveringType == DeliveringTypeEnum.External.ToString()
+                && requestUpdateOrderRefund.OrderRefundDeliveringType == DeliveringTypeEnum.GHN)
+            {
+                throw new Exception("Đơn hàng vận chuyển External không thể chọn hoàn hàng bằng GHN");
             }
 
             await _unitOfWork.BeginTransactionAsync();
@@ -503,72 +511,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                     };
                     await _transactionRepository.InsertAsync(newTransaction);
 
-
-                    var fromWardName = await _shippingService.GetWardName(orderRefund.Order.DistrictId.Value);
-                    var fromDistrictName = await _shippingService.GetDistrictName(orderRefund.Order.ProvinceId.Value);
-                    var fromProvinceName = await _shippingService.GetProvinceName();
-
-                    ShopAddress shopAddress = await _shopAddressRepository.GetShopAddress();
-
-                    GhnCreateOrderRequest ghnCreateOrderRequest = new GhnCreateOrderRequest
+                    if (requestUpdateOrderRefund.OrderRefundDeliveringType.HasValue
+                        && requestUpdateOrderRefund.OrderRefundDeliveringType == DeliveringTypeEnum.External)
                     {
-                        PaymentTypeId = 1, // Người trả phí shop | 1: Seller, 2: Buyer
-                        Note = "Khách hàng hoàn hàng", // Note của khách hàng cho shipper
-                        RequiredNote =
-                        "CHOXEMHANGKHONGTHU", // Các phương thức khi nhận hàng | CHOTHUHANG , CHOXEMHANGKHONGTHU , KHONGCHOXEMHANG 
-                        FromName = orderRefund.Order.ReceiverName, // Tên của bên gửi 
-                        FromPhone = orderRefund.Order.ReceiverPhone,   // Số điện thoại của bên gửi
-                        FromAddress = orderRefund.Order.ReceiverAddress,  // Địa chỉ gửi
-                        FromWardName = fromWardName[orderRefund.Order.WardCode], // Tên phường gửi | Phải theo api của GHN
-                        FromDistrictName = fromDistrictName[orderRefund.Order.DistrictId.Value], // Tên huyện gửi | Phải theo api của GHN
-                        FromProvinceName = fromProvinceName[orderRefund.Order.ProvinceId.Value], // Tên tỉnh gửi | Phải theo api của GHN
+                        orderRefund.DeliveringType = DeliveringTypeEnum.External.ToString();
+                        orderRefund.ShippingCode = Guid.NewGuid().ToString();
 
-                        //ReturnPhone = "0868728859", // Số điện thoại để trả lại hàng
-                        //ReturnAddress = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam",    // Địa chỉ trả hàng
-                        //ReturnDistrictId = 3695,    // ID địa chỉ của huyện trả hàng | Phải theo api của GHN
-                        //ReturnWardCode = "90752",   // ID địa chỉ của phường trả hàng | Phải theo api của GHN
-
-                        ClientOrderCode = "", // Không thêm trường này
-                        ToName = shopAddress.ShopName, // Tên của khách hàng
-                        ToPhone = shopAddress.ShopPhone, // Số điện thoại của khách hàng
-                        ToAddress = shopAddress.ShopAddress1, // Địa chỉ của khách hàng
-                        ToWardCode = shopAddress.WardCode, // Phường của người nhận hàng | Phải theo api của GHN
-                        ToDistrictId = shopAddress.DistrictId.Value, // Huyện của người nhận hàng | Phải theo api của GHN
-
-                        CodAmount = 0, // Tiền COD mà shipper phải thu
-                        Content = "Cửa hàng thời trang nữ", // Có thể đặt tên sản phẩm ở đây
-                        Weight = (int)orderRefund.Order.PackageWeight.Value, // Cân nặng đơn
-                        Length = (int)orderRefund.Order.PackageLength.Value, // Chiều dài đơn
-                        Width = (int)orderRefund.Order.PackageWidth.Value, // Chiều rộng đơn
-                        Height = (int)orderRefund.Order.PackageHeight.Value, // Chiều cao đơn
-                        PickStationId = 1444, // Chưa rõ
-                                              //DeliverStationId = null,    // Chưa rõ
-                        InsuranceValue = (int)orderRefund.Order.Amount.Value, // Giá trị đơn hàng
-                        ServiceId = 0, // Chưa rõ
-                        ServiceTypeId = 2, // Loại dịch vụ giao | 2: E-commerce Delivery
-                                           //Coupon = null,  // Mã phiếu giảm giá
-                        PickShift = new List<int> { 3 } // Ca lấy hàng | 3: (7h00 - 12h00)
-                    };
-
-                    var options = new JsonSerializerOptions
-                    {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, // bỏ qua field null
-                        PropertyNamingPolicy =
-                        JsonNamingPolicy.CamelCase // GHN dùng snake_case -> mình map lại bằng [JsonPropertyName]
-                    };
-                    var jsonContent = new StringContent(
-                        JsonSerializer.Serialize(ghnCreateOrderRequest, options),
-                        Encoding.UTF8,
-                        "application/json");
-                    var response = await _client.PostAsync("shiip/public-api/v2/shipping-order/create", jsonContent);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var resultGHN = await response.Content.ReadAsStringAsync();
-                        GhnCreateOrderResponse resultGHNObj = JsonSerializer.Deserialize<GhnCreateOrderResponse>(resultGHN);
-                        // ... xử lý result
-                        orderRefund.ShippingCode = resultGHNObj.Data.OrderCode;
-                        //orderRefund.EstimatedDelivery = resultGHNObj.Data.ExpectedDeliveryTime;
                         await _orderRefundRepository.UpdateAsync(orderRefund);
                         int result = await _unitOfWork.SaveChanges();
 
@@ -589,17 +537,113 @@ namespace VirtualTryonWomenFashion.Service.Services
                             {
                                 Message = "Cập nhật trạng thái hoàn hàng và tạo đơn vận chuyển thành công",
                                 StatusCode = StatusCodes.Status200OK,
-                                Data = $"{resultGHNObj.Data.OrderCode}"
+                                Data = $"{orderRefund.ShippingCode}"
                             };
                         }
 
                     }
-                    else
+                    else if (requestUpdateOrderRefund.OrderRefundDeliveringType.HasValue
+                        && requestUpdateOrderRefund.OrderRefundDeliveringType == DeliveringTypeEnum.GHN
+                        )
                     {
-                        await _unitOfWork.RollbackTransactionAsync();
-                        var error = await response.Content.ReadAsStringAsync();
-                        throw new Exception($"Không thể tạo đơn hàng vận chuyển. Lỗi GHN: {error}");
+                        var fromWardName = await _shippingService.GetWardName(orderRefund.Order.DistrictId.Value);
+                        var fromDistrictName = await _shippingService.GetDistrictName(orderRefund.Order.ProvinceId.Value);
+                        var fromProvinceName = await _shippingService.GetProvinceName();
+
+                        ShopAddress shopAddress = await _shopAddressRepository.GetShopAddress();
+
+                        GhnCreateOrderRequest ghnCreateOrderRequest = new GhnCreateOrderRequest
+                        {
+                            PaymentTypeId = 1, // Người trả phí shop | 1: Seller, 2: Buyer
+                            Note = "Khách hàng hoàn hàng", // Note của khách hàng cho shipper
+                            RequiredNote =
+                            "CHOXEMHANGKHONGTHU", // Các phương thức khi nhận hàng | CHOTHUHANG , CHOXEMHANGKHONGTHU , KHONGCHOXEMHANG 
+                            FromName = orderRefund.Order.ReceiverName, // Tên của bên gửi 
+                            FromPhone = orderRefund.Order.ReceiverPhone,   // Số điện thoại của bên gửi
+                            FromAddress = orderRefund.Order.ReceiverAddress,  // Địa chỉ gửi
+                            FromWardName = fromWardName[orderRefund.Order.WardCode], // Tên phường gửi | Phải theo api của GHN
+                            FromDistrictName = fromDistrictName[orderRefund.Order.DistrictId.Value], // Tên huyện gửi | Phải theo api của GHN
+                            FromProvinceName = fromProvinceName[orderRefund.Order.ProvinceId.Value], // Tên tỉnh gửi | Phải theo api của GHN
+
+                            //ReturnPhone = "0868728859", // Số điện thoại để trả lại hàng
+                            //ReturnAddress = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam",    // Địa chỉ trả hàng
+                            //ReturnDistrictId = 3695,    // ID địa chỉ của huyện trả hàng | Phải theo api của GHN
+                            //ReturnWardCode = "90752",   // ID địa chỉ của phường trả hàng | Phải theo api của GHN
+
+                            ClientOrderCode = "", // Không thêm trường này
+                            ToName = shopAddress.ShopName, // Tên của khách hàng
+                            ToPhone = shopAddress.ShopPhone, // Số điện thoại của khách hàng
+                            ToAddress = shopAddress.ShopAddress1, // Địa chỉ của khách hàng
+                            ToWardCode = shopAddress.WardCode, // Phường của người nhận hàng | Phải theo api của GHN
+                            ToDistrictId = shopAddress.DistrictId.Value, // Huyện của người nhận hàng | Phải theo api của GHN
+
+                            CodAmount = 0, // Tiền COD mà shipper phải thu
+                            Content = "Cửa hàng thời trang nữ", // Có thể đặt tên sản phẩm ở đây
+                            Weight = (int)orderRefund.Order.PackageWeight.Value, // Cân nặng đơn
+                            Length = (int)orderRefund.Order.PackageLength.Value, // Chiều dài đơn
+                            Width = (int)orderRefund.Order.PackageWidth.Value, // Chiều rộng đơn
+                            Height = (int)orderRefund.Order.PackageHeight.Value, // Chiều cao đơn
+                            PickStationId = 1444, // Chưa rõ
+                                                  //DeliverStationId = null,    // Chưa rõ
+                            InsuranceValue = (int)orderRefund.Order.Amount.Value, // Giá trị đơn hàng
+                            ServiceId = 0, // Chưa rõ
+                            ServiceTypeId = 2, // Loại dịch vụ giao | 2: E-commerce Delivery
+                                               //Coupon = null,  // Mã phiếu giảm giá
+                            PickShift = new List<int> { 3 } // Ca lấy hàng | 3: (7h00 - 12h00)
+                        };
+
+                        var options = new JsonSerializerOptions
+                        {
+                            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, // bỏ qua field null
+                            PropertyNamingPolicy =
+                            JsonNamingPolicy.CamelCase // GHN dùng snake_case -> mình map lại bằng [JsonPropertyName]
+                        };
+                        var jsonContent = new StringContent(
+                            JsonSerializer.Serialize(ghnCreateOrderRequest, options),
+                            Encoding.UTF8,
+                            "application/json");
+                        var response = await _client.PostAsync("shiip/public-api/v2/shipping-order/create", jsonContent);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var resultGHN = await response.Content.ReadAsStringAsync();
+                            GhnCreateOrderResponse resultGHNObj = JsonSerializer.Deserialize<GhnCreateOrderResponse>(resultGHN);
+                            // ... xử lý result
+                            orderRefund.ShippingCode = resultGHNObj.Data.OrderCode;
+                            //orderRefund.EstimatedDelivery = resultGHNObj.Data.ExpectedDeliveryTime;
+                            await _orderRefundRepository.UpdateAsync(orderRefund);
+                            int result = await _unitOfWork.SaveChanges();
+
+                            RequestCreateNotification requestCreateNotification = new RequestCreateNotification()
+                            {
+                                ReceiverId = orderRefund.CustomerId,
+                                Title = $"Yêu cầu hàng {orderRefund.OrderRefundId} đã được chấp nhận",
+                                Content =
+                                $"Yêu cầu hoàn hàng {orderRefund.OrderRefundId} của bạn đã được nhân viên xác nhận."
+                            };
+                            await _notificationService.CreateNotificationAsync(requestCreateNotification);
+                            await _notificationHub.Clients.Group(orderRefund.CustomerId.ToString())
+                                .SendAsync("ReceiveNotification", requestCreateNotification.Title);
+                            await _unitOfWork.CommitTransactionAsync();
+                            if (result > 0)
+                            {
+                                return new MessageModelWithData<string>
+                                {
+                                    Message = "Cập nhật trạng thái hoàn hàng và tạo đơn vận chuyển thành công",
+                                    StatusCode = StatusCodes.Status200OK,
+                                    Data = $"{resultGHNObj.Data.OrderCode}"
+                                };
+                            }
+
+                        }
+                        else
+                        {
+                            await _unitOfWork.RollbackTransactionAsync();
+                            var error = await response.Content.ReadAsStringAsync();
+                            throw new Exception($"Không thể tạo đơn hàng vận chuyển. Lỗi GHN: {error}");
+                        }
                     }
+
                 }
 
                 return new MessageModelWithData<string>
@@ -814,7 +858,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         public async Task<MessageModel> UpdateAllOrderRefundStatusInGHN()
         {
             List<OrderRefund> orderRefunds = await _orderRefundRepository.GetAllOrderRefundReadyForGHNUpdate();
-            if(orderRefunds == null || orderRefunds.Count == 0)
+            if (orderRefunds == null || orderRefunds.Count == 0)
             {
                 return new MessageModel
                 {
@@ -961,5 +1005,57 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
+        public async Task<MessageModel> UpdateOrderRefundStatusWithExternalDeliveringForStaff(int orderRefundId, OrderRefundStatusEnum orderRefundStatusEnum)
+        {
+            OrderRefund orderRefund = await _orderRefundRepository.GetOrderRefundById(orderRefundId);
+            if (orderRefund == null)
+            {
+                throw new Exception("ID của yêu cầu hoàn hàng không hợp lệ");
+            }
+            if (orderRefund.DeliveringType != DeliveringTypeEnum.External.ToString())
+            {
+                throw new Exception("Yêu cầu hoàn hàng hiện tại không thể cập nhật theo cách này");
+            }
+
+            string currentStatus = orderRefund.Status;
+
+            switch (currentStatus)
+            {
+                case "Accepted":
+                    if (orderRefundStatusEnum.ToString() != OrderRefundStatusEnum.Delivering.ToString())
+                    {
+                        throw new Exception($"Trạng thái hiện tại là {orderRefund.Status} chỉ có thể chuyển lên Delivering");
+                    }
+                    orderRefund.Status = OrderRefundStatusEnum.Delivering.ToString();
+                    break;
+
+                case "Delivering":
+                    if(orderRefundStatusEnum.ToString() != OrderRefundStatusEnum.Delivered.ToString())
+                    {
+                        throw new Exception($"Trạng thái hiện tại là {orderRefund.Status} chỉ có thể chuyển lên Delivered");
+                    }
+                    orderRefund.Status = OrderRefundStatusEnum.Delivered.ToString();
+                    break;
+            }
+
+            await _orderRefundRepository.UpdateAsync(orderRefund);
+            int result = await _unitOfWork.SaveChanges();
+
+            if(result > 0)
+            {
+                return new MessageModel
+                {
+                    Message = "Cập nhật trạng thái hoàn hàng thành công",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+
+            return new MessageModel
+            {
+                Message = "Cập nhật trạng thái hoàn hàng thất bại",
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
+
+        }
     }
 }
