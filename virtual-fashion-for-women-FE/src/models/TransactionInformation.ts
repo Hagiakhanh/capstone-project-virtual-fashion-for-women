@@ -9,6 +9,6 @@ export interface TransactionInformation {
     transactionCode: string;
     bankName?: string;
     bankAccountNumber?: string;
-    createAt: string;
+    createdAt: string;
     updatedAt: string;
 }

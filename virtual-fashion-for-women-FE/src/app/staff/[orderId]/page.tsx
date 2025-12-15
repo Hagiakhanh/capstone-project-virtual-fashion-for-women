@@ -429,7 +429,7 @@ export default function StaffOrderDetailsPage() {
                   <tbody>
                      <tr className="border-b">
                         <td className="py-2 font-medium text-gray-600 w-1/3">Phương thức</td>
-                        <td className="py-2 text-gray-800">{orderData?.paymentMethod}</td>
+                        <td className="py-2 text-gray-800">{orderData?.paymentMethod === "Wallet" ? "Ví" : orderData?.paymentMethod}</td>
                      </tr>
                      <tr className="border-b">
                         <td className="py-2 font-medium text-gray-600">Trạng thái</td>
