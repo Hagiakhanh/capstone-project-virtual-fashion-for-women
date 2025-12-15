@@ -9,10 +9,10 @@ namespace VirtualTryonWomenFashion.Service.Helpers
 {
     public static class MailContent
     {
-       
+
         public static string ConfirmAccountEmail(string fullName, string tokenConfirm, string email, string baseUrl)
         {
-            
+
             string url = baseUrl + "/confirm-email?token="
                  + Uri.EscapeDataString(tokenConfirm)
                  + "&email=" + Uri.EscapeDataString(email);
@@ -157,36 +157,91 @@ namespace VirtualTryonWomenFashion.Service.Helpers
     string bankAccountNumber,
     string transactionCode)
         {
-
-            return "<div style=\"background-color:#f8f8f8;font-family:sans-serif;padding:15px\">\n"
-                + "    <div style=\"max-width:1000px; margin:auto\">\n"
-                + "        <div style=\"background-color:#fff;padding:5px 20px;color:#000;border-radius:2px\">\n"
-                + "            <div style=\"padding:35px 15px\">\n"
-                + "                <p style=\"margin:0;font-size:16px\">\n"
-                + "                    <b>Hello, " + fullName + "</b>\n"
-                + "                </p>\n"
-                + "                <br>\n"
-                + "                <p style=\"margin:0;font-size:16px;line-height:1.6\">\n"
-                + "                    Yêu cầu rút tiền của bạn đã được <b>Admin chấp nhận</b> và đang được xử lý.\n"
-                + "                    <br>Admin sẽ tiến hành chuyển tiền cho bạn thông qua phương thức rút mà bạn đã cung cấp.\n"
-                + "                </p>\n"
-                + "                <br>\n"
-                + "                <p style=\"margin:0;font-size:16px;line-height:1.6\">\n"
-                + "                    <b>Số tiền rút:</b> " + money.ToString("N0") + " VND<br>\n"
-                + "                    <b>Ngân hàng:</b> " + bankName + "<br>\n"
-                + "                    <b>Số tài khoản:</b> " + bankAccountNumber + "<br>\n"
-                + "                    <b>Mã giao dịch:</b> #" + transactionCode + "\n"
-                + "                </p>\n"
-                + "                <div style=\"border-top:1px solid #dcdbdb\"></div>\n"
-                + "                <br>\n"
-                + "                <p style=\"margin:0;font-size:16px\">Trân trọng,</p>\n"
-                + "                <p style=\"margin:0;font-size:16px\">Women Fashion</p>\n"
-                + "            </div>\n"
-                + "        </div>\n"
-                + "    </div>\n"
-                + "</div>";
+            return @"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; color: white; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        .header p { margin: 10px 0 0 0; font-size: 14px; opacity: 0.9; }
+        .content { padding: 40px 30px; }
+        .status-box { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); padding: 20px; border-radius: 6px; margin-bottom: 30px; color: #2d5f2e; text-align: center; }
+        .status-box p { margin: 0; font-size: 16px; font-weight: 600; }
+        .info-section { margin-bottom: 30px; }
+        .info-section h3 { margin: 0 0 20px 0; font-size: 16px; color: #333; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .info-item:last-child { border-bottom: none; }
+        .info-label { color: #666; font-weight: 500; font-size: 14px; }
+        .info-value { color: #333; font-weight: 600; font-size: 14px; word-break: break-all; text-align: right; margin-left: 20px; }
+        .success-icon { font-size: 32px; margin-bottom: 10px; }
+        .description { color: #555; font-size: 15px; line-height: 1.6; margin-bottom: 20px; }
+        .footer { background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #eee; }
+        .footer p { margin: 8px 0; color: #666; font-size: 14px; }
+        .brand { color: #667eea; font-weight: 600; font-size: 16px; }
+        .divider { height: 3px; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); margin: 30px 0; }
+        .note { background-color: #fef3cd; border-left: 4px solid #ffc107; padding: 15px; margin-top: 30px; border-radius: 4px; }
+        .note p { margin: 0; color: #856404; font-size: 13px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>✓ Yêu Cầu Rút Tiền Được Chấp Nhận</h1>
+            <p>Giao dịch của bạn đang được xử lý</p>
+        </div>
+        
+        <div class='content'>
+            <p style='margin: 0 0 20px 0; font-size: 16px;'>Xin chào <strong>" + fullName + @"</strong>,</p>
+            
+            <div class='status-box'>
+                <div class='success-icon'>✓</div>
+                <p>Yêu cầu rút tiền của bạn đã được Admin chấp nhận</p>
+            </div>
+            
+            <p class='description'>
+                Chúng tôi vui mừng thông báo rằng yêu cầu rút tiền của bạn đã được xét duyệt thành công. 
+                Quản trị viên sẽ tiến hành chuyển tiền tới tài khoản ngân hàng của bạn trong thời gian sớm nhất.
+            </p>
+            
+            <div class='info-section'>
+                <h3>Chi Tiết Giao Dịch</h3>
+                <div class='info-item'>
+                    <span class='info-label'>Số tiền rút</span>
+                    <span class='info-value'>" + money.ToString("N0") + @" VND</span>
+                </div>
+                <div class='info-item'>
+                    <span class='info-label'>Ngân hàng</span>
+                    <span class='info-value'>" + bankName + @"</span>
+                </div>
+                <div class='info-item'>
+                    <span class='info-label'>Số tài khoản</span>
+                    <span class='info-value'>" + bankAccountNumber + @"</span>
+                </div>
+                <div class='info-item'>
+                    <span class='info-label'>Mã giao dịch</span>
+                    <span class='info-value'>#" + transactionCode + @"</span>
+                </div>
+            </div>
+            
+            <div class='note'>
+                <p><strong>Lưu ý:</strong> Vui lòng giữ mã giao dịch để phục vụ cho việc theo dõi. Nếu có bất kỳ thắc mắc, vui lòng liên hệ với bộ phận hỗ trợ của chúng tôi.</p>
+            </div>
+        </div>
+        
+        <div class='footer'>
+            <p>Cảm ơn bạn đã tin tưởng chúng tôi!</p>
+            <p class='brand'>Women Fashion</p>
+            <p style='margin-top: 15px; font-size: 12px; color: #999;'>
+                © 2024 Women Fashion. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>";
         }
-
     }
-
 }

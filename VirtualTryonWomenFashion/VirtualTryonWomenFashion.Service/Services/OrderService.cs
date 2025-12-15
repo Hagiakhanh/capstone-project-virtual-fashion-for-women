@@ -40,6 +40,7 @@ using VirtualTryonWomenFashion.Service.DTO.OrderRefund;
 using VirtualTryonWomenFashion.Service.DTO.Wallet;
 using System.Globalization;
 using VirtualTryonWomenFashion.Service.DTO.Mail;
+using System.Reflection.Metadata;
 
 namespace VirtualTryonWomenFashion.Service.Services
 {
@@ -1317,6 +1318,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception("Đơn hàng hiện tại không thể cập nhật theo cách này");
             }
 
+            List<RequestCreateStatusLog> requestCreateStatusLogs = new List<RequestCreateStatusLog>();
+            RequestCreateNotification requestCreateNotification = new RequestCreateNotification()
+            {
+                ReceiverId = order.CustomerId,
+            };
+
             string currentStatus = order.Status;
             switch (currentStatus)
             {
@@ -1327,6 +1334,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     }
                     order.Status = orderStatusEnum.ToString();
                     order.ShippingCode = Guid.NewGuid().ToString();
+                    order.EstimatedDelivery = order.CreatedAt.AddDays(5);
                     break;
 
                 case "Packed":
@@ -1344,6 +1352,10 @@ namespace VirtualTryonWomenFashion.Service.Services
                         throw new Exception($"Trạng thái hiện tại là {order.Status} chỉ có thể chuyển lên Delivered hoặc Returning");
                     }
                     order.Status = orderStatusEnum.ToString();
+                    if (order.Status == OrderStatusEnum.Delivered.ToString())
+                    {
+                        order.DeliveredAt = DateTime.UtcNow.AddHours(7);
+                    }
                     break;
 
                 case "Returning":
@@ -1356,7 +1368,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             }
 
-            if(currentStatus == order.Status)
+            if (currentStatus == order.Status)
             {
                 return new MessageModel
                 {
@@ -1365,8 +1377,73 @@ namespace VirtualTryonWomenFashion.Service.Services
                 };
             }
 
+            switch (orderStatusEnum.ToString())
+            {
+                case "Packed":
+                    requestCreateNotification.Title = $"Đơn hàng {order.OrderId} đã được shop đóng gói và chờ shipper lấy hàng";
+                    requestCreateNotification.Content = $"Đơn hàng {order.OrderId} của bạn đã được đóng gói thành công. Vui lòng chờ shipper giao đến";
+                    break;
+                case "Delivering":
+                    requestCreateNotification.Title = $"Đơn hàng {order.OrderId} đã được shipper lấy hàng";
+                    requestCreateNotification.Content =
+                        $"Đơn hàng {order.OrderId} của bạn đã được shipper lấy và đang trong quá trình vận chuyển.";
+                    break;
+                case "Delivered":
+                    requestCreateNotification.Title = $"Đơn hàng {order.OrderId} đã được giao thành công";
+                    requestCreateNotification.Content =
+                        $"Đơn hàng {order.OrderId} của bạn đã được giao thành công. Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi!";
+                    break;
+                case "Returning":
+                    requestCreateNotification.Title = $"Đơn hàng {order.OrderId} đang được hoàn trả lại";
+                    requestCreateNotification.Content =
+                         $"Đơn hàng {order.OrderId} đang được trả lại do bạn không nhận hàng.";
+                    break;
+                case "Returned":
+                    requestCreateNotification.Title = $"Đơn hàng {order.OrderId} đã được hoàn tiền thành công";
+                    requestCreateNotification.Content =
+                        $"Do đơn hàng {order.OrderId} của bạn không nhận hàng nên tiền mua hàng đã được hoàn tiền vào ví bạn thành công.";
+                    break;
+            }
+
+            if (order.Status == OrderStatusEnum.Returned.ToString())
+            {
+                decimal amountRefund = (decimal)(order.Amount - order.ShippingMoney - order.InsuranceFee);
+                int refundResult = await _walletService.UpdateBalanceInWalletAsync(new RequestUpdateRecharge()
+                {
+                    WalletId = order.Customer.WalletId.Value,
+                    Amount = amountRefund,
+                }, TypeTransactionEnum.Refund.ToString());
+                if (refundResult > 0)
+                {
+                    Transaction transaction = new Transaction()
+                    {
+                        UserId = order.CustomerId,
+                        Status = TransactionStatusEnum.Success.ToString(),
+                        Money = amountRefund,
+                        WalletId = order.Customer.WalletId,
+                        Method = PaymentMethodEnum.Wallet.ToString(),
+                        Type = TypeTransactionEnum.Refund.ToString(),
+                        CreatedAt = DateTime.UtcNow.AddHours(7),
+                        UpdatedAt = DateTime.UtcNow.AddHours(7),
+                        OrderId = order.OrderId,
+                    };
+                    await _transactionService.CreateTransactionAsync(transaction);
+                }
+            }
+
+            requestCreateStatusLogs.Add(new RequestCreateStatusLog
+            {
+                OrderId = order.OrderId,
+                Status = order.Status,
+                UpdateAt = DateTime.UtcNow.AddHours(7),
+            });
             await _orderRepository.UpdateAsync(order);
             int result = await _unitOfWork.SaveChanges();
+
+            await _statusLogService.CreateStatusLog(requestCreateStatusLogs);
+            await _notificationService.CreateNotificationAsync(requestCreateNotification);
+            await _notificationHub.Clients.Group(order.CustomerId.ToString())
+                .SendAsync("ReceiveNotification", requestCreateNotification.Title);
 
             if (result > 0)
             {
