@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.Helpers;
 using VirtualTryonWomenFashion.Service.IServices;
 
@@ -25,6 +26,40 @@ namespace VirtualTryonWomenFashion.API.Controllers
                 StatusCode = 200,
                 Data = shippingRegion
             });
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> UpdateShippingRegionAsync([FromBody] List<ShippingRegion> shippingRegionsRequest)
+        {
+            try
+            {
+                var result = await _shippingRegionService.UpdateShippingRegionAsync(shippingRegionsRequest);
+                if(result)
+                {
+                    return Ok(new MessageModelWithData<object>()
+                    {
+                        Message = "Cập nhật giá vận chuyển thành công",
+                        StatusCode = StatusCodes.Status200OK,
+                        Data = null
+                    });
+                }
+                return BadRequest(new MessageModelWithData<object>()
+                {
+                    Message = "Cập nhật giá vận chuyển thất bại",
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Data = null
+                });
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new MessageModelWithData<object>()
+                {
+                    Message = "Cập nhật giá vận chuyển thất bại: " + ex.Message,
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Data = null
+                });
+            }
         }
     }
 }

@@ -348,6 +348,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Amount = transaction.Money.Value,
                     WalletId = transaction.WalletId.Value
                 }, TypeTransactionEnum.Recharge.ToString());
+                await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
                 return true;
             }
@@ -401,6 +402,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Subject = $"[Women Fashion] Giao dịch rút tiền {transaction.ThirdPartyCode} đã được admin chấp nhận",
                     Body = MailContent.WithdrawRequestApproved(ownerTransaction.FullName, transaction.Money.Value, transaction.BankName, transaction.BankAccountNumber, transaction.ThirdPartyCode)
                 });
+                await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
                 return true;
             }
