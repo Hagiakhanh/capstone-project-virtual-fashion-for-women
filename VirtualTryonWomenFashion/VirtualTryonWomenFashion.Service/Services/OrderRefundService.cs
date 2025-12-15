@@ -214,7 +214,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         public async Task<MessageModelWithData<Pagination<ResponseListOrderRefund>>> ListOrderRefundForCustomer(PaginationParameter page, OrderRefundStatusEnum? statusEnum)
         {
             int customerId = _currentUserService.GetUserId();
-            Expression<Func<OrderRefund, bool>> filterExpression = x => !statusEnum.HasValue || x.Status == statusEnum.Value.ToString();
+            Expression<Func<OrderRefund, bool>> filterExpression = x => x.Order.CustomerId == customerId && (!statusEnum.HasValue || x.Status == statusEnum.Value.ToString());
 
             List<OrderRefund> orderRefunds = await _orderRefundRepository.GetListOrderRefundForCustomer(statusEnum.ToString(), page.PageIndex, page.PageSize, customerId);
 
