@@ -188,7 +188,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<Pagination<ResponseTransactionAdmin>> GetAllTransactions(
+        public async Task<Pagination<ResponseTransactionAdmin>> GetAllTransactions(int? orderId,
             string? type,
             string? status,
             string? method,
@@ -237,6 +237,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
 
             filter = t =>
+                (!orderId.HasValue || t.OrderId == orderId) &&
                 (string.IsNullOrEmpty(type) || t.Type == type) &&
                 (string.IsNullOrEmpty(method) || t.Method == method) &&
                 (string.IsNullOrEmpty(status) || t.Status == status) &&
@@ -269,11 +270,11 @@ namespace VirtualTryonWomenFashion.Service.Services
 
 
             // Gọi repository
-            List<Transaction> rawResult = await _transactionRepository.GetAll(
+            List<Transaction> rawResult = await _transactionRepository.GetAllThenInclude(
                 pagination: pagination,
                 filter: filter,
                 orderBy: q => q.OrderByDescending(t => t.CreatedAt),
-                includes: t => t.User
+                includes: [t => t.User, t => t.Order]
             );
 
             int totalRecords = await _transactionRepository.CountAsync(filter);
@@ -348,6 +349,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Amount = transaction.Money.Value,
                     WalletId = transaction.WalletId.Value
                 }, TypeTransactionEnum.Recharge.ToString());
+                await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
                 return true;
             }
@@ -401,6 +403,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     Subject = $"[Women Fashion] Giao dịch rút tiền {transaction.ThirdPartyCode} đã được admin chấp nhận",
                     Body = MailContent.WithdrawRequestApproved(ownerTransaction.FullName, transaction.Money.Value, transaction.BankName, transaction.BankAccountNumber, transaction.ThirdPartyCode)
                 });
+                await _unitOfWork.SaveChanges();
                 await _unitOfWork.CommitTransactionAsync();
                 return true;
             }

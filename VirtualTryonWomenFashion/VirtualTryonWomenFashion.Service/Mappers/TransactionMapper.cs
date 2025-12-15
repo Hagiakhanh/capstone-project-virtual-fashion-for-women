@@ -19,6 +19,8 @@ namespace VirtualTryonWomenFashion.Service.Mappers
                 Type = transaction.Type,
                 Status = transaction.Status,
                 TransactionCode = transaction.ThirdPartyCode,
+                BankName = transaction.BankName,
+                BankAccountNumber = transaction.BankAccountNumber,
                 UpdatedAt = transaction.UpdatedAt
             };
         }
@@ -28,15 +30,19 @@ namespace VirtualTryonWomenFashion.Service.Mappers
             if (transaction == null)
                 return null;
 
+            int? finalOrderId = transaction.OrderId ?? transaction.OrderRefund?.OrderId;
+
             return new ResponseTransactionAdmin
             {
                 TransactionId = transaction.TransactionId,
                 UserName = transaction.User?.FullName ?? "Unknown",
+                OrderId = finalOrderId,
                 Status = transaction.Status,
                 Money = transaction.Money,
                 Method = transaction.Method,
                 Type = transaction.Type,
-                CreatedAt = transaction.CreatedAt
+                CreatedAt = transaction.CreatedAt,
+                UpdatedAt= transaction.UpdatedAt,
             };
         }
 

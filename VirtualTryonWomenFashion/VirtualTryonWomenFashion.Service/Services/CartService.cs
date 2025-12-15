@@ -28,6 +28,8 @@ namespace VirtualTryonWomenFashion.Service.Services
         private readonly IShippingService _shippingService;
         private readonly IProductService _productService;
         private readonly IUserInteractionService _userInteractionService;
+        private readonly IShippingRegionRespository _shippingRegionRespository;
+        private readonly IShopAddressRepository _shopAddressRepository;
 
         public CartService(
             ICartRepository cartRepository,
@@ -36,7 +38,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             IProductVariantService productVariantService,
             IShippingService shippingService,
             IProductService productService,
-            IUserInteractionService userInteractionService
+            IUserInteractionService userInteractionService,
+            IShippingRegionRespository shippingRegionRespository,
+            IShopAddressRepository shopAddressRepository
         )
         {
             _cartRepository = cartRepository;
@@ -46,6 +50,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             _shippingService = shippingService;
             _productService = productService;
             _userInteractionService = userInteractionService;
+            _shippingRegionRespository = shippingRegionRespository;
+            _shopAddressRepository = shopAddressRepository;
         }
 
         public async Task<ResponseCartItem> AddProductToCartAsync(RequestAddProductToCart requestAddProductToCart)
@@ -102,7 +108,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     await _cartRepository.InsertAsync(newCartItem);
                     await _unitOfWork.SaveChanges();
                     await _unitOfWork.CommitTransactionAsync();
-                    
+
                     var product = await _productService.GetProductByVariantIdAsync(requestAddProductToCart.ProductVariantId);
                     await _userInteractionService.CreateAsync(new CreateUpdateUserInteractionDto()
                     {
@@ -110,7 +116,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                         InteractionType = UserInteractionEnum.AddToCart.ToString(),
                         Weight = 3.0m
                     });
-                    
+
                     return newCartItem.MapToResponseCartItem(new ResponseProductVariantDto());
                 }
             }
@@ -130,8 +136,8 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 throw new Exception("Sản phẩm trong cart không được tìm thấy.");
             }
-            
-            if(existingCartItem.UserId != userId)
+
+            if (existingCartItem.UserId != userId)
             {
                 throw new Exception("Bạn không có quyền xóa sản phẩm này trong giỏ hàng.");
             }
@@ -233,7 +239,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             {
                 await _unitOfWork.BeginTransactionAsync();
                 existingCartItem.Quantity = requestAddProductToCart.Quantity;
-                if(requestAddProductToCart.TryOnSlotId != null)
+                if (requestAddProductToCart.TryOnSlotId != null)
                 {
                     existingCartItem.TryOnSlotId = requestAddProductToCart.TryOnSlotId;
                 }
@@ -261,8 +267,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                             .FirstOrDefault(v => v.ProductVariantId == existingCartItem.ProductVariantId).SizeDto ??=
                         new ResponseSizeDto(),
                     ColorDto = responseProductDto.ProductColors
-                        .Where(pc => pc.ProductVariants.Any(pv=>pv.ProductVariantId == existingCartItem.ProductVariantId))
-                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto()
+                        .Where(pc => pc.ProductVariants.Any(pv => pv.ProductVariantId == existingCartItem.ProductVariantId))
+                        .Select(pc => pc.Color).FirstOrDefault() ?? new ResponseColorDto()
                 };
                 return existingCartItem.MapToResponseCartItem(productVariantDto);
             }
@@ -304,8 +310,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                             .FirstOrDefault(v => v.ProductVariantId == cartItem.ProductVariantId).SizeDto ??=
                         new ResponseSizeDto(),
                     ColorDto = responseProductDto.ProductColors
-                        .Where(pc => pc.ProductVariants.Any(pv=>pv.ProductVariantId == cartItem.ProductVariantId))
-                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto()
+                        .Where(pc => pc.ProductVariants.Any(pv => pv.ProductVariantId == cartItem.ProductVariantId))
+                        .Select(pc => pc.Color).FirstOrDefault() ?? new ResponseColorDto()
                 };
 
                 responseCartItems.Add(cartItem.MapToResponseCartItem(productVariantDto));
@@ -353,8 +359,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                             .FirstOrDefault(v => v.ProductVariantId == cartItem.ProductVariantId).SizeDto ??=
                         new ResponseSizeDto(),
                     ColorDto = responseProductDto.ProductColors
-                        .Where(pc => pc.ProductVariants.Any(pv=>pv.ProductVariantId == cartItem.ProductVariantId))
-                        .Select(pc=>pc.Color).FirstOrDefault()?? new ResponseColorDto()
+                        .Where(pc => pc.ProductVariants.Any(pv => pv.ProductVariantId == cartItem.ProductVariantId))
+                        .Select(pc => pc.Color).FirstOrDefault() ?? new ResponseColorDto()
                 };
 
                 responseCartItems.Add(cartItem.MapToResponseCartItem(productVariantDto));
@@ -371,62 +377,122 @@ namespace VirtualTryonWomenFashion.Service.Services
                 throw new Exception("No items selected for checkout.");
             }
 
-            int totalProductPrice = 0;
+            decimal totalProductPrice = 0.0m;
 
             foreach (var cartItem in selectedCartItems)
             {
-                int productPrice =
-                    (int)Math.Ceiling((cartItem.QuantityItem * cartItem.ResponseProductVariantDto?.CurrentPrice) ?? 0);
+                decimal productPrice =
+                  (cartItem.QuantityItem * cartItem.ResponseProductVariantDto?.CurrentPrice) ?? 0;
                 totalProductPrice += productPrice;
             }
-            (decimal serviceFee, decimal insuranceFree) = (0.0m, 0.0m);
-
-            if(!string.IsNullOrEmpty(requestCheckout.ProvinceName) && !string.IsNullOrEmpty(requestCheckout.DistrictName) && !string.IsNullOrEmpty(requestCheckout.WardName))
+            (decimal ghnServiceFee, decimal ghnInsuranceFee) = (0.0m, 0.0m);
+            (decimal externalServiceFee, decimal externalInsuranceFee) = (0.0m, 0.0m);
+            
+            List<ResponseDeliveryTypeFee> deliveryTypeFees = new List<ResponseDeliveryTypeFee>();
+            ResponseDeliveryTypeFee ghnDeliveryTypeFee = new ResponseDeliveryTypeFee
             {
-                (int provinceId, int districtId, string wardCode) =
-                await this.GetAddressCodeAsync(requestCheckout.ProvinceName, requestCheckout.DistrictName,requestCheckout.WardName);
-                
-                int totalWeight =
+                DeliveryType = DeliveringTypeEnum.GHN.ToString(),
+                InsuranceFee = ghnInsuranceFee,
+                ServiceFee = ghnServiceFee,
+                TotalPrice = totalProductPrice + ghnServiceFee + ghnInsuranceFee,
+            };
+
+            ResponseDeliveryTypeFee externalDeliveryTypeFee = new ResponseDeliveryTypeFee
+            {
+                DeliveryType = DeliveringTypeEnum.External.ToString(),
+                InsuranceFee = externalInsuranceFee,
+                ServiceFee = externalServiceFee,
+                TotalPrice = totalProductPrice + externalServiceFee + externalInsuranceFee,
+            };
+            int totalWeight =
                     (int)Math.Ceiling(
                         selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductWeight) ?? 0);
-                int totalHeight =
-                    (int)Math.Ceiling(
-                        selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductHeight) ?? 0);
-                int totalLength =
-                    (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductLength) ?? 0);
-                int totalWidth =
-                    (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductWidth) ?? 0);
-                ShippingObjectRequest shippingObjectRequest = new ShippingObjectRequest()
+            int totalHeight =
+                (int)Math.Ceiling(
+                    selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductHeight) ?? 0);
+            int totalLength =
+                (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductLength) ?? 0);
+            int totalWidth =
+                (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductWidth) ?? 0);
+            decimal finalTotalWeight = (totalLength * totalWidth * totalHeight) / 5000m;
+            if (!string.IsNullOrEmpty(requestCheckout.ProvinceName) && !string.IsNullOrEmpty(requestCheckout.DistrictName) && !string.IsNullOrEmpty(requestCheckout.WardName))
+            {
+                (int provinceId, int districtId, string wardCode, string errorGHN) =
+                await this.GetAddressCodeAsync(requestCheckout.ProvinceName, requestCheckout.DistrictName, requestCheckout.WardName);
+                
+                if (provinceId != 0 && districtId != 0 && !string.IsNullOrEmpty(wardCode))
                 {
-                    ToWardCode = wardCode,
-                    ToDistrictId = districtId,
-                    Weight = totalWeight,
-                    Length = totalLength,
-                    Width = totalWidth,
-                    Height = totalHeight,
-                    InsuranceValue = totalProductPrice
-                };
-                (serviceFee, insuranceFree) =
-                    await _shippingService.CalculateShippingFee(shippingObjectRequest);
+                    ShippingObjectRequest shippingObjectRequest = new ShippingObjectRequest()
+                    {
+                        ToWardCode = wardCode,
+                        ToDistrictId = districtId,
+                        Weight = totalWeight,
+                        Length = totalLength,
+                        Width = totalWidth,
+                        Height = totalHeight,
+                        InsuranceValue = (int)Math.Ceiling(totalProductPrice)
+                    };
+                    (ghnServiceFee, ghnInsuranceFee, errorGHN) =
+                        await _shippingService.CalculateShippingFee(shippingObjectRequest);
+                }
+                var shopAddress = await _shopAddressRepository.GetShopAddress();
+                var shippingRegions = await _shippingRegionRespository.GetShippingRegion();
+
+                if (shopAddress.ProvinceId == provinceId)
+                {
+                    externalServiceFee = this.CalculateExternalFee(totalLength, totalWidth, totalHeight, shippingRegions.Where(sr => sr.RegionType == "Nội tỉnh").FirstOrDefault());
+                }else
+                {
+                    externalServiceFee = this.CalculateExternalFee(totalLength, totalWidth, totalHeight, shippingRegions.Where(sr => sr.RegionType == "Ngoại tỉnh").FirstOrDefault());
+                }
+                externalInsuranceFee = totalProductPrice > 1000000m ? totalProductPrice * 0.005m : 0;
+
+                ghnDeliveryTypeFee.InsuranceFee = ghnInsuranceFee;
+                ghnDeliveryTypeFee.ServiceFee = ghnServiceFee;
+                ghnDeliveryTypeFee.TotalPrice = totalProductPrice + ghnServiceFee + ghnInsuranceFee;
+                ghnDeliveryTypeFee.Error = string.IsNullOrEmpty(errorGHN) ? "" : errorGHN;
+
+                externalDeliveryTypeFee.InsuranceFee = externalInsuranceFee;
+                externalDeliveryTypeFee.ServiceFee = externalServiceFee;
+                externalDeliveryTypeFee.TotalPrice = totalProductPrice + externalServiceFee + externalInsuranceFee;
+
+                
             }
+
+            deliveryTypeFees.Add(ghnDeliveryTypeFee);
+            deliveryTypeFees.Add(externalDeliveryTypeFee);
+
             ResponseCheckout responseCheckout = new ResponseCheckout()
             {
                 Items = selectedCartItems,
+                TotalWeight = finalTotalWeight,
                 TotalProductPrice = totalProductPrice,
-                ServiceFee = serviceFee,
-                InsuranceFee = insuranceFree,
-                TotalPrice = totalProductPrice + serviceFee + insuranceFree
+                DeliveryTypeFees = deliveryTypeFees,
             };
             return responseCheckout;
         }
 
-        public async Task<(int, int, string)> GetAddressCodeAsync(string provinceName, string districtName,
+        public async Task<(int, int, string, string)> GetAddressCodeAsync(string provinceName, string districtName,
             string wardName)
         {
-            int provinceId = await _shippingService.GetProvinceId(provinceName);
-            int districtId = await _shippingService.GetDistrictId(districtName, provinceId);
-            string wardCode = await _shippingService.GetWardId(wardName, districtId);
-            return (provinceId, districtId, wardCode);
+            int provinceId = 0, districtId = 0;
+            string wardCode = "";
+            string errorGHN = "";
+            provinceId = await _shippingService.GetProvinceId(provinceName);
+            if (provinceId != 0)
+            {
+                districtId = await _shippingService.GetDistrictId(districtName, provinceId);
+                if (districtId != 0)
+                {
+                    wardCode = await _shippingService.GetWardId(wardName, districtId);
+                }
+            }
+            if (provinceId == 0 || districtId == 0 || string.IsNullOrEmpty(wardCode))
+            {
+                errorGHN = "Giao hàng nhanh chưa hỗ trợ khu vực này";
+            }
+
+            return (provinceId, districtId, wardCode, errorGHN);
         }
 
         public async Task RestoreCartItemAsync(int userId, string productVariantId, int quantity)
@@ -463,6 +529,15 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
 
             await _unitOfWork.SaveChanges();
+        }
+
+        private decimal CalculateExternalFee(decimal length, decimal width, decimal height, ShippingRegion shippingRegion)
+        {
+            decimal volumetricWeight = (length * width * height) / 5000m;
+            decimal roundedWeight = Math.Ceiling(volumetricWeight * 2) / 2;
+            decimal extraSteps = Math.Max(0, Math.Ceiling((roundedWeight - 0.5m) / 0.5m));
+            decimal shippingFee = shippingRegion.BasePrice + (extraSteps * shippingRegion.AdditionalWeightFee);
+            return shippingFee;
         }
     }
 }

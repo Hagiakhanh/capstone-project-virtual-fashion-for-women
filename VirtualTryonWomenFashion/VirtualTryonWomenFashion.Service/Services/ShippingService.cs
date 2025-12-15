@@ -42,14 +42,15 @@ public class ShippingService : IShippingService
             using var doc = JsonDocument.Parse(responseContent);
 
             var provinces = doc.RootElement.GetProperty("data");
-
+            int provinceId = 0;
             foreach (var province in provinces.EnumerateArray())
             {
-                int provinceId = province.GetProperty("ProvinceID").GetInt32();
+                 int provinceIdJson= province.GetProperty("ProvinceID").GetInt32();
                 string provinceNameJson = province.GetProperty("ProvinceName").GetString();
 
                 if (string.Equals(provinceNameJson, provinceName, StringComparison.OrdinalIgnoreCase))
                 {
+                    provinceId = provinceIdJson;
                     return provinceId;
                 }
 
@@ -59,14 +60,13 @@ public class ShippingService : IShippingService
                     {
                         if (string.Equals(ext.GetString(), provinceName, StringComparison.OrdinalIgnoreCase))
                         {
+                            provinceId = provinceIdJson;
                             return provinceId;
                         }
                     }
                 }
             }
-
-            // Nếu không tìm thấy
-            throw new Exception($"{provinceName} không tìm thấy.");
+            return provinceId;
         }
         catch (Exception e)
         {
@@ -107,14 +107,15 @@ public class ShippingService : IShippingService
             using var doc = JsonDocument.Parse(responseContent);
 
             var districts = doc.RootElement.GetProperty("data");
-
+            int districtId = 0;
             foreach (var district in districts.EnumerateArray())
             {
-                int districtId = district.GetProperty("DistrictID").GetInt32();
+                int districtIdJson = district.GetProperty("DistrictID").GetInt32();
                 string districtNameJson = district.GetProperty("DistrictName").GetString();
 
                 if (string.Equals(districtNameJson, districtName, StringComparison.OrdinalIgnoreCase))
                 {
+                    districtId = districtIdJson;
                     return districtId;
                 }
 
@@ -124,14 +125,14 @@ public class ShippingService : IShippingService
                     {
                         if (string.Equals(ext.GetString(), districtName, StringComparison.OrdinalIgnoreCase))
                         {
+                            districtId = districtIdJson;
                             return districtId;
                         }
                     }
                 }
             }
 
-            // Nếu không tìm thấy
-            throw new Exception($"Province '{districtName}' not found.");
+            return districtId;
         }
         catch (Exception e)
         {
@@ -169,14 +170,15 @@ public class ShippingService : IShippingService
             using var doc = JsonDocument.Parse(responseContent);
 
             var wards = doc.RootElement.GetProperty("data");
-
+            string wardCode = "";
             foreach (var ward in wards.EnumerateArray())
             {
-                string wardCode = ward.GetProperty("WardCode").ToString();
+                string wardCodeJson = ward.GetProperty("WardCode").ToString();
                 string wardNameJson = ward.GetProperty("WardName").GetString();
 
                 if (string.Equals(wardNameJson, wardName, StringComparison.OrdinalIgnoreCase))
                 {
+                    wardCode = wardCodeJson; 
                     return wardCode;
                 }
 
@@ -186,14 +188,13 @@ public class ShippingService : IShippingService
                     {
                         if (string.Equals(ext.GetString(), wardName, StringComparison.OrdinalIgnoreCase))
                         {
+                            wardCode = wardCodeJson;
                             return wardCode;
                         }
                     }
                 }
             }
-
-            // Nếu không tìm thấy
-            throw new Exception($"Province '{wardName}' not found.");
+            return wardCode;
         }
         catch (Exception e)
         {
@@ -202,7 +203,7 @@ public class ShippingService : IShippingService
         }
     }
 
-    public async Task<(decimal, decimal)> CalculateShippingFee(ShippingObjectRequest shippingObjectRequest)
+    public async Task<(decimal, decimal, string)> CalculateShippingFee(ShippingObjectRequest shippingObjectRequest)
     {
         try
         {
@@ -218,7 +219,7 @@ public class ShippingService : IShippingService
             );
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception("Giao hàng nhanh không hỗ trợ giao hàng địa chỉ này");
+                return (0.0m, 0.0m, "Giao hàng nhanh không hỗ trợ giao hàng địa chỉ này");
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -240,7 +241,7 @@ public class ShippingService : IShippingService
                 insuranceFee = insuranceFeeeElement.GetDecimal();
             }
 
-            return (serviceFee, insuranceFee);
+            return (serviceFee, insuranceFee, "");
         }
         catch (Exception e)
         {

@@ -24,6 +24,10 @@ namespace VirtualTryonWomenFashion.Service.DTO.Transaction
 
         public string TransactionCode { get; set; }
 
+        public string? BankName { get; set; }
+
+        public string? BankAccountNumber { get; set; }
+
         public DateTime UpdatedAt { get; set; }
 
         public DateTime CreatedAt { get; set; }
