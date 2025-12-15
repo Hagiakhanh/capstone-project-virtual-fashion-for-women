@@ -1326,13 +1326,13 @@ namespace VirtualTryonWomenFashion.Service.Services
                         throw new Exception($"Trạng thái hiện tại là {order.Status} chỉ có thể chuyển lên Packed");
                     }
                     order.Status = orderStatusEnum.ToString();
+                    order.ShippingCode = Guid.NewGuid().ToString();
                     break;
 
                 case "Packed":
-                    if (orderStatusEnum.ToString() != OrderStatusEnum.Delivering.ToString()
-                        && orderStatusEnum.ToString() != OrderStatusEnum.Returning.ToString())
+                    if (orderStatusEnum.ToString() != OrderStatusEnum.Delivering.ToString())
                     {
-                        throw new Exception($"Trạng thái hiện tại là {order.Status} chỉ có thể chuyển lên Delivering hoặc Returning");
+                        throw new Exception($"Trạng thái hiện tại là {order.Status} chỉ có thể chuyển lên Delivering");
                     }
                     order.Status = orderStatusEnum.ToString();
                     break;
