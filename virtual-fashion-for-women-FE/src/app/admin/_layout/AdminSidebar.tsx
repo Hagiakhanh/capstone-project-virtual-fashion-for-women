@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // 1. Import hook usePathname
-import { Home, ShoppingCart, Package, Users, LineChart, X, BadgePercent, LayoutGrid, Ruler, HandCoins } from "lucide-react";
+import { Home, ShoppingCart, Package, Users, LineChart, X, BadgePercent, LayoutGrid, Ruler, HandCoins, Settings } from "lucide-react";
 
 // Interface cho props
 interface SidebarProps {
@@ -119,6 +119,14 @@ export default function AdminSidebar({
           >
             <HandCoins className="w-5 h-5 mr-3" />
             Giao dịch rút tiền
+          </Link>
+          <Link
+            onClick={handleLinkClick}
+            href="/admin/store-settings"
+            className={`${baseLinkClasses} ${isActive("/admin/store-settings") ? activeLinkClasses : inactiveLinkClasses}`}
+          >
+            <Settings className="w-5 h-5 mr-3" />
+            Cấu hình cửa hàng
           </Link>
         </nav>
       </aside>
