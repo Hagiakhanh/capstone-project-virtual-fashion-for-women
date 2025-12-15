@@ -1,7 +1,7 @@
 "use client";
 
-import { Table, Steps, Button, Radio, Modal, Input, Form } from "antd";
-import { ArchiveRestore, CircleDollarSign, RefreshCcw } from "lucide-react";
+import { Table, Steps, Button, Radio, Modal, Input, Form, Select } from "antd";
+import { ArchiveRestore, CircleDollarSign, RefreshCcw, Save } from "lucide-react";
 import type { ColumnsType } from "antd/es/table";
 import { useParams } from "next/navigation";
 import { api } from "@/api/instance";
@@ -23,6 +23,10 @@ export default function OrderRefundDetailsStaff() {
    const [isModalVisible, setIsModalVisible] = useState(false);
    const [form] = Form.useForm();
    const [isSyncing, setIsSyncing] = useState<boolean>(false);
+   const decision = Form.useWatch('decision', form);
+   const [isGhnOrder, setIsGhnOrder] = useState<boolean>();
+   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+   const [isLoadingExternal, setIsLoadingExternal] = useState<boolean>(false);
 
    const handlePreview = (img: string) => {
       setSelectedImage(img);
@@ -47,6 +51,7 @@ export default function OrderRefundDetailsStaff() {
             orderRefundId: Number(orderRefundId),
             statusEnum: Number(values?.decision),
             staffResponse: values?.reason,
+            orderRefundDeliveringType: Number(values?.shippingMethod) || undefined,
          }
          const response = await api.put('/orderRefund/staff', payload);
          if (response.status === 200) {
@@ -59,7 +64,7 @@ export default function OrderRefundDetailsStaff() {
          setIsModalVisible(false);
       } catch (error) {
          // Nếu validate lỗi thì antd sẽ tự hiển thị, không cần xử lý thêm
-            messageToast.error("Phản hồi yêu cầu hoàn trả thất bại");
+         messageToast.error("Phản hồi yêu cầu hoàn trả thất bại");
       }
    };
 
@@ -87,6 +92,11 @@ export default function OrderRefundDetailsStaff() {
          if (response.status === 200) {
             console.log("Chi tiết đơn hàng:", response.data?.data);
             setOrderRefundData(response.data?.data);
+            if (response.data?.data.orderDeliveringType === 'GHN') {
+               setIsGhnOrder(true);
+            } else {
+               setIsGhnOrder(false);
+            }
          }
 
       } catch (error: any) {
@@ -114,6 +124,31 @@ export default function OrderRefundDetailsStaff() {
          setIsSyncing(false);
       }
    }
+
+   const handleUpdateStatusExternal = async () => {
+      if (!selectedStatus) {
+         messageToast.warning("Vui lòng chọn trạng thái tiếp theo.");
+         return;
+      }
+
+      setIsLoadingExternal(true);
+      try {
+         const response = await api.put(`/orderRefund/staff/external-delivering/${orderRefundId}`, null, {
+            params: { orderRefundStatusEnum: selectedStatus }
+         });
+
+         if (response.status === 200) {
+            messageToast.success(`Cập nhật thành công`);
+            fetchOrderRefundDetails();
+            setSelectedStatus(null);
+         }
+      } catch (error) {
+         console.error(`Lỗi khi chuyển trạng thái sang ${selectedStatus}:`, error);
+         messageToast.error('Cập nhật trạng thái thất bại');
+      } finally {
+         setIsLoadingExternal(false);
+      }
+   };
 
    useEffect(() => {
       fetchOrderRefundDetails();
@@ -245,6 +280,24 @@ export default function OrderRefundDetailsStaff() {
 
    const orderRefundStatus = statusMapRefund[orderRefundData?.orderRefundStatus || ''];
 
+   const getNextStatusOptions = (currentStatus: string | undefined) => {
+      if (!currentStatus) return [];
+
+      // Định nghĩa các luồng đi: Current -> [Option 1, Option 2...]
+      const transitionMap: Record<string, { value: string, label: string }[]> = {
+         'Accepted': [
+            { value: '3', label: 'Đang hoàn hàng' }
+         ],
+         'Delivering': [
+            { value: '4', label: 'Đã hoàn hàng' },
+         ],
+      };
+
+      return transitionMap[currentStatus] || [];
+   };
+
+   const externalOptions = getNextStatusOptions(orderRefundData?.orderRefundStatus);
+
    return (
       <div className="p-6 space-y-6">
          {/* Header */}
@@ -262,15 +315,51 @@ export default function OrderRefundDetailsStaff() {
                >
                   Phản hồi yêu cầu
                </Button>
-               <Button
-                  onClick={handleSyncGHN}
-                  disabled={isSyncing || (orderRefundData?.orderRefundStatus !== 'Accepted' && orderRefundData?.orderRefundStatus !== 'Delivering')}
-                  icon={<RefreshCcw size={16} />}
-                  className={`${orderRefundData?.orderRefundStatus == 'Accepted' || orderRefundData?.orderRefundStatus == 'Delivering' ? 'cursor-pointer' : 'opacity-50 !cursor-not-allowed'} !border-[#E5E5E5] !text-base !text-black !hover:text-black`}
-                  size="large"
-               >
-                  Đồng bộ dữ liệu GHN
-               </Button>
+               {
+                  orderRefundData?.orderRefundDeliveringType == 'GHN' ? (
+                     <Button
+                        onClick={handleSyncGHN}
+                        disabled={isSyncing || (orderRefundData?.orderRefundStatus !== 'Accepted' && orderRefundData?.orderRefundStatus !== 'Delivering')}
+                        icon={<RefreshCcw size={16} />}
+                        className={`${orderRefundData?.orderRefundStatus == 'Accepted' || orderRefundData?.orderRefundStatus == 'Delivering' ? 'cursor-pointer' : 'opacity-50 !cursor-not-allowed'} !border-[#E5E5E5] !text-base !text-black !hover:text-black`}
+                        size="large"
+                     >
+                        Đồng bộ dữ liệu GHN
+                     </Button>
+                  ) : orderRefundData?.orderRefundDeliveringType == 'External' ? (
+
+                     externalOptions.length > 0 ? (
+                        <div className="flex items-center gap-2 bg-gray-50 p-1 pr-2 rounded-lg border border-gray-200">
+                           <Select
+                              placeholder="Chọn trạng thái tiếp theo"
+                              style={{ width: 220 }}
+                              size="middle"
+                              value={selectedStatus}
+                              onChange={(value) => setSelectedStatus(value)}
+                              options={externalOptions}
+                              className="!border-none"
+                              variant="borderless"
+                           />
+                           <Button
+                              type="primary"
+                              onClick={handleUpdateStatusExternal}
+                              loading={isLoadingExternal}
+                              disabled={!selectedStatus}
+                              icon={<Save size={16} />}
+                              className="bg-blue-600"
+                           >
+                              Cập nhật
+                           </Button>
+                        </div>
+                     ) : (
+                        <span className="text-gray-400 italic text-sm"></span>
+                     )
+
+                  ) : (
+                     <div></div>
+                  )
+               }
+
                <Button
                   onClick={handleRefundMoney}
                   icon={<CircleDollarSign size={16} />}
@@ -320,6 +409,23 @@ export default function OrderRefundDetailsStaff() {
                      placeholder="Nhập lý do phản hồi..."
                   />
                </Form.Item>
+
+               {decision === '1' && (
+                  <Form.Item
+                     label={<span style={{ fontSize: '16px' }}>Chọn phương thức vận chuyển hoàn về:</span>}
+                     name="shippingMethod"
+                     // Nếu không phải GHN (tức là External), mặc định chọn SHOP luôn
+                     initialValue={!isGhnOrder ? "1" : undefined}
+                     rules={[{ required: true, message: "Vui lòng chọn phương thức vận chuyển." }]}
+                  >
+                     <Radio.Group>
+                        {isGhnOrder && (
+                           <Radio value="0">Giao Hàng Nhanh</Radio>
+                        )}
+                        <Radio value="1">Cửa hàng vận chuyển</Radio>
+                     </Radio.Group>
+                  </Form.Item>
+               )}
             </Form>
          </Modal>
 
