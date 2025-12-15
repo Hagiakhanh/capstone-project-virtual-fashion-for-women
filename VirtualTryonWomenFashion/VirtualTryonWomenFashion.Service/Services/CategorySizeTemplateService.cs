@@ -283,7 +283,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             }
         }
 
-        public async Task<List<CategorySizeTemplate>> GetListTemplateSizeByBody(
+        /*public async Task<List<CategorySizeTemplate>> GetListTemplateSizeByBody(
      int categoryId, double bust, double waist, double hips, double? shoulder = null)
         {
             var templates = await _templateSizeRepository.GetAll(
@@ -381,9 +381,9 @@ namespace VirtualTryonWomenFashion.Service.Services
                 .Template;
 
             return new List<CategorySizeTemplate> { closest };
-        }
+        }*/
 
-        /*public async Task<List<CategorySizeTemplate>> GetListTemplateSizeByBody(
+        public async Task<List<CategorySizeTemplate>> GetListTemplateSizeByBody(
             int categoryId, double bust, double waist, double hips, double? shoulder = null)
         {
             var templates = await _templateSizeRepository.GetAll(
@@ -552,8 +552,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                     return new List<CategorySizeTemplate>();
             }
 
-            // ... (Phần tìm kiếm và trả về kết quả giữ nguyên) ...
-
             // ===============================
             // 2️⃣ Tìm template khớp chính xác
             // ===============================
@@ -576,7 +574,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 .Template;
 
             return new List<CategorySizeTemplate> { closest };
-        }*/
+        }
 
         // =====================================
         // Helper tránh lỗi null + convert double? → decimal
