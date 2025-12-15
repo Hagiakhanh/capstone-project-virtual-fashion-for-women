@@ -487,7 +487,8 @@ namespace VirtualTryonWomenFashion.Service.Services
                 CreatedAt = x.CreatedAt,
                 Status = ((OrderStatusEnum)Enum.Parse(typeof(OrderStatusEnum), x.Status)).ToString(),
                 Amount = x.Amount.Value,
-                Email = x.Customer.Email
+                Email = x.Customer.Email,
+                DeliveringType = x.DeliveringType,
             }
             ).ToList();
 
@@ -562,6 +563,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 TotalWithShippingMoney = order.Amount,
                 TotalQuantity = order.OrderDetails.Sum(x => x.Quantity),
                 ResponseStatusLogs = order.StatusLogs.Select(x => x.MapToResponseStatusLog()).ToList(),
+                deliveringType = order.DeliveringType,
             };
 
             return new MessageModelWithData<ResponseOrderDetailForStaff>
@@ -856,7 +858,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                                 await _transactionService.CreateTransactionAsync(transaction);
                             }
                         }
-                        List<string> transitionStatuses =OrderShippingStateHelper.BuildTransitionPath(oldStatus,order.Status);
+                        List<string> transitionStatuses = OrderShippingStateHelper.BuildTransitionPath(oldStatus, order.Status);
                         foreach (var status in transitionStatuses)
                         {
                             requestCreateStatusLogs.Add(new RequestCreateStatusLog
@@ -1301,6 +1303,86 @@ namespace VirtualTryonWomenFashion.Service.Services
 
             await _orderRepository.UpdateRangeAsync(listOrder);
             int result = await _unitOfWork.SaveChanges();
+        }
+
+        public async Task<MessageModel> UpdateOrderStatusWithExternalDeliveringForStaff(int orderId, OrderStatusEnum orderStatusEnum)
+        {
+            Order? order = await _orderRepository.GetOrderByOrderID(orderId);
+            if (order == null)
+            {
+                throw new Exception("ID của đơn hàng không hợp lệ");
+            }
+            if (order.DeliveringType != DeliveringTypeEnum.External.ToString())
+            {
+                throw new Exception("Đơn hàng hiện tại không thể cập nhật theo cách này");
+            }
+
+            string currentStatus = order.Status;
+            switch (currentStatus)
+            {
+                case "Confirmed":
+                    if (orderStatusEnum.ToString() != OrderStatusEnum.Packed.ToString())
+                    {
+                        throw new Exception($"Trạng thái hiện tại là {order.Status} chỉ có thể chuyển lên Packed");
+                    }
+                    order.Status = orderStatusEnum.ToString();
+                    break;
+
+                case "Packed":
+                    if (orderStatusEnum.ToString() != OrderStatusEnum.Delivering.ToString()
+                        && orderStatusEnum.ToString() != OrderStatusEnum.Returning.ToString())
+                    {
+                        throw new Exception($"Trạng thái hiện tại là {order.Status} chỉ có thể chuyển lên Delivering hoặc Returning");
+                    }
+                    order.Status = orderStatusEnum.ToString();
+                    break;
+
+                case "Delivering":
+                    if (orderStatusEnum.ToString() != OrderStatusEnum.Delivered.ToString()
+                        && orderStatusEnum.ToString() != OrderStatusEnum.Returning.ToString())
+                    {
+                        throw new Exception($"Trạng thái hiện tại là {order.Status} chỉ có thể chuyển lên Delivered hoặc Returning");
+                    }
+                    order.Status = orderStatusEnum.ToString();
+                    break;
+
+                case "Returning":
+                    if (orderStatusEnum.ToString() != OrderStatusEnum.Returned.ToString())
+                    {
+                        throw new Exception($"Trạng thái hiện tại là {order.Status} chỉ có thể chuyển lên Returned");
+                    }
+                    order.Status = orderStatusEnum.ToString();
+                    break;
+
+            }
+
+            if(currentStatus == order.Status)
+            {
+                return new MessageModel
+                {
+                    Message = "Không có trạng thái thay đổi",
+                    StatusCode = StatusCodes.Status400BadRequest
+                };
+            }
+
+            await _orderRepository.UpdateAsync(order);
+            int result = await _unitOfWork.SaveChanges();
+
+            if (result > 0)
+            {
+                return new MessageModel
+                {
+                    Message = "Cập nhật trạng thái đơn thành công",
+                    StatusCode = StatusCodes.Status200OK
+                };
+            }
+
+            return new MessageModel
+            {
+                Message = "Cập nhật trạng thái đơn thất bại",
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
+
         }
     }
 }

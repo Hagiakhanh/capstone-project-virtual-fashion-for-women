@@ -158,32 +158,97 @@ public class DashboardService : IDashboardService
         return purchase - refund;
     }
 
+    /*private decimal CalculateRevenue(IEnumerable<Transaction> group)
+    {
+        // 1. Tính tổng tiền từ các giao dịch mua hàng (Purchase)
+        var purchaseTransactions = group
+            .Where(t => t.Type == TypeTransactionEnum.Purchase.ToString())
+            .ToList();
+
+        var totalPurchaseMoney = purchaseTransactions
+            .Sum(t => t.Money ?? 0);
+
+        var orderIds = purchaseTransactions
+            .Where(t => t.OrderId.HasValue)
+            .Select(t => t.OrderId.Value)
+            .Distinct();
+
+        decimal totalShippingFee = 0;
+        decimal totalInsuranceFee = 0;
+
+        var purchasedOrders = purchaseTransactions
+            .Where(t => t.Order != null)
+            .GroupBy(t => t.OrderId)
+            .Select(g => g.First().Order)
+            .Where(o => o != null);
+
+        totalShippingFee = purchasedOrders
+            .Sum(o => o.ShippingMoney ?? 0);
+
+        totalInsuranceFee = purchasedOrders
+            .Sum(o => o.InsuranceFee ?? 0);
+
+        var totalRefundMoney = group
+            .Where(t => t.Type == TypeTransactionEnum.Refund.ToString())
+            .Sum(t => t.Money ?? 0);
+
+        return totalPurchaseMoney - totalShippingFee - totalInsuranceFee - totalRefundMoney;
+    }*/
+
     private decimal CalculateRevenueFromOrderDetails(IEnumerable<OrderDetail> details)
     {
-        decimal revenue = 0;
+        decimal totalRevenue = 0;
 
-        foreach (var od in details)
+        // Group theo Order
+        var orders = details
+            .GroupBy(od => od.OrderId)
+            .Select(g => g.First().Order);
+
+        foreach (var order in orders)
         {
-            // ❌ Đơn không nhận hàng → bỏ qua
-            if (od.Order.Status == OrderStatusEnum.Returning.ToString()
-             || od.Order.Status == OrderStatusEnum.Returned.ToString())
+            // ❌ bỏ các order Returning / Returned
+            if (order.Status == OrderStatusEnum.Returning.ToString())
             {
                 continue;
             }
 
-            int refundedQty = od.OrderRefundDetails
-                .Where(rd =>
-                    rd.OrderRefund.Status == OrderRefundStatusEnum.Accepted.ToString()
-                 || rd.OrderRefund.Status == OrderRefundStatusEnum.Completed.ToString())
-                .Sum(rd => rd.Quantity);
+            // 1️⃣ Tính revenue sản phẩm của order này
+            var orderDetails = details.Where(od => od.OrderId == order.OrderId);
 
-            int validQty = od.Quantity - refundedQty;
-            if (validQty <= 0) continue;
+            decimal productRevenue = 0;
 
-            revenue += validQty * od.PriceAtTime;
+            foreach (var od in orderDetails)
+            {
+                int refundedQty = od.OrderRefundDetails
+                    .Where(rd =>
+                        rd.OrderRefund.Status == OrderRefundStatusEnum.Accepted.ToString()
+                     || rd.OrderRefund.Status == OrderRefundStatusEnum.Completed.ToString())
+                    .Sum(rd => rd.Quantity);
+
+                int validQty = od.Quantity - refundedQty;
+                if (validQty <= 0) continue;
+
+                productRevenue += validQty * od.PriceAtTime;
+            }
+
+            // 2️⃣ Cộng phí theo order
+            decimal shippingFee = order.ShippingMoney ?? 0;
+            decimal insuranceFee = order.InsuranceFee ?? 0;
+
+            //totalRevenue += productRevenue + shippingFee + insuranceFee;
+            if (order.Status == OrderStatusEnum.Returned.ToString())
+            {
+                // Nếu là đơn Returning/Returned: Chỉ cộng Phí Dịch vụ, xem productRevenue = 0
+                totalRevenue += shippingFee + insuranceFee;
+            }
+            else
+            {
+                // Nếu là đơn KHÁC: Cộng cả productRevenue và Phí Dịch vụ
+                totalRevenue += productRevenue + shippingFee + insuranceFee;
+            }
         }
 
-        return revenue;
+        return totalRevenue;
     }
 
     public async Task<List<RevenueResult>> GetRevenueAsync(RevenueFilterRequest filter)
@@ -263,6 +328,15 @@ public class DashboardService : IDashboardService
         return new List<RevenueResult>();
     }
 
+    private DateTime? GetConfirmedAt(Order order)
+    {
+        return order.StatusLogs
+            .Where(sl => sl.Status == OrderStatusEnum.Confirmed.ToString())
+            .OrderByDescending(sl => sl.UpdateDate)
+            .Select(sl => (DateTime?)sl.UpdateDate)
+            .FirstOrDefault();
+    }
+
     public async Task<List<RevenueResult>> GetRevenueVersion2Async(RevenueFilterRequest filter)
     {
         DateTime start, end;
@@ -298,7 +372,8 @@ public class DashboardService : IDashboardService
                 periodStart: start,
                 periodEnd: end,
                 labelFormat: "yyyy-MM",
-                groupBy: od => od.Order.DeliveredAt!.Value.Date,
+                //groupBy: od => od.Order.DeliveredAt!.Value.Date,
+                groupBy: od => GetConfirmedAt(od.Order)!.Value.Date,
                 details: orderDetails
             );
         }
@@ -316,7 +391,8 @@ public class DashboardService : IDashboardService
                 periodStart: start,
                 periodEnd: end,
                 labelFormat: "dd/MM/yyyy",
-                groupBy: od => od.Order.DeliveredAt!.Value.Date,
+                //groupBy: od => od.Order.DeliveredAt!.Value.Date,
+                groupBy: od => GetConfirmedAt(od.Order)!.Value.Date,
                 details: orderDetails
             );
         }
@@ -332,7 +408,8 @@ public class DashboardService : IDashboardService
                 periodStart: start,
                 periodEnd: end,
                 labelFormat: "dd/MM/yyyy",
-                groupBy: od => od.Order.DeliveredAt!.Value.Date,
+                //groupBy: od => od.Order.DeliveredAt!.Value.Date,
+                groupBy: od => GetConfirmedAt(od.Order)!.Value.Date,
                 details: orderDetails
             );
         }

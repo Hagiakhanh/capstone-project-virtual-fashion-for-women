@@ -89,7 +89,7 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<OrderDetail>> GetRevenueOrderDetailsAsync(
+        /*public async Task<List<OrderDetail>> GetRevenueOrderDetailsAsync(
             DateTime start,
             DateTime end)
         {
@@ -97,21 +97,60 @@ namespace VirtualTryonWomenFashion.Data.Repositories
                 .Include(od => od.Order)
                 .Include(od => od.OrderRefundDetails)
                     .ThenInclude(rd => rd.OrderRefund)
-                /*.Where(od =>
+                *//*.Where(od =>
                     od.Order.CreatedAt >= start &&
                     od.Order.CreatedAt <= end &&
                     (
                         od.Order.Status == OrderStatusEnum.Completed.ToString()
                         || od.Order.Status == OrderStatusEnum.Returning.ToString()
                         || od.Order.Status == OrderStatusEnum.Returned.ToString()
-                    ))*/
+                    ))*//*
                 .Where(od =>
                     od.Order.CreatedAt >= start &&
                     od.Order.CreatedAt <= end &&
-                    od.Order.Status == OrderStatusEnum.Completed.ToString() &&
+                    od.Order.Status == OrderStatusEnum.Confirmed.ToString() &&
                     od.Order.DeliveredAt != null
                 )
                 .ToListAsync();
+        }*/
+
+        public async Task<List<OrderDetail>> GetRevenueOrderDetailsAsync(
+            DateTime start,
+            DateTime end)
+        {
+            /*var confirmedOrders = _context.StatusLogs
+                .Where(sl => sl.Status == OrderStatusEnum.Confirmed.ToString() &&
+                             sl.UpdateDate >= start &&
+                             sl.UpdateDate <= end)
+                .Select(sl => sl.OrderId)
+                .Distinct();
+
+            // Lấy OrderDetails của các Order đã được Confirmed trong khoảng [start, end]
+            var orderDetails = await _context.OrderDetails
+                .Include(od => od.Order)
+                    .ThenInclude(sl => sl.StatusLogs)
+                .Include(od => od.OrderRefundDetails)
+                    .ThenInclude(rd => rd.OrderRefund)
+                .Where(od => confirmedOrders.Contains(od.OrderId)) // Lọc theo các OrderId đã Confirmed
+                .ToListAsync();*/
+            
+            var confirmedOrderIds = await _context.StatusLogs
+                .Where(sl => sl.Status == OrderStatusEnum.Confirmed.ToString() &&
+                             sl.UpdateDate >= start &&
+                             sl.UpdateDate <= end)
+                .Select(sl => sl.OrderId)
+                .Distinct()
+                .ToListAsync(); // Thêm ToListAsync() ở đây
+
+            var orderDetails = await _context.OrderDetails
+                .Include(od => od.Order)
+                    .ThenInclude(sl => sl.StatusLogs)
+                .Include(od => od.OrderRefundDetails)
+                    .ThenInclude(rd => rd.OrderRefund)
+                .Where(od => confirmedOrderIds.Contains(od.OrderId))
+                .ToListAsync();
+
+            return orderDetails;
         }
 
     }
