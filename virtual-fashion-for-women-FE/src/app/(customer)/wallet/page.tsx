@@ -806,7 +806,7 @@ export default function WalletPage() {
                             <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                                 <span className="text-sm text-gray-600">Ngày tạo:</span>
                                 <span className="text-sm font-medium text-gray-800">
-                                    {formatDate(selectedTransaction.createAt)}
+                                    {formatDate(selectedTransaction.createdAt)}
                                 </span>
                             </div>
 
