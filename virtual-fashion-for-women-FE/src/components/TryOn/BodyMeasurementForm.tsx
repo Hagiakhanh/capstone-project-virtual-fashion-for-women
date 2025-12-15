@@ -7,13 +7,13 @@ import React, { useState } from 'react';
 export default function BodyMeasurementForm({
     clothingType,
     onSubmit,
-    onCancel,
+    onSkip,
     onBackToResult,
     characteristicData,
 }: {
     clothingType: Category | undefined;
     onSubmit: (values: Record<string, number>) => void;
-    onCancel: () => void;
+    onSkip: () => void;
     onBackToResult: () => void;
     characteristicData?: Characteristic | null;
 }) {
@@ -113,10 +113,10 @@ export default function BodyMeasurementForm({
                 </button>
 
                 <button
-                    onClick={onCancel}
+                    onClick={onSkip}
                     className="flex-1 py-3 bg-gray-200 text-gray-800 rounded-xl font-semibold"
                 >
-                    Hủy
+                    Bỏ qua
                 </button>
             </div>
         </div>

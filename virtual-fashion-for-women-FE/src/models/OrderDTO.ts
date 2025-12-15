@@ -15,6 +15,7 @@ export interface OrderDTO {
     shippingMoney: number | null;
     insuranceFee: number | null;
     shippingCode: string;
+    deliveringType: string;
     estimatedDelivery: string | null;
     paymentUrl: string;
     transactionInformations: TransactionInformation[];
@@ -45,4 +46,5 @@ export interface OrderStaffResponseDTO {
     totalQuantity: number;
     orderDetails: OrderDetailStaffResponseDTO[];
     responseStatusLogs: StatusLogDTO[];
+    deliveringType: string | null;
 }

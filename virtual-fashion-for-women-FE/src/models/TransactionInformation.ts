@@ -7,6 +7,8 @@ export interface TransactionInformation {
     method: string;
     type: string;
     transactionCode: string;
-    createAt: string;
+    bankName?: string;
+    bankAccountNumber?: string;
+    createdAt: string;
     updatedAt: string;
 }

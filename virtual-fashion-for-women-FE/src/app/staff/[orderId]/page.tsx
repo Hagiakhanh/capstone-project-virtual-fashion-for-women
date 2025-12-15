@@ -1,7 +1,7 @@
 "use client";
 
-import { Table, Steps, Button } from "antd";
-import { Box, RefreshCcw } from "lucide-react";
+import { Table, Steps, Button, Select } from "antd";
+import { Box, CheckCircle, RefreshCcw, RotateCcw, Save, Truck, XCircle } from "lucide-react";
 import type { ColumnsType } from "antd/es/table";
 import { useParams } from "next/navigation";
 import { api } from "@/api/instance";
@@ -20,6 +20,8 @@ export default function StaffOrderDetailsPage() {
    const [orderData, setOrderData] = useState<OrderStaffResponseDTO | null>(null);
    const [isSyncing, setIsSyncing] = useState<boolean>(false);
    const [hasReturnedStatus, setHasReturnedStatus] = useState<boolean>(false);
+   const [isLoadingExternal, setIsLoadingExternal] = useState<boolean>(false);
+   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
    const fetchOrderDetails = async () => {
       try {
@@ -240,27 +242,117 @@ export default function StaffOrderDetailsPage() {
       }
    }
 
+   const handleUpdateStatusExternal = async () => {
+      if (!selectedStatus) {
+         messageToast.warning("Vui lòng chọn trạng thái tiếp theo.");
+         return;
+      }
+
+      setIsLoadingExternal(true);
+      try {
+         const response = await api.put(`/order/staff/external-delivering/${orderId}`, null, {
+            params: { orderStatusEnum: selectedStatus }
+         });
+
+         if (response.status === 200) {
+            messageToast.success(`Cập nhật thành công`);
+            fetchOrderDetails();
+            setSelectedStatus(null);
+         }
+      } catch (error) {
+         console.error(`Lỗi khi chuyển trạng thái sang ${selectedStatus}:`, error);
+         messageToast.error('Cập nhật trạng thái thất bại');
+      } finally {
+         setIsLoadingExternal(false);
+      }
+   };
+
+   const getNextStatusOptions = (currentStatus: string | undefined) => {
+      if (!currentStatus) return [];
+
+      // Định nghĩa các luồng đi: Current -> [Option 1, Option 2...]
+      const transitionMap: Record<string, { value: string, label: string }[]> = {
+         'Confirmed': [
+            { value: '2', label: 'Chuẩn bị hàng' }
+         ],
+         'Packed': [
+            { value: '3', label: 'Đang giao hàng' },
+            // { value: '7', label: 'Trả hàng' }
+         ],
+         'Delivering': [
+            { value: '4', label: 'Đã giao hàng' },
+            { value: '7', label: 'Trả hàng' }
+         ],
+         'Returning': [
+            { value: '8', label: 'Đã nhận lại hàng' }
+         ],
+         'Delivered': [],
+         'Returned': [],
+      };
+
+      return transitionMap[currentStatus] || [];
+   };
+
+   const externalOptions = getNextStatusOptions(orderData?.status);
+
    return (
       <div className="p-6 space-y-6">
          {/* Header */}
          <div className="flex justify-between items-center border-1 border-[#E5E5E5] rounded-2xl px-6 py-4 shadow-md bg-white">
-            <div>
-               <h1 className="text-2xl font-bold"># Order - {orderData?.orderId}</h1>
-               <p className="text-gray-500 text-lg">Tạo lúc {formatDate(orderData?.createdAt)}</p>
-            </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-5">
+               <div>
+                  <h1 className="text-2xl font-bold"># Order - {orderData?.orderId}</h1>
+                  <p className="text-gray-500 text-lg">Tạo lúc {formatDate(orderData?.createdAt)}</p>
+               </div>
                <p className="bg-[#666666] cursor-default text-white px-4 py-1 rounded-full text-base flex items-center">{statusMap[orderData?.status]?.label}</p>
-               <Button onClick={handlePrepareOrder} icon={<Box size={16} />} className={`${orderData?.status == 'Confirmed' ? 'cursor-pointer' : 'opacity-50 !cursor-not-allowed'} !border-[#E5E5E5] !text-base !text-black !hover:text-black`} size="large">Đã chuẩn bị hàng</Button>
-               <Button
-                  onClick={handleSyncGHN}
-                  disabled={isSyncing || (orderData?.status !== 'Packed' && orderData?.status !== 'Delivering' && orderData?.status !== 'Returning')}
-                  icon={<RefreshCcw size={16} />}
-                  className={`${orderData?.status == 'Packed' || orderData?.status == 'Delivering' || orderData?.status == 'Returning' ? 'cursor-pointer' : 'opacity-50 !cursor-not-allowed'} !border-[#E5E5E5] !text-base !text-black !hover:text-black`}
-                  size="large"
-               >
-                  Đồng bộ dữ liệu GHN
-               </Button>
             </div>
+
+            {
+               orderData?.deliveringType == 'External' ?
+                  (
+                     externalOptions.length > 0 ? (
+                        <div className="flex items-center gap-2 bg-gray-50 p-1 pr-2 rounded-lg border border-gray-200">
+                           <Select
+                              placeholder="Chọn trạng thái tiếp theo"
+                              style={{ width: 220 }}
+                              size="middle"
+                              value={selectedStatus}
+                              onChange={(value) => setSelectedStatus(value)}
+                              options={externalOptions}
+                              className="!border-none"
+                              variant="borderless"
+                           />
+                           <Button
+                              type="primary"
+                              onClick={handleUpdateStatusExternal}
+                              loading={isLoadingExternal}
+                              disabled={!selectedStatus}
+                              icon={<Save size={16} />}
+                              className="bg-blue-600"
+                           >
+                              Cập nhật
+                           </Button>
+                        </div>
+                     ) : (
+                        <span className="text-gray-400 italic text-sm"></span>
+                     )
+                  )
+                  :
+                  (
+                     <div className="flex gap-2">
+                        <Button onClick={handlePrepareOrder} icon={<Box size={16} />} className={`${orderData?.status == 'Confirmed' ? 'cursor-pointer' : 'opacity-50 !cursor-not-allowed'} !border-[#E5E5E5] !text-base !text-black !hover:text-black`} size="large">Đã chuẩn bị hàng</Button>
+                        <Button
+                           onClick={handleSyncGHN}
+                           disabled={isSyncing || (orderData?.status !== 'Packed' && orderData?.status !== 'Delivering' && orderData?.status !== 'Returning')}
+                           icon={<RefreshCcw size={16} />}
+                           className={`${orderData?.status == 'Packed' || orderData?.status == 'Delivering' || orderData?.status == 'Returning' ? 'cursor-pointer' : 'opacity-50 !cursor-not-allowed'} !border-[#E5E5E5] !text-base !text-black !hover:text-black`}
+                           size="large"
+                        >
+                           Đồng bộ dữ liệu GHN
+                        </Button>
+                     </div>
+                  )
+            }
          </div>
 
          {/* Status Steps */}
@@ -337,7 +429,7 @@ export default function StaffOrderDetailsPage() {
                   <tbody>
                      <tr className="border-b">
                         <td className="py-2 font-medium text-gray-600 w-1/3">Phương thức</td>
-                        <td className="py-2 text-gray-800">{orderData?.paymentMethod}</td>
+                        <td className="py-2 text-gray-800">{orderData?.paymentMethod === "Wallet" ? "Ví" : orderData?.paymentMethod}</td>
                      </tr>
                      <tr className="border-b">
                         <td className="py-2 font-medium text-gray-600">Trạng thái</td>
