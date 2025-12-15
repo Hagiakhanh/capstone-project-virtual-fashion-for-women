@@ -46,4 +46,5 @@ export interface OrderStaffResponseDTO {
     totalQuantity: number;
     orderDetails: OrderDetailStaffResponseDTO[];
     responseStatusLogs: StatusLogDTO[];
+    deliveringType: string | null;
 }
