@@ -11,12 +11,15 @@ namespace VirtualTryonWomenFashion.Service.Services
     public class GeminiService : IGeminiService
     {
         private readonly HttpClient _http;
-        private readonly string _apiKey;
+        private readonly string _apiKeyChatBot;
+        private readonly string _apiKeyValidateImage;
+
 
         public GeminiService(IConfiguration config, HttpClient http)
         {
             _http = http;
-            _apiKey = config["GeminiApiKey"]!;
+            _apiKeyChatBot = config["Gemini:ChatBotApiKey"]!;
+            _apiKeyValidateImage = config["Gemini:ValidateTryOnKey"]!;
         }
 
         public async Task<float[]> GetEmbeddingAsync(string text)
@@ -32,7 +35,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             };
             var jsonPayload = JsonSerializer.Serialize(payload);
             var request = new HttpRequestMessage(HttpMethod.Post,
-                $"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-exp-03-07:embedContent?key={_apiKey}")
+                $"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-exp-03-07:embedContent?key={_apiKeyChatBot}")
             {
                 Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json")
             };
@@ -56,7 +59,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         }
         public async Task<string> CallGeminiAsync(string prompt)
         {
-            var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_apiKey}";
+            var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_apiKeyChatBot}";
 
             // 1. Cấu hình trả về JSON thuần
             var payload = new
@@ -108,7 +111,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             throw new Exception("Quá nhiều request (Rate Limit) dù đã thử lại nhiều lần.");
         }
 
-    public async Task<string> CallGeminiWithMediaAsync(string prompt, IFormFile mediaFile)
+        public async Task<string> CallGeminiWithMediaAsync(string prompt, IFormFile mediaFile)
         {
             // 1. Đọc IFormFile và chuyển đổi sang Base64
             string base64File;
@@ -122,7 +125,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 base64File = Convert.ToBase64String(fileBytes);
             }
 
-            var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_apiKey}";
+            var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_apiKeyValidateImage}";
 
             // 2. Định nghĩa cấu trúc contents chứa cả text và dữ liệu Base64
             // Cấu trúc này áp dụng chung cho mọi file đa phương tiện (ảnh, pdf, audio, video)
