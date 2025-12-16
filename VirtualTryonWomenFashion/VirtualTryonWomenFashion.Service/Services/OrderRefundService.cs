@@ -610,6 +610,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                             GhnCreateOrderResponse resultGHNObj = JsonSerializer.Deserialize<GhnCreateOrderResponse>(resultGHN);
                             // ... xử lý result
                             orderRefund.ShippingCode = resultGHNObj.Data.OrderCode;
+                            orderRefund.DeliveringType = DeliveringTypeEnum.GHN.ToString();
                             //orderRefund.EstimatedDelivery = resultGHNObj.Data.ExpectedDeliveryTime;
                             await _orderRefundRepository.UpdateAsync(orderRefund);
                             int result = await _unitOfWork.SaveChanges();
