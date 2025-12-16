@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VirtualTryonWomenFashion.Data.Models;
 using VirtualTryonWomenFashion.Service.Helpers;
@@ -29,6 +30,7 @@ namespace VirtualTryonWomenFashion.API.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateShippingRegionAsync([FromBody] List<ShippingRegion> shippingRegionsRequest)
         {
             try
