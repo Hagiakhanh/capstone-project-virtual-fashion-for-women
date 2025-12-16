@@ -18,5 +18,6 @@ namespace VirtualTryonWomenFashion.Service.DTO.OrderRefund
 
         [Required(ErrorMessage = "StaffResponse require")]
         public string StaffResponse { get; set; }
+        public DeliveringTypeEnum? OrderRefundDeliveringType { get; set; }
     }
 }
