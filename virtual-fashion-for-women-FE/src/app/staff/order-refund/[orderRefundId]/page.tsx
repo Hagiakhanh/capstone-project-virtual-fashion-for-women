@@ -51,7 +51,7 @@ export default function OrderRefundDetailsStaff() {
             orderRefundId: Number(orderRefundId),
             statusEnum: Number(values?.decision),
             staffResponse: values?.reason,
-            orderRefundDeliveringType: Number(values?.shippingMethod) || undefined,
+            orderRefundDeliveringType: Number(values?.shippingMethod),
          }
          const response = await api.put('/orderRefund/staff', payload);
          if (response.status === 200) {
