@@ -115,7 +115,7 @@ export default function AdminSidebar({
           <Link
             onClick={handleLinkClick}
             href="/admin/withdraw-transactions"
-            className={`${baseLinkClasses} ${isActive("/admin/campaigns") ? activeLinkClasses : inactiveLinkClasses}`}
+            className={`${baseLinkClasses} ${isActive("/admin/withdraw-transactions") ? activeLinkClasses : inactiveLinkClasses}`}
           >
             <HandCoins className="w-5 h-5 mr-3" />
             Giao dịch rút tiền
