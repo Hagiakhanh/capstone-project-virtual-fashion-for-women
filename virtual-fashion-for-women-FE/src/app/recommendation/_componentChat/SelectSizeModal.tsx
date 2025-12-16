@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button, Flex, Typography } from "antd";
 import { Minus, Plus } from "lucide-react";
 import { ProductVariantDTO } from "@/models/ProductVariantDTO";
+import formatPrice from "@/utils/formatPrice";
 
 const { Text, Title } = Typography;
 
@@ -90,19 +91,19 @@ export const SelectSizeModal: React.FC<SelectSizeModalProps> = ({
               // Có giảm giá
               <div className="flex items-center gap-2">
                 <Text type="warning" className="text-lg font-semibold">
-                  {product.priceAtTime} ₫
+                  {formatPrice(product.priceAtTime)} ₫
                 </Text>
                 <Text
                   type="secondary"
                   className="text-lg font-semibold line-through text-red-500"
                 >
-                  {product.price} ₫
+                  {formatPrice(product.price)} ₫
                 </Text>
               </div>
             ) : (
               // Không giảm hoặc 2 giá bằng nhau
               <Text type="warning" className="text-lg font-semibold">
-                {product.price} ₫
+                {formatPrice(product.price)} ₫
               </Text>
             )}
           </Flex>
