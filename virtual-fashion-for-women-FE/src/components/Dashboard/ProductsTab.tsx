@@ -506,7 +506,7 @@ const ProductsTab = () => {
                         <div className="flex justify-between items-center mb-3">
                             <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
                                 <Eye className="w-5 h-5 text-green-500" />
-                                Top Sản Phẩm Try-On
+                                Top Sản Phẩm Đã Được Thử
                             </h2>
                             <div className="flex items-center gap-2 mb-3">
                                 <select 
@@ -631,7 +631,7 @@ const ProductsTab = () => {
                         <div className="flex justify-between items-center mb-3">
                             <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
                                 <Calendar className="w-5 h-5 text-purple-500" />
-                                Lượt Try-On Theo Thời Gian
+                                Lượt Thử Đồ Theo Thời Gian
                             </h2>
                             <span className="text-sm text-gray-500">
                                 {selectedProduct ? `Sản phẩm: ${selectedProduct.productName}` : 'Chọn sản phẩm bên trái'}
