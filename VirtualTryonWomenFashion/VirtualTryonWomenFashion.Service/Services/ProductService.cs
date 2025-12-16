@@ -1797,8 +1797,9 @@ namespace VirtualTryonWomenFashion.Service.Services
 
         public async Task<Pagination<ResponseProductDto>> GetProductWithColorRecommentAsync(PaginationParameter pagination, string hexcode, string catergory)
         {
-            List<int> matchedColors = await _colorRecommendationSerivce.GetListHexcodeRecommend(hexcode);
-            
+            //List<int> matchedColors = await _colorRecommendationSerivce.GetListHexcodeRecommend(hexcode);
+            List<int> matchedColors = await _colorRecommendationSerivce.GetListHexcodeRecommendV2(hexcode);
+
             List<Product> recommendedProduct = await _productRepository.GetProductWithColorRecommend(matchedColors, catergory, pagination);
 
             List<ResponseProductDto> responseProduct = new List<ResponseProductDto>();

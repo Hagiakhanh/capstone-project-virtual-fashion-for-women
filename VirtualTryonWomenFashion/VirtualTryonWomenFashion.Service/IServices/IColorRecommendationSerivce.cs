@@ -9,5 +9,6 @@ namespace VirtualTryonWomenFashion.Service.IServices
     public interface IColorRecommendationSerivce
     {
         Task<List<int>> GetListHexcodeRecommend(string hexcode);
+        Task<List<int>> GetListHexcodeRecommendV2(string hexcode);
     }
 }
