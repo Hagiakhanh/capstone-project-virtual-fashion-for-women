@@ -975,7 +975,7 @@ export default function CheckoutForm() {
                                                     Khối Lượng
                                                 </th>
                                                 <th className="px-3 md:px-4 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-gray-700">
-                                                    Phí Cơ Bảng
+                                                    Phí Cơ Bản
                                                 </th>
                                                 <th className="px-3 md:px-4 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-gray-700">
                                                     Thêm 0.5 kg

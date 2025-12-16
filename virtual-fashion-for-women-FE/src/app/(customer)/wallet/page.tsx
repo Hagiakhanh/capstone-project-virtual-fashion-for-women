@@ -326,6 +326,7 @@ export default function WalletPage() {
                             {rechargeTransactions.length > 0 ? (
                                 rechargeTransactions.map((t) => {
                                     const statusInfor = getStatusIcon(t.status);
+                                    console.log('Transaction:', t);
                                     return (
                                         <div
                                             key={t.transactionId}
@@ -347,7 +348,7 @@ export default function WalletPage() {
                                                         {typeTransaction(t.type)}
                                                     </p>
                                                     <p className="text-xs md:text-sm text-gray-500 truncate">
-                                                        Ví • {formatDate(t.updatedAt)}
+                                                        {t.method === 'Wallet' ? 'Ví' : t.method} • {formatDate(t.updatedAt)}
                                                     </p>
                                                 </div>
                                             </div>
@@ -771,7 +772,7 @@ export default function WalletPage() {
                             <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                                 <span className="text-sm text-gray-600">Phương thức:</span>
                                 <span className="text-sm font-medium text-gray-800">
-                                    {selectedTransaction.method}
+                                    {selectedTransaction.method === 'Wallet' ? 'Ví' : selectedTransaction.method}
                                 </span>
                             </div>
 

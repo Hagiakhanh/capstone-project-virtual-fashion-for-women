@@ -438,7 +438,7 @@ export default function OrderDetailPage() {
                         <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
                             <div>
                                 <p className="font-medium text-black italic text-xs md:text-sm">Phương thức</p>
-                                <p className="text-xs md:text-base">{order?.transactionInformations[0]?.method}</p>
+                                <p className="text-xs md:text-base">{order?.transactionInformations[0]?.method === "Wallet" ? "Ví" : order?.transactionInformations[0]?.method}</p>
                             </div>
                             <div>
                                 <p className="font-medium text-black italic text-xs md:text-sm">Mã giao dịch</p>
