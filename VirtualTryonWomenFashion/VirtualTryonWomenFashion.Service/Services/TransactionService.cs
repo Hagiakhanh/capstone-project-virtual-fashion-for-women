@@ -274,7 +274,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 pagination: pagination,
                 filter: filter,
                 orderBy: q => q.OrderByDescending(t => t.CreatedAt),
-                includes: [t => t.User, t => t.Order]
+                includes: [t => t.User, t => t.Order, t => t.OrderRefund]
             );
 
             int totalRecords = await _transactionRepository.CountAsync(filter);
