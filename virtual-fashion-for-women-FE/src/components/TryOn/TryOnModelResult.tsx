@@ -9,6 +9,7 @@ import BodyMeasurementForm from './BodyMeasurementForm';
 import { Characteristic } from '@/models/CharacteristicDTO';
 import { api } from '@/api/instance';
 import { messageToast } from '@/helpers/toastHelper';
+import { set } from 'lodash';
 
 interface TryOnResultModalProps {
     isOpen: boolean;
@@ -81,6 +82,7 @@ export default function TryOnResultModal({
     };
 
     const handleSkipFromMeasurementForm = () => {
+        setRecommendedVariant(null);
         setShowBodyMeasurementForm(false);
         // setSelectedProduct(undefined);
         // setSelectedProductVariant(null);
@@ -95,6 +97,7 @@ export default function TryOnResultModal({
     }
 
     const handleBackToResult = () => {
+        setRecommendedVariant(null);
         setShowCartView(false);
         setSelectedProduct(undefined);
         setShowBodyMeasurementForm(false);
@@ -130,6 +133,7 @@ export default function TryOnResultModal({
         if (!canClose) return;
 
         onClose();
+        setRecommendedVariant(null);
         setShowCartView(false);
         setSelectedProduct(undefined);
         setShowBodyMeasurementForm(false);

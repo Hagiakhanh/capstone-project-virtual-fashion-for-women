@@ -154,7 +154,7 @@ export default function ShopConfigAdmin() {
                                                     Khối Lượng
                                                 </th>
                                                 <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
-                                                    Phí Cơ Bảng
+                                                    Phí Cơ Bản
                                                 </th>
                                                 <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
                                                     Thêm 0.5 kg
