@@ -10,6 +10,7 @@ import { OrderRefundDetailDTO } from "@/models/OrderRefundDTO";
 import statusMapRefund from "@/helpers/statusMapperRefund";
 import { Modal } from "antd";
 import { messageToast } from "@/helpers/toastHelper";
+import statusMap from "@/helpers/statusMapper";
 
 export default function RefundDetailsPage() {
    const { refundId } = useParams();
@@ -354,7 +355,7 @@ export default function RefundDetailsPage() {
                            Trạng thái
                         </p>
                         <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium border border-gray-200 bg-gray-100 text-gray-800">
-                           {refundDetails?.transactionStatus || 'Chưa có giao dịch'}
+                           {refundDetails?.transactionStatus ? statusMap[refundDetails?.transactionStatus]?.label : 'Chưa có giao dịch'}
                         </span>
                      </div>
                      <div>
