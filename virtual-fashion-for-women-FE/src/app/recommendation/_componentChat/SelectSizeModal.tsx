@@ -4,6 +4,10 @@ import { Modal, Button, Flex, Typography } from "antd";
 import { Minus, Plus } from "lucide-react";
 import { ProductVariantDTO } from "@/models/ProductVariantDTO";
 import formatPrice from "@/utils/formatPrice";
+import { api } from "@/api/instance";
+import SizeGuideModal from "@/components/Size/SizeGuideModal";
+import { messageToast } from "@/helpers/toastHelper";
+import { RightOutlined} from '@ant-design/icons';
 
 const { Text, Title } = Typography;
 
@@ -31,9 +35,12 @@ export const SelectSizeModal: React.FC<SelectSizeModalProps> = ({
   const [selectedVariant, setSelectedVariant] =
     useState<ProductVariantDTO | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [sizeTable, setSizeTable] = useState(null);
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
   useEffect(() => {
     if (product && selectingProduct) {
+      fetchSizeTable();
       const productColor = product.productColor || product.productColors?.[0];
       if (!productColor) return;
 
@@ -53,6 +60,19 @@ export const SelectSizeModal: React.FC<SelectSizeModalProps> = ({
     }
   }, [product, selectingProduct, open]);
 
+  const fetchSizeTable = async () => {
+    if (!product?.categoryId) return;
+    try {
+       const response = await api.get(
+          `categorysizetemplate/by-categoryid/${product?.categoryId}`
+       );
+       if (response.status === 200) {
+          setSizeTable(response?.data);
+       }
+    } catch (error) {
+       console.error('Lỗi khi lấy bảng size sản phẩm:', error);
+    }
+ }
   if (!product) return null;
 
   const productColor = product.productColor || product.productColors?.[0];
@@ -111,9 +131,12 @@ export const SelectSizeModal: React.FC<SelectSizeModalProps> = ({
 
         {/* Chọn size */}
         <div>
+          
           <Text strong className="block mb-2">
             Chọn size:
           </Text>
+          
+
           <Flex wrap gap={8}>
             {productColor?.productVariants?.map(
               (variant: ProductVariantDTO) => (
@@ -142,7 +165,23 @@ export const SelectSizeModal: React.FC<SelectSizeModalProps> = ({
               )
             )}
           </Flex>
+          <div className="flex gap-2 mt-3 items-center">
+                     <p
+                        className='text-sm lg:text-xl font-normal underline cursor-pointer hover:text-blue-600 transition-colors'
+                        onClick={() => {
+                           if (sizeTable) {
+                              setIsSizeGuideOpen(true);
+                           } else {
+                              messageToast.info("Sản phẩm này chưa có bảng size chi tiết.");
+                           }
+                        }}
+                     >
+                        Hướng dẫn chọn kích thước
+                     </p>
+                     <RightOutlined className="text-xs lg:text-sm" />
+                  </div>
         </div>
+        
 
         {/* Chọn số lượng */}
         {selectedVariant && (
@@ -192,6 +231,11 @@ export const SelectSizeModal: React.FC<SelectSizeModalProps> = ({
           {selectedVariant ? "Xác nhận chọn" : "Vui lòng chọn size"}
         </Button>
       </Flex>
+      <SizeGuideModal
+            isOpen={isSizeGuideOpen}
+            onClose={() => setIsSizeGuideOpen(false)}
+            categoryId={product?.categoryId}
+         />
     </Modal>
   );
 };
