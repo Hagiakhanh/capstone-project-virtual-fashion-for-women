@@ -10,6 +10,7 @@ import { Characteristic } from '@/models/CharacteristicDTO';
 import { api } from '@/api/instance';
 import { messageToast } from '@/helpers/toastHelper';
 import { set } from 'lodash';
+import SizeGuideModal from '../Size/SizeGuideModal';
 
 interface TryOnResultModalProps {
     isOpen: boolean;
@@ -48,6 +49,7 @@ export default function TryOnResultModal({
     const [showBodyMeasurementForm, setShowBodyMeasurementForm] = useState(false);
     const [clothingType, setClothingType] = useState<Category | undefined>();
     const [recommendedVariant, setRecommendedVariant] = useState<ProductVariantDTO | null>(null);
+    const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
     if (!isOpen) return null;
 
@@ -361,7 +363,15 @@ export default function TryOnResultModal({
 
                                         {/* Size selection - Responsive */}
                                         <div className="mb-4 md:mb-6">
-                                            <h5 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Chọn size:</h5>
+                                            <div className="flex items-center justify-between mb-2 md:mb-3">
+                                                <h5 className="font-semibold text-gray-800 text-sm md:text-base">Chọn size:</h5>
+                                                <button
+                                                    onClick={() => setIsSizeGuideOpen(true)}
+                                                    className="text-blue-600 hover:text-blue-700 font-medium text-base md:text-sm underline"
+                                                >
+                                                    Xem hướng dẫn
+                                                </button>
+                                            </div>
                                             <div className="flex flex-wrap gap-2 md:gap-3">
                                                 {selectedProduct?.productColors[0].productVariants.map((productVariants: ProductVariantDTO) => (
                                                     <button
@@ -485,6 +495,11 @@ export default function TryOnResultModal({
                     </button>
 
                 </div>
+                <SizeGuideModal
+                    isOpen={isSizeGuideOpen}
+                    onClose={() => setIsSizeGuideOpen(false)}
+                    categoryId={selectedProduct?.categoryId}
+                />
             </div>
 
             <style jsx>{`
