@@ -197,11 +197,17 @@ export default function OrderRefundDetailsStaff() {
       },
       {
          title: 'Hoàn tất',
+      }
+   ];
+
+   const itemsRejectRefund = [
+      {
+         title: "Chờ xác nhận",
       },
       {
          title: 'Từ chối yêu cầu',
       }
-   ];
+   ]
 
    const columns: ColumnsType<ItemRefundDetailDTO> = [
       {
@@ -275,7 +281,10 @@ export default function OrderRefundDetailsStaff() {
    };
 
    const currentStatusText = getStatusText(orderRefundData?.orderRefundStatus);
-   const currentStepIndex = items.findIndex(item => item.title === currentStatusText);
+   // const currentStepIndex = items.findIndex(item => item.title === currentStatusText);
+   const currentStepIndex = orderRefundData?.orderRefundStatus == 'Rejected'
+      ? itemsRejectRefund.findIndex(item => item.title === currentStatusText)
+      : items.findIndex(item => item.title === currentStatusText);
    const currentStep = currentStepIndex !== -1 ? currentStepIndex : 0;
 
    const orderRefundStatus = statusMapRefund[orderRefundData?.orderRefundStatus || ''];
@@ -434,7 +443,7 @@ export default function OrderRefundDetailsStaff() {
             <div className="mb-5 font-bold text-xl text-black">
                Trạng thái & Tiến trình
             </div>
-            <Steps size="default" current={currentStep} labelPlacement="vertical" items={items} />
+            <Steps size="default" current={currentStep} labelPlacement="vertical" items={orderRefundData?.orderRefundStatus == 'Rejected' ? itemsRejectRefund : items} />
          </div>
 
          {/* Hình ảnh và lý do */}
