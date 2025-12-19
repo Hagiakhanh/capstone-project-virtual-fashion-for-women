@@ -11,7 +11,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ orderRef
       }
 
    } catch (error: any) {
-      console.log(error.response?.data);
       return NextResponse.json({ message: 'Lỗi khi lấy thông tin hoàn trả đơn hàng: ' + error.response?.data, }, { status: 500 });
    }
 }
