@@ -996,7 +996,7 @@ export default function CheckoutForm() {
                                                             {deliveringFee.regionType !== 'NS tinh' && deliveringFee.regionType !== 'Ngoai tinh' && deliveringFee.regionType}
                                                         </td>
                                                         <td className="px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm text-gray-800">
-                                                            0 - 0.5 kg
+                                                            0 - 2 kg
                                                         </td>
                                                         <td className="px-3 md:px-4 py-2 md:py-3 text-right text-xs md:text-sm font-semibold text-green-600">
                                                             {deliveringFee.basePrice.toLocaleString('vi-VN')} đ
