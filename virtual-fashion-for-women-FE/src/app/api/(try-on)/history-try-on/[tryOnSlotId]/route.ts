@@ -6,7 +6,7 @@ export async function GET(request: Request,
     const { tryOnSlotId } = await params;
     try {
         const api = createApiInstance(request);
-        const responseBE = await api.get(`/try-on-slot/try-on-slot/${parseInt(tryOnSlotId)}`);
+        const responseBE = await api.get(`/try-on-slot/history-try-on-slot/${parseInt(tryOnSlotId)}`);
         if (responseBE.status === 200) {
             const dataResponse = responseBE.data?.data || {};
             return NextResponse.json(dataResponse, { status: responseBE.data?.statusCode });

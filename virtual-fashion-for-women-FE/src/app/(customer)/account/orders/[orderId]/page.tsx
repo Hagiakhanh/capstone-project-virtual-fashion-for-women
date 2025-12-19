@@ -37,9 +37,9 @@ export default function OrderDetailPage() {
                 messageToast.error("Lỗi khi lấy chi tiết đơn hàng");
             }
         } catch (error: any) {
-            messageToast.error("Lỗi khi lấy chi tiết đơn hàng: " + error.response?.data?.message);
+            messageToast.error(error.response.data.message);
             setOrder(undefined);
-            route.back
+            route.push('/account/orders');
         }
     }
 

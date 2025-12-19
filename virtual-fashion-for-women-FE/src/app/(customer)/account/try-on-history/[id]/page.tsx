@@ -34,6 +34,7 @@ export default function TryOnHistoryDetailPage() {
             }
         } catch (error: any) {
             messageToast.error(error?.response?.data?.message);
+            router.push('/account/try-on-history');
         } finally {
             setLoading(false);
         }

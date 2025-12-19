@@ -16,9 +16,9 @@ export async function GET(request: Request,
                 { status: responseBE.data?.statusCode }
             );
         }
-    } catch (error) {
+    } catch (error: any) {
         return NextResponse.json(
-            { message: `Lỗi khi lấy orderId ${orderId}: `, error },
+            { message: error.response?.data.message },
             { status: 400 }
         )
     }
