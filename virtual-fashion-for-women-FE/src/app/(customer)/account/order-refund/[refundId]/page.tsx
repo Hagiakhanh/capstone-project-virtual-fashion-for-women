@@ -41,9 +41,10 @@ export default function RefundDetailsPage() {
             setStatusOrderInformation(statusMapRefund[response.data?.data.orderRefundStatus]);
          }
 
-      } catch (error) {
-         messageToast.error('Lỗi khi lấy chi tiết đơn hoàn trả.');
+      } catch (error: any) {
+         messageToast.error(error.response.data.message);
          console.log('Lỗi khi lấy chi tiết đơn hoàn trả:', error);
+         route.push('/account/order-refund');
       }
    };
 

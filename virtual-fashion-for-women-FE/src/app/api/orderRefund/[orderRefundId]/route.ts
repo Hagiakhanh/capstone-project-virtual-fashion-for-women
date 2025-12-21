@@ -10,7 +10,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ orderRef
          return NextResponse.json(responseBE.data, { status: 200 });
       }
 
-   } catch (error) {
-      return NextResponse.json({ message: 'Lỗi khi lấy thông tin hoàn trả đơn hàng' }, { status: 500 });
+   } catch (error: any) {
+      return NextResponse.json({ message: 'Lỗi khi lấy thông tin hoàn trả đơn hàng: ' + error.response?.data, }, { status: 500 });
    }
 }

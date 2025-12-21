@@ -34,7 +34,7 @@ export default function SuccessStatus() {
 
             {/* Mô tả */}
             <p className="text-gray-600 max-w-md mb-6">
-                Đơn hàng của bạn đã được xác nhận. Cảm ơn bạn đã mua sắm cùng chúng tôi 💚
+                Giao dịch của bạn đã được xử lý thành công. Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi 💚
             </p>
 
             {/* Loading effect trước khi redirect */}

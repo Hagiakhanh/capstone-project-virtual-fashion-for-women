@@ -49,7 +49,7 @@ export default function FailStatus() {
 
             {/* Mô tả */}
             <p className="text-gray-600 max-w-md mb-6">
-                Giao dịch không thành công. Vui lòng thử lại hoặc quay về trang chủ để tiếp tục mua sắm.
+                Giao dịch không thành công. Vui lòng thử lại hoặc quay về trang chủ.
             </p>
 
             {/* Nút hành động */}
