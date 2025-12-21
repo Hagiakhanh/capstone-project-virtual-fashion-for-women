@@ -56,7 +56,6 @@ export default function WalletPage() {
             const response = await api.get("/payment/bank"); // Thay đổi endpoint nếu cần
             if (response.status === 200) {
                 const banksData = response.data;
-                console.log('Danh sách ngân hàng:', banksData);
                 // Sort theo tên
                 banksData.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
                 setBanks(banksData);
@@ -326,7 +325,6 @@ export default function WalletPage() {
                             {rechargeTransactions.length > 0 ? (
                                 rechargeTransactions.map((t) => {
                                     const statusInfor = getStatusIcon(t.status);
-                                    console.log('Transaction:', t);
                                     return (
                                         <div
                                             key={t.transactionId}
@@ -581,10 +579,20 @@ export default function WalletPage() {
                                 />
                                 <span className="absolute right-4 top-2.5 md:top-3.5 text-gray-500 text-sm md:text-base">đ</span>
                             </div>
+                            {wallet?.balance === 0 ? (
+                                <p className="text-xs font-medium text-yellow-600 mt-2 flex items-center gap-1">
+                                    ⚠️ Số dư hiện tại của bạn không đủ để rút tiền
+                                </p>
+                            ) : ((wallet?.balance ?? 0) <= 10000 ? (
+                                <p className="text-xs font-medium text-yellow-600 mt-2 flex items-center gap-1">
+                                    ⚠️ Số dư tối thiểu để rút là 10.000đ
+                                </p>
+                            ) : (
+                                <p className="text-xs font-medium text-yellow-600 mt-2 flex items-center gap-1">
+                                    ⚠️ Tối thiểu 10.000đ – Tối đa {formatPrice(wallet?.balance ?? 0)}đ
+                                </p>
+                            ))}
 
-                            <p className="text-xs font-medium text-yellow-600 mt-2 flex items-center gap-1">
-                                ⚠️ Tối thiểu 10.000đ – Tối đa {formatPrice(wallet?.balance ?? 0)}đ
-                            </p>
                         </div>
 
                         {/* Chọn ngân hàng */}
