@@ -75,7 +75,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 }
                 List<Message> listHistoryMessage = await _messageRepository.GetAll(new Data.Commons.PaginationParameter { PageIndex = 1, PageSize = 15 },
                     x => x.AiconversationId == conversationChatID,
-                    x => x.OrderByDescending(x => x.CreatedAt));
+                    x => x.OrderBy(x => x.CreatedAt));
 
                 var currentUserStyle = string.IsNullOrEmpty(conversationModel.CurrentUserStyleJson)
                    ? new SuggestRequirement()

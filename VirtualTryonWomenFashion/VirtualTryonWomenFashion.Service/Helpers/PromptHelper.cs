@@ -187,7 +187,7 @@ Nếu người dùng đã chọn sản phẩm Lower Body (quần hoặc váy)
 → Thì không được chọn Full Body.
 → Và có thể chọn tối đa một sản phẩm Upper Body.
 
-Nếu người dùng cố tình chọn 3 loại xung đột (Áo + Váy + Đầm)
+Nếu người dùng cố tình chọn 2 loại xung đột (Áo + Đầm hoặc váy + Đầm hoặc quần + Đầm )
 
 AI PHẢI:
 
