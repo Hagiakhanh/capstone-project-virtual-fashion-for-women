@@ -10,7 +10,7 @@ const SizeGuideModal = ({ isOpen, onClose, categoryId }: any) => {
    const fetchSizeTable = async (categoryId: number) => {
       try {
          const response = await api.get(`/categorysizetemplate/notfullmodel/${categoryId}`);
-         console.log("Size Table Response:", response);  
+         console.log("Size Table Response:", response);
          setSizeTable(response.data);
       } catch (error) {
          console.error("Error fetching size table:", error);
@@ -44,12 +44,15 @@ const SizeGuideModal = ({ isOpen, onClose, categoryId }: any) => {
          open={isOpen}
          onCancel={onClose}
          footer={null}
-         width={700}
+         width={800}
          centered
       >
          <div className="py-4">
-            <p className="text-gray-500 text-center mb-4 italic">
+            <p className="text-gray-500 text-center mb-2 italic">
                Đơn vị tính: Centimeters (cm). Hãy đo cơ thể bạn và đối chiếu bảng dưới đây.
+            </p>
+            <p className="text-gray-500 text-center mb-4 italic">
+               Lưu ý: Bảng kích cỡ này chỉ áp dụng cho người châu Á và có thể không phù hợp với người châu Âu hoặc Mỹ.
             </p>
 
             <div className="overflow-x-auto rounded-lg border border-gray-200">
