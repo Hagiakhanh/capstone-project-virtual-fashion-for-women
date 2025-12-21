@@ -59,13 +59,13 @@ export default function AIConversationCard({
               {styleInfo.FashionStyle ?? "Không có"}
             </span>
           </p>
-          <span className="text-gray-400 hidden sm:inline">–</span>
+          {/* <span className="text-gray-400 hidden sm:inline">–</span>
           <p className="flex items-baseline gap-1">
             <strong className="text-gray-700">Trang phục:</strong>
             <span className="text-gray-600">
               {styleInfo.ItemType ?? "Không có"}
             </span>
-          </p>
+          </p> */}
         </div>
 
         {/* Row 2: Dịp */}
