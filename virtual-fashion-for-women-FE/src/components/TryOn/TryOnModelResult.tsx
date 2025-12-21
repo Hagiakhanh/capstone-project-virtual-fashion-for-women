@@ -132,7 +132,7 @@ export default function TryOnResultModal({
 
     const handleClose = () => {
         // Chỉ cho phép đóng nếu có kết quả ảnh
-        if (!canClose) return;
+        if (isCreatingLoading) return;
 
         onClose();
         setRecommendedVariant(null);
@@ -180,14 +180,14 @@ export default function TryOnResultModal({
                         {showCartView ? 'Thêm vào giỏ hàng' : 'Kết quả thử đồ'}
                     </h2>
                     <button
-                        disabled={!canClose}
+                        disabled={isCreatingLoading}
                         onClick={handleClose}
                         className={`p-1.5 md:p-2 rounded-full transition-colors
-                                ${!canClose
+                                ${isCreatingLoading
                                 ? "opacity-40 cursor-not-allowed pointer-events-none"
                                 : "hover:bg-white/30"
                             }`}
-                        title={!canClose ? "Vui lòng đợi cho đến khi xử lý xong" : "Đóng"}
+                        title={isCreatingLoading ? "Vui lòng đợi cho đến khi xử lý xong" : "Đóng"}
                     >
                         <X className="w-5 h-5 md:w-6 md:h-6 text-gray-800" />
                     </button>
@@ -482,11 +482,11 @@ export default function TryOnResultModal({
                     )}
 
                     <button
-                        disabled={!canClose}
+                        disabled={isCreatingLoading}
                         onClick={handleClose}
                         className={`flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-3 
                                     font-semibold rounded-lg md:rounded-xl transition-all shadow-md text-sm md:text-base w-full sm:w-auto
-                                    ${!canClose
+                                    ${isCreatingLoading
                                 ? "bg-gray-300 text-gray-500 opacity-50 cursor-not-allowed pointer-events-none"
                                 : "bg-gray-200 hover:bg-gray-300 text-gray-800"
                             }`}
