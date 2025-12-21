@@ -188,7 +188,7 @@ public class TryOnSlotController : ControllerBase
         }
     }
 
-    [HttpGet("try-on-slot/{tryOnSlotId}")]
+    [HttpGet("history-try-on-slot/{tryOnSlotId}")]
     public async Task<IActionResult> GetHistoryTryOnSlot([FromRoute]int tryOnSlotId )
     {
         try
@@ -204,7 +204,7 @@ public class TryOnSlotController : ControllerBase
         }
         catch (Exception ex)
         {
-            return Ok(new MessageModelWithData<object>()
+            return BadRequest(new MessageModelWithData<object>()
             {
                 Message = "Lấy chi tiết lịch sử thử đồ thất bại: " + ex.Message,
                 StatusCode = StatusCodes.Status400BadRequest,

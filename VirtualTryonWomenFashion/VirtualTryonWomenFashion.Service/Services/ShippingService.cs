@@ -35,7 +35,7 @@ public class ShippingService : IShippingService
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception("Không thể truy xuất các tỉnh từ API GHN.");
+                return 0;
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -100,7 +100,7 @@ public class ShippingService : IShippingService
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception("Không thể lấy được quận/huyện từ API GHN.");
+                return 0;
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -163,7 +163,7 @@ public class ShippingService : IShippingService
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception("Failed to retrieve wards from GHN API.");
+                return "";
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
