@@ -393,6 +393,18 @@ namespace VirtualTryonWomenFashion.Service.Services
                 includes: [x => x.Size, x => x.Category]
             );
 
+            decimal? maxBust = templates.Where(t => t.MaxBust.HasValue)
+                            .Max(t => (decimal?)t.MaxBust.Value);
+
+            decimal? maxWaist = templates.Where(t => t.MaxWaist.HasValue)
+                                         .Max(t => (decimal?)t.MaxWaist.Value);
+
+            decimal? maxHips = templates.Where(t => t.MaxHips.HasValue)
+                                        .Max(t => (decimal?)t.MaxHips.Value);
+
+            decimal? maxShoulder = templates.Where(t => t.MaxShoulder.HasValue)
+                                            .Max(t => (decimal?)t.MaxShoulder.Value);
+
             if (templates == null || !templates.Any())
                 return new List<CategorySizeTemplate>();
 
@@ -406,6 +418,20 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (shoulder != null)
             {
                 shoulderDes = (decimal)shoulder.Value;
+            }
+
+            if (shoulderDes.HasValue && maxShoulder.HasValue &&
+                shoulderDes.Value > maxShoulder.Value + 5m)
+            {
+                return new List<CategorySizeTemplate>();
+            }
+
+            // Bust / Waist / Hips > Max + 15
+            if ((maxBust.HasValue && bustDec > maxBust.Value + 12m) ||
+                (maxWaist.HasValue && waistDec > maxWaist.Value + 12m) ||
+                (maxHips.HasValue && hipsDec > maxHips.Value + 12m))
+            {
+                return new List<CategorySizeTemplate>();
             }
 
             // ===============================
