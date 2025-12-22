@@ -440,10 +440,10 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 if (shopAddress.ProvinceId == provinceId)
                 {
-                    externalServiceFee = this.CalculateExternalFee(totalLength, totalWidth, totalHeight, shippingRegions.Where(sr => sr.RegionType == "Nội tỉnh").FirstOrDefault());
+                    externalServiceFee = this.CalculateExternalFee(totalWidth, shippingRegions.Where(sr => sr.RegionType == "Nội tỉnh").FirstOrDefault());
                 }else
                 {
-                    externalServiceFee = this.CalculateExternalFee(totalLength, totalWidth, totalHeight, shippingRegions.Where(sr => sr.RegionType == "Ngoại tỉnh").FirstOrDefault());
+                    externalServiceFee = this.CalculateExternalFee(totalWidth, shippingRegions.Where(sr => sr.RegionType == "Ngoại tỉnh").FirstOrDefault());
                 }
                 externalInsuranceFee = 0;
 
@@ -531,10 +531,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _unitOfWork.SaveChanges();
         }
 
-        private decimal CalculateExternalFee(decimal length, decimal width, decimal height, ShippingRegion shippingRegion)
+        private decimal CalculateExternalFee(decimal weight, ShippingRegion shippingRegion)
         {
-            decimal volumetricWeight = (length * width * height) / 5000m;
-            decimal roundedWeight = Math.Ceiling(volumetricWeight * 2) / 2;
+            decimal roundedWeight = Math.Ceiling(weight * 2) / 2;
             if (roundedWeight <= 2)
                 return shippingRegion.BasePrice;
             decimal extraSteps = Math.Max(0, Math.Ceiling((roundedWeight - 2) / 0.5m));
