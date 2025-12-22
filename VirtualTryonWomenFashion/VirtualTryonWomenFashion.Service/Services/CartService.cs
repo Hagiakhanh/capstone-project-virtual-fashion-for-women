@@ -414,7 +414,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                 (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductLength) ?? 0);
             int totalWidth =
                 (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductWidth) ?? 0);
-            decimal finalTotalWeight = (totalLength * totalWidth * totalHeight) / 5000m;
             if (!string.IsNullOrEmpty(requestCheckout.ProvinceName) && !string.IsNullOrEmpty(requestCheckout.DistrictName) && !string.IsNullOrEmpty(requestCheckout.WardName))
             {
                 (int provinceId, int districtId, string wardCode, string errorGHN) =
@@ -465,7 +464,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             ResponseCheckout responseCheckout = new ResponseCheckout()
             {
                 Items = selectedCartItems,
-                TotalWeight = finalTotalWeight,
+                TotalWeight = totalWeight,
                 TotalProductPrice = totalProductPrice,
                 DeliveryTypeFees = deliveryTypeFees,
             };
