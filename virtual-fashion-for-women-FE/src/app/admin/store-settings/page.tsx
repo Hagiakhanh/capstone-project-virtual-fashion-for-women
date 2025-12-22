@@ -171,7 +171,7 @@ export default function ShopConfigAdmin() {
                                                         {shipping.regionType}
                                                     </td>
                                                     <td className="px-4 py-3 text-sm text-gray-800">
-                                                        0 - 0.5 kg
+                                                        0 - 2 kg
                                                     </td>
                                                     <td className="px-4 py-3 text-right">
                                                         <input
