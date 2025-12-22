@@ -237,7 +237,7 @@ namespace VirtualTryonWomenFashion.Service.Services
 
 
             filter = t =>
-                (!orderId.HasValue || t.OrderId == orderId) &&
+                (!orderId.HasValue || t.OrderId == orderId || (t.OrderRefund != null && t.OrderRefund.OrderId == orderId)) &&
                 (string.IsNullOrEmpty(type) || t.Type == type) &&
                 (string.IsNullOrEmpty(method) || t.Method == method) &&
                 (string.IsNullOrEmpty(status) || t.Status == status) &&
