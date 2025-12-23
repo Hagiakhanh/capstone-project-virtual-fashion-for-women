@@ -15,7 +15,7 @@ function FooterComponent() {
                      VFW
                   </h1>
                   <div className="mt-5 text-lg border-t-2 border-gray-400 pt-5">
-                     <p>7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh</p>
+                     <p>Số 1 đường Lưu Hữu Phước, Đông Hoà, Dĩ An, Bình Dương</p>
                      <p className="font-bold">Email: <span className="font-normal">info@vfw.com</span></p>
                      <p className="font-bold">Liên hệ: <span className="font-normal">0868728859</span></p>
                   </div>
