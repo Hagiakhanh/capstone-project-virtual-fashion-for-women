@@ -404,9 +404,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 ServiceFee = externalServiceFee,
                 TotalPrice = totalProductPrice + externalServiceFee + externalInsuranceFee,
             };
-            int totalWeight =
-                    (int)Math.Ceiling(
-                        selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductWeight) ?? 0);
+            decimal totalWeight = selectedCartItems.Sum(c => c.QuantityItem * (c.ResponseProductVariantDto.ProductWeight ?? 0));
             int totalHeight =
                 (int)Math.Ceiling(
                     selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductHeight) ?? 0);
@@ -425,7 +423,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         ToWardCode = wardCode,
                         ToDistrictId = districtId,
-                        Weight = totalWeight,
+                        Weight = (int)Math.Ceiling(totalWeight),
                         Length = totalLength,
                         Width = totalWidth,
                         Height = totalHeight,
@@ -439,10 +437,10 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 if (shopAddress.ProvinceId == provinceId)
                 {
-                    externalServiceFee = this.CalculateExternalFee(totalWidth, shippingRegions.Where(sr => sr.RegionType == "Nội tỉnh").FirstOrDefault());
+                    externalServiceFee = this.CalculateExternalFee(totalWeight, shippingRegions.Where(sr => sr.RegionType == "Nội tỉnh").FirstOrDefault());
                 }else
                 {
-                    externalServiceFee = this.CalculateExternalFee(totalWidth, shippingRegions.Where(sr => sr.RegionType == "Ngoại tỉnh").FirstOrDefault());
+                    externalServiceFee = this.CalculateExternalFee(totalWeight, shippingRegions.Where(sr => sr.RegionType == "Ngoại tỉnh").FirstOrDefault());
                 }
                 externalInsuranceFee = 0;
 
