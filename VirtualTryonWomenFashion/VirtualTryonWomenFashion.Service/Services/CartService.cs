@@ -404,9 +404,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 ServiceFee = externalServiceFee,
                 TotalPrice = totalProductPrice + externalServiceFee + externalInsuranceFee,
             };
-            int totalWeight =
-                    (int)Math.Ceiling(
-                        selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductWeight) ?? 0);
+            decimal totalWeight = selectedCartItems.Sum(c => c.QuantityItem * (c.ResponseProductVariantDto.ProductWeight ?? 0));
             int totalHeight =
                 (int)Math.Ceiling(
                     selectedCartItems.Sum(c => c.QuantityItem * c.ResponseProductVariantDto.ProductHeight) ?? 0);
@@ -414,7 +412,6 @@ namespace VirtualTryonWomenFashion.Service.Services
                 (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductLength) ?? 0);
             int totalWidth =
                 (int)Math.Ceiling(selectedCartItems.Max(c => c.ResponseProductVariantDto.ProductWidth) ?? 0);
-            decimal finalTotalWeight = (totalLength * totalWidth * totalHeight) / 5000m;
             if (!string.IsNullOrEmpty(requestCheckout.ProvinceName) && !string.IsNullOrEmpty(requestCheckout.DistrictName) && !string.IsNullOrEmpty(requestCheckout.WardName))
             {
                 (int provinceId, int districtId, string wardCode, string errorGHN) =
@@ -426,7 +423,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                     {
                         ToWardCode = wardCode,
                         ToDistrictId = districtId,
-                        Weight = totalWeight,
+                        Weight = (int)Math.Ceiling(totalWeight),
                         Length = totalLength,
                         Width = totalWidth,
                         Height = totalHeight,
@@ -440,10 +437,10 @@ namespace VirtualTryonWomenFashion.Service.Services
 
                 if (shopAddress.ProvinceId == provinceId)
                 {
-                    externalServiceFee = this.CalculateExternalFee(totalLength, totalWidth, totalHeight, shippingRegions.Where(sr => sr.RegionType == "Nội tỉnh").FirstOrDefault());
+                    externalServiceFee = this.CalculateExternalFee(totalWeight, shippingRegions.Where(sr => sr.RegionType == "Nội tỉnh").FirstOrDefault());
                 }else
                 {
-                    externalServiceFee = this.CalculateExternalFee(totalLength, totalWidth, totalHeight, shippingRegions.Where(sr => sr.RegionType == "Ngoại tỉnh").FirstOrDefault());
+                    externalServiceFee = this.CalculateExternalFee(totalWeight, shippingRegions.Where(sr => sr.RegionType == "Ngoại tỉnh").FirstOrDefault());
                 }
                 externalInsuranceFee = 0;
 
@@ -465,7 +462,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             ResponseCheckout responseCheckout = new ResponseCheckout()
             {
                 Items = selectedCartItems,
-                TotalWeight = finalTotalWeight,
+                TotalWeight = totalWeight,
                 TotalProductPrice = totalProductPrice,
                 DeliveryTypeFees = deliveryTypeFees,
             };
@@ -531,10 +528,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             await _unitOfWork.SaveChanges();
         }
 
-        private decimal CalculateExternalFee(decimal length, decimal width, decimal height, ShippingRegion shippingRegion)
+        private decimal CalculateExternalFee(decimal weight, ShippingRegion shippingRegion)
         {
-            decimal volumetricWeight = (length * width * height) / 5000m;
-            decimal roundedWeight = Math.Ceiling(volumetricWeight * 2) / 2;
+            decimal roundedWeight = Math.Ceiling(weight * 2) / 2;
             if (roundedWeight <= 2)
                 return shippingRegion.BasePrice;
             decimal extraSteps = Math.Max(0, Math.Ceiling((roundedWeight - 2) / 0.5m));
