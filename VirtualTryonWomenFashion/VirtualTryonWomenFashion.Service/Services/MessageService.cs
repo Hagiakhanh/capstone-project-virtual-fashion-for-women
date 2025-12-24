@@ -103,7 +103,12 @@ namespace VirtualTryonWomenFashion.Service.Services
                     };
 
                     conversationModel.CurrentUserStyleJson = JsonSerializer.Serialize(analysis.UpdatedStyle, options);
-                    currentUserStyle = analysis.UpdatedStyle;
+                    //currentUserStyle = analysis.UpdatedStyle;
+                    currentUserStyle.Bust = analysis.UpdatedStyle.Bust;
+                    currentUserStyle.Hips = analysis.UpdatedStyle.Hips;
+                    currentUserStyle.Waist = analysis.UpdatedStyle.Waist;
+                    currentUserStyle.FashionStyle = analysis.UpdatedStyle.FashionStyle;
+                    currentUserStyle.Occasion = analysis.UpdatedStyle.Occasion;
                     await _aiConversationRepository.UpdateAsync(conversationModel);
                 }
                 if (analysis.Action == "provide_suggestions" && analysis.Components != null)
@@ -267,7 +272,9 @@ namespace VirtualTryonWomenFashion.Service.Services
             if (oldStyle.ItemType != newStyle.ItemType) return true;
             if (oldStyle.Occasion != newStyle.Occasion) return true;
             if (oldStyle.Color != newStyle.Color) return true;
-
+            if (oldStyle.Hips != newStyle.Hips) return true;
+            if (oldStyle.Waist != newStyle.Waist) return true;
+            if (oldStyle.Bust != newStyle.Bust) return true;
             // Nếu tất cả các thuộc tính đều giống nhau
             return false;
         }
