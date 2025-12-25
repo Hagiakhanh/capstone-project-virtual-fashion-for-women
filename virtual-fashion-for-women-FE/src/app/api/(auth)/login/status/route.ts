@@ -12,6 +12,8 @@ export async function GET(request: Request) {
       }
       const decoded = jwtDecode(token) as any;
       user.id = decoded.UserID;
+      user.email = decoded.email;
+      user.name = decoded.name;
       switch (decoded.role) {
          case 'Admin':
             user.role = 'admin';
