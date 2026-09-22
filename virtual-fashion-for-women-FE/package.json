@@ -1,0 +1,47 @@
+{
+  "name": "nextjs-base-source",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack -p 3000",
+    "build": "next build",
+    "export": "next export",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ant-design/plots": "^2.6.6",
+    "@microsoft/signalr": "^9.0.6",
+    "@react-oauth/google": "^0.12.2",
+    "@snap/camera-kit": "^1.11.0",
+    "antd": "^5.26.7",
+    "axios": "^1.13.2",
+    "env": "^0.0.2",
+    "framer-motion": "^12.23.24",
+    "jose": "^6.1.0",
+    "jwt-decode": "^4.0.0",
+    "lodash": "^4.17.21",
+    "lottie-react": "^2.4.1",
+    "lucide-react": "^0.544.0",
+    "next": "15.4.10",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-datepicker": "^8.9.0",
+    "react-dom": "^18.3.1",
+    "react-toastify": "^11.0.5",
+    "recharts": "^3.4.1",
+    "swiper": "^12.0.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/lodash": "^4.17.20",
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^18.3.3",
+    "@types/react-datepicker": "^6.2.0",
+    "@types/react-dom": "^18.3.3",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

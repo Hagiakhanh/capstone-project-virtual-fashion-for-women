@@ -1,0 +1,46 @@
+export type AIConversationDTO ={
+  aiconversationId: number;
+  userId: number;
+  currentUserStyleJson: string | null;
+  createdAt: string; // ISO datetime string
+  updatedAt: string | null;
+  isDeleted: boolean;
+  messages: ChatMessageItem[];
+  suggestedOutfits: ComponentSuggested[];
+  user: UserDTO | null;
+}
+
+// Nếu có dữ liệu message
+export type ChatMessageItem ={
+  id?: number;
+  isBot: boolean;
+  message: string;
+  time?: string;
+  isTyping?: boolean;
+}
+
+// Nếu có dữ liệu outfit gợi ý
+export type SuggestedOutfitDTO ={
+  id?: number;
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+}
+
+// Nếu API trả về thông tin user kèm theo
+export type UserDTO ={
+  userId: number;
+  name?: string;
+  email?: string;
+  avatarUrl?: string;
+}
+
+export type ComponentSuggested = {
+  id: string;
+  name: string;
+  ImageUrl: string;
+  ProductSlug: string;
+  ProductColorId: string;
+  reason: string;
+  productId: string;
+};
