@@ -5,7 +5,7 @@
 > Online Women's Fashion Store with **AI Recommendation** & **Virtual Try-On**
 
 ![Next.js](https://img.shields.io/badge/Frontend-Next.js-blue)
-![.NET](https://img.shields.io/badge/Backend-.NET%206-purple)
+![.NET](https://img.shields.io/badge/Backend-.NET%208-purple)
 ![Docker](https://img.shields.io/badge/Deploy-Docker-blue)
 ![Azure](https://img.shields.io/badge/Backend-Azure%20ACR-informational)
 ![AWS](https://img.shields.io/badge/Frontend-AWS%20Amplify-orange)
