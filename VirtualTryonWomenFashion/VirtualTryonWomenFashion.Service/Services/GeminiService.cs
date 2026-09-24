@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -27,7 +27,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             // Build payload for embedContent
             var payload = new
             {
-                model = "models/gemini-embedding-exp-03-07",
+                model = "models/gemini-embedding-001",
                 content = new
                 {
                     parts = new[] { new { text = text } }
@@ -35,7 +35,7 @@ namespace VirtualTryonWomenFashion.Service.Services
             };
             var jsonPayload = JsonSerializer.Serialize(payload);
             var request = new HttpRequestMessage(HttpMethod.Post,
-                $"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-exp-03-07:embedContent?key={_apiKeyChatBot}")
+                $"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={_apiKeyChatBot}")
             {
                 Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json")
             };
@@ -59,7 +59,7 @@ namespace VirtualTryonWomenFashion.Service.Services
         }
         public async Task<string> CallGeminiAsync(string prompt)
         {
-            var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_apiKeyChatBot}";
+            var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={_apiKeyChatBot}";
 
             // 1. Cấu hình trả về JSON thuần
             var payload = new
@@ -125,7 +125,7 @@ namespace VirtualTryonWomenFashion.Service.Services
                 base64File = Convert.ToBase64String(fileBytes);
             }
 
-            var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_apiKeyValidateImage}";
+            var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={_apiKeyValidateImage}";
 
             // 2. Định nghĩa cấu trúc contents chứa cả text và dữ liệu Base64
             // Cấu trúc này áp dụng chung cho mọi file đa phương tiện (ảnh, pdf, audio, video)

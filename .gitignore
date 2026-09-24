@@ -365,3 +365,7 @@ FodyWeavers.xsd
 # JetBrains Rider / IntelliJ / ReSharper settings
 .idea/
 *.DotSettings.user
+
+# Local environment appsettings (contains real secret keys)
+appsettings.Development.json
+appsettings.*.Development.json
