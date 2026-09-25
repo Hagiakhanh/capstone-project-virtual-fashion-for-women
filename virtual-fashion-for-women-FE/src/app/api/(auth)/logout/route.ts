@@ -12,10 +12,14 @@ export async function POST(request: Request) {
          //const cookieStore = await cookies();
          //cookieStore.delete('token');
          const res = NextResponse.json({ message: 'Logout successful' }, { status: 200 });
+         const host = request.headers.get('host') || '';
+         const isProdDomain = host.includes('onlinewomanfashion.store');
+
          res.cookies.delete({
             name: 'token',
             path: '/',
             domain: process.env.NODE_ENV === 'production' ? '.onlinewomanfashion.store' : undefined,
+            domain: isProdDomain ? '.onlinewomanfashion.store' : undefined,
          });
          return res;
       }

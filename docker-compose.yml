@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # 1. Dịch vụ Cache Redis
+  redis:
+    image: redis:alpine
+    container_name: vfw-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - vfw-network
+
+  # 2. Dịch vụ Backend (.NET 8 Web API)
+  backend:
+    build:
+      context: ./VirtualTryonWomenFashion
+      dockerfile: Dockerfile
+    container_name: vfw-backend
+    restart: always
+    ports:
+      - "7105:8080" # Gọi http://localhost:7105 sẽ vào backend trong container
+    depends_on:
+      - redis
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__RedisCloud=redis:6379,abortConnect=False
+      # Kết nối trực tiếp vào SQL Server đang có sẵn dữ liệu của máy bạn:
+      - ConnectionStrings__MyDbContext=Data Source=host.docker.internal,1433;Initial Catalog=VirtualTryonWomenFashion;User ID=sa;Password=12345;Encrypt=False;TrustServerCertificate=True
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - vfw-network
+
+  # 3. Dịch vụ Frontend (Next.js 15)
+  frontend:
+    build:
+      context: ./virtual-fashion-for-women-FE
+      dockerfile: Dockerfile
+    container_name: vfw-frontend
+    restart: always
+    ports:
+      - "3000:3000" # Truy cập web tại http://localhost:3000
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=ThisIsASecretKeyForJWTOfCapstoneWomanFashionStylistWithVirtualTryOnAndRecommendation
+      # Next.js Server gọi Backend qua mạng nội bộ Docker:
+      - API_URL=http://backend:8080/api
+      # Trình duyệt client kết nối SignalR qua port của máy host:
+      - NEXT_PUBLIC_SIGNALR_URL=http://localhost:7105
+    networks:
+      - vfw-network
+
+volumes:
+  redis_data:
+
+networks:
+  vfw-network:
+    driver: bridge
+

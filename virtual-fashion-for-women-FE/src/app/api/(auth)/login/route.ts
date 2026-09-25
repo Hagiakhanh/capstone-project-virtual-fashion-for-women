@@ -25,11 +25,16 @@ export async function POST(request: Request) {
             message: "Đăng nhập thành công.",
             user: user,
          }, { status: 200 });
+         const host = request.headers.get('host') || '';
+         const isProdDomain = host.includes('onlinewomanfashion.store');
+
          nextResponse.cookies.set('token', jwtToken, {
             httpOnly: true,
             secure: true,
+            secure: isProdDomain,
             sameSite: 'lax',
             domain: process.env.NODE_ENV === 'production' ? '.onlinewomanfashion.store' : undefined,
+            domain: isProdDomain ? '.onlinewomanfashion.store' : undefined,
             maxAge: maxAge,
             path: '/',
          });
