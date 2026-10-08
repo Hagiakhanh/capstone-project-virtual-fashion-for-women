@@ -5,7 +5,7 @@ services:
   redis:
     image: redis:alpine
     container_name: vfw-redis
-    restart: always
+    restart: "no"
     ports:
       - "6379:6379"
     volumes:
@@ -19,7 +19,7 @@ services:
       context: ./VirtualTryonWomenFashion
       dockerfile: Dockerfile
     container_name: vfw-backend
-    restart: always
+    restart: "no"
     ports:
       - "7105:8080" # Gọi http://localhost:7105 sẽ vào backend trong container
     depends_on:
@@ -41,7 +41,7 @@ services:
       context: ./virtual-fashion-for-women-FE
       dockerfile: Dockerfile
     container_name: vfw-frontend
-    restart: always
+    restart: "no"
     ports:
       - "3000:3000" # Truy cập web tại http://localhost:3000
     depends_on:
